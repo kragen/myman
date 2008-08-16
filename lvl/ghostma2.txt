@@ -1,0 +1,16 @@
+﻿1 25x15 READY="  READY! " GAMEOVER="GAME OVER" PLAYER1=" PLAYER 1" PLAYER2=" PLAYER 2" RGHOST=7.5 ROGHOST=1 CGHOST=11.5 RFRUIT=7.5 RTOP=6 RHERO=7.5 CHERO=15.5 RMSG=9 CMSG=7 RMSG2=5 CMSG2=7 ABOUT="Inspired by Infogrames's 'Ghostman' game for the Oric (some dots removed)" NOTE="The original maze has quad-dots which are not accurately representable in MyMan's maze format."
+╔═════════╝ ╚═══════════╗
+║·■················■····║
+║·•·•·╞═══╡·╞═══╡·╞═╡·╥·║
+║·····················║·║
+║·╥·╞═╦═══╡ ╞═══╡·╥·╞═╣·║
+║·╨···╨          ·╨···╨·║
+║···╥   ╔≡═≡═≡╗ ╥···╥···║
+╠═╡·╠═╡ ║     ║ ╠═╡·╠═╡·║
+║···╨   ╚═════╝ ╨···╨···║
+║·╥···╥          ·╥···╥·║
+║·╨·╞═╩═══╡ ╞═══╡·╨·╞═╣·║
+║·····················║·║
+║·•·•·╞═══╡·╞═══╡·╞═╡·╨·║
+║·■················■····║
+╚═════════╗ ╔═══════════╝

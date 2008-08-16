@@ -1,0 +1,112 @@
+#!/usr/bin/open -a ToolServer
+# -*- shell-script -*- coding: mac-roman -*-
+# macbuild.txt - MPW build script for the MyMan video game
+# Copyright 2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+#
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights to use, copy,
+# modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+# FIXME: we should do this, but it might break other stuff!
+#setshellsize -f "{MPW}ToolServer" -s 4096k -p 65536k
+
+set Exit 1
+export Exit
+set TraceFailures 1
+export TraceFailures
+
+set variants "bigman hugeman smallman squareman"
+
+if {#} <> 0
+    set variants ""
+    loop
+        if {#} == 0
+            break
+        end
+        set variants "{{variants}} {{1}}"
+        shift
+    end
+end
+
+setfile -t TEXT VERSION COPYRIGHT
+set MYMANVERSION "``catenate VERSION``"
+set MYMANCOPYRIGHT "``catenate COPYRIGHT``"
+
+# for sending string literals to the C compiler and including the solidus in them (which MyMan autoconverts to colon when needed)
+set char_quotation_mark "'"'"'"'"
+set char_solidus "{{char_quotation_mark}}CHAR_SOLIDUS{{char_quotation_mark}}"
+
+# "myman" is the default maze; see Makefile for more
+set MAZEFILE_myman "maze.txt"
+set mymanmaze "-D MAZEFILE={{char_quotation_mark}}lvl{{char_solidus}}{{MAZEFILE_myman}}{{char_quotation_mark}}"
+set myman "-D MYMANVARIANT={{char_quotation_mark}}myman{{char_quotation_mark}} {{mymanmaze}}"
+
+# "big" is the default size (large ASCII-art pictures)
+set bigman "{{big}} {{myman}}"
+
+# "huge" is the largest size (huge ASCII-art pictures)
+set TILEFILE_huge "chr5x3.txt"
+set hugetiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_huge}}{{char_quotation_mark}}"
+set SPRITEFILE_huge "spr10x6.txt"
+set hugesprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_huge}}{{char_quotation_mark}}"
+set huge "-D MYMANSIZE={{char_quotation_mark}}huge{{char_quotation_mark}} {{hugetiles}} {{hugesprites}}"
+set hugeman "{{huge}} {{myman}}"
+
+# "small" uses a pair of character-cells to represent each tile and sprite
+set TILEFILE_small "khr2h.txt"
+set smalltiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_small}}{{char_quotation_mark}}"
+set SPRITEFILE_small "spr2h.txt"
+set smallsprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_small}}{{char_quotation_mark}}"
+set small "-D MYMANSIZE={{char_quotation_mark}}small{{char_quotation_mark}} {{smalltiles}} {{smallsprites}}"
+set smallman "{{small}} {{myman}}"
+
+# "square" uses one character-cell to represent each tile and sprite
+set TILEFILE_square "khr1.txt"
+set squaretiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_square}}{{char_quotation_mark}}"
+set SPRITEFILE_square "spr1.txt"
+set squaresprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_square}}{{char_quotation_mark}}"
+set square "-D MYMANSIZE={{char_quotation_mark}}square{{char_quotation_mark}} {{squaretiles}} {{squaresprites}}"
+set squareman "{{square}} {{myman}}"
+
+for variant in {{variants}}
+    echo 'set DEFS "{{'"{{variant}}"'}}"' > {{variant}}.makeout
+    execute {{variant}}.makeout
+    if ":{{DEFS}}" == ":"
+        echo "#variant {{variant}} not defined" > dev:stderr
+        exit 2
+    end
+    setfile -t TEXT :inc:maccurs.h :inc:utils.h :src:myman.c :my_getopt:getopt.h :my_getopt:my_getopt.c :my_getopt:my_getopt.h :inc:optcurs.h &&
+    set CFLAGS "-noMapCR -includes unix -D MACCURSES=1 -D MY_GETOPT_H={{char_quotation_mark}}my_getopt:getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}{{{MYMANVERSION}}{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}{{{MYMANCOPYRIGHT}}{{char_quotation_mark}} {{DEFS}}" &&
+    delete -i myman.NJ myman.c.o myman.c.x &&
+    delete -i {{variant}} {{variant}}.make {{variant}}.makeout &&
+    delete -i my_getopt.c.o my_getopt.c.x my_getopt.NJ &&
+    createmake {{variant}} -I :inc: -I : :src:myman.c :my_getopt:my_getopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}}" &&
+    make -e -f {{variant}}.make > {{variant}}.makeout &&
+    {{variant}}.makeout #&&
+
+    # FIXME: the unicode version is commented out because it takes too
+    # much memory and crashes the compiler
+
+    #delete -i myman.NJ myman.c.o myman.c.x &&
+    #delete -i u{{variant}} u{{variant}}.make u{{variant}}.makeout &&
+    #createmake u{{variant}} -I :inc: -I : :src:myman.c :my_getopt:my_getopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
+    #make -e -f u{{variant}}.make > u{{variant}}.makeout &&
+    #u{{variant}}.makeout
+
+end

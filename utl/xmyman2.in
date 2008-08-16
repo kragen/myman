@@ -1,0 +1,232 @@
+#!@SHELL@ --
+# xmyman2 -*- shell-script -*- to run the MyMan video game under the X Window System
+# Copyright 2003, 2006-2007, Benjamin Sittler <bsittler@gmail.com>
+# 
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights to use, copy,
+# modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+# If you use a different-sized maze or tileset, you
+# should probaby change the geometry and font.
+
+
+# NOTE: @this_file_undergoes_variable_substitution@
+
+export MYMAN
+MYMAN=myman
+
+export SHELL
+SHELL=/bin/sh
+
+export PATH
+PATH="$PATH":/usr/bin:/usr/X11R6/bin
+
+if test :"$DISPLAY" = :"" -a -d /Applications/Utilities/X11.app/ -a -x /usr/bin/open
+then
+    export DISPLAY
+    DISPLAY=:0
+    /usr/bin/open /Applications/Utilities/X11.app/
+elif test :"$DISPLAY" = :"" -a -d /Applications/XDarwin.app/ -a -x /usr/bin/open
+then
+    export DISPLAY
+    DISPLAY=:0
+    /usr/bin/open /Applications/XDarwin.app/
+fi
+
+export EXE_SUFFIX
+EXE_SUFFIX=@EXE_SUFFIX@
+
+# special characters
+char_tab='	'
+char_newline='
+'
+export char_tab
+export char_newline
+
+for myman in @DIST_EXE@ @MYMAN_EXE@ @MYMAN@
+do
+  if test -f "`dirname \"\$0\"`"/"${myman}" -a -x "`dirname \"\$0\"`"/"${myman}" -o -f "`dirname \"\$0\"`"/"${myman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN="`dirname \"\$0\"`"/"${myman}"
+  elif test -f "`dirname \"\$0\"`"@bindir@/"${myman}" -a -x "`dirname \"\$0\"`"@bindir@/"${myman}" -o -f "`dirname \"\$0\"`"@bindir@/"${myman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"@bindir@/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN="`dirname \"\$0\"`"@bindir@/"${myman}"
+      break
+  elif test -f @bindir@/"${myman}" -a -x @bindir@/"${myman}" -o -f @bindir@/"${myman}""$EXE_SUFFIX" -a -x @bindir@/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN=@bindir@/"${myman}"
+      break
+  elif test -f "`type -p \"\${myman}\"`" -a -x "`type -p \"\${myman}\"`" -o -f "`type -p \"\${myman}\"`""$EXE_SUFFIX" -a -x "`type -p \"\${myman}\"`""$EXE_SUFFIX"
+      then
+      MYMAN="`type -p \"\${myman}\"`"
+      break
+  fi
+done
+
+if test -f @SHELL@ -a -x @SHELL@ -o -f @SHELL@"$EXE_SUFFIX" -a -x @SHELL@"$EXE_SUFFIX"
+    then
+    SHELL=@SHELL@
+fi
+
+xterm=rxvt
+geometry=56x35
+ttffont="monospace"
+font="-xos4-terminus-medium-r-normal--12-120-72-72-c-60-iso10646-1"
+termName=rxvt
+basename="`basename \"\$0\"`"
+
+# forget any locale-induced character set madness; we want simple
+# pass-through for our ASCII
+
+# FIXME: we should pass the original values of these variables to the
+# myman child process so that messages can be localized someday
+
+unset OUTPUT_CHARSET
+unset LINGUA
+unset LANGUAGE
+unset LANG
+unset LC_ALL
+unset LC_CTYPE
+
+# FIXME: rxvt has been exceedingly slow to add UTF-8 support, so for
+# now we hack the locale to avoid garbage on the display.
+
+export LC_CTYPE
+export myman_lc_ctype
+
+LC_CTYPE=C
+myman_lc_ctype="${LC_CTYPE}"
+rxvtfont="$font"
+
+if test :"${DISPLAY}" != :"" -a -x "`type -p urxvt 2>/dev/null`" 2>/dev/null
+then
+    xterm=urxvt
+    LC_CTYPE=en_US.UTF-8
+    myman_lc_ctype="${LC_CTYPE}"
+    rxvtfont="xft:${ttffont}"
+    termName=rxvt-unicode
+elif test :"${DISPLAY}" = :"" || ! ( xlsfonts "${rxvtfont}" 2>/dev/null | grep . > /dev/null )
+then
+    rxvtfont=fixed
+fi
+
+# don't pollute the child terminal's environment
+unset LINES
+unset COLUMNS
+if ! test -f "$TERMCAP"
+    then unset TERMCAP
+fi
+
+# first, probe for myman
+"$MYMAN" --help >/dev/null || exit $?
+
+# second, probe for XCurses myman
+if "$MYMAN" --help | fgrep toolkit-options > /dev/null
+then
+    exec \
+        "$MYMAN" "$@" \
+        -- \
+        -lines "${geometry##*x}" \
+        -cols "${geometry%x*}" \
+        -normalFont "$font" \
+        -colorBlack "#000000" \
+        -colorBlue "#0000DD" \
+        -colorGreen "#00B700" \
+        -colorCyan "#00DDDD" \
+        -colorRed "#DD9646" \
+        -colorMagenta "#FF2096" \
+        -colorYellow "#FFB746" \
+        -colorWhite "#FFB796" \
+        -colorBoldBlack "#666666" \
+        -colorBoldBlue "#2020DD" \
+        -colorBoldGreen "#96FF00" \
+        -colorBoldCyan "#00FFDD" \
+        -colorBoldRed "#FF0000" \
+        -colorBoldMagenta "#F9B2D7" \
+        -colorBoldYellow "#FFFF00" \
+        -colorBoldWhite "#DDDDDD" \
+        -cursorColor "#0000DB" \
+        -pointerForeColor "#FAB393" \
+        -pointerBackColor "#000000" \
+        -borderWidth 0
+        -xrm "*waitForMap: true" \
+        -xrm "*iconName: xmyman"
+fi
+
+export statusfile
+statusfile="${TMPDIR:-/tmp}/${basename}$$.st"
+
+cleanup()
+{
+    rm -f "${statusfile}"
+}
+
+trap cleanup 0
+
+export arglist
+arglist=
+while test $# -gt 0
+do
+  arglist="${arglist}"' ${arg'$#'}'
+  eval export 'arg'$#
+  eval 'arg'$#'="${1}"'
+  shift
+done
+
+echo 1 > "${statusfile}" || exit $?
+
+"$xterm" \
+-geometry "$geometry" \
++sb \
+-fn "$rxvtfont" \
+-bg "#000000" \
+-fg "#FAB393" \
+-cr "#0000DB" \
+-fb "$rxvtfont" \
+-tn "$termName" \
+-n "xmyman" \
+-title "X MyMan" \
+-xrm "*vt100.color0:  #000000" \
+-xrm "*vt100.color1:  #DD9646" \
+-xrm "*vt100.color2:  #00B700" \
+-xrm "*vt100.color3:  #FFB746" \
+-xrm "*vt100.color4:  #0000DD" \
+-xrm "*vt100.color5:  #FF2096" \
+-xrm "*vt100.color6:  #00DDDD" \
+-xrm "*vt100.color7:  #FFB796" \
+-xrm "*vt100.color8:  #666666" \
+-xrm "*vt100.color9:  #FF0000" \
+-xrm "*vt100.color10: #96FF00" \
+-xrm "*vt100.color11: #FFFF00" \
+-xrm "*vt100.color12: #2020DD" \
+-xrm "*vt100.color13: #F9B2D7" \
+-xrm "*vt100.color14: #00FFDD" \
+-xrm "*vt100.color15: #DDDDDD" \
+--colorBD "#FAFA00" \
+--colorUL "#2020D8" \
+-pr "#FAB393" \
++rv \
+-e "$SHELL" -c 'unset OUTPUT_CHARSET; unset LINGUA; unset LANGUAGE; unset LANG; unset LC_ALL; export LC_CTYPE; LC_CTYPE="${myman_lc_ctype}"; unset DISPLAY; export GGICURSES_FIXEDPAL; GGICURSES_FIXEDPAL="${GGICURSES_FIXEDPAL-t}"; export GGI_DISPLAY; GGI_DISPLAY="${GGI_DISPLAY:-terminfo}"; export CACA_DRIVER; CACA_DRIVER="${CACA_DRIVER:-ncurses}"; stty cbreak -echo 2>/dev/null; "$MYMAN" -o -u '"${arglist}"'; st=$?; echo "${st}" > "${statusfile}"; echo; echo "[ press RETURN to continue ]"; stty -echo; read x; exit "${st}"'
+st="${?}"
+if test :"${st}" = :"0"
+then
+    read st < "${statusfile}"
+fi
+cleanup
+exit "${st:-1}"

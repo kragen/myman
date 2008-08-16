@@ -1,0 +1,167 @@
+﻿TODO:
+
+        document recent additions to file formats (named parameters) in README
+
+        refactor
+
+        for "bicolor" mazes (maze flag "~4"), use edge/gate proximity rather than width
+
+        lvl printer numeric suffix when ambiguous and sufficient room
+
+        v/s lists in separate files
+
+        config dialog
+
+        double buffering and possibly in-driver frame-skipping
+            and/or redraw avoidance
+
+        fold bitmap renderer into main code
+
+        no transparency by default
+
+        figure out much earlier whether the plain-text status
+           line will be displayed and do not scroll the extra
+           line if it is not to be displayed
+
+        optional flip scrolling: break the screen into nonants and
+           scroll in one nonant steps (or as much of a nonant as
+           possible) to keep the focus in the center nonant
+
+        black background by default, transparency optional
+
+        refactor backend-independent code to a separate file(s)
+
+        refactor backend implementation code to separate files, compiling conditionally
+
+        native bitmap support
+
+        optional bright bgcolor-by-blinking support
+
+        ansi escapes in data files and per-character and per-tile coloring
+
+        otto fruit -- przl pear bnna, bouncy
+
+        eliminate the numerous memory leaks (mainly in the file parsers)
+
+        allow run-time maze switching (or just exec'ing?) via a
+           built-in "command line" editor
+
+        a level editor, perhaps?
+
+Bitmap Renderer Ideas:
+
+BITMAP
+BITMAP_DOUBLE
+BITMAP_DOUBLEHEIGHT
+
+BITMAP_BRAILLE
+ ⊻
+BITMAP_QUADRANT
+
+double  dheight braille quad    pels/cell
+n       n       n       n       1x2
+n       n       -       y       2x2
+n       n       y       -       2x4
+n       y       n       n       1x1
+n       y       -       y       2x1
+n       y       y       -       2x2
+y       n       n       n       ½x1
+y       n       -       y       1x1
+y       n       y       -       1x2
+y       y       n       n       ½x½
+y       y       -       y       1x½
+y       y       y       -       1x1
+
+braille pattern dots- U+2800 ... U+28FF
+1 4
+2 5
+3 6
+7 8
+
+(no) ■ U+25A0 BLACK SQUARE
+(no) ￭ U+FFED HALFWIDTH BLACK SQUARE
+
+
+cp437
+▀ U+2580 UPPER HALF BLOCK
+▄ U+2584 LOWER HALF BLOCK
+█ U+2588 FULL BLOCK
+▌ U+258C LEFT HALF BLOCK
+▐ U+2590 RIGHT HALF BLOCK
+
+quadrants
+▖ U+2596 QUADRANT LOWER LEFT
+▗ U+2597 QUADRANT LOWER RIGHT
+▘ U+2598 QUADRANT UPPER LEFT
+▙ U+2599 QUADRANT UPPER LEFT AND LOWER LEFT AND LOWER RIGHT
+▚ U+259A QUADRANT UPPER LEFT AND LOWER RIGHT
+▛ U+259B QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER LEFT
+▜ U+259C QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER RIGHT
+▝ U+259D QUADRANT UPPER RIGHT
+▞ U+259E QUADRANT UPPER RIGHT AND LOWER LEFT
+▟ U+259F QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT
+
+Palette Allocation Ideas:
+
+bitmap:
+
+j in B,!^b,b
+ i in F,^f,f
+  ij,!ji
+
+always:
+
+XX -> 0X
+00 -> 70
+
+fallbacks:
+XB -> !BX
+XB -> !^bX
+XB -> !Bx
+4X -> _7X
+8X -> v7X
+FX -> fX
+XY -> 0Y
+XB -> Xb
+FX -> ^fX
+XY -> !Y0
+XY -> Y0
+X0 -> 70
+70 -> .
+
+(default)
+ f0      70 10 20 30 40 50 60
+ F0      F0 90 A0 B0 C0 D0 E0 80
+!0b     !07!01!02!03!04!05!06
+!0B     !0F!09!0A!0B!0C!0D!0E!08
+ fb         71 72 73 74 75 76
+        !17   !12!13!14!15!16
+        !27 21   !23!24!25!26
+        !37 31 32   !34!35!36
+        !47 41 42 43   !45!46
+        !57 51 52 53 54   !56
+        !67 61 62 63 64 65
+^XX     ^77^11^22^33^44^55^66
+vXX     v77
+ fB      7F 79 7A 7B 7C 7D 7E 78
+         1F 19 1A 1B 1C 1D 1E 18
+         2F 29 2A 2B 2C 2D 2E 28
+         3F 39 3A 3B 3C 3D 3E 38
+         4F 49 4A 4B 4C 4D 4E 48
+         5F 59 5A 5B 5C 5D 5E 58
+         6F 69 6A 6B 6C 6D 6E 68
+!Fb     !F7!97!A7!B7!C7!D7!E7!87
+        !F1!91!A1!B1!C1!D1!E1!81
+        !F2!92!A2!B2!C2!D2!E2!82
+        !F3!93!A3!B3!C3!D3!E3!83
+        !F4!94!A4!B4!C4!D4!E4!84
+        !F5!95!A5!B5!C5!D5!E5!85
+        !F6!96!A6!B6!C6!D6!E6!86
+ FB         F9 FA FB FC FD FE F8
+        !9F   !9A!9B!9C!9D!9E!98
+        !AF A9   !AB!AC!AD!AE!A8
+        !BF B9 BA   !BC!BD!BE!B8
+        !CF C9 CA CB   !CD!CE!C8
+        !DF D9 DA DB DC   !DE!D8
+        !EF E9 EA EB EC ED   !E8
+        !8F 89 8A 8B 8C 8D 8E

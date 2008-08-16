@@ -1,0 +1,1 @@
+﻿1x1~1 ABOUT="A minimal spriteset"

@@ -1,0 +1,913 @@
+.TH MYMAN 6 "31 May 2008" "@MYMAN@ @MYMANVERSION@" "The MyMan Manual"
+.\" myman.man - the MyMan manual
+.\" Copyright 2003, 2006-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+.\"
+.\"  Copying and distribution of this file, with or without modification,
+.\"  are permitted in any medium without royalty provided the copyright
+.\"  notice and this notice are preserved.
+.\"
+.\" NOTE: @this_file_undergoes_variable_substitution@
+.\"
+.SH NAME
+@MYMAN_EXE@, @XMYMAN_EXE@, @XMYMAN2_EXE@, @XMYMAN3_EXE@, @XMYMAN4_EXE@, @XBIGMAN_EXE@, @XHUGEMAN_EXE@, @XBITMAN_EXE@, @XBITMAN2_EXE@, @XBITMAN3_EXE@, @XBITMAN4_EXE@, @XBITMAN5_EXE@, @XBITMAN6_EXE@, @XQUACKMAN_EXE@, @MYMAN_CT_EXE@ \- the MyMan video game
+.SH SYNOPSIS
+.B @MYMAN_EXE@
+[\-v
+.I variant
+]
+[\-z
+.I size
+]
+[\-h]
+[\-V]
+[\-b|\-q]
+[\-c|\-n]
+[\-B|\-N]
+[\-o|\-p]
+[\-d
+.I num
+]
+[\-g
+.I num
+]
+[\-l
+.I num
+]
+[\-u|\-U]
+[\-a|\-A]
+[\-i|\-I]
+[\-r|\-R]
+[\-e|\-E]
+[\-x|\-X]
+[\-1|\-2]
+[\-m
+.I file
+]
+[\-s
+.I file
+]
+[\-t
+.I file
+]
+[\-M]
+[\-S]
+[\-T]
+[\-f
+.I file
+]
+[\-F
+.I file
+]
+[ \-\-
+.RI [ toolkit-options ] ...
+]
+
+.RS
+.B NOTE:
+The optional \fItoolkit-options\fP are only accepted when
+.B myman
+is built with PDCurses for X (a.k.a. XCurses)
+.RE
+
+.B @SHELL@ \fI@bindir@/\fP@XMYMAN_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XMYMAN2_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XMYMAN3_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XMYMAN4_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBIGMAN_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XHUGEMAN_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN2_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN3_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN4_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN5_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XBITMAN6_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B @SHELL@ \fI@bindir@/\fP@XQUACKMAN_EXE@@SH_SUFFIX@
+.RI [ options ] ...
+
+.B ctheme \fI@bindir@/\fP@MYMAN_CT_EXE@
+.SH DESCRIPTION
+.PP
+Basic premise of the MyMan video game:
+.RS
+.PP
+\fI\*(lqThose scary monsters are back, and this time they've spotted
+you! What's worse is that they've mistaken you for their old rival
+Pac, and they're out for (yellow) blood!\*(rq\fP
+.RE
+.PP
+This is a fast-paced video game using the
+.BR @CURSES_FLAVOR@ (@CURSES_FLAVOR_SECTION@)
+library to display on @CURSES_FLAVOR_TARGET@.
+.SS "LEGAL NOTICE"
+.PP
+MyMan is an unofficial and unlicensed clone of the original Pac-Man
+and Puckman games and of their sequels and imitators, and is not
+endorsed by Namco Bandai Games Inc., owners of the Pac-Man and Puckman
+registered trademarks and copyrights. Any trademarks used herein are
+the property of their respective owners. No mention of a trademark,
+trademark owner, or other party shall be construed as an endorsement
+of MyMan or any other product by any party. If you believe that by
+using or posessing MyMan the rights of others would be infringed, you
+are strongly encouraged to cease using MyMan and its derivatives and
+delete all copies of the MyMan software and its derivatives, and to
+inform the author or authors of MyMan and the distributor or
+distributors from whom you obtained MyMan of the reasons for such
+belief so that the infringing part may be removed or replaced. Any
+imitation by MyMan of other software is intended to be purely for
+purposes of humor and amusement.
+.PP
+Please see the file
+.I @privatedocdir@/LICENSE
+for author contact information.
+.PP
+Please see the file
+.I @privatedocdir@/COPYRIGHT
+for copyright information.
+.PP
+Press ? or Ctrl-H during the game for help and additional notices.
+.SS "VERSION"
+.PP
+This manual page was generated for @MYMAN@ @MYMANVERSION@. Please check
+the output of \fB@MYMAN_EXE@ \-\-version\fP to make sure you're using a
+corresponding version of the \fB@MYMAN@\fP program.
+.SS "GETTING STARTED"
+.PP
+Start playing MyMan by typing
+.B @MYMAN_EXE@
+(to play MyMan on @CURSES_FLAVOR_TARGET@), or
+.B @XMYMAN_EXE@
+(to play MyMan in full color inside a new window under the X Window
+System.) Move MyMan using the arrow keys. The alternate keys
+.BR H ,
+.BR J ,
+.BR K ,
+and
+.B L
+are available for vi (1) users.
+The alternate keys
+.BR Ctrl-B ,
+.BR Ctrl-N ,
+.BR Ctrl-P ,
+and
+.B Ctrl-F
+are available for emacs (1) users.
+Press the
+.B Q
+key at any time to quit.  If the flashing power pellets are too small,
+run
+.B @MYMAN_EXE@
+with the
+.B \-o
+command-line parameter or press
+.BR O " or " 0
+during the game.  If the maze walls are invisible or garbled, run
+.B @MYMAN_EXE@
+with the
+.B \-a
+command-line parameter or press
+.B A
+during the game.
+.SS "ADVANCED"
+.PP
+See below, especially the
+.B OPTIONS
+and
+.B USAGE
+sections.
+.TP
+.B @MYMAN_EXE@
+The
+.B @MYMAN_EXE@
+program plays the MyMan video game.
+.B @MYMAN_EXE@
+runs in text mode and displays on @CURSES_FLAVOR_TARGET@.
+.B @MYMAN_EXE@
+includes several maze variants inspired by similar games, and an
+alternative ASCII-art display mode suitable for large terminal
+screens.
+.TP
+.BR @XMYMAN_EXE@ ", " @XMYMAN2_EXE@ ", " @XMYMAN3_EXE@ ", " @XMYMAN4_EXE@ ", " @XBIGMAN_EXE@ ", " @XHUGEMAN_EXE@ ", " @XBITMAN_EXE@ ", " @XBITMAN2_EXE@ ", " @XBITMAN3_EXE@ ", " @XBITMAN4_EXE@ ", " @XBITMAN5_EXE@ ", " @XBITMAN6_EXE@ ", and " @XQUACKMAN_EXE@
+The
+.BR @XMYMAN_EXE@ ", " @XBIGMAN_EXE@ ", " @XHUGEMAN_EXE@ ", " @XBITMAN_EXE@ ", " @XBITMAN2_EXE@ ", " @XBITMAN3_EXE@ ", " @XBITMAN4_EXE@ ", " @XBITMAN5_EXE@ ", " @XBITMAN6_EXE@ ", " @XQUACKMAN_EXE@
+and
+.B @XMYMAN3_EXE@
+shell scripts are wrappers used to launch
+.B @MYMAN@
+inside a new window under the X Window system with approporiate colors
+and fonts. They accept all of
+.BR @MYMAN_EXE@ 's
+options. They use either PDCurses for X (a.k.a. XCurses) or the
+.BR xterm (1)
+terminal emulator to open the new window.
+
+The
+.B @XMYMAN2_EXE@
+.RB "shell script is similar to " @XMYMAN_EXE@ ", but uses the " rxvt "(1) terminal"
+emulator instead of
+.BR xterm (1) .
+
+The
+.B @XMYMAN3_EXE@
+.RB "shell script is similar to " @XMYMAN_EXE@ ", but uses the " kterm "(1) terminal"
+emulator instead of
+.BR xterm (1) .
+
+The
+.B @XMYMAN_EXE@
+and
+.B @XMYMAN2_EXE@
+shell scripts use altcharset translations (VT100-style graphics). The
+.B @XMYMAN3_EXE@
+script uses raw tile characters (CP437 or UCS/Unicode character graphics.) The
+.B @XMYMAN4_EXE@
+script uses raw tile characters (EUC-JP character graphics.) The
+.B @XBIGMAN_EXE@
+script uses large tiles and sprites (ASCII-art) for a more authentic
+appearance, but this means you either see less of the game or need to
+use a larger terminal emulator window (typically with a small font
+size.) The
+.B @XHUGEMAN_EXE@
+script uses even larger ASCII-art and is usable only on
+high-resolution displays. The
+.BR @XBITMAN_EXE@ ,
+.B @XBITMAN3_EXE@
+and
+.B @XBITMAN5_EXE@
+scripts use ASCII-art or UCS/Unicode graphics to approximate a bitmap
+display, and are only usable on high-resolution displays. The
+.BR @XBITMAN2_EXE@ ,
+.B @XBITMAN4_EXE@
+and
+.B @XBITMAN6_EXE@
+scripts use ASCII-art or UCS/Unicode graphics to approximate a bitmap
+display, and are only usable on very high-resolution displays. The
+.B @XQUACKMAN_EXE@
+script behaves like
+.B @XMYMAN_EXE@
+but selects maze, tile and sprites similar to those used in
+YumPop.com's `Quackman'
+
+Any necessary terminal emulators and fonts must be installed and
+properly configured for these shell scripts to work.
+.TP
+.B @MYMAN_CT_EXE@
+The @MYMAN_CT_EXE@
+.B ctheme
+script reconfigures the Linux console or
+.BR xterm (1)
+color palette for use with
+.BR @MYMAN@ .
+.\" .RE
+.\" What other people say about MyMan:
+.\" .TP
+.\" .I "\*(lqvis\[~o]es lis\['e]rgicas de arte ascii ...\*(rq"
+.\" .HTML <a href="http://www.dicas-l.unicamp.br/artigos/linux-modotexto/coluna05.html">
+.\" <http://www.dicas-l.unicamp.br/artigos/linux-modotexto/coluna05.html>
+.\" .HTML </a>
+.SH "EXIT STATUS"
+.TP
+.B 0
+Exit status zero indicates normal completion of the
+.B @MYMAN_EXE@
+program.
+.TP
+.B 1
+Exit status one indicates an incomplete or damaged installation or
+another abnormal situation causing the
+.B @MYMAN_EXE@
+program to exit unexpectedly.
+.TP
+.B 2
+Exit status two indicates that unrecognized or unsupported
+command-line parameters were given to
+.BR @MYMAN_EXE@ .
+.TP
+.B other
+In some cases the
+.BR @XMYMAN_EXE@ ,
+.BR @XMYMAN2_EXE@ ,
+.BR @XMYMAN3_EXE@ ,
+.BR @XMYMAN4_EXE@ ,
+.BR @XBIGMAN_EXE@ ,
+.BR @XHUGEMAN_EXE@ ,
+.BR @XBITMAN_EXE@ ,
+.BR @XBITMAN2_EXE@ ,
+.BR @XBITMAN3_EXE@ ,
+.BR @XBITMAN4_EXE@ ,
+.BR @XBITMAN5_EXE@ ,
+.BR @XBITMAN6_EXE@ ,
+and
+.B @XQUACKMAN_EXE@
+scripts may exit with another status as a result of inability to
+connect to an X Window System display server, or as a result of
+inability to start a terminal emulator. Receipt of an unhandled signal
+may cause the process to exit with some other status.
+.SH OPTIONS
+.PP
+The following options are accepted by
+.BR @MYMAN_EXE@ ,
+.BR @XMYMAN_EXE@ ,
+.BR @XMYMAN2_EXE@ ,
+.BR @XMYMAN3_EXE@ ,
+.BR @XMYMAN4_EXE@ ,
+.BR @XBIGMAN_EXE@ ,
+.BR @XHUGEMAN_EXE@ ,
+.BR @XBITMAN_EXE@ ,
+.BR @XBITMAN2_EXE@ ,
+.BR @XBITMAN3_EXE@ ,
+.BR @XBITMAN4_EXE@ ,
+.BR @XBITMAN5_EXE@ ,
+.BR @XBITMAN6_EXE@ ,
+and
+.BR @XQUACKMAN_EXE@ .
+.PP
+Required arguments to long options are required for short options too.
+.TP
+.BR \-v ", " \-\-variant=\fIvariant\fP
+select game variant
+
+variants included in this build:
+.B @MYMANVARIANTS[*]@
+.TP
+.BR \-z ", " \-\-size=\fIsize\fP
+select tile and sprite size
+
+sizes included in this build:
+.B @MYMANSIZES[*]@
+.TP
+.BR \-h ", " \-\-help
+print a brief usage message and exit
+.TP
+.BR \-k ", " \-\-keys
+show keybindings and exit
+.TP
+.BR \-L ", " \-\-legal
+show legal notice and exit
+.TP
+.BR \-V ", " \-\-version
+print @MYMAN@ version and exit
+.TP
+.B \-b
+enable sounds
+.TP
+.B \-q
+disable sounds
+.TP
+.B \-c
+enable color support
+.TP
+.B \-n
+disable color support
+.TP
+.B \-B
+use dim and bold attributes for missing colors
+.TP
+.B \-N
+don't use dim and bold attributes for missing colors
+.TP
+.B \-o
+use `o' for power pellets and bullet for dots
+.TP
+.B \-p
+use bullet for power pellets and `.' for dots
+.TP
+.BI \-d " num"
+delay
+.I num
+microseconds/refresh
+.TP
+.BI \-g " num"
+play against
+.I num
+monsters
+.TP
+.BI \-l " num"
+start with
+.I num
+lives
+.TP
+.B \-u
+use the underline attribute for maze walls
+.TP
+.B \-a
+use ASCII for altcharset translation
+.TP
+.B \-A
+use your terminal's altcharset translations
+.TP
+.B \-i
+scroll vertically by redrawing the screen
+.TP
+.B \-I
+use your terminal's vertical scrolling capabilities
+.TP
+.B \-r
+use raw tile characters (CP437 or UCS/Unicode character graphics)
+.TP
+.B \-R
+use altcharset translations (VT100-style graphics)
+.TP
+.B \-e
+use UCS/Unicode for internal representation of raw tile characters
+.TP
+.B \-E
+use CP437 for internal representation of raw tile characters
+.TP
+.B \-x
+reflect maze diagonally, exchanging the upper right and lower left corners
+.TP
+.B \-X
+do not reflect maze
+.TP
+.B \-1
+use default UCS/Unicode mapping
+.TP
+.B \-2
+use CJK (fullwidth) UCS/Unicode mapping
+.TP
+.BI \-m " file"
+use the maze in
+.I file
+.TP
+.BI \-s " file"
+use sprites from
+.I file
+.TP
+.BI \-t " file"
+use tiles from
+.I file
+.TP
+.B \-M
+write the maze to stdout in C format and exit
+.TP
+.B \-S
+write sprites to stdout in C format and exit
+.TP
+.B \-T
+write tiles to stdout in C format and exit
+.TP
+.BI \-f " file"
+redirect stdout to
+.I file
+(append)
+.TP
+.BI \-F " file"
+redirect stdout to
+.I file
+(truncate)
+.SS "X TOOLKIT OPTIONS"
+.PP
+When
+.B myman
+is built with PDCurses for X (a.k.a. XCurses), standard X toolkit
+options and XCurses options may be passed at the end of the command
+line after a double dash (\fB\-\-\fP). Refer to the X Window System
+documentation and the XCurses documentation for more information.
+.SH USAGE
+.PP
+The following case-insensitive keystroke commands are recognized
+during the game:
+.TP
+.BR Q " or " Ctrl-C :
+quit the game
+.TP
+.BR P " or " ESC :
+pause the game
+.TP
+.BR Ctrl-Q :
+re-enable output (after Ctrl-S)
+.TP
+.BR R " or " Ctrl-L " or " Ctrl-R :
+refresh (redraw) the screen
+.TP
+.BR @@ :
+reset the display subsystem and refresh (redraw) the screen
+.TP
+.BR Ctrl-S :
+inhibit output until Ctrl-Q is typed
+.TP
+.BR S :
+toggle sound on/off
+.TP
+.BR W :
+warp to the next level (after consuming the next dot)
+.TP
+.BR C :
+toggle color on/off (if enabled at compile-time)
+.TP
+.BR B :
+toggle use of dim and bold attributes for missing colors
+.TP
+.BR U :
+toggle underlining of walls on/off (if enabled at compile-time)
+.TP
+.BR D :
+toggle maze debugging on/off
+.TP
+.BR T :
+save an HTML screenshot to the file \fIsnap####@HTM_SUFFIX@\fP, where
+\fI####\fP is a four-digit sequence number, and flash the screen
+briefly; a plain text (UTF-8) version is saved as
+\fIsnap####@TXT_SUFFIX@\fP using backspacing to represent underlined
+and bold text
+.TP
+.BR O " or " 0 :
+toggle appearance of power pellets and dots
+.TP
+.BR A :
+toggle between ASCII altcharset translations and your terminal's
+altcharset translations
+.TP
+.BR I :
+toggle between using your terminal's vertical scrolling capabilities and
+redrawing the screen
+.TP
+.BR X :
+toggle between raw tile characters (CP437 or UCS/Unicode character
+graphics) and altcharset translations (VT100-style graphics)
+.TP
+.BR E :
+toggle between UCS/Unicode and CP437 for internal representation of
+raw tile characters
+.TP
+.BR H ", " 4 ", " Ctrl-B " or " LEFT :
+move left
+.TP
+.BR J ", " 2 ", " Ctrl-N " or " DOWN :
+move down
+.TP
+.BR K ", " 8 ", " Ctrl-P " or " UP :
+move up
+.TP
+.BR L ", " 6 ", " Ctrl-F " or " RIGHT :
+move right
+.TP
+.BR , " (comma) or " < :
+forget previously buffered vertical movement
+.TP
+.BR . " (full stop) or " > :
+forget previously buffered horizontal movement
+.TP
+.BR / " or " \\ :
+toggle diagonal maze reflection
+.TP
+.BR ? " or " Ctrl-H :
+display help screen
+.PP
+The pager recognizes the following special commands:
+.TP
+.BR SPACE :
+display next page or finish
+.TP
+.BR ESC :
+finish immediately
+.TP
+Move left then right with no intervening keystrokes:
+equivalent to ESC
+.SH FILES
+.PP
+The following directories are used by MyMan:
+.TP
+.I @privatelibexecdir@
+Directory of individual tile/sprite size and maze variant
+binaries. These are invoked automatically by the main
+.B @MYMAN_EXE@
+executable in non-monolithic installations.
+.TP
+.I @mazedir@
+Directory of maze datafiles.
+.I @tiledir@
+Directory of tile datafiles.
+.I @spritedir@
+Directory of sprite datafiles.
+.TP
+.I @privatedocdir@
+Directory of documentation.
+.PP
+Refer to the
+.BR @CURSES_FLAVOR@ (@CURSES_FLAVOR_SECTION@)
+manual for additional information.
+.SH ENVIRONMENT
+.PP
+Certain environment variables influence the program's behavior. See the file
+.I @privatedocdir@/README
+for more details. Refer to the
+.BR @CURSES_FLAVOR@ (@CURSES_FLAVOR_SECTION@)
+manual for additional information.
+.SH DIAGNOSTICS
+.PP
+The following diagnostic messages may appear while trying to run
+.BR @MYMAN_EXE@ :
+.TP
+.B "Summary: @MYMAN_EXE@ [\-\-help] [\-\-version] [options]"
+.TP
+.B "Usage: @MYMAN_EXE@ [\-h] [options]"
+.TP
+.B "@MYMAN_EXE@: argument to \-d must be an unsigned long integer."
+Command line parameters do not conform to option language (see
+.B OPTIONS
+above.)
+.TP
+.B "@MYMAN_EXE@: compile with \-DMYMANDELAY=1 to enable the \-d option."
+.TP
+.B "@MYMAN_EXE@: compile with \-DUSE_ATTR=1 to enable the \-u option."
+.TP
+.B "@MYMAN_EXE@: compile with \-DUSE_COLOR=1 to enable color support."
+Support for the specified option was not included in your
+.B @MYMAN@
+installation.
+.TP
+.IB size ": unrecognized size"
+The tile and sprite size
+.I size
+is not included in your
+.B @MYMAN@
+installation (see
+.B SIZES
+above.) You may need to enable it and recompile.
+.TP
+.IB variant ": unrecognized variant"
+The game variant
+.I variant
+is not included in your
+.B @MYMAN@
+installation (see
+.B VARIANTS
+above.) You may need to enable it and recompile.
+.TP
+.IB ... " @MYMAN_EXE@: command not found"
+.TP
+.IB ... " @MYMAN_EXE@: not found"
+.TP
+.IB @privatelibexecdir@/variant\-size ": No such file or directory"
+.TP
+.BI "@MYMAN_EXE@: game variant `" variant "' not included in this binary"
+.TP
+.BI "@MYMAN_EXE@: game size `" size "' not included in this binary"
+Your
+.B @MYMAN@
+installation is incomplete or damaged. You need to re-install MyMan.
+.TP
+.IB file ": can't find an index"
+.TP
+.IB file ": invalid index " index " ignored"
+.TP
+.IB file ": duplicate definition for " index
+.TP
+.IB file ": can't find a color for index " index
+.TP
+.IB file ": invalid color " colorcode " ignored"
+.TP
+.IB file ": premature EOF in index " index
+The tile or sprite file
+.I file
+does not follow the format required by the
+.B @MYMAN@
+font reader. See the file
+.I @privatedocdir@/README
+for more details.
+.TP
+.IB file ": can't find a dimension specification N WxH"
+.TP
+.IB file ": premature EOF"
+The maze file
+.I file
+does not follow the format required by the
+.B @MYMAN@
+maze reader. See the file
+.I @privatedocdir@/README
+for more details.
+.TP
+.IB file ": Permission denied"
+.TP
+.IB file ": No such file or directory"
+An attempt to access the file
+.I file
+failed.
+.TP
+.BI "@MYMAN_EXE@: scored " points " points"
+You quit. I hope you enjoyed the game!
+.TP
+.BI "Error: no DISPLAY variable set " ... " Killed"
+PDCurses for X (a.k.a. XCurses) was unable to determine the name of
+your X Window System display server. Refer to your X Window System
+documentation for further information.
+.PP
+Additional diagnostics generated by the
+.BR @XMYMAN_EXE@ ,
+.BR @XMYMAN2_EXE@ ,
+.BR @XMYMAN3_EXE@ ,
+.BR @XMYMAN4_EXE@ ,
+.BR @XBIGMAN_EXE@ ,
+.BR @XHUGEMAN_EXE@ ,
+.BR @XBITMAN_EXE@ ,
+.BR @XBITMAN2_EXE@ ,
+.BR @XBITMAN3_EXE@ ,
+.BR @XBITMAN4_EXE@ ,
+.BR @XBITMAN5_EXE@ ,
+.BR @XBITMAN6_EXE@ ,
+and
+.B @XQUACKMAN_EXE@
+shell scripts:
+.TP
+.IB ... " xterm: not found"
+.TP
+.IB ... " xterm: No such file or directory"
+.TP
+.IB ... " rxvt: not found"
+.TP
+.IB ... " rxvt: No such file or directory"
+.TP
+.IB ... " kterm: not found"
+.TP
+.IB ... " kterm: No such file or directory"
+.TP
+.IB ... " /usr/bin/ctheme: not found"
+.TP
+.IB ... " /usr/bin/ctheme: No such file or directory"
+.TP
+.IB ... " /bin/sh: not found"
+.TP
+.IB ... " /bin/sh: No such file or directory"
+.TP
+.IB ... " basename: not found"
+.TP
+.IB ... " basename: No such file or directory"
+.TP
+.IB ... " rm: not found"
+.TP
+.IB ... " rm: No such file or directory"
+The named utility program is missing or not in your
+.B PATH
+search list.
+.TP
+\fBxterm:  unable to open font "\fIfontname\fP", trying "fixed"\fP
+.TP
+\fBrxvt: can't load font "\fIfontname\fP"\fP
+The font specified by
+.I fontname
+is not available on your X Window System display server.
+.SH SECURITY
+.PP
+Although no vulnerabilities are known, it is recommended that
+.B @MYMAN_EXE@
+and related programs not be installed setuid-root.
+.SH "CONFORMING TO"
+.PP
+This is still considered a non-standard command, but by installing it
+you bring us one step closer to world domination.
+.SH NOTES
+.PP
+The
+.B \-o
+option or the
+.BR O " or " 0
+command is frequently needed for correct display.
+.SH BUGS
+.PP
+Probably lots. Some of the more annoying known bugs:
+.TP
+.B "Broken or Missing Character Graphics (i.e. Mangled Maze Walls)"
+MyMan uses character graphics to represent maze walls, power pellets,
+and other graphic elements. Usually these character graphics are
+rendered using altcharset translations (VT100-style graphics,) but
+they can be rendered using ASCII-art or raw tile characters (either
+CP437 bytes or UCS/Unicode characters.)
+
+For these character graphics to be displayed properly, several pieces
+of software must work together:
+.BR @MYMAN@ (6),
+.BR @CURSES_FLAVOR@ (@CURSES_FLAVOR_SECTION@),
+and @CURSES_FLAVOR_TARGET@ (including any necessary fonts.)
+Interactions between these pieces of software may be affected by
+environment variables,
+.BR locale (7)
+settings, command-line parameters, other configuration settings, and
+perhaps even the occultation of natural satellites. A misalignment
+between two of these pieces can cause the character graphics to become
+garbled, or even cause them to disappear entirely.
+.\" USE_ACS USE_RAW USE_RAW_UCS
+.\" T       T       F               raw CP437 bytes
+.\" T       T       T               UCS/Unicode, fallback to...
+.\" T       F       -               altcharset translations, fallback to...
+.\" F       -       -               ASCII-art
+
+You may work around these problems by using the
+.B \-a
+option or the
+.B A
+command to switch to plain ASCII-art.
+.TP
+.B "Buggy Monster Behavior"
+The monsters sometimes become lost and are unable to find their way
+home, or fail to follow the player into obvious hiding places. Some
+mazes confuse the monsters more than others.
+.TP
+.B "Lacking Standard Documentation Formats"
+There should be a Texinfo manual for MyMan, and some sort of
+human-readable manual should be included in the source distribution.
+.TP
+.B "Inaccurate Status Line in HTML and text Screenshots"
+The screenshot mechanism does not accurately reflect the overlaying of
+the status line on top of the maze, so the screen shot may be one line
+too tall, and will include any parts of the maze that are actually
+obscured by the status line.
+.TP
+.B "Inaccurate HTML and text Screenshots"
+The HTML and text screenshots record MyMan's internal representation
+of the terminal screen, which may not agree with what you see in terms
+of graphic characters (actual rendering varies among terminals and
+across curses implementations,) color (some terminals and curses
+libraries don't support palette manipulation,) and font (MyMan has no
+way to guess what your terminal font looks like.)
+
+Also, different web browsers and fonts will affect rendering of the
+screenshot itself. Some browsers and fonts render line-drawing
+graphics characters at different visual widths from plain ASCII
+characters. Other browsers substitute their own inadequate ASCII
+replacements. A few web browsers are unable to display line-drawing
+graphics characters at all, or require the user to manually select the
+\*(lqUser Defined\*(rq encoding.
+
+If your terminal is configured to use raw CP437 tile characters, the
+screenshot will contain raw CP437 data.  Otherwise UCS/Unicode numeric
+character references will be used and the document will be labeled as
+UTF-8. Some web browsers do not support CP437, others do not support
+numeric character references in UTF-8, and still others support
+neither!
+
+You may work around these problems using the
+.B \-a
+option or the
+.B A
+command to switch to plain ASCII-art and the
+.B \-n
+option or the
+.B C
+command to disable color before taking a screenshot to be sure that
+what you see is what you get.
+.SH AUTHOR
+.PP
+Please mail bug reports to
+.HTML <a href="mailto:bsittler@gmail.com">
+"Benjamin C. W. Sittler" <bsittler@gmail.com>
+.HTML </a>
+.SH "HISTORY"
+MyMan was written on a dare on Sunday, 1998-06-28. The original
+version had no color or attribute support and only supported large
+tiles (equivalent to \-z big.) It was 742 lines of ANSI C and used
+three data files: a maze file (equivalent to \-v pac), a tile file and
+a sprite file. It worked with ncurses on Linux and cygwin. Several
+variations using other maze layouts were created over the following
+hours. Color came in December of that year, as did support for small
+tiles (equivalent to \-z small.) The my_getopt argument parser is a
+bit older, having been started in 1997 as part of the SMOKE-16
+project.
+.SH "ACKNOWLEDGEMENTS"
+Toru Iwatani had the original idea for Namco's `Pac-Man'/`Puck-Man',
+which in turn served as inspiration for this game.
+Innumerable others have written their own variants of the original
+game which in turn inspired variants for this game, and I have tried
+to credit them where authorship is known. Credits for each variant are
+listed in the in-game help screen reachable by pressing ? or Ctrl-H.
+.SH "SEE ALSO"
+.BR xterm (1),
+.BR phoon (1),
+.BR xphoon (1),
+.BR @CURSES_FLAVOR@ (@CURSES_FLAVOR_SECTION@),
+.BR locale (7),
+.BR X (7)
+.TP
+.B Home Page for `MyMan'
+.HTML <a href="http://geocities.com/bsittler/#myman">
+<http://geocities.com/bsittler/#myman>
+.HTML </a>
+.TP
+.B SourceForge Project Page for `ctheme'
+.HTML <a href="http://sourceforge.net/project/?group_id=2640">
+<http://sourceforge.net/project/?group_id=2640>
+.HTML </a>

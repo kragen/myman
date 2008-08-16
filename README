@@ -1,0 +1,379 @@
+README - basic documentation for the MyMan video game
+Copyright 1997-2006, Benjamin Sittler <bsittler@gmail.com>
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+
+        NOTE: !!! LICENSE CHANGE !!!
+
+        MyMan is no longer in the public domain. It is now distributed
+        under a BSD-style license (see LICENSE for details.)
+
+
+Description
+-----------
+
+Basic premise of the MyMan video game:
+
+  "Those scary ghosts are back, and this time they've spotted
+   you! What's worse is that they've mistaken you for their old
+   rival Pac, and they're out for (yellow) blood!"
+
+MyMan displays either (A) on a text terminal or terminal emulator
+(using ncurses, slang, PDCurses or SysV curses), or (B) on an X Window
+System display (using PDCurses for X, a.k.a. XCurses).  Since MyMan is
+fairly fast-moving, you'll need a reasonably fast computer and
+display.  It once ran acceptably fast on a 486-66 under Linux, and may
+still.
+
+
+Installation
+------------
+
+Installation instructions are in the file INSTALL.
+
+
+License and Version
+-------------------
+
+The MyMan version number is recorded in the file VERSION inside the
+source package. To determine the version number of an installed MyMan
+executable, run e.g. `myman -V'.
+
+This version of MyMan has a BSD-like license; see the file LICENSE for
+details. Earlier versions were placed in the public domain.
+
+MyMan includes a bundled copy of the 'my_getopt' argument parser,
+which is licensed under the same terms as MyMan; see the README file
+in the 'my_getopt-1.5' subdirectory of the MyMan source distribution
+for details.
+
+Note that the contents of the MyMan datafiles (tiles, sprites and
+mazes) are in the public domain.
+
+
+Detailed Notes
+--------------
+
+For basic usage information, refer to the text version of the MyMan
+manual page, myman.txt (generated from myman.man by `make docs' using
+groff.)
+
+
+A. When Power Pellets Look Strange:
+
+The compile-time option -DSWAPDOTS=1 or the equivalent command-line
+option '-o' or in-game command 'O' or '0' is often necessary for a
+decent display. This depends greatly on what font you use.
+
+
+B. More Authentic Colors:
+
+If you have a color X server and the XFree XTerm terminal emulator,
+you can try the included xmyman script which should start MyMan in a
+window of its own, with proper colors. If you have the rxvt terminal
+emulator, you can try the xmyman2 script for a similar effect. And
+finally, if you have XFree86 XTerm and a font for IBM codepage 437,
+you can try the included xmyman3 script for more different types of
+pseudo-graphic characters (single and double lines, dots, and power
+pellets.)
+
+Alternatively, you can get the "ctheme" package from
+
+   http://sourceforge.net/project/?group_id=2640
+
+and then run the included 'myman.ct' color theme script in your XTerm
+or on the Linux console.
+
+Changing your terminal's palette can greatly improve the experience;
+recommended RGB values for each palette entry are listed at the end of
+this file.
+
+
+C. Window Size:
+
+A terminal height of 34 or more lines works quite nicely, but 24 or 25
+(or even less) will work. Similarly, a width of 58 or more characters
+is nice, but not required. If you're a real pro (or lacking screen
+real-estate) you can play MyMan in a terminal window with 7 lines of
+12 characters each... it's actually playable!
+
+
+D. Keyboard Map:
+
+       The following case-insensitive keystroke commands are recognized during
+       the game:
+
+       Q:     quit the game
+
+       P or ESC:
+              pause the game
+
+       R:     refresh (redraw) the screen
+
+       S:     toggle sound on/off
+
+       W:     warp to the next level (after consuming the next dot)
+
+       C:     toggle color on/off (if enabled at compile-time)
+
+       B:     toggle use of dim and bold attributes for missing colors
+
+       U:     toggle underlining of walls on/off (if enabled at compile-time)
+
+       D:     toggle maze debugging on/off
+
+       T:     save an HTML screenshot to the file snap####.html, where #### is
+              a four-digit sequence number, and flash the screen briefly
+
+       O or 0:
+              toggle appearance of power pellets and dots
+
+       A:     toggle between ASCII altcharset translations and your terminal's
+              altcharset translations
+
+       I:     toggle between using your terminal's vertical scrolling capabil-
+              ities and redrawing the screen
+
+       X:     toggle between raw tile characters (CP437 or UCS/Unicode charac-
+              ter graphics) and altcharset translations (VT100-style graphics)
+
+       E:     toggle between UCS/Unicode and CP437 for internal representation
+              of raw tile characters
+
+       H, 4 or LEFT:
+              move left
+
+       J, 2 or DOWN:
+              move down
+
+       K, 8 or UP:
+              move up
+
+       L, 6 or RIGHT:
+              move right
+
+
+E. Configuration at Start-Up:
+
+Several of the game's settings can be changed at startup using
+command-line parameters; use the '-h' parameter for more information.
+
+
+F. Configuration at Compile-Time:
+
+There are several properties of the game which may be altered using
+compile-time options:
+
+Compile-time option           Default value         Description
+DELAY                         25000                 Delay is between updates.
+                                                    (in microseconds)
+SPEEDUP                       1000                  Amount delay decreases
+                                                    after each level.
+
+Values other than the default and 0 don't work particularly well. This
+uses the usleep library function.
+
+Boolean Compile-time option   Default value         Description
+USE_ATTR                      (automatic)           Try to use attributes.
+USE_COLOR                     (automatic)           Enable color support.
+USE_PALETTE                   1 (except under       Enable support for
+                                 slang & PDCurses)  color palette manipulation.
+USE_KEYPAD                    (automatic)           Try to use the keypad.
+USE_ACS                       1                     Use your terminal's
+                                                    altcharset translations by
+                                                    default.
+USE_RAW                       0                     Output untranslated CP437
+                                                    character graphics by
+                                                    default.
+
+The preceding options affect which curses features MyMan uses. MyMan
+was developed using ncurses, primarily under GNU/Linux. It should be
+fairly portable to other operating systems and other SysV-like curses
+implementations. A port to old BSD curses would be rather involved, as
+MyMan uses nodelay().
+
+Options with automatic default values will be enabled if your curses
+implementation seems to support them. Support is verified by checking
+for relevant #defines; if your curses implementation doesn't provide
+the relevant #defines, the default value will likely be wrong. This
+guessing process is pessimistic, meaning that features are more likely
+to be erroneously disabled than erroneously enabled.
+
+Boolean Compile-time option   Default               Description
+SWAPDOTS                      0                     Use 'o' for power pellets
+                                                    and ACS_BULLET for dots.
+                                                    (useful for vt100/latin-1
+                                                     terminals and emulations)
+
+This compile-time option can be modified on the command-line or at run-time.
+
+Boolean Compile-time option   Default               Description
+COLORIZE                      1                     Try to use color.
+                                                    (somewhat slower than
+                                                     monochrome)
+
+This compile-time option can be modified on the command-line, and
+toggled at run-time using 'c', provided USE_COLOR is non-zero.
+
+Compile-time option           Default value         Description
+TILEFILE                      "tile5x2.txt"         File containing maze tiles.
+TILE_W                        5                     Width of maze tiles.
+TILE_H                        2                     Height of maze tiles.
+
+A tile file contains a dimension specifier followed by some tiles. The
+dimension specifier is of the form WxH, where W and H are decimal
+integers corresponding to TILE_W and TILE_H.
+
+Define EXTERN_TILE to use a tileset declared in another module.
+
+Each maze tile is described as follows:
+XX~Y <- two-digit hex code; corresponds roughly to CP437 character code.
+   ^___ optional: '~' followed by 1-digit hex code; corresponds to color.
+:cccc...cc <- ':' followed by TILE_W characters; further characters ignored.
+(repeated TILE_H times)
+Blank lines are ignored.
+
+Hex codes with special meaning:
+
+20(' '),FF: walkable tile
+2E('.'),F9: edible dot
+6F('o'),FE: power pellet
+3D('='),3A(':'),F0,FF: door (to ghost house)
+
+Color codes:
+
+0: white (def.) 8: dim white
+1: blue         9: bold blue
+2: green        A: bold green
+3: cyan         B: bold cyan
+4: red          C: bold red
+5: magenta      D: bold magenta
+6: yellow       E: bold yellow
+7: white        F: bold white
+
+Compile-time option           Default value         Description
+STILEFILE                     "stile7x3.txt"        File containing sprites.
+STILE_W                       7                     Width of sprite frames.
+STILE_H                       3                     Height of sprite frames.
+
+A sprite file contains a dimension specifier followed by some
+frames. The dimension specifier is of the form WxH, where W and H are
+decimal integers corresponding to STILE_W and STILE_H.
+
+Define EXTERN_STILE to use a sprite frameset declared in another module.
+
+Boolean Compile-time option   Default value         Description
+VISIBLE_EYES                  1                     Ghost eyes visible.
+
+Note that ghost eyes are always visible while a ghost is returning
+home (after being eaten.) Setting VISIBLE_EYES to 0 is a good idea if
+your ghost eye sprite totally obsures your "mean" ghost sprite.
+
+The sprite frame format is similar to the maze tile format, with the
+following differences: a literal NUL (ASCII 0) in the description is
+treated as a transparent character, and the hex codes are as follows:
+
+00-07: level indicators (fruit, keys, etc.)
+08-09: "mean" ghost body animation
+0a: ghost eyes looking up
+0b: ghost eyes looking left
+0c: ghost eyes looking down
+0d: ghost eyes looking right
+0e-0f: "scared" ghost animation
+10-13: MyMan walking up animation
+14-17: MyMan walking left animation
+18-1b: MyMan dying animation
+1c-1f: MyMan walking right animation
+20-23: MyMan walking down animation
+24-2f: (unused)
+29: 100 points
+2A: 300 points
+2B: 500 points
+2C: 700 points
+2D: 1000 points
+2E: 2000 points
+2F: 3000 points
+30: 5000 points
+31: 200 points
+32: 400 points
+33: 800 points
+34: 1600 points
+35-36: "white/scared" ghost animation
+37-FF: (unused)
+
+Compile-time option           Default value         Description
+MAZEFILE                      "maze.txt"            Maze description file.
+MAZE_N                        1                     Number of maze levels.
+MAZE_W                        28                    Width of maze.
+MAZE_H                        31                    Height of maze.
+
+The maze description file starts with a line containing '1 MAZE_W
+MAZE_H', and the remaining lines are an ASCII picture of the maze.
+Define EXTERN_MAZE to use a maze declared in another module.
+
+Compile-time option           Default value         Description
+DOTS                          244                   Dots before next level.
+DOTS_FRUIT1                   70                    Dots before first prize.
+DOTS_FRUIT2                   140                   Dots before second prize.
+CHERO                         (MAZE_W * 0.5)        MyMan's start column.
+RHERO                         23.5                  MyMan's start row.
+CFRUIT                        CHERO                 Prize column.
+RFRUIT                        17.5                  Prize row.
+RGHOST                        (RFRUIT - 3.0)        Ghost start row.
+ROGHOST                       3                     Ghost offset rows.
+COGHOST                       2                     Ghost offset columns.
+RTOP                          (RFRUIT - 5.0)        Ghost door row.
+MSGLEN                        10                    Message length.
+CMSG                          9                     Message column.
+RMSG                          17                    Message row.
+CMSG2                         9                     Player Message column.
+RMSG2                         11                    Player Message row.
+PLAYER1                       "PLAYER ONE"
+PLAYER2                       "PLAYER TWO"
+READY                         "  READY!  "          Ready message.
+GAMEOVER                      "GAME  OVER"          Game over message.
+PAUSE                         " - PAUSED - "        Pause string.
+GHOSTS                        4                     Number of ghosts.
+
+Ideal level progression: (only 7 fruits would show at a time)
+lvl --- fruit ------------------------ score -- bonus #
+1:      cherry                           100          0
+2:      strawberry                       300          1
+---     inter1 (predator or prey?)
+3-4:    peachx2                          500          2
+5:      apple                            700          3
+---     inter2 (the catch)
+6:      apple                            700          3
+7-8:    pineapplex2                     1000          4
+9:      galaxian                        2000          5
+---     inter3 (revenge)
+10:     galaxian                        2000          5
+11-12:  bellx2                          3000          6
+13:     key                             5000          7
+---     inter3 (revenge)
+14-19:  keyx5                           5000          7
+---     inter3 (revenge)
+20-??:  keys                            5000          7
+
+Set this palette if you can (values are on a scale of 0-255):
+
+No. --- R - G - B - Usual color ------- MyMan color -- Curses attributes
+0x0     0   0   0   black               black          COLOR_BLACK
+0x1     0   0 216   blue                blue           COLOR_WHITE
+0x2     0 179   0   green               green          COLOR_GREEN
+0x3     0 216 216   cyan                cyan           COLOR_CYAN
+0x4   216 147  69   red                 brown          COLOR_RED
+0x5   250  32 147   magenta             magenta        COLOR_MAGENTA
+0x6   250 179  69   brown/dark yellow   salmon         COLOR_YELLOW
+0x7   250 179 147   light grey          light yellow   COLOR_WHITE
+0x8   100 100 100   dark grey           grey           A_DIM
+0x9    32  32 216   light blue          light blue     COLOR_BLUE|A_BOLD
+0xA   147 250   0   light green         light green    COLOR_GREEN|A_BOLD
+0xB     0 250 216   light cyan          light cyan     COLOR_CYAN|A_BOLD
+0xC   250   0   0   light red           light red      COLOR_RED|A_BOLD
+0xD   250 179 216   light magenta       pink           COLOR_MAGENTA|A_BOLD
+0xE   250 250   0   yellow              yellow         COLOR_YELLOW|A_BOLD
+0xF   216 216 216   white               light grey     COLOR_WHITE|A_BOLD

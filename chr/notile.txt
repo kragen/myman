@@ -1,0 +1,15 @@
+﻿1x1 ABOUT="A minimal ASCII tileset"
+2B
+:+
+2D
+:-
+7C
+:|
+2E
+:.
+41
+:A
+43
+:C
+4D
+:M

@@ -1,0 +1,159 @@
+ONEWS - older news about the MyMan video game
+Copyright 1997-2003, Benjamin Sittler <bsittler@gmail.com>
+
+
+        NOTE: !!! LICENSE CHANGE !!!
+
+        MyMan is no longer in the public domain. It is now distributed
+        under a BSD-style license (see LICENSE for details.)
+
+
+The following text is known to be out of date; see README and
+ChangeLog for more recent information.
+
+...
+
+Myman - Updated Holiday Revenge Release [2000.03.04]
+In technicolor, and in new places too...
+
+UPDATES? WHAT UPDATES?!?
+
+Wow, it's been over a year since the last release! MyMan hasn't
+changed a whole lot, but the contact information needed updating. The
+official MyMan home is now:
+
+   http://geocities.com/bsittler/#myman
+
+My new email address is at the end of this file.
+
+Also, a color theme for the "ctheme" package is now included. See
+
+   http://sourceforge.net/project/?group_id=2640
+
+for more on ctheme. The ctheme file for MyMan is 'myman.ct'. You can
+use ctheme on the Linux console, or in a color xterm.
+
+Finally, binaries for DJGPP and Linux (libc5/libc6) are included.
+
+The MyMan source is still in the public domain.
+
+...
+
+MyMan - Holiday Revenge Release [1998.12.18]
+The spectral menace becomes more... er... menacing.
+
+A new version of MyMan (like The Yellow Fellow) has just been released.
+
+BACKGROUND (NOISE)
+
+  "Those scary ghosts are back, and this time they've spotted
+   you! What's worse is that they've mistaken you for their old
+   rival Pac, and they're out for (yellow) blood!"
+
+(LACK OF) COPYRIGHT AND (NONRESTRICTIVE) LICENSE
+
+This release of MyMan is in the public domain. Do with it as you wish.
+
+SYSTEM REQUIREMENTS
+
+MyMan is a fast-paced video game for terminals and terminal emulations
+supporting cursor addressing and asynchronous input. It supports color,
+pitiful sound (beeps, really), and keyboard input. Arrow keys are
+supported where the curses implementation makes that trivial to implement.
+It runs at full speed on a P120 under Linux. It probably works on slower
+machines, and certainly works on faster machines.
+
+MyMan is generally more demanding than vi, rogue, or pine. If MyMan
+seems to be running slowly, try the '-d 0' command-line parameter.
+
+Some platforms MyMan compiles and runs on:
+
+Linux/x86 + ncurses
+Linux/ppc + ncurses
+SunOS 4/sun4m + SysV curses
+Cygwin32 B19 + ncurses
+DJGPP 2 + PDcurses
+
+MyMan has been tested with a wide variety of terminals and terminal
+emulators. The '-o' option sometimes improves the appearance of power
+pellets.
+
+WHERE TO GET IT
+
+The latest version is listed on:
+
+   http://geocities.com/bsittler/#myman
+
+For your sanity, I encourage you to download directly, though:
+
+   http://geocities.com/bsittler/myman.tgz
+
+The Holiday Revenge Release is a gzip'd tarball including the source,
+data files, and two scripts for running MyMan in color under the X
+Window System ('xmyman' uses color xterm, 'xmyman2' uses rxvt.)
+
+SCREEN-SHOTS
+
+A screen-shot demonstrating 'xmyman2' in full color is online for your
+viewing pleasure:
+
+   http://www.nmt.edu/~bsittler/images/myman.png
+
+It's a 418x474-pixel PNG and it's less than 10 kilobytes.
+
+There's also a larger screen-shot demonstrating the 5x2-character tiles and
+7x3-character sprites:
+
+   http://www.nmt.edu/~bsittler/images/myman2.png
+
+It's an 888x714-pixel PNG and it's less than 19 kilobytes.
+
+COLOR FOR (SOME) VT100 EMULATORS
+
+There's a spiffy new underline-the-maze mode (-u or the 'u' key during
+play) which underlines all maze wall characters. This is useful if you
+have a terminal emulator which doesn't do full ANSI-style color, but does
+allow you to set the color used to display the underline attribute. 
+In this way you can still get a blue maze if you can configure your
+terminal to display "underlined" text in blue. Setting bold text to
+display in yellow is also nice, since MyMan is drawn in bold.
+
+FONT
+
+Other changes include slight improvements in maze drawing (no more '?'s
+for any of the supplied mazes, I think) and ghost intelligence (they
+actually see fit to follow you from time to time.) The ghosts are now
+depicted using 'A' instead of 'M' when they're scared, so it's easier to
+tell when they've stopped "flashing" even on a monochrome terminal.
+
+ETERM
+
+By the way, I *highly* suggest running MyMan in an Eterm with a background
+of your choice (I find 'Neopolis' very appropriate.) Make sure to set TERM
+to something appropriate (like 'xterm-color' or 'color_xterm',) and you'll
+see why I like this combination: the maze background is solid black, but
+outside the maze the background pixmap is visible. It looks like some sort
+of high-tech virtual arcade machine, if you ignore the fact that MyMan is
+running in text-mode.
+
+A color xterm (such as that shipped with recent versions of XFree)
+also works rather well, but it doesn't support background pixmaps.
+
+"MY NAME IS BEN, AND I'M A LINUX ADDICT... "
+
+One last piece of questionable advice: on a Linux machine with MyMan
+installed as '/bin/myman', you should be able to skip all that
+annoying overhead and get straight to the action by booting the Linux
+kernel with the following boot parameter:
+
+init=/bin/myman
+
+This has only been tested on a single system, but it seemed to work fine.
+(If you are annoyed with the low-res 80x25 default VGA resolution, use
+ the vga=ask parameter too.)
+
+AUTHOR
+
+bsittler <bsittler@gmail.com>
+
+   http://geocities.com/bsittler/

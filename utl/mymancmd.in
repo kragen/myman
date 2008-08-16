@@ -1,0 +1,103 @@
+#!@SHELL@ --
+# myman.command -*- shell-script -*- to run the MyMan video game
+# Copyright 2003, 2006-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+# 
+# Permission is hereby granted, free of charge, to any person
+# obtaining a copy of this software and associated documentation
+# files (the "Software"), to deal in the Software without
+# restriction, including without limitation the rights to use, copy,
+# modify, merge, publish, distribute, sublicense, and/or sell copies
+# of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be
+# included in all copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+# NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+# WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+# DEALINGS IN THE SOFTWARE.
+
+
+# NOTE: @this_file_undergoes_variable_substitution@
+
+export MYMAN
+MYMAN=myman
+
+export XMYMAN
+XMYMAN=xmyman
+
+export SHELL
+SHELL=/bin/sh
+
+export EXE_SUFFIX
+EXE_SUFFIX=@EXE_SUFFIX@
+
+# special characters
+char_tab='	'
+char_newline='
+'
+export char_tab
+export char_newline
+
+for myman in @DIST_EXE@ @MYMAN_EXE@ @MYMAN@
+do
+  if test -f "`dirname \"\$0\"`"/"${myman}" -a -x "`dirname \"\$0\"`"/"${myman}" -o -f "`dirname \"\$0\"`"/"${myman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN="`dirname \"\$0\"`"/"${myman}"
+  elif test -f "`dirname \"\$0\"`"@bindir@/"${myman}" -a -x "`dirname \"\$0\"`"@bindir@/"${myman}" -o -f "`dirname \"\$0\"`"@bindir@/"${myman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"@bindir@/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN="`dirname \"\$0\"`"@bindir@/"${myman}"
+      break
+  elif test -f @bindir@/"${myman}" -a -x @bindir@/"${myman}" -o -f @bindir@/"${myman}""$EXE_SUFFIX" -a -x @bindir@/"${myman}""$EXE_SUFFIX"
+      then
+      MYMAN=@bindir@/"${myman}"
+      break
+  elif test -f "`type -p \"\${myman}\"`" -a -x "`type -p \"\${myman}\"`" -o -f "`type -p \"\${myman}\"`""$EXE_SUFFIX" -a -x "`type -p \"\${myman}\"`""$EXE_SUFFIX"
+      then
+      MYMAN="`type -p \"\${myman}\"`"
+      break
+  fi
+done
+
+for xmyman in @XMYMAN_EXE@ @XMYMAN@
+do
+  if test -f "`dirname \"\$0\"`"/"${xmyman}" -a -x "`dirname \"\$0\"`"/"${xmyman}" -o -f "`dirname \"\$0\"`"/"${xmyman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"/"${xmyman}""$EXE_SUFFIX"
+      then
+      XMYMAN="`dirname \"\$0\"`"/"${xmyman}"
+  elif test -f "`dirname \"\$0\"`"@bindir@/"${xmyman}" -a -x "`dirname \"\$0\"`"@bindir@/"${xmyman}" -o -f "`dirname \"\$0\"`"@bindir@/"${xmyman}""$EXE_SUFFIX" -a -x "`dirname \"\$0\"`"@bindir@/"${xmyman}""$EXE_SUFFIX"
+      then
+      XMYMAN="`dirname \"\$0\"`"@bindir@/"${xmyman}"
+      break
+  elif test -f @bindir@/"${xmyman}" -a -x @bindir@/"${xmyman}" -o -f @bindir@/"${xmyman}""$EXE_SUFFIX" -a -x @bindir@/"${xmyman}""$EXE_SUFFIX"
+      then
+      XMYMAN=@bindir@/"${xmyman}"
+      break
+  elif test -f "`type -p \"\${xmyman}\"`" -a -x "`type -p \"\${xmyman}\"`" -o -f "`type -p \"\${xmyman}\"`""$EXE_SUFFIX" -a -x "`type -p \"\${xmyman}\"`""$EXE_SUFFIX"
+      then
+      XMYMAN="`type -p \"\${xmyman}\"`"
+      break
+  fi
+done
+
+# under X11 we use XMyMan
+if test :"$DISPLAY" != :""
+then
+    if test -f "$XMYMAN" -a -x "$XMYMAN" -o -f "`type -p \"\${XMYMAN}\"`" -a -x "`type -p \"\${XMYMAN}\"`"
+    then
+        exec "$XMYMAN" "$@"
+        exit $?
+    fi
+fi
+
+# first, probe for myman
+"$MYMAN" --help >/dev/null || exit $?
+
+# then run it
+exec "$MYMAN" "$@"
+
+exit $?

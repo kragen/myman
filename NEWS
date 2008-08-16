@@ -1,0 +1,92 @@
+NEWS - news about the MyMan video game
+Copyright 2003, 2006, Benjamin Sittler <bsittler@gmail.com>
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+
+
+myman 0.6
+
+Added a new size (--size=huge) based on the original 1998 MyMan
+sources. The tiles and sprites are even larger than the "big"
+size, and the ghosts have a very cartoonish look.
+
+There's a new configure option (--enable-monolithic) to build a single
+larger executable rather than a whole bunch of smaller
+executables. Built this way, the myman binary will work regardless of
+where it's moved.
+
+
+myman 0.6pre6
+
+Now UCS/Unicode terminals work, provided your curses supports them
+too; tested with ncurses (wide character version) -- configure with
+`--with-ncursesw' to use this; also added support for the UTF-8
+version of S/Lang's curses emulation -- configure with
+`--with-slang-utf8' to use this. Wrote a little more
+documentation. String-quoting is mostly fixed in configure, Makefile
+and generated manual pages. Now our main Makefile requires a very
+recent version of GNU Make (3.80) to run, so there's a much simpler
+one (simple.mk) to get people started in older versions of Make.
+
+Added a new variant (--variant=tiny) for tiny screens.
+
+
+myman 0.6pre5
+
+Improved portability and diagnostics; added experimental HTML
+screenshot support (press the T key to generate snap####.html, where
+#### is a four-digit sequence number); improved support for PDCurses
+for X (a.k.a. XCurses) -- configure with `--with-xcurses' to use this;
+added support for S/Lang's curses emulation -- configure with
+`--with-slang' to use this; allow run-time toggling of dot/power
+pellet appearance (press the O or 0 key or start with -o/-p), plain
+ASCII-art/altcharset graphics (press the A key, or start with -a/-A),
+and raw CP437/terminal-native altcharset graphics (press the X key, or
+start with -r/-R)
+
+
+myman 0.5
+
+Added a new variant (--variant=quackman) with corresponding tiles and
+sprites (--size=quack); also added support for multiple-level mazes,
+although so far this is used only in one variant (chomp).
+
+Added new 1x1 tiles and sprites for fonts with nearly-square aspect
+ratio, e.g. linux console in 8x9-pixel font (--size=square).
+
+Various minor improvements (manpage, installation/packaging, bourne
+shell/sed/gnu make portability, etc.)
+
+
+myman 0.4
+
+Binary distributions seem to work ('make bindist'), and there is now a
+manpage for myman (first added in myman 0.3).
+
+
+myman 0.2
+
+
+        NOTE: !!! LICENSE CHANGE !!!
+
+        MyMan is no longer in the public domain. It is now distributed
+        under a BSD-style license (see LICENSE for details.)
+
+
+There is now a minimal functioning `configure' system, although
+cross-compilation does not work yet (both intermediate and final
+stages are built with the same tools.)
+
+The build system now creates a `myman' wrapper and individual
+executables for each maze/tileset combination. If you want to use the
+wrapper, you must install the individual executables in the proper
+directory (/usr/local/libexec/myman-X.Y, changeable using the
+GAMElibexecdir Makefile parameter.) Use `make install' to install the
+wrapper and the individual executables; a later `make uninstall' will
+remove them.
+
+Code-level changes are tracked in ChangeLog.
+
+For older news, see ONEWS.

@@ -1,0 +1,350 @@
+2006-12-09  Benjamin C. W. Sittler  <bsittler@>
+
+	* configure: added support for --enable-monolithic
+	
+	* Makefile: updated for my_getopt-1.5; improved shell compatibility
+
+	* README: updated email address
+
+2004-01-03  bsittler@sillystuff  <bsittler@>
+
+	* README: re-generated the keyboard help from the text output from
+	manpage
+
+	* myman.c: now use of insert/delete line may be disabled using -i,
+	enabled using -I, or toggled using the I command; this is handy on
+	terminals with slow scrolling.
+
+2003-12-31  bsittler@sillystuff  <bsittler@>
+
+	* myman.c (my_erase): now we only generate raw CP437 HTML when we
+	would send raw CP437 to the terminal too.
+
+2003-12-26  bsittler@sillystuff  <bsittler@>
+
+	* myman.c (my_attrset): now taking a snapshot inverts the screen
+	for one frame (however, the inversion does not affect the
+	generated snapshot, only the rendered attributes)
+	(main): use of the dim and bold/bright attributes can now be
+	toggled on and off at runtime using the B command, and is
+	configurable from the command line using the -B/-N parameters --
+	note that disabling these attributes leads to strange side-effects
+	in HTML snapshots and in palette-mapped terminals!
+
+	* VERSION: bumped to 0.6pre6
+
+2003-12-25  bsittler@sillystuff  <bsittler@>
+
+	* xmyman3: always force CP437, and lie about it (by calling it
+	"ISO8859-1")
+
+	* myman.c: now we use setlocale(LC_ALL, "") so we can use ncurses
+	wide-character APIs to output Unicode (configure --with-ncursesw)
+
+2003-12-20  bsittler@sillystuff  <bsittler@>
+
+	* Makefile: added a separate branch for --with-slang-utf8
+
+	* myman.c: explicitly re-enable the cursor on shutdown, since
+	slcurses doesn't do that in endwin()
+
+2003-12-19  bsittler@sillystuff  <bsittler@>
+
+	* configure, Makefile, myman.c: added support for the S/Lang
+	curses emulation (a.k.a. slcurses), selectable by --with-slang to
+	configure
+
+	* INSTALL: added URLs for recommended infrastructure software
+	(NOTE): fixed typo in spelling of Slowaris
+
+	* Makefile (gnumake_ok_tested_version): moved to top, and added a
+	note warning readers about the version dependencies
+
+	* configure (date): unset LC_CTYPE too, in order to avoid
+	non-portable characters in the date string
+
+2003-12-18  bsittler@sillystuff  <bsittler@>
+
+	* configure (qw): fixed quoting to not affect non-ASCII characters
+
+2003-12-15  bsittler@sillystuff  <bsittler@>
+
+	* configure: added a new function (echolinex) for quoting strings
+	to display to people -- these are quoted C-style, except that
+	apostrophe is not escaped; we no longer alter config.status or
+	makefile.cp when they would not be changed
+
+	* Makefile: added compatibility checks for older versions of GNU
+	Make; improved string-quoting and shortened function names; added
+	several pattern-substitution functions for use with strings that
+	contain spaces, tabs, %-signs, /, etc. -- there's a special 'xq'
+	quoting function (and its inverse, 'xu') that is used for this and
+	for a whole slew of new %-patterns (which are labeled with -xq-%
+	so you know they expect the % part to be quoted in that style)
+
+	* configure (echoline): fixed a bug that trimmed trailing newlines
+
+2003-12-10  bsittler@sillystuff  <bsittler@>
+
+	* Makefile: changed MYMAN to HERO in all macro names, and then
+	changed BASENAME to MYMAN; also wrote a new (and working)
+	string-quoting library in Makefile; now I need to add a
+	compatibility test to make sure an older, non-functional version
+	of GNU Make is not used
+
+2003-12-04  bsittler@sillystuff  <bsittler@>
+
+	* Makefile: switched back to using ?= and other features of recent
+	GNU Make versions -- in particular, $(call ...)
+
+	* configure (configure_version): bumped configure script version
+	to 0.3
+
+2003-12-03  bsittler@sillystuff  <bsittler@>
+
+	* VERSION: bumped version to 0.6pre5
+
+2003-12-02  bsittler@sillystuff  <bsittler@>
+
+	* Makefile (sanity-check): added primitive toolchain
+	sanity-checking
+
+	* myman.c (uni_cp437): fixed typo in comment
+	(snapshot_addstr): now we only generate non-ASCII CP437 characters
+	when both use_acs and use_raw are set
+
+	* myman.man: added some more notes on the screenshot mechanism in
+	the BUGS section
+
+	* myman.c (snapshot_addstr): now we insert raw CP437 bytes into
+	the HTML when use_raw is set
+	(my_erase): use_raw sets the HTML document charset to CP437,
+	otherwise it's UTF-8
+
+	* VERSION: bumped version to 0.6-dev3, then bumped version to
+	0.6pre4; from now on we'll avoid mentioning dev versions in
+	ChangeLog, and we won't use dashes in the version number in order
+	to avoid breaking makewhatis
+
+	* myman.man: removed references to version-numbered executable --
+	although it's still present, referring to it breaks some versions
+	of makewhatis
+
+	* myman.c, main.c: make sure we don't even look at string
+	constants funny; some strict C++ compilers complain about a char *
+	pointing at a string constant
+
+	* VERSION: bump version to 0.6-dev2
+
+	* xmyman, xmyman2, xmyman3: added XCurses detection and support,
+	including proper colors and fonts; an XCurses MyMan opens its own
+	window, so no xterm/rxvt window is opened to contain it
+
+	* main.c, myman.c: improved XCurses support; now we allow toolkit
+	options to be passed after --, and use Xinitscr and XCursesExit
+	for proper set-up and tear-down of the XCurses window
+
+2003-12-01  bsittler@sillystuff  <bsittler@>
+
+	* xmyman, xmyman2, xmyman3 (geometry): made the window just a
+	little wider to accomodate quackman
+
+	* configure (quotewords): fixed to work with braindead sh that
+	likes to break multiply-quoted backtick expressions
+
+	* myman.c: toggle dot and power pellet appearance when the O or 0
+	key is pressed; toggle between ASCII altcharset translations and
+	your terminal's altcharset translations when the A key is pressed;
+	toggle between raw CP437 and altcharset translation when the X key
+	is pressed; added an option -a/-A to change the initial state of
+	altcharset translation
+
+	* myman.c: reindented; made it possible once again to compile
+	myman.c without any -D compiler flags, although this only works on
+	systems with GNU getopt in the C library; save an HTML screenshot
+	to a numbered snap####.html when the T key is pressed
+
+	* Makefile (CURSESLIBS, CURSESINCLUDE): added support for XCurses
+	and ncurses, with auto-detected compiler/linker flags for the
+	former
+
+	* configure: added --with-xcurses, --with-ncurses, and (ignored)
+	--x-includes=... and --x-libraries=... flags
+
+	* VERSION: bumped version to 0.6-dev
+
+2003-11-30  bsittler@sillystuff  <bsittler@>
+
+	* VERSION: bumped version to 0.5
+
+	* Makefile (MAZEDEFS_chomp): myman now uses all six levels in the
+	"chomp" mazefiles
+
+2003-11-28  bsittler@sillystuff  <bsittler@>
+
+	* Makefile: added quackman "yum pop" maze from russell's t-shirt
+
+2003-11-26  bsittler@sillystuff  <bsittler@>
+
+	* myman.man: make filename references italic, in keeping with
+	man(7) conventions; switched to an URL markup style (using .HTML)
+	that seems to work reasonably well -- this should avoid problems
+	with non-groff typesetters/filters that otherwise hide the link
+	contents
+
+2003-11-25  bsittler@sillystuff  <bsittler@>
+
+	* Makefile ($(BASENAME)$(htm)): ooops, the -i option to sed is not
+	portable either
+
+	* VERSION: bumped package version to 0.5-dev2
+
+	* configure (configure_version): bumped configure version to 0.2
+
+	* Makefile (bindist): don't send the -v flag to rm or tar
+	(update-whatis): use $(SHELL) -c '...' so primitive shells don't
+	kill our make on systems with neither mandb nor makewhatis
+	(bindist): now we autogenerate HTML, PostScript, DVI and plaintext
+	versions of the manual page and include them in the docs directory
+	and in the toplevel of a binary distribution
+	($(BASENAME)$(htm)): postprocess the html to replace some common
+	non-ascii character references with ASCII equivalents.
+
+2003-11-24  bsittler@sillystuff  <bsittler@>
+
+	* myman.man: updated to use new DIST and BASENAME variables;
+	removed references to luit(1), since screen(1) works far far
+	better
+
+	* Makefile (DIST, BINDIST): renamed from PACKAGE, BINPACKAGE resp.
+
+	* configure (cputype, vendor, ostype, build): while it's still not
+	as robust as the FSF's config.guess, the build-type-guesser at
+	least works on all the machines I have access to -- it now tries
+	to invoke bash to echo $MACHTYPE, and falls back on a bunch of
+	uname, sed and tr trickery if that fails [this should make
+	"unknown-unknown-unknown" less likely, though certainly still
+	possible; this only *really* matters when running "make bindist",
+	where it's used to construct file and directory names]
+
+	* Makefile: make the variant/size lists and defaults more robust,
+	and removed dependency on $(if ...), which does not exist in older
+	versions of GNU Make
+	(date, build, host): removed lots of duplicated logic by calling
+	out to configure --dump=... to calculate these variables
+
+	* configure (dump): added a new [undocumented] --dump=VARIABLE
+	option to dump the contents of shell variable VARIABLE and exit
+
+	* configure: unfortunately the "local" builtin does not exist in
+	some Bourne shells...
+	(opts): the "(" prefix in a case statement is not portable either
+
+	* Makefile (uninstalldirs): don't pass -v to rmdir, it's not
+	portable
+
+	* myman.c: fixed typo does't -> doesn't
+
+	* myman.man: added @PACKAGE@ to the NAME section and description,
+	since we install the wrapper executable with that name too
+
+	* Makefile (install-size-..., install-variant-...): split out the
+	datafile installation from the game combinations to eliminate lots
+	of redundant copying.
+
+	* README: noted that the MyMan datafiles are still in the public
+	domain
+
+	* Makefile (all_sizes): added a new "square" size with
+	single-character tiles and sprites, useful for fonts with a 1:1
+	character cell aspect ratio, such as VGA 80x60 extended text mode
+	(SUBSTITUTE): now we backslash hyphen-minus in substituted
+	variables too
+
+	* myman.man: backslashed a few stray hyphen-minus characters
+
+	* VERSION: bumped the version to 0.5-dev
+
+2003-11-22  bsittler@sillystuff  <bsittler@>
+
+	* VERSION: bumped the version number to 0.4
+
+	* Makefile (bindist): binary tarballs are now automatically
+	created, and include the docfiles and two shell scripts
+	(uninstall.sh and install.sh); GNU tar is currently required to
+	install, although the script could conceivably be changed to use a
+	pregenerated list of "install", "cp", "mv", and/or "chmod"
+	commands
+
+2003-11-21  bsittler@sillystuff  <bsittler@>
+
+	* Makefile (uninstall-files, install-files): better handling for
+	manpage install/uninstall.  Also fixed recursive make calls to
+	work correctly with $(PRE_INSTALL), $(POST_INSTALL),
+	$(NORMAL_INSTALL), $(PRE_UNINSTALL), $(NORMAL_UNINSTALL), and
+	$(POST_UNINSTALL) markers; may soon add a bindist target using
+	these.  All actions that use "exit" are now in parentheses to
+	avoid aborting a shell script built using make -n.
+
+	* myman.man: renamed from myman.6; now myman.6 is autogenerated
+	through variable substitutions controlled by Makefile; added some
+	license text
+
+	* Makefile: hopefully this $(origin ...) crap will work around the
+	broken ?= in older versions of GNU make [it behaved as if $(value
+	X) was used when referring to a variable set by X ?= ...]
+
+	* VERSION: bumped the version number to 0.3
+
+	* myman.6: we now have something like a real manpage
+
+2003-11-20  bsittler@sillystuff  <bsittler@>
+
+	* xmyman: disabled boldMode
+
+	* main.c: added license text
+
+	* myman.c: added license text
+
+	* xmyman: improved error reporting; we now pause after myman exits
+	so that messages can be read
+
+2003-11-19  bsittler@sillystuff  <bsittler@>
+
+	* myman.c (my_addch, main): now use_raw works correctly in
+	conjunction with color, and is settable at runtime with the -r
+	flag
+
+	* Makefile (HOSTCC): fix HOSTCC to only use gcc when
+	cross-compiling
+
+	* INSTALL: added a note about long filename requirements
+
+	* configure: now configure works with ash and with bash and
+	supports parameters to --with options, even though that's not
+	recommended practice
+
+2003-11-18  bsittler@sillystuff  <bsittler@>
+
+	* configure: added --enable-variants=... and --enable-sizes=...;
+	still needs to be rethought
+
+	* Makefile: cross-compilation seems to work now, at least for a
+	dummy case -- need to get an actual cross-compilation test
+	environment to test this better
+
+2003-11-17  bsittler@sillystuff  <bsittler@>
+
+	* ONEWS: renamed from README.old
+
+	* VERSION: bumped version to 0.2
+
+	* configure: added lots more configurable directories
+
+	* main.c: now we flush stdout and stderr before execve(), so
+	e.g. --version works correctly even when piped or redirected
+
+2003-11-14  bsittler@sillystuff  <bsittler@>
+
+	* ChangeLog: started new ChangeLog -- some old changes are tracked
+	in README.old

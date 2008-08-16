@@ -1,0 +1,26 @@
+#! /usr/bin/ctheme
+# myman.ct - ctheme console color palette for the MyMan video game
+# Copyright 2003, Benjamin Sittler <bsittler@gmail.com>
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
+
+set 0 000000
+set 4 0000D8
+set 2 00B300
+set 6 00D8D8
+set 1 D89345
+set 5 FA2093
+set 3 FAB345
+set 7 FAB393
+set 8 646464
+set c 2020D8
+set a 93FA00
+set e 00FAD8
+set 9 FA0000
+set d FAB3D8
+set b FAFA00
+set f D8D8D8
+
+end

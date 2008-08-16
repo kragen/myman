@@ -1,0 +1,837 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<!--
+ game.html - game logic for the MyMan video game (incomplete DHTML rewrite)
+ Copyright 1997-2008, Benjamin C. Wiley Sittler (email: bsittler@gmail.com)
+ 
+  Permission is hereby granted, free of charge, to any person
+  obtaining a copy of this software and associated documentation
+  files (the "Software"), to deal in the Software without
+  restriction, including without limitation the rights to use, copy,
+  modify, merge, publish, distribute, sublicense, and/or sell copies
+  of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+ 
+  The above copyright notice and this permission notice shall be
+  included in all copies or substantial portions of the Software.
+ 
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  DEALINGS IN THE SOFTWARE.
+-->
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>MyMan (incomplete DHTML rewrite)</title>
+<link rel="icon" href="gfx/myman.png" />
+<link rel="shortcut icon" href="gfx/myman.ico" />
+</head>
+<body style="border: 0px; margin: 0px; background: black; color: white; overflow: hidden;">
+<script type="text/javascript">
+/*<![CDATA[*/
+(function() {
+    document.body.setAttribute('tabindex', '1');
+    var wideFontFamily = '"sazanami gothic", "kochi gothic", "ar pl new sung", osaka, kai, biaukai, stkaiti, "ms gothic", nsimsun, mingliu, fixedsys, courier, monospace';
+    var narrowFontFamily = 'monaco, fixedsys, "lucida sans unicode", freemono, fixed, monospace';
+    var wideMode = location.hash.indexOf('wide') >= 0;
+    var narrowMode = location.hash.indexOf('narrow') >= 0;
+    var textMode = wideMode || narrowMode;
+    var fontFamily = wideMode ? wideFontFamily : narrowFontFamily;
+    var original = location.hash.indexOf('original') >= 0;
+    var small = location.hash.indexOf('small') >= 0;
+    var large = location.hash.indexOf('large') >= 0;
+    var mono = location.hash.indexOf('mono') >= 0;
+    var mag = 1;
+    if (location.hash.indexOf('mag') >= 0)
+    {
+        var tmag = parseFloat(location.hash.substr(location.hash.indexOf('mag') + 'mag'.length).replace(/[^0-9.].*/, ''));
+        if (tmag) mag = tmag;
+    }
+    var ghosts = null;
+    if (location.hash.indexOf('ghosts') >= 0)
+    {
+        var tghosts = parseInt(location.hash.substr(location.hash.indexOf('ghosts') + 'ghosts'.length).replace(/[^0-9].*/, ''));
+        if (tghosts) ghosts = tghosts;
+    }
+    var pal = '' +
+        '#000000\n' +
+        '#0000DD\n' +
+        '#00B700\n' +
+        '#00DDDD\n' +
+        '#DD9646\n' +
+        '#FF2096\n' +
+        '#FFB746\n' +
+        '#FFB796\n' +
+        '#666666\n' +
+        '#2020DD\n' +
+        '#96FF00\n' +
+        '#00FFDD\n' +
+        '#FF0000\n' +
+        '#F9B2D7\n' +
+        '#FFFF00\n' +
+        '#DDDDDD';
+    pal = pal.split('\n');
+    var cp437_fullwidth_rhs = [
+        /*00*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*10*/
+        0x20, 0xcd, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*20*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x2D, 0x20, 0x20,
+        /*30*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x3D, 0x20, 0x20,
+        /*40*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*50*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*60*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*70*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20,
+        /*80*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*90*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*A0*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*B0*/
+        0xb0, 0xb1, 0xb2, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20,
+        /*C0*/
+        0xc4, 0xc4, 0xc4, 0xc4, 0xc4, 0xc4, 0xcd, 0xc4, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd,
+        /*D0*/
+        0xc4, 0xcd, 0xc4, 0xc4, 0xcd, 0xcd, 0xc4, 0xc4, 0xcd, 0x20, 0xc4, 0xdb, 0xdc, 0x20, 0xde, 0xdf,
+        /*E0*/
+        0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
+        /*F0*/
+        0xf0, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
+        ];
+    var unistile = [
+        /* 0x00 */
+        /*%8*/'%', 'v', '@', '@', '@', 'Y', 'A', 'F',
+        'A', 'A', /*"^*/'\"', /*"<*/'\"', /*"v*/'\"', /*">*/'\"', /*m2*/'m', 'm',
+        /* 0x10 */
+        /*C<4*/'C', 'c', 'C', 'c', /*C^4*/'C', 'c', 'C', 'c',
+        /*CX4*/'C', '(', '*', '\'', /*Cv4*/'C', 'c', 'C', 'c',
+        /* 0x20 */
+        /*C>4*/'C', 'c', 'C', 'c',
+        /**/' ', ' ', ' ', ' ',
+        /**/' ',
+        /*1*/'1', /*3*/'3', /*5*/'5', /*7*/'7', /*10*/'1', /*20*/'2', /*30*/'3',
+        /* 0x30 */
+        /*50*/'5', /*2*/'2', /*4*/'4', /*8*/'8', /*16*/'!', /*M2*/'M', 'M', /*C*/'C',
+        /*C(UL)*/'/', '/', '/', '/',
+        /*C(UR)*/'\\', '-', '/', '-',
+        /* 0x40 */
+        /*C(LL)*/'\\', '\\', '\\', '\\',
+        /*C(LR)*/'/', '-', '\\', '-',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0x50 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0x60 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0x70 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0x80 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0x90 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xa0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xb0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xc0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xd0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xe0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        /* 0xf0 */
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
+        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '
+        ];
+    unistile = unistile.join('');
+    var cp437 = '' +
+        ' ☺☻♥♦♣♠•' +
+        '◘○◙♂♀♪♫☼' +
+        '►◄↕‼¶§▬↨' +
+        '↑↓→←∟↔▲▼' +
+        ' !"#$%&\'' +
+        '()*+,-./' +
+        '01234567' +
+        '89:;<=>?' +
+        '@ABCDEFG' +
+        'HIJKLMNO' +
+        'PQRSTUVW' +
+        'XYZ[\\]^_' +
+        '`abcdefg' +
+        'hijklmno' +
+        'pqrstuvw' +
+        'xyz{|}~⌂' +
+        'Çüéâäàåç' +
+        'êëèïîìÄÅ' +
+        'ÉæÆôöòûù' +
+        'ÿÖÜ¢£¥₧ƒ' +
+        'áíóúñÑªº' +
+        '¿⌐¬½¼¡«»' +
+        '░▒▓│┤╡╢╖' +
+        '╕╣║╗╝╜╛┐' +
+        '└┴┬├─┼╞╟' +
+        '╚╔╩╦╠═╬╧' +
+        '╨╤╥╙╘╒╓╫' +
+        '╪┘┌█▄▌▐▀' +
+        'αßΓπΣσµτ' +
+        'ΦΘΩδ∞φε∩' +
+        '≡±≥≤⌠⌡÷≈' +
+        '°·•√ⁿ²■ ' +
+        '　○●●●■■●' +
+        '■○■♂♀＃＃☆' +
+        '★★Ｉ！Ｐ§■Ｌ' +
+        '↑↓→←Ｌ─▲▼' +
+        '　！”＃＄％＆’' +
+        '（）＊＋，─．／' +
+        '０１２３４５６７' +
+        '８９：；＜＝＞？' +
+        '＠ＡＢＣＤＥＦＧ' +
+        'ＨＩＪＫＬＭＮＯ' +
+        'ＰＱＲＳＴＵＶＷ' +
+        'ＸＹＺ［＼］＾＿' +
+        '‘ａｂｃｄｅｆｇ' +
+        'ｈｉｊｋｌｍｎｏ' +
+        'ｐｑｒｓｔｕｖｗ' +
+        'ｘｙｚ｛｜｝〜Δ' +
+        'Ｃｕｅａａａａｃ' +
+        'ｅｅｅｉｉｉＡＡ' +
+        'ＥｅＥｏｏｏｕｕ' +
+        'ｙＯＵ￠￡￥ｐｆ' +
+        'ａｉｏｕｎＮａｏ' +
+        '？┌￢½¼！《》' +
+        '░▒▓│┤┤┤┤' +
+        '┬┤│┐┘┤┴┐' +
+        '└┴┬├─┼├├' +
+        '└┌┴┬├─┼┴' +
+        '┴┬┬├┴┬├┼' +
+        '┼┘┌■■■■■' +
+        'αβΓπΣσμτ' +
+        'ΦΘΩδ∞φε∩' +
+        '≡±＞＜∫∫÷＝' +
+        '°・・√ｎ２●　';
+    var maze = '' +
+        '╔════════════╕╒════════════╗\n' +
+        '║············││············║\n' +
+        '║·┌──┐·┌───┐·││·┌───┐·┌──┐·║\n' +
+        '║■│  │·│   │·││·│   │·│  │■║\n' +
+        '║·└──┘·└───┘·└┘·└───┘·└──┘·║\n' +
+        '║··························║\n' +
+        '║·┌──┐·┌┐·┌──────┐·┌┐·┌──┐·║\n' +
+        '║·└──┘·││·└──┐┌──┘·││·└──┘·║\n' +
+        '║······││····││····││······║\n' +
+        '╚════╗·│└──┐ ││ ┌──┘│·╔════╝\n' +
+        '     ║·│┌──┘ └┘ └──┐│·║     \n' +
+        '     ║·││          ││·║     \n' +
+        '     ║·││ ╔══≡≡══╗ ││·║     \n' +
+        '═════╝·└┘ ║      ║ └┘·╚═════\n' +
+        '      ·   ║      ║   ·      \n' +
+        '═════╗·┌┐ ║      ║ ┌┐·╔═════\n' +
+        '     ║·││ ╚══════╝ ││·║     \n' +
+        '     ║·││          ││·║     \n' +
+        '     ║·││ ┌──────┐ ││·║     \n' +
+        '╔════╝·└┘ └──┐┌──┘ └┘·╚════╗\n' +
+        '║············││············║\n' +
+        '║·┌──┐·┌───┐·││·┌───┐·┌──┐·║\n' +
+        '║·└─┐│·└───┘·└┘·└───┘·│┌─┘·║\n' +
+        '║■··││·······  ·······││··■║\n' +
+        '╙─┐·││·┌┐·┌──────┐·┌┐·││·┌─╜\n' +
+        '╓─┘·└┘·││·└──┐┌──┘·││·└┘·└─╖\n' +
+        '║······││····││····││······║\n' +
+        '║·┌────┘└──┐·││·┌──┘└────┐·║\n' +
+        '║·└────────┘·└┘·└────────┘·║\n' +
+        '║··························║\n' +
+        '╚══════════════════════════╝';
+    maze = maze.split('\n');
+    var tileset = document.createElement('img');
+    var tile_w = small ? 6 : large ? 32 : 8;
+    var tile_h = small ? 6 : large ? 32 : 8;
+    tileset.width = 16 * Math.floor(tile_w * mag);
+    tileset.height = 256 * Math.floor(tile_h * mag);
+    tileset.border = 0;
+    tileset.src = small ? 'chr/chr6.png' : large ? 'chr/chr32.png' : 'chr/chr8.png';
+    tileset.style.width = '' + (Math.floor(tile_w * mag) * 16) + 'px';
+    tileset.style.height = '' + (Math.floor(tile_h * mag) * 256) + 'px';
+    tileset.style.border = '0px';
+    tileset.style.position = 'relative';
+    var spriteset = document.createElement('img');
+    var stile_w = small ? 12 : large ? 64 : 16;
+    var stile_h = small ? 12 : large ? 64 : 16;
+    spriteset.width = Math.floor(stile_w * mag) * 16;
+    spriteset.height = Math.floor(stile_h * mag) * 256;
+    spriteset.border = 0;
+    if (small) spriteset.src = 'spr/spr12.png';
+    else if (large) spriteset.src = 'spr/spr64.png';
+    else if (original) spriteset.src = 'spr/spr16.png';
+    else spriteset.src = 'spr/ott16.png';
+    spriteset.style.width = '' + (Math.floor(stile_w * mag) * 16) + 'px';
+    spriteset.style.height = '' + (Math.floor(stile_h * mag) * 256) + 'px';
+    spriteset.style.border = '0px';
+    spriteset.style.position = 'relative';
+    var display = document.createElement('div');
+    display.style.padding = '0px';
+    display.style.margin = '0px';
+    display.style.border = '0px solid #000';
+    display.style.position = 'absolute';
+    var MAZE_W = maze[0].length;
+    var MAZE_H = maze.length;
+    var LINES = MAZE_H + 5;
+    var COLS = MAZE_W;
+    var MAZE_X = 0;
+    var MAZE_Y = 3;
+    var virtw = (Math.floor(tile_w * mag) * COLS);
+    var virth = (Math.floor(tile_h * mag) * LINES);
+    var originx = 0;
+    var originy = 0;
+    display.style.width = '' + virtw + 'px';
+    display.style.height = '' + virth + 'px';
+    display.style.clip = 'rect(0px ' + virtw + 'px ' + virth + 'px 0px)';
+    display.style.overflow = 'hidden';
+    var cells = [];
+    for (var r = 0; r < LINES; r ++)
+    {
+        var row = [];
+        var displayRow = document.createElement('div');
+        displayRow.style.padding = '0px';
+        displayRow.style.margin = '0px';
+        displayRow.style.position = 'absolute';
+        displayRow.style.height = '' + Math.floor(tile_h * mag) + 'px';
+        displayRow.style.top = '' + (Math.floor(tile_h * mag) * cells.length) + 'px';
+        display.appendChild(displayRow);
+        cells[cells.length] = row;
+        for (var c = 0; c < COLS; c ++)
+        {
+            var displayCell = document.createElement('span');
+            displayCell.style.padding = '0px';
+            displayCell.style.margin = '0px';
+            displayCell.style.position = 'absolute';
+            displayCell.style.width = '' + Math.floor(tile_w * mag) + 'px';
+            displayCell.style.height = '' + Math.floor(tile_h * mag) + 'px';
+            displayCell.style.left = '' + (Math.floor(tile_w * mag) * row.length) + 'px';
+            displayCell.style.overflow = 'hidden';
+            var cell = document.createElement('span');
+            cell.style.display = 'block';
+            cell.style.position = 'relative';
+            cell.style.width = '' + Math.floor(tile_w * mag) + 'px';
+            cell.style.height = '' + Math.floor(tile_h * mag) + 'px';
+            cell.style.fontFamily = fontFamily;
+            cell.style.textAlign = 'left';
+            cell.style.lineHeight = '' + Math.floor(tile_h * mag) + 'px';
+            cell.style.fontSize = '' + Math.floor(tile_h * mag) + 'px';
+            cell.style.overflow = 'hidden';
+            cell.style.clip = 'rect(0px ' + Math.floor(tile_w * mag) + 'px ' + Math.floor(tile_h * mag) + 'px 0px)';
+            cell.style.visibility = 'hidden';
+            var tile = tileset.cloneNode(true);
+            if (textMode) tile = document.createElement('span');
+            cell.appendChild(tile);
+            displayCell.appendChild(cell);
+            displayRow.appendChild(displayCell);
+            row[row.length] = { 'img': tile, 'cell': cell, 'displayCell': displayCell, 'tile': 0x20, 'color': 0xF, 'dirty': true};
+        }
+    }
+    var center = document.createElement('div');
+    document.body.appendChild(center);
+    center.appendChild(display);
+
+    var sfx = document.createElement('div');
+    sfx.style.visibility = 'hidden';
+    document.body.appendChild(sfx);
+
+    var dotsfx = document.createElement('div');
+    dotsfx.style.visibility = 'hidden';
+    document.body.appendChild(dotsfx);
+
+    var dot2sfx = document.createElement('div');
+    dot2sfx.style.visibility = 'hidden';
+    document.body.appendChild(dot2sfx);
+
+    var dotalt = false;
+
+    var bgm = document.createElement('div');
+    bgm.style.visibility = 'hidden';
+    document.body.appendChild(bgm);
+
+    var playsound = (function (channel, sound) {
+        var e;
+        try
+        {
+            var sid = 'sfx' + Math.random().toString().split(".").join("");
+            channel.innerHTML = '<' + 'embed id="' + sid + '" autostart="true" hidden="true" width="0" height="0" src="' + sound + '" type="audio/midi"><' + '/embed>';
+        }
+        catch (e)
+        {
+        }
+    });
+
+    var NOTTOP = function (y) { return (y >= (tile_h / 2)); };
+    var NOTBOTTOM = function (y) { return (y <= (tile_h / 2)); };
+    var NOTLEFT = function (x) { return (x >= (tile_w / 2)); };
+    var NOTRIGHT = function (x) { return (x <= (tile_w / 2)); };
+
+    var UP = 1;
+    var LEFT = 2;
+    var DOWN = 3;
+    var RIGHT = 4;
+    var DIRHERO = LEFT;
+    var LIVES = 3;
+    var GHOSTS = 4;
+    var MAXGHOSTS = 16;
+    /* sprite numbers */
+    var GHOSTEYES = function (ghost) { return ((ghost) * 2); };
+    var UNGHOSTEYES = function (sprite) { return ((sprite) / 2); };
+    var MEANGHOST = function (ghost) { return (GHOSTEYES(ghost) + 1); };
+    var HERO = MEANGHOST(MAXGHOSTS);
+    var BLUEGHOST = function (ghost) { return ((ghost) + HERO + 1); };
+    var FRUIT = BLUEGHOST(MAXGHOSTS);
+    var GHOST_SCORE = (FRUIT + 1);
+    var FRUIT_SCORE = (GHOST_SCORE + 1);
+    /* large hero sprite, split into four quadrants */
+    var BIGHERO_UL = (FRUIT_SCORE + 1);
+    var BIGHERO_UR = (BIGHERO_UL + 1);
+    var BIGHERO_LL = (BIGHERO_UR + 1);
+    var BIGHERO_LR = (BIGHERO_LL + 1);
+    /* total sprite count */
+    var SPRITES = (BIGHERO_LR + 1);
+
+    var STILE_FRUIT = 0x00;
+    var STILE_MEAN = 0x08;
+    var STILE_EYES = 0x0a;
+    var STILE_BLUE = 0x0e;
+    var STILE_HERO = 0x10;
+    var STILE_FRUIT_SCORE = 0x29;
+    var STILE_200 = 0x31;
+    var STILE_400 = 0x32;
+    var STILE_800 = 0x33;
+    var STILE_1600 = 0x34;
+    var STILE_WHITE = 0x35;
+    var STILE_LIFE = 0x37;
+    /* rightward-facing large hero sprite, split into four quadrants with four frames each */
+    var STILE_BIGHERO_UL = 0x38;
+    var STILE_BIGHERO_UR = 0x3C;
+    var STILE_BIGHERO_LL = 0x40;
+    var STILE_BIGHERO_LR = 0x44;
+
+    var ISTEXT = function (c) { return (((c) == '!'.charCodeAt(0)) || (((c) >= '0'.charCodeAt(0)) && ((c) <= '9'.charCodeAt(0))) || ((c) == '@'.charCodeAt(0)) || (((c) >= 'A'.charCodeAt(0)) && ((c) <= 'Z'.charCodeAt(0)))); };
+    var ISDOT = function (c) { return (((c) == 249) || ((c) == '.'.charCodeAt(0))); };
+    var ISPELLET = function (c) { return (((c) == 254) || ((c) == 'o'.charCodeAt(0))); };
+    var ISZAPLEFT = function (c) { return (((c) == '<'.charCodeAt(0)) || (c == 174)); };
+    var ISZAPRIGHT = function (c) { return (((c) == '>'.charCodeAt(0)) || (c == 175)); };
+    var ISZAPUP = function (c) { return ((c) == '^'.charCodeAt(0)); };
+    var ISZAPDOWN = function (c) { return ((c) == 'v'.charCodeAt(0)); };
+    var ISOPEN = function (c) { return (((c) == ' '.charCodeAt(0)) || ISDOT(c) || ISPELLET(c) || ((c) == '!'.charCodeAt(0)) || (((c) >= 'A'.charCodeAt(0)) && ((c) <= 'Z'.charCodeAt(0))) || ((c) == 'l'.charCodeAt(0)) || ((c) == '~'.charCodeAt(0)) || ISZAPRIGHT(c) || ISZAPLEFT(c) || ISZAPUP(c) || ISZAPDOWN(c)); };
+    var ISDOOR = function (c) { return (((c) == '='.charCodeAt(0)) || (c == ':'.charCodeAt(0)) || ((c) == 240) || (c == 255)); };
+
+    var DIRWRAP = function (dir) { return (((dir) + 3) % 4 + 1); };
+
+    var XDIR = function (dir) { return (((dir) == RIGHT) - ((dir) == LEFT)); };
+    var YDIR = function (dir) { return (((dir) == DOWN) - ((dir) == UP)); };
+
+    var YLEAVING = function (dir, y) { return ( -(((dir) == UP) && ! NOTTOP(y)) + (((dir) == DOWN) && ! NOTBOTTOM(y))); };
+    var XLEAVING = function (dir, x) { return ( -(((dir) == LEFT) && ! NOTLEFT(x)) + (((dir) == RIGHT) && ! NOTRIGHT(x))); };
+
+    if (ghosts == null) ghosts = GHOSTS;
+    if (ghosts > MAXGHOSTS) ghosts = MAXGHOSTS;
+    if (ghosts < 0) ghosts = 0;
+    var dir = DIRHERO;
+    var joydir = null;
+    var sprites = [];
+    for (var n = 0; n < SPRITES; n ++)
+    {
+        var sprite = document.createElement('span');
+        sprite.style.display = 'block';
+        sprite.style.position = 'absolute';
+        sprite.style.width = '' + Math.floor(stile_w * mag) + 'px';
+        sprite.style.height = '' + Math.floor(stile_h * mag) + 'px';
+        sprite.style.top = '' + (parseInt(display.offsetTop) + 0) + 'px';
+        sprite.style.left = '' + (parseInt(display.offsetLeft) + Math.floor(stile_w * mag) * n) + 'px';
+        sprite.style.fontFamily = fontFamily;
+        sprite.style.textAlign = 'left';
+        sprite.style.lineHeight = '' + Math.floor(stile_h * mag) + 'px';
+        sprite.style.fontSize = '' + Math.floor(stile_h * mag) + 'px';
+        sprite.style.overflow = 'hidden';
+        sprite.style.clip = 'rect(0px ' + Math.floor(stile_w * mag) + 'px ' + Math.floor(stile_h * mag) + 'px 0px)';
+        sprite.style.visibility = 'hidden';
+        var stile = spriteset.cloneNode(true);
+        if (textMode) stile = document.createElement('span');
+        else
+        {
+            stile.style.top = '0px';
+            stile.style.left = '0px';
+        }
+        sprite.appendChild(stile);
+        sprites[sprites.length] = { 'sprite': sprite, 'img': stile, 'visible': false, 'stile': 0, 'frame': 0, 'color': 0, 'x': 0, 'y': 0, 'dirty': false };
+        display.appendChild(sprite);
+    }
+    var draw;
+    var framecount = 0;
+    var blurred = false;
+    self.onfocus = function (ev) {
+        if (! ev) ev = self.event;
+        blurred = false;
+        if (ev.stopPropagation) ev.stopPropagation();
+        return false;
+    };
+    if (document.addEventListener) document.addEventListener('focus', self.onfocus, false);
+    self.onblur = function (ev) {
+        if (! ev) ev = self.event;
+            blurred = true;
+        if (ev.stopPropagation) ev.stopPropagation();
+        return false;
+    };
+    if (document.addEventListener) document.addEventListener('blur', self.onblur, false);
+    var paused = false;
+    document.body.onkeypress = function (ev) {
+        if (! ev) ev = self.event;
+        blurred = false;
+        var code = ev.charCode ? ev.charCode : ev.keyCode ? ev.keyCode : ev.which;
+        var ch = String.fromCharCode(code).toLowerCase();
+        if ((ev.keyIdentifier == 'Left') || (ch == 'h') || (ch == '%') || (ch == '\uf702') || (ch == '\x1c')) joydir = LEFT;
+        else if ((ev.keyIdentifier == 'Down') || (ch == 'j') || (ch == '(') || (ch == '\uf701') || (ch == '\x1f')) joydir = DOWN;
+        else if ((ev.keyIdentifier == 'Up') || (ch == 'k') || (ch == '&') || (ch == '\uf700') || (ch == '\x1e')) joydir = UP;
+        else if ((ev.keyIdentifier == 'Right') || (ch == 'l') || (ch == '\'') || (ch == '\uf703') || (ch == '\x1d')) joydir = RIGHT;
+        else if (ch == ' ') joydir = null;
+        else if (ch == 'p') paused = ! paused;
+        else if (ch == 'r') {
+            self.resizeBy(1, 1);
+            self.resizeBy(-1, -1);
+        }
+        else return true;
+        if (ev.stopPropagation) ev.stopPropagation();
+        return false;
+    };
+    display.onkeypress = document.body.onkeypress;
+    if (document.addEventListener) document.addEventListener('keypress', document.body.onkeypress, false);
+    document.body.onclick = function (ev) {
+        if (! ev) ev = self.event;
+        paused = false;
+        blurred = false;
+        var x = null;
+        var y = null;
+        if (typeof(ev.pageX) != 'undefined')
+        {
+            x = ev.pageX;
+            y = ev.pageY;
+        }
+        else if (typeof(ev.clientX) != 'undefined')
+        {
+            x = ev.clientX + document.body.offsetLeft;
+            y = ev.clientY + document.body.offsetTop;
+        }
+        if (x != null)
+        {
+            var dx, dy;
+            dy = y - Math.floor((sprites[HERO].y + MAZE_Y * tile_h) * Math.floor(mag * tile_h) / tile_h) - originy;
+            dx = x - Math.floor((sprites[HERO].x + MAZE_X * tile_w) * Math.floor(mag * tile_w) / tile_w) - originx;
+            if ((dx * dx) > (dy * dy))
+            {
+                if (dx < 0) joydir = LEFT;
+                if (dx > 0) joydir = RIGHT;
+                if (! dx) joydir = null;
+            }
+            else
+            {
+                if (dy < 0) joydir = UP;
+                if (dy > 0) joydir = DOWN;
+                if (! dy) joydir = null;
+            }
+        }
+        var e;
+        try
+        {
+            document.body.focus();
+        }
+        catch (e)
+        {
+        }
+        try
+        {
+            display.focus();
+        }
+        catch (e)
+        {
+        }
+        if (ev.stopPropagation) ev.stopPropagation();
+        return false;
+    };
+    var oframecount = 0;
+    var maze_init_needed = true;
+    var total_dots = 0;
+    var dots = 0;
+    var quantum = 0.025e3 * (8 + 8) / (tile_w + tile_h);
+    var lastRun = (new Date);
+    var xfocus = Math.floor(MAZE_W * tile_w / 2);
+    var yfocus = Math.floor(MAZE_H * tile_h / 2);
+    game = (function () {
+        var now = (new Date);
+        for (var i = quantum / 2; ((now - lastRun) > i) && ! (paused || blurred); i += quantum)
+        {
+            if (maze_init_needed)
+            {
+                //playsound(bgm, 'sfx/start.mid');
+                sprites[HERO].x = (MAZE_W * tile_w) / 2;
+                sprites[HERO].y = 23.5 * tile_h;
+                sprites[HERO].dirty = true;
+                xfocus = sprites[HERO].x;
+                yfocus = sprites[HERO].y;
+                dots = 0;
+                total_dots = 0;
+                maze_init_needed = false;
+                for (var r = 0; r < MAZE_H; r ++)
+                {
+                    for (var c = 0; c < MAZE_W; c ++)
+                    {
+                        var ch = maze[r].substr(c, 1);
+                        var b = (cp437.indexOf(ch) + 256) % 256;
+                        var cell = cells[r + MAZE_Y][c + MAZE_X];
+                        cell.tile = b;
+                        if (ISPELLET(b) || ISDOT(b)) total_dots ++;
+                        cell.color = ((ch == '\xb7') || (ch == '\u2022') || (ch == '\u25a0')) ? 0x7 : (ch == '\u2261') ? 0xd : 0x9;
+                        cell.dirty = true;
+                    }
+                }
+            }
+            if (dots == total_dots) maze_init_needed = true;
+            var r = Math.floor(sprites[HERO].y / tile_h);
+            var c = Math.floor(sprites[HERO].x / tile_w);
+            if ((joydir != null)
+                &&
+                ISOPEN(cells[MAZE_Y + (r + YLEAVING(joydir, sprites[HERO].y % tile_h + YDIR(joydir)) + MAZE_H) % MAZE_H][MAZE_X + (c + XLEAVING(joydir, sprites[HERO].x % tile_w + XDIR(joydir)) + MAZE_W) % MAZE_W].tile))
+            {
+                dir = joydir;
+                joydir = null;
+            }
+            sprites[HERO].stile = STILE_HERO + ((dir == LEFT) ? 4 : (dir == RIGHT) ? 12 : (dir == DOWN) ? 16 : 0);
+            sprites[HERO].color = 0xE;
+            sprites[HERO].visible = true;
+            sprites[HERO].dirty = true;
+            var cell = cells[r + MAZE_Y][c + MAZE_X];
+            if (ISDOT(cell.tile))
+            {
+                if (! dotalt)
+                {
+                    //playsound(dotsfx, 'sfx/dot.mid');
+                }
+                else
+                {
+                    //playsound(dot2sfx, 'sfx/dot2.mid');
+                }
+                dotalt = ! dotalt;
+                cell.tile = 0x20;
+                cell.dirty = true;
+                dots ++;
+            }
+            else if (ISPELLET(cell.tile))
+            {
+                //playsound(sfx, 'sfx/pellet.mid');
+                cell.tile = 0x20;
+                cell.dirty = true;
+                dots ++;
+            }
+            else if (ISOPEN(cells[MAZE_Y + (r + YLEAVING(dir, sprites[HERO].y % tile_h + YDIR(dir)) + MAZE_H) % MAZE_H][MAZE_X + (c + XLEAVING(dir, sprites[HERO].x % tile_w + XDIR(dir)) + MAZE_W) % MAZE_W].tile))
+            {
+                if (framecount != oframecount)
+                {
+                    sprites[HERO].frame ++;
+                    sprites[HERO].frame %= 4;
+                    oframecount = framecount;
+                }
+                if (! YDIR(dir))
+                {
+                    sprites[HERO].y = Math.floor(Math.floor(sprites[HERO].y / tile_h) * tile_h + tile_h / 2);
+                }
+                if (! XDIR(dir))
+                {
+                    sprites[HERO].x = Math.floor(Math.floor(sprites[HERO].x / tile_w) * tile_w + tile_w / 2);
+                }
+                sprites[HERO].x += XDIR(dir);
+                sprites[HERO].y += YDIR(dir);
+                sprites[HERO].x += tile_w * MAZE_W;
+                sprites[HERO].y += tile_h * MAZE_H;
+                sprites[HERO].x %= tile_w * MAZE_W;
+                sprites[HERO].y %= tile_h * MAZE_H;
+                xfocus = sprites[HERO].x;
+                yfocus = sprites[HERO].y;
+            }
+        }
+        lastRun = (new Date);
+        setTimeout(game, quantum);
+    });
+    game();
+    var startTime = (new Date);
+    draw = (function () {
+        if (! (paused || blurred))
+        {
+            var now;
+            now = (new Date);
+            for (var r = 0; r < LINES; r ++)
+            {
+                for (var c = 0; c < COLS; c ++)
+                {
+                    var b = cells[r][c].tile % 256;
+                    var color = cells[r][c].color % 16;
+                    if (mono) color = 0xF;
+                    if (b == 0xFE)
+                    {
+                        cells[r][c].dirty = true;
+                        if (((now / 1.000e3) - Math.floor(now / 1.000e3)) > 0.500) b = 0x20;
+                    }
+                    if (! cells[r][c].dirty) continue;
+                    cells[r][c].dirty = false;
+                    var left = '' + (-Math.floor(tile_w * mag) * color) + 'px';
+                    var top = '' + (-Math.floor(tile_h * mag) * b) + 'px';
+                    if (textMode)
+                    {
+                        var cell = cells[r][c].cell;
+                        cell.style.color = pal[color];
+                        cell.style.backgroundColor = color ? pal[0] : 'white';
+                        while (cell.firstChild) cell.removeChild(cell.firstChild);
+                        cell.appendChild(document.createTextNode(cp437.substr((wideMode ? 256 : 0) + b, 1)));
+                        if (narrowMode)
+                        {
+                            var b2 = cp437_fullwidth_rhs[b];
+                            var subcell = document.createElement('div');
+                            subcell.style.position = 'absolute';
+                            subcell.style.left = '' + Math.floor(tile_w / 2 * mag) + 'px';
+                            subcell.style.top = '0px';
+                            subcell.style.height = '' + Math.floor(tile_h * mag) + 'px';
+                            subcell.style.width = '' + Math.floor(tile_w * mag) + 'px';
+                            subcell.style.clip = 'rect(0px ' + Math.floor(tile_w / 2 * mag) + 'px ' + Math.floor(tile_h * mag) + 'px 0px)';
+                            subcell.appendChild(document.createTextNode(cp437.substr((wideMode ? 256 : 0) + b2, 1)));
+                            cell.appendChild(subcell);
+                        }
+                    }
+                    else
+                    {
+                        var tile = cells[r][c].img;
+                        if (tile.style.left != left) tile.style.left = left;
+                        if (tile.style.top != top) tile.style.top = top;
+                    }
+                    cells[r][c].cell.style.visibility = 'visible';
+                }
+            }
+            for (var n = 0; n < SPRITES; n ++)
+            {
+                if (! sprites[n].dirty) continue;
+                sprites[n].dirty = false;
+                var b = (sprites[n].stile + sprites[n].frame) % 256;
+                var color = sprites[n].color % 16;
+                if (mono) color = 0xF;
+                var top = '' + (-Math.floor(stile_h * mag) * b) + 'px';
+                var left = '' + (-Math.floor(stile_w * mag) * color) + 'px';
+                if (textMode)
+                {
+                    var sprite = sprites[n].sprite;
+                    sprite.style.color = pal[color];
+                    sprite.removeChild(sprite.firstChild);
+                    while (sprite.firstChild) sprite.removeChild(cell.firstChild);
+                    var ch = unistile.substr(b, 1);
+                    var b2 = cp437.substr(0, 256).indexOf(ch);
+                    if (wideMode && (b2 >= 0))
+                    {
+                        ch = cp437.substr(256 + b2, 1);
+                    }
+                    sprite.appendChild(document.createTextNode(ch));
+                }
+                else
+                {
+                    var stile = sprites[n].img;
+                    if (stile.style.left != left) stile.style.left = left;
+                    if (stile.style.top != top) stile.style.top = top;
+                }
+                var top = '' + Math.floor((sprites[n].y - (stile_h / 2) + MAZE_Y * tile_h) * Math.floor(mag * tile_h) / tile_h) + 'px';
+                var left = '' + Math.floor((sprites[n].x - (stile_w / 2) + MAZE_X * tile_w) * Math.floor(mag * tile_w) / tile_w) + 'px';
+                var visibility = sprites[n].visible ? 'visible' : 'hidden';
+                var sprite = sprites[n].sprite;
+                if (sprite.style.left != left) sprite.style.left = left;
+                if (sprite.style.top != top) sprite.style.top = top;
+                if (sprite.style.visibility != visibility) sprite.style.visibility = visibility;
+            }
+        }
+        var visw, vish;
+        if (self.innerHeight)
+        {
+            visw = self.innerWidth;
+            vish = self.innerHeight;
+        }
+        else
+        {
+            var elt = document.documentElement ? document.documentElement : document.body ? document.body : document;
+            visw = elt.clientWidth;
+            vish = elt.clientHeight;
+        }
+        if (! visw) visw = virtw;
+        if (! vish) vish = virth;
+        var ox, oy;
+        if (self.pageXOffset)
+        {
+            ox = self.pageXOffset;
+            oy = self.pageYOffset;
+        }
+        else
+        {
+            var elt = document.documentElement ? document.documentElement : document.body ? document.body : document;
+            ox = elt.scrollLeft;
+            oy = elt.scrollTop;
+        }
+        if (! ox) ox = 0;
+        if (! oy) oy = 0;
+        var nox = Math.floor((xfocus + MAZE_X * tile_w) * Math.floor(mag * tile_w) / tile_w - visw / 2);
+        if (nox < 0) nox = 0;
+        if (nox > (virtw - visw)) nox = virtw - visw;
+        var noy = Math.floor((yfocus + MAZE_Y * tile_h) * Math.floor(mag * tile_h) / tile_h - vish / 2);
+        if (noy < 0) noy = 0;
+        if (noy > (virth - vish)) noy = virth - vish;
+        if ((nox != ox) || (noy != oy))
+        {
+            self.scrollTo(nox, noy);
+        }
+        var noriginx = 0;
+        var noriginy = 0;
+        if (vish > virth)
+        {
+            noriginy = Math.floor((vish - virth) / 2);
+        }
+        if (visw > virtw)
+        {
+            noriginx = Math.floor((visw - virtw) / 2);
+        }
+        if (noriginy != originy)
+        {
+            originy = noriginy;
+            display.style.top = '' + originy + 'px';
+        }
+        if (noriginx != originx)
+        {
+            originx = noriginx;
+            display.style.left = '' + originx + 'px';
+        }
+        framecount ++;
+        setTimeout(draw, 0.100e3);
+    });
+    draw();
+})();
+/*]]>*/
+</script>
+<noscript><p style="text-align: center; border: 3px solid red; margin: 1em 2em; padding: 1em 2em; font-family: sans-serif; font-size: 12pt;">Please enable JavaScript to use this application.</p></noscript>
+</body>
+</html>
