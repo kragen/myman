@@ -3476,6 +3476,9 @@ spr \
 utl \
 sfx \
 gfx \
+$(website_dirs)
+
+website_dirs = \
 website \
 website/cgi-bin \
 website/htdocs
@@ -3495,6 +3498,7 @@ endif
 .PHONY: push-website
 
 push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
+	$(RSYNC) $(RSYNCFLAGS) -aessh --dirs $(foreach dir,$(website_dirs),$(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman$(call s,website,,$(dir)/))) $(call q,$(srcdir))/website/
 	$(RSYNC) $(RSYNCFLAGS) -aessh --delete $(call q,$(srcdir))/website/ $(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman/)
 	@$(ECHOLINE) $(call q,Now visit the website here:$(char_newline)\
 http://myman.sf.net/$(char_newline)\
