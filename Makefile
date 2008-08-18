@@ -3447,6 +3447,7 @@ $(website_files)
 website_files = \
 website/htdocs/favicon.ico \
 website/htdocs/index.html \
+website/htdocs/myman-0.7.0.png \
 website/htdocs/snap0000.html \
 website/htdocs/snap0000.txt
 
