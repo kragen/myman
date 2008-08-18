@@ -1032,6 +1032,11 @@ ifeq ($(subst default,undefined,$(origin REMOVE)),undefined)
 REMOVE = $(RM) $(RMFLAGS) $(EXTRARMFLAGS)
 endif
 
+# remote file synchronization
+ifeq ($(subst default,undefined,$(origin RSYNC)),undefined)
+RSYNC = rsync
+endif
+
 # function to generate removal command for file $1
 uninstall_file = test ! -f $(call q,$1) -o -L $(call q,$1) || \
             ($(ECHOLINEX) removing file $(call q,$1) && \
@@ -3474,12 +3479,12 @@ endif
 .PHONY: push-website
 
 push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
-	rsync -avessh --delete $(call q,$(srcdir))/website/ shell.sourceforge.net:/home/groups/m/my/myman/
+	$(RSYNC) -avessh --delete --size-only $(call q,$(srcdir))/website/ 'shell.sourceforge.net:/home/groups/m/my/myman/'
 
 .PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
 fill-dir-xq-$(call xq,$(CVSDIST)):
-	rsync -av --delete 'rsync://myman.cvs.sourceforge.net/cvsroot/myman/*' $(call q,$(CVSDIST))
+	$(RSYNC) -av --delete 'rsync://myman.cvs.sourceforge.net/cvsroot/myman/*' $(call q,$(CVSDIST))
 
 .PHONY: cvsdist
 
