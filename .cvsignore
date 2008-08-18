@@ -3,11 +3,13 @@ config.status
 GNUmakefile
 makefile.cp
 myman
-myman.exe
 myman-cvs
+myman-cvs-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].tar.gz
+myman-wip-[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9].tar.gz
 myman.6
 myman.command
 myman.dvi
+myman.exe
 myman.html
 myman.ps
 myman.txt
