@@ -587,10 +587,16 @@ ifeq ($(subst default,undefined,$(origin BINDIST)),undefined)
 BINDIST = $(DIST)-$(host)
 endif
 
-## CVSDIST: CVS snapshot package name (without suffix)
+## CVSDUMP: CVS repository dump package name (without suffix)
+
+ifeq ($(subst default,undefined,$(origin CVSDUMP)),undefined)
+CVSDUMP = $(MYMAN)-cvs
+endif
+
+## CVSDIST: CVS source snapshot package name (without suffix)
 
 ifeq ($(subst default,undefined,$(origin CVSDIST)),undefined)
-CVSDIST = $(MYMAN)-cvs
+CVSDIST = $(MYMAN)-wip-$(isodate)
 endif
 
 ## directories
@@ -1039,6 +1045,11 @@ RSYNC = rsync
 endif
 ifeq ($(subst default,undefined,$(origin RSYNCFLAGS)),undefined)
 RSYNCFLAGS = -vP
+endif
+
+# version control system
+ifeq ($(subst default,undefined,$(origin CVS)),undefined)
+CVS = cvs
 endif
 
 # SourceForge user name to use with rsync-over-ssh
@@ -2718,7 +2729,7 @@ distclean::
 
 distclean mostlyclean:: clean
 
-maintainer-clean:: distclean wipe-dir-xq-$(call mwxq,$(CVSDIST))
+maintainer-clean:: distclean wipe-dir-xq-$(call mwxq,$(CVSDUMP))
 
 pdcicon.bmp: $(srcdir)/gfx/myman.png
 	@-$(CONVERT_TO_BMP)
@@ -3528,26 +3539,35 @@ push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
 	@$(ECHOLINE) $(call q,    $(MYMANWEBSITE))
 	@$(ECHOLINE) $(call q,And make sure it works.)
 
-.PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
+.PHONY: fill-dir-xq-$(call mwxq,$(CVSDUMP))
 
-fill-dir-xq-$(call xq,$(CVSDIST)):
-	$(RSYNC) $(RSYNCFLAGS) -a --delete $(call q,$(MYMANCVSRSYNC)) $(call q,$(CVSDIST))
+fill-dir-xq-$(call xq,$(CVSDUMP)):
+	$(RSYNC) $(RSYNCFLAGS) -a --delete $(call q,$(MYMANCVSRSYNC)) $(call q,$(CVSDUMP))
 
 .PHONY: push-cvsdist
 
-push-cvsdist: cvsdist
-	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(UPLOADSRSYNC))
+push-cvsdist: cvsdump cvsdist
+	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDUMP))-$(isodate)$(tgz) $(call q,$(CVSDIST))$(tgz) $(call q,$(UPLOADSRSYNC))
 	@$(ECHOLINE) $(call q,)
 	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:)
 	@$(ECHOLINE) $(call q,    $(UPLOADSWEBSITE))
-	@$(ECHOLINE) $(call q,And add the file $(CVSDIST)-$(isodate)$(tgz) to it.)
+	@$(ECHOLINE) $(call q,And add the files $(CVSDUMP)-$(isodate)$(tgz) and $(CVSDIST)$(tgz) to it.)
 
 .PHONY: cvsdist
 
-cvsdist: compressed-tarball-xq-$(call mwxq,$(CVSDIST))
-	-$(REMOVE) $(call q,$(CVSDIST))$(tar)
-	$(INSTALL_DATA) $(call q,$(CVSDIST))$(tgz) $(call q,$(CVSDIST))-$(isodate)$(tgz)
-	-$(REMOVE) $(call q,$(CVSDIST))$(tgz)
+cvsdist: fill-dir-xq-$(call xq,$(CVSDUMP)) empty-dir-xq-$(call mwxq,$(CVSDIST))
+	$(CVS) -d $(call q,$(shell pwd)/$(CVSDUMP)) co -P -d $(call q,$(CVSDIST)) myman
+	$(MAKE) -C $(call q,$(CVSDIST)) dist DIST=$(call q,$(CVSDIST))
+	$(INSTALL_DATA) $(call q,$(CVSDIST)/$(CVSDIST))$(tgz) $(call q,$(CVSDIST))$(tgz)
+	@$(MAKE) $(MAKELOOP) \
+            wipe-dir-xq-$(call qxq,$(CVSDIST))
+
+.PHONY: cvsdump
+
+cvsdump: compressed-tarball-xq-$(call mwxq,$(CVSDUMP))
+	-$(REMOVE) $(call q,$(CVSDUMP))$(tar)
+	$(INSTALL_DATA) $(call q,$(CVSDUMP))$(tgz) $(call q,$(CVSDUMP))-$(isodate)$(tgz)
+	-$(REMOVE) $(call q,$(CVSDUMP))$(tgz)
 
 .PHONY: fill-dir-xq-$(DIST)
 
@@ -3988,13 +4008,14 @@ ifeq (yes,$(with_mac))
 clean:: wipe-dir-xq-$(call mwxq,$(MYMAN).app)
 endif
 
-clean:: wipe-dir-xq-$(call mwxq,$(DIST)) wipe-dir-xq-$(call mwxq,$(BINDIST))
+clean:: wipe-dir-xq-$(call mwxq,$(DIST)) wipe-dir-xq-$(call mwxq,$(BINDIST)) wipe-dir-xq-$(call mwxq,$(CVSDIST))
 	-$(REMOVE) config.h
 	-$(REMOVE) $(DIST)$(tgz) $(DIST)$(tar)
 	-$(REMOVE) $(BINDIST)$(tgz) $(BINDIST)$(tar)
-	-$(REMOVE) $(CVSDIST)$(tgz) $(CVSDIST)$(tar)
-	-$(REMOVE) $(CVSDIST)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tgz)
-	-$(REMOVE) $(CVSDIST)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tar)
+	-$(REMOVE) $(CVSDUMP)$(tgz) $(CVSDUMP)$(tar)
+	-$(REMOVE) $(CVSDUMP)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tgz)
+	-$(REMOVE) $(CVSDUMP)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tar)
+	-$(REMOVE) $(CVSDIST)$(tgz)
 ifeq (yes,$(with_zip))
 	-$(REMOVE) $(BINDIST).zip
 endif
