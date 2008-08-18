@@ -746,6 +746,7 @@ MYMAN_EXE \
 MYMANCOMMAND_EXE \
 MYMANCOPYRIGHT \
 MYMANVERSION \
+MYMANWEBSITE \
 PKG_CONFIG \
 SDL_CONFIG \
 SHELL \
@@ -1050,6 +1051,21 @@ SFPREFIX = $(SFUSER)@
 else
 SFPREFIX =
 endif
+endif
+ifeq ($(subst default,undefined,$(origin MYMANWEBSITE)),undefined)
+MYMANWEBSITE = http://myman.sf.net/
+endif
+ifeq ($(subst default,undefined,$(origin MYMANWEBSITERSYNC)),undefined)
+MYMANWEBSITERSYNC = $(SFPREFIX)shell.sf.net:/home/groups/m/my/myman
+endif
+ifeq ($(subst default,undefined,$(origin UPLOADSRSYNC)),undefined)
+UPLOADSRSYNC = $(SFPREFIX)frs.sf.net:uploads/
+endif
+ifeq ($(subst default,undefined,$(origin UPLOADSWEBSITE)),undefined)
+UPLOADSWEBSITE = http://sourceforge.net/project/admin/newrelease.php?package_id=288220&group_id=236995
+endif
+ifeq ($(subst default,undefined,$(origin MYMANCVSRSYNC)),undefined)
+MYMANCVSRSYNC = rsync://myman.cvs.sf.net/cvsroot/myman/*
 endif
 
 # function to generate removal command for file $1
@@ -2284,6 +2300,7 @@ endif
 substitute_vars = \
 MYMAN \
 MYMANVERSION \
+MYMANWEBSITE \
 MYMANCOPYRIGHT \
 host \
 date \
@@ -3498,24 +3515,32 @@ endif
 .PHONY: push-website
 
 push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
-	$(RSYNC) $(RSYNCFLAGS) -aessh --dirs $(foreach dir,$(website_dirs),$(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman$(call s,website,,$(dir)/))) $(call q,$(srcdir))/website/
-	$(RSYNC) $(RSYNCFLAGS) -aessh --delete $(call q,$(srcdir))/website/ $(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman/)
-	@$(ECHOLINE) $(call q,Now visit the website here:$(char_newline)\
-http://myman.sf.net/$(char_newline)\
-And make sure it works.)
+	$(foreach dir,$(website_dirs),\
+            test -d $(call q,$(dir)) || \
+            ($(ECHOLINEX) creating directory $(call q,$(dir)) && \
+                $(INSTALL_DIR) $(call q,$(dir))) || \
+                exit $$?; \
+            $(RSYNC) $(RSYNCFLAGS) -essh --times --dirs $(call q,$(MYMANWEBSITERSYNC)$(call s,$(call xq,website)%,%,$(dir))/) $(call q,$(srcdir)/$(dir)/) || \
+                exit $$?;)
+	$(RSYNC) $(RSYNCFLAGS) -aessh --delete $(call q,$(srcdir))/website/ $(call q,$(MYMANWEBSITERSYNC)/)
+	@$(ECHOLINE) $(call q,)
+	@$(ECHOLINE) $(call q,Now visit the website here:)
+	@$(ECHOLINE) $(call q,    $(MYMANWEBSITE))
+	@$(ECHOLINE) $(call q,And make sure it works.)
 
 .PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
 fill-dir-xq-$(call xq,$(CVSDIST)):
-	$(RSYNC) $(RSYNCFLAGS) -a --delete 'rsync://myman.cvs.sf.net/cvsroot/myman/*' $(call q,$(CVSDIST))
+	$(RSYNC) $(RSYNCFLAGS) -a --delete $(call q,$(MYMANCVSRSYNC)) $(call q,$(CVSDIST))
 
 .PHONY: push-cvsdist
 
 push-cvsdist: cvsdist
-	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(SFPREFIX)frs.sf.net:uploads/)
-	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:$(char_newline)\
-http://sourceforge.net/project/admin/newrelease.php?package_id=288220&group_id=236995$(char_newline)\
-And add the file $(CVSDIST)-$(isodate)$(tgz) to it.)
+	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(UPLOADSRSYNC))
+	@$(ECHOLINE) $(call q,)
+	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:)
+	@$(ECHOLINE) $(call q,    $(UPLOADSWEBSITE))
+	@$(ECHOLINE) $(call q,And add the file $(CVSDIST)-$(isodate)$(tgz) to it.)
 
 .PHONY: cvsdist
 

@@ -903,8 +903,8 @@ listed in the in-game help screen reachable by pressing ? or Ctrl-H.
 .BR X (7)
 .TP
 .B Home Page for `MyMan'
-.HTML <a href="http://geocities.com/bsittler/#myman">
-<http://geocities.com/bsittler/#myman>
+.HTML <a href="@MYMANWEBSITE@">
+<@MYMANWEBSITE@>
 .HTML </a>
 .TP
 .B SourceForge Project Page for `ctheme'
