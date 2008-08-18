@@ -3495,7 +3495,10 @@ endif
 .PHONY: push-website
 
 push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
-	$(RSYNC) $(RSYNCFLAGS) -aessh --delete --size-only $(call q,$(srcdir))/website/ $(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman/)
+	$(RSYNC) $(RSYNCFLAGS) -aessh --delete $(call q,$(srcdir))/website/ $(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman/)
+	@$(ECHOLINE) $(call q,Now visit the website here:$(char_newline)\
+http://myman.sf.net/$(char_newline)\
+And make sure it works.)
 
 .PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
