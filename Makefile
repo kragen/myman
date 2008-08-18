@@ -3506,7 +3506,7 @@ fill-dir-xq-$(call xq,$(CVSDIST)):
 
 push-cvsdist: cvsdist
 	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(SFPREFIX)frs.sf.net:uploads/)
-	$(ECHOLINEX) $(call q,Now create a new file release called myman-cvs-$(isodate) here:$(char_newline)\
+	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:$(char_newline)\
 http://sourceforge.net/project/admin/newrelease.php?package_id=288220&group_id=236995$(char_newline)\
 And add the file $(CVSDIST)-$(isodate)$(tgz) to it.)
 
