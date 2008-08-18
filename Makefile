@@ -3430,6 +3430,9 @@ utl/xmyman2.in \
 utl/xmyman3.in \
 utl/xmyman4.in \
 utl/xquack.in \
+$(website_files)
+
+website_files = \
 website/htdocs/favicon.ico \
 website/htdocs/index.html \
 website/htdocs/snap0000.html \
@@ -3460,6 +3463,11 @@ endif
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
 UTILS = $(call mw,$(srcdir)/inc/utils.h) $(call mw,$(srcdir)/src/utils.c)
 endif
+
+.PHONY: push-website
+
+push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
+	rsync -avessh --delete $(call q,$(srcdir))/website/ shell.sourceforge.net:/home/groups/m/my/myman/
 
 .PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
