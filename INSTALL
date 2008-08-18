@@ -53,6 +53,8 @@ myman-VERSION-HOST directory:
 
 Note that the binaries you install may depend on dynamically linked
 libraries which will also need to be installed before myman will work.
+On Linux systems you can generally determine which libraries are needed
+by running 'ldd myman'; on Mac OS X systems use 'otool -L myman' instead.
 
 
 Installation from Source
