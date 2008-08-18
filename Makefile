@@ -1036,6 +1036,21 @@ endif
 ifeq ($(subst default,undefined,$(origin RSYNC)),undefined)
 RSYNC = rsync
 endif
+ifeq ($(subst default,undefined,$(origin RSYNCFLAGS)),undefined)
+RSYNCFLAGS = -vP
+endif
+
+# SourceForge user name to use with rsync-over-ssh
+ifeq ($(subst default,undefined,$(origin SFUSER)),undefined)
+SFUSER =
+endif
+ifeq ($(subst default,undefined,$(origin SFPREFIX)),undefined)
+ifneq ($(SFUSER),)
+SFPREFIX = $(SFUSER)@
+else
+SFPREFIX =
+endif
+endif
 
 # function to generate removal command for file $1
 uninstall_file = test ! -f $(call q,$1) -o -L $(call q,$1) || \
@@ -3480,12 +3495,20 @@ endif
 .PHONY: push-website
 
 push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
-	$(RSYNC) -avessh --delete --size-only $(call q,$(srcdir))/website/ 'shell.sourceforge.net:/home/groups/m/my/myman/'
+	$(RSYNC) $(RSYNCFLAGS) -aessh --delete --size-only $(call q,$(srcdir))/website/ $(call q,$(SFPREFIX)shell.sf.net:/home/groups/m/my/myman/)
 
 .PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
 fill-dir-xq-$(call xq,$(CVSDIST)):
-	$(RSYNC) -av --delete 'rsync://myman.cvs.sourceforge.net/cvsroot/myman/*' $(call q,$(CVSDIST))
+	$(RSYNC) $(RSYNCFLAGS) -a --delete 'rsync://myman.cvs.sf.net/cvsroot/myman/*' $(call q,$(CVSDIST))
+
+.PHONY: push-cvsdist
+
+push-cvsdist: cvsdist
+	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(SFPREFIX)frs.sf.net:uploads/)
+	$(ECHOLINEX) $(call q,Now create a new file release called myman-cvs-$(isodate) here:$(char_newline)\
+http://sourceforge.net/project/admin/newrelease.php?package_id=288220&group_id=236995$(char_newline)\
+And add the file $(CVSDIST)-$(isodate)$(tgz) to it.)
 
 .PHONY: cvsdist
 
@@ -3493,13 +3516,6 @@ cvsdist: compressed-tarball-xq-$(call mwxq,$(CVSDIST))
 	-$(REMOVE) $(call q,$(CVSDIST))$(tar)
 	$(INSTALL_DATA) $(call q,$(CVSDIST))$(tgz) $(call q,$(CVSDIST))-$(isodate)$(tgz)
 	-$(REMOVE) $(call q,$(CVSDIST))$(tgz)
-
-dist:: $(call mw,$(MAKEFILE))
-	@$(MAKE) $(MAKELOOP) \
-            compressed-tarball-xq-$(call qxq,$(DIST))
-	-$(REMOVE) $(DIST)$(tar)
-	@$(MAKE) $(MAKELOOP) \
-            wipe-dir-xq-$(call qxq,$(DIST))
 
 .PHONY: fill-dir-xq-$(DIST)
 
