@@ -4499,7 +4499,7 @@ $(BOOTSTRAP)$O: $(call mw,$(srcdir))/src/myman.c $(call mw,$(srcdir))/$(MYGETOPT
 define variant_template
 $$(call mymanvariant_data,$1).c: $$(call mw,$$(BOOTSTRAP)$$X) $$(call mw,$$(call tilefile,$$(MYMANSIZE))) $$(call mw,$$(call spritefile,$$(MYMANSIZE))) $$(call mw,$$(call mazefile,$1))
 	@$(MKPARENTDIR)
-	@($$(ECHOLINEX) creating $$(call q,$$(call mymanvariant_data,$1).c) from $$(call q,$$(call mazefile,$1)) ; \
+	@($$(ECHOLINEX) $$(call q,creating $$(call mymanvariant_data,$1).c from $$(call mazefile,$1) for --variant=$1); \
             $$(call q,$$(XBOOTSTRAP)) -m $$(call q,$$(call mazefile,$1)) -MF $$(call q,$$(call mymanvariant_data,$1).c) \
             || exit $$$$?; \
         )
@@ -4510,7 +4510,7 @@ $(eval $(foreach variant,$(MYMANVARIANTS),$(call variant_template,$(variant))$(c
 define size_template
 $$(call mymansize_data,$1).c: $$(call mw,$$(BOOTSTRAP)$$X) $$(call mw,$$(call tilefile,$1)) $$(call mw,$$(call spritefile,$1)) $$(call mw,$$(call mazefile,$(MYMANVARIANT)))
 	@$(MKPARENTDIR)
-	@($$(ECHOLINEX) creating $$(call q,$$(call mymansize_data,$1).c) from $$(call q,$$(call tilefile,$1)) and $$(call q,$$(call spritefile,$1)) ; \
+	@($$(ECHOLINEX) $$(call q,creating $$(call mymansize_data,$1).c from $$(call tilefile,$1) and $$(call spritefile,$1) for --size=$1) ; \
             $$(call q,$$(XBOOTSTRAP)) -t $$(call q,$$(call tilefile,$1)) -s $$(call q,$$(call spritefile,$1)) -STF $$(call q,$$(call mymansize_data,$1).c) \
             || exit $$$$?; \
         )
