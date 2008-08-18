@@ -1,6 +1,6 @@
 #!/bin/sh --
 # configure - configuration script for the MyMan text-terminal video game
-# Copyright 2003, 2006, Benjamin Sittler <bsittler@gmail.com>
+# Copyright 2003, 2006-2007, Benjamin Sittler <bsittler@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -22,8 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 # DEALINGS IN THE SOFTWARE.
 
+# Bourne-compatible shell
+SHELL=/bin/sh
+
+# GNU sed (or possibly a compatible stream editor)
+SED="${SED:-`type -p gsed >/dev/null 2>&1 && type -p gsed 2>/dev/null || echo sed`}"
+
 # version of this script
-configure_version=0.4
+configure_version=0.5
 
 # character classes
 charclass_ascii_lower="abcdefghijklmnopqrstuvwxyz"
@@ -35,15 +41,34 @@ charclass_ascii_id="${charclass_ascii_lower}${charclass_ascii_upper}${charclass_
 basename=myman
 
 # file we search for to verify that a directory contains MyMan sources
-testfile="myman.c"
+testfile="src/myman.c"
 
 # temporary filename used during generation of output files
 conftmp="_conftmp.$$"
 trap 'test -f "${conftmp}" && rm -f "${conftmp}"' 0 >/dev/null 2>&1
 
 # make sure some standard directories are in our search path
-PATH="${PATH:-}:/usr/bin:/bin"
-export PATH
+if test :"${OSTYPE}" != :"msdosdjgpp"
+then
+    PATH="${PATH:-}:/usr/bin:/bin"
+    export PATH
+fi
+
+features=
+
+feature()
+{
+    _features_=" ${features} "
+    if test :"${_features_%* $1 *}" = :"${_features_}"
+    then
+        if test :"${features}" != :""
+        then
+            features="${features} "
+        fi
+        features="${features}${1}"
+    fi
+    eval "${1}"'="${2}"'
+}
 
 export cputype
 
@@ -65,33 +90,30 @@ ostype="${ostype:-`
 
 srcdir=
 date=`unset LC_TIME; unset LC_ALL; unset LANG; unset LC_CTYPE; date || echo unknown`
+feature date "${date}"
+
+isodate=`unset LC_TIME; unset LC_ALL; unset LANG; unset LC_CTYPE; TZ=UTC date "+%Y-%m-%d" || echo unknown`
+feature isodate "${isodate}"
 
 build=`
     (
-        bash -c '
+        ${SHELL} -c '
             echo "${MACHTYPE:-${cputype:-unknown}-${vendor:-unknown}-${ostype:-unknown}}"
         ' 2>/dev/null ||
             echo "${MACHTYPE:-${cputype:-unknown}-${vendor:-unknown}-${ostype:-unknown}}"
     ) |
-        sed '
+        ${SED} '
            s/\([^-/]\+\)\/\([^-]\+\)/\2-\1/g;
         ' |
             tr "${charclass_ascii_upper}"/ "${charclass_ascii_lower}"-
 `
+feature build "${build}"
 host=
-features=
-
-feature()
-{
-    if test :"${features}" != :""
-    then
-        features="${features} "
-    fi
-    features="${features}${1}"
-    eval "${1}"'="${2}"'
-}
 
 ${START_ECHOLINE_LIBRARY}
+
+# GNU sed (or possibly a compatible stream editor)
+SED="${SED:-`type -p gsed >/dev/null 2>&1 && type -p gsed 2>/dev/null || echo sed`}"
 
 # special characters
 char_tab='	'
@@ -131,7 +153,7 @@ __EOF__
 echolinex()
 {
     echoline "$*" |
-        sed -ne '1 h; 2,$ H; $ {; g; s/[\\?""]/\\&/g; s/'"${char_tab}"'/\\t/g; s/'"\\${char_newline}"'/\\n/g; p; }'
+        ${SED} -ne '1 h; 2,$ H; $ {; g; s/[\\?""]/\\&/g; s/'"${char_tab}"'/\\t/g; s/'"\\${char_newline}"'/\\n/g; p; }'
 }
 
 ${END_ECHOLINE_LIBRARY}
@@ -153,14 +175,14 @@ varsafe()
     # --enable and --with parameter names into shell variable names
 
     echoline "$*" |
-        sed -ne 's/[^'"${charclass_ascii_id}"']/_/g; 1 h; 2,$ H; $ {; g; s/\
+        ${SED} -ne 's/[^'"${charclass_ascii_id}"']/_/g; 1 h; 2,$ H; $ {; g; s/\
 /_/g; p; }'
 }
 
 qw()
 {
     echoline "$*" |
-        sed -ne 's/\([ '\!'"#$&'\''()*;<>?@^`{|}~\\]\|\[\|\]\)/\\\1/g; 1 h; 2,$ H; $ {; g; s/\
+        ${SED} -ne 's/\([ '\!'"#$&'\''()*;<>?@^`{|}~\\]\|\[\|\]\)/\\\1/g; 1 h; 2,$ H; $ {; g; s/\
 /"${char_newline}"/g; s/'"${char_tab}"'/"${char_tab}"/g; p; }'
 }
 
@@ -168,7 +190,7 @@ mqw()
 {
 
     echoline "$*" |
-        sed -ne '
+        ${SED} -ne '
             1 h;
             2,$ H;
             $ {;
@@ -225,19 +247,19 @@ dump_command=echoline
 while test $# -gt 0
 do
   case :"$1" in
-      :"-help"|:"-help="*|:"-enable-"*"="*|:"-enable-"*|:"-disable-"*|:"-with-"*"="*|:"-with-"*|:"-without-"*|:"-srcdir="*|:"-build="*|:"-host="*|:"-srcdir"|:"-build"|:"-host"|:"-prefix"|:"-exec"[-_]"prefix"|:"-bindir"|:"-sbindir"|:"-libexecdir"|:"-datarootdir"|:"-datadir"|:"-sysconfdir"|:"-sharedstatedir"|:"-localstatedir"|:"-docdir"|:"-includedir"|:"-oldincludedir"|:"-infodir"|:"-libdir"|:"-lispdir"|:"-localedir"|:"-mandir"|:"-version"|:"-x-includes"|:"-x-libraries"|:"-prefix="*|:"-exec"[-_]"prefix="*|:"-bindir="*|:"-sbindir="*|:"-libexecdir="*|:"-datarootdir="*|:"-datadir="*|:"-sysconfdir="*|:"-sharedstatedir="*|:"-localstatedir="*|:"-docdir="*|:"-includedir="*|:"-oldincludedir="*|:"-infodir="*|:"-libdir="*|:"-lispdir="*|:"-localedir="*|:"-mandir="*|:"-version="*|:"-x-includes="*|:"-x-libraries="*|:"-dump"|:"-dump="*|:"-dump-ucase"|:"-dump-ucase="*)
+      :"-help"|:"-help="*|:"-enable"[-_]*"="*|:"-enable"[-_]*|:"-disable"[-_]*|:"-with"[-_]*"="*|:"-with"[-_]*|:"-without"[-_]*|:"-srcdir="*|:"-build="*|:"-host="*|:"-srcdir"|:"-build"|:"-host"|:"-prefix"|:"-exec"[-_]"prefix"|:"-bindir"|:"-objdir"|:"-sbindir"|:"-appdir"|:"-libexecdir"|:"-datarootdir"|:"-datadir"|:"-sysconfdir"|:"-sharedstatedir"|:"-localstatedir"|:"-docdir"|:"-includedir"|:"-oldincludedir"|:"-infodir"|:"-libdir"|:"-lispdir"|:"-localedir"|:"-mandir"|:"-program"[-_]"prefix"|:"-program"[-_]"suffix"|:"-program"[-_]"transform"[-_]"name"|:"-version"|:"-x"[-_]"includes"|:"-x"[-_]"libraries"|:"-prefix="*|:"-exec"[-_]"prefix="*|:"-bindir="*|:"-objdir="*|:"-sbindir="*|:"-appdir="*|:"-libexecdir="*|:"-datarootdir="*|:"-datadir="*|:"-sysconfdir="*|:"-sharedstatedir="*|:"-localstatedir="*|:"-docdir="*|:"-includedir="*|:"-oldincludedir="*|:"-infodir="*|:"-libdir="*|:"-lispdir="*|:"-localedir="*|:"-mandir="*|:"-program"[-_]"prefix="*|:"-program"[-_]"suffix="*|:"-program"[-_]"transform"[-_]"name="*|:"-version="*|:"-x"[-_]"includes="*|:"-x"[-_]"libraries="*|:"-dump"|:"-dump="*|:"-dump"[-_]"ucase"|:"-dump"[-_]"ucase="*)
           _param="${1}"
           shift
           set : "-${_param}" "$@"
           shift
           ;;
-      :"--prefix="*|:"--exec"[-_]"prefix="*|:"--bindir="*|:"--sbindir="*|:"--libexecdir="*|:"--datarootdir="*|:"--datadir="*|:"--sysconfdir="*|:"--sharedstatedir="*|:"--localstatedir="*|:"--docdir="*|:"--includedir="*|:"--oldincludedir="*|:"--infodir="*|:"--libdir="*|:"--lispdir="*|:"--localedir="*|:"--mandir="*)
+      :"--prefix="*|:"--exec"[-_]"prefix="*|:"--bindir="*|:"--objdir="*|:"--appdir="*|:"--sbindir="*|:"--libexecdir="*|:"--datarootdir="*|:"--datadir="*|:"--sysconfdir="*|:"--sharedstatedir="*|:"--localstatedir="*|:"--docdir="*|:"--includedir="*|:"--oldincludedir="*|:"--infodir="*|:"--libdir="*|:"--lispdir="*|:"--localedir="*|:"--mandir="*|:"--program"[-_]"prefix="*|:"--program"[-_]"suffix="*|:"--program"[-_]"transform"[-_]"name="*)
           opt="${1%%=*}"
           opt="${opt#--}"
-          eval `varsafe "${opt}"`='"${1#*=}"'
+          feature `varsafe "${opt}"` "${1#*=}"
           shift
           ;;
-      :"--disable-"*"="*|:"--with-"*"="*|:"--without-"*"="*|:"--version="*|:"--dump-ucase="*|:"--dump-escaped="*)
+      :"--disable"[-_]*"="*|:"--with"[-_]*"="*|:"--without"[-_]*"="*|:"--version="*|:"--dump"[-_]"ucase="*|:"--dump"[-_]"escaped="*)
           opt="${1%%=*}"
           echolinex "${progname}": option \`"${opt}"\' doesn\'t allow an argument >&2
           echolinex Try \`"${progname}" --help\' for more information. >&2
@@ -247,11 +269,11 @@ do
           echolinex "${basename}" configure "${configure_version}"
           exit 0
           ;;
-      :"--dump-ucase")
+      :"--dump"[-_]"ucase")
           dump_tr=' | tr "${charclass_ascii_lower}" "${charclass_ascii_upper}"'
           shift
           ;;
-      :"--dump-escaped")
+      :"--dump"[-_]"escaped")
           dump_command=echolinex
           shift
           ;;
@@ -270,6 +292,7 @@ do
           echoline "--build=BUILD      "type of system to build the program on \[guessed\]
           echoline "--host=HOST        "type of system to build the program for \[BUILD\]
           echolinex "--srcdir=DIR       "look for \`"${basename}"\' package in DIR \(default: . or ..\)
+          echoline "--objdir=DIR       "create intermediate object files in DIR \(default: obj\)
           echoline
           echoline Installation Directories:
           echoline "--prefix=PREFIX    "common prefix for installation directories \[/usr/local\]
@@ -280,6 +303,15 @@ do
           echoline "                   "for individual variant executables \[EPREFIX/libexec\]
           echoline "--datadir=DATADIR  "for architecture-independent data files \[PREFIX/share\]
           echoline "--docdir=DOCDIR    "for plain-text documentation \[PREFIX/share/doc\]
+          echoline "--appdir=APPDIR    "for myman.app \[/Applications\] \(only used when building for Carbon\)
+          echoline
+          echoline Installation Options:
+          echoline --program-prefix=PREFIX
+          echoline "                   "prepend PREFIX to installed program names
+          echoline --program-suffix=SUFFIX
+          echoline "                   "append SUFFIX to installed program names
+          echoline --program-transform-name=SCRIPT
+          echoline "                   "run sed commands given by SCRIPT on installed program names
           echoline
           echoline Optional Features and Packages:
           echoline --enable-FEATURE\[=yes\] or
@@ -301,69 +333,106 @@ do
           echoline "                   "include all sizes except those explicitly disabled
           echoline --enable-size-SIZE\[=yes\]
           echoline "                   "include the tile size SIZE
-          echoline --enable-monolithic
-          echoline "                   "create a single, monolithic executable
-          echoline "--with-slang-utf8  "use UTF-8 S/Lang curses emulation \(a.k.a. slcurses\)
-          echoline "--with-slang       "use S/Lang curses emulation \(a.k.a. slcurses\)
+          echoline "--with-libiconv    "use iconv\(3\) for character set conversions
+          echoline "--with-xterm       "use xterm\(1\) to display under the X\(7\) Window System
+          echoline "                   "\(installs xmyman, xmyman3, xquackman, xbigman, xhugeman, and xbitman\*\)
+          echoline "--with-rxvt        "use rxvt\(1\) or urxvt\(1\) to display under the X\(7\) Window System
+          echoline "                   "\(installs xmyman2\)
+          echoline "--with-kterm       "use kterm\(1\) to display under the X\(7\) Window System
+          echoline "                   "\(installs xmyman4\)
+          echoline "--with-ctheme      "use ctheme to install a custom console color palette
+          echoline "                   "\(installs myman.ct\)
+          echoline "--with-zip         "generate .zip-format binary distribution
+          echoline "--with-dmg         "generate .dmg-format binary distribution
+          echoline "--with-mac-icon    "include program icon for Mac OS
+          echoline "--with-win-icon    "include program icon and version information for Win32
+          echoline
+          echoline Output drivers \(select at most one\):
+          echoline "--with-libcaca     "use libcaca
+          echoline "--with-libcaca0    "use libcaca with \<caca0.h\>
+          echoline "--with-aalib       "use AA-Lib
+          echoline "--with-raw         "use *nix TTY/CONIO/TOS/Win32 Console API \(Unicode\)
+          echoline "--with-raw-cp437   "use *nix TTY/CONIO/TOS/Win32 Console API \(CP-437\)
+          echoline "--with-allegro     "use Allegro
+          echoline "--with-twin        "use Twin
+          echoline "--with-ggi         "use LibGGI/LibGII
+          echoline "--with-ggiwmh      "use LibGGI/LibGII with WindowManagerHints
+          echoline "--with-slang-utf8  "use UTF-8 S-Lang curses emulation \(a.k.a. slcurses\)
+          echoline "--with-slang       "use S-Lang curses emulation \(a.k.a. slcurses\)
+          echoline "--with-xcursesw    "use PDCurses for X \(a.k.a. XCurses\) \(wide character version\)
           echoline "--with-xcurses     "use PDCurses for X \(a.k.a. XCurses\)
+          echoline "--with-pdcursesw   "use PDCurses \(wide character version\)
           echoline "--with-pdcurses    "use PDCurses
+          echoline "--with-pdcursessdl "use PDCurses \(SDL version\)
+          #echoline "--with-sdl         "use SDL \(DOES NOT WORK\!\!\!\)
+          echoline "--with-sdl-mixer   "use SDL Mixer for audio \(only works with PDCurses SDL\)
           echoline "--with-ncursesw    "use ncurses \(wide character version\)
+          echoline "                   "\(--with-libiconv is recommended too if not using glibc\)
           echoline "--with-ncurses     "use ncurses
+          echoline "--with-mac         "use Carbon \(Quickdraw Text\)
+          echoline "--with-mac-unicode "use Carbon \(ATSUI\)
+          echoline "--with-newt        "use newt
+          echoline "--with-gtk2        "use the GIMP Toolkit \(GTK/GTK\+\), version 2.x
+          echoline "--with-gtk         "use the GIMP Toolkit \(GTK/GTK\+\), version 1.x
+          echoline "--with-fltk2       "use FLTK 2 \(requires CC\=g\+\+ or similar\)
+          echoline "--with-fltk        "use FLTK \(requires CC\=g\+\+ or similar\)
+          echoline "--with-conio       "use Borland-style CONIO
+          echoline "--with-disp        "use \<disp.h\> \(Digital Mars/Symantec/Zortech C/C\+\+\)
           echoline
           echoline Report bugs to \<bsittler@gmail.com\>.
           exit 0
           ;;
-      :"--x-includes="*|:"--x-libraries="*)
+      :"--x"[-_]"includes="*|:"--x"[-_]"libraries="*)
           opt="${1%%=*}"
           opt="${opt#--}"
           feature `varsafe "${opt}"` "${1#*=}"
           shift
           ;;
-      :"--enable-"*"="*)
+      :"--enable"[-_]*"="*)
           opt="${1%%=*}"
           opt="${opt#--enable-}"
           feature enable_`varsafe "${opt}"` "${1#*=}"
           shift
           ;;
-      :"--enable-"*)
+      :"--enable"[-_]*)
           opt="${1#--enable-}"
           feature enable_`varsafe "${opt}"` yes
           shift
           ;;
-      :"--disable-"*)
+      :"--disable"[-_]*)
           opt="${1#--disable-}"
           feature enable_`varsafe "${opt}"` no
           shift
           ;;
-      :"--with-"*"="*)
+      :"--with"[-_]*"="*)
           opt="${1%%=*}"
           opt="${opt#--with-}"
           feature with_`varsafe "${opt}"` "${1#*=}"
           shift
           ;;
-      :"--with-"*)
+      :"--with"[-_]*)
           opt="${1#--with-}"
           feature with_`varsafe "${opt}"` yes
           shift
           ;;
-      :"--without-"*)
+      :"--without"[-_]*)
           opt="${1#--without-}"
           feature with_`varsafe "${opt}"` no
           shift
           ;;
       :"--srcdir="*)
-          srcdir="${1#--srcdir=}" ;
+          feature srcdir "${1#--srcdir=}" ;
           shift
           ;;
       :"--build="*)
-          build="${1#--build=}" ;
+          feature build "${1#--build=}" ;
           shift
           ;;
       :"--host="*)
-          host="${1#--host=}" ;
+          feature host "${1#--host=}" ;
           shift
           ;;
-      :"--srcdir"|:"--build"|:"--host"|:"--prefix"|:"--exec"[-_]"prefix"|:"--bindir"|:"--sbindir"|:"--libexecdir"|:"--datarootdir"|:"--datadir"|:"--sysconfdir"|:"--sharedstatedir"|:"--localstatedir"|:"--docdir"|:"--includedir"|:"--oldincludedir"|:"--infodir"|:"--libdir"|:"--lispdir"|:"--localedir"|:"--mandir"|:"--dump"|:"--x-includes"|:"--x-libraries")
+      :"--srcdir"|:"--build"|:"--host"|:"--prefix"|:"--exec"[-_]"prefix"|:"--bindir"|:"--objdir"|:"--sbindir"|:"--appdir"|:"--libexecdir"|:"--datarootdir"|:"--datadir"|:"--sysconfdir"|:"--sharedstatedir"|:"--localstatedir"|:"--docdir"|:"--includedir"|:"--oldincludedir"|:"--infodir"|:"--libdir"|:"--lispdir"|:"--localedir"|:"--mandir"|:"--dump"|:"--x"[-_]"includes"|:"--x"[-_]"libraries"|:"--program"[-_]"prefix"|:"--program"[-_]"suffix"|:"--program"[-_]"transform"[-_]"name")
           _param="${1}"
           _value="${2}"
           if test $# -lt 2 -o :"${_value}" != :"-" -a :"${_value#-}" != :"${_value}"
@@ -384,8 +453,16 @@ do
           non_option_arguments="${non_option_arguments} $*"
           while test $# -gt 0
           do
-            build="$1"
-            shift
+            case :"$1" in
+                :*"="*)
+                    feature `varsafe "${1%%=*}"` "${1#*=}"
+                    shift
+                    ;;
+                *)
+                    feature build "$1"
+                    shift
+                    ;;
+            esac
           done
           ;;
       :"-"*)
@@ -393,9 +470,13 @@ do
           echolinex Try \`"${progname}" --help\' for more information. >&2
           exit 2
           ;;
+      :*"="*)
+          feature `varsafe "${1%%=*}"` "${1#*=}"
+          shift
+          ;;
       *)
           non_option_arguments="${non_option_arguments} $1"
-          build="$1"
+          feature build "$1"
           shift
           ;;
   esac
@@ -409,7 +490,7 @@ then
     do
       if test -f "${dir}/${testfile}"
       then
-          srcdir="${dir}"
+          feature srcdir "${dir}"
           break
       fi
     done
@@ -428,7 +509,7 @@ then
     exit 2
 fi
 
-host="${host:-${build}}"
+feature host "${host:-${build}}"
 
 if test :"${dump}" != :""
 then
@@ -437,9 +518,9 @@ then
 fi
 
 # create config.status
-echo ${echo_n} "creating config.status... "${echo_c} >&2
+echo ${echo_n} "creating config.status... "${echo_c}
 (
-    echoline \#\!/bin/sh --
+    echoline \#\!`q "${SHELL}"` --
     echoline \# This file was generated automatically using \`configure\'.
     echoline \# You may later run this file \(or a copy\) in a working Bourne
     echoline \# shell to restore this configuration\; see INSTALL for more
@@ -452,19 +533,20 @@ echo ${echo_n} "creating config.status... "${echo_c} >&2
     echoline export char_tab
     echoline export char_newline
     echoline
-    echoline exec ${cmdline} \"\$@\"
+    echoline exec `q "$SHELL"` ${cmdline} \"\$@\"
+    echoline exit \$?
 ) > "${conftmp}" || exit $?
 if test -f config.status && ( diff "${conftmp}" config.status ) </dev/null >/dev/null 2>&1
 then
     rm -f "${conftmp}" || exit $?
-    echoline "unchanged." >&2
+    echoline "unchanged."
 else
     if test -e config.status -o -L config.status
     then
         rm -f config.status || exit $?
     fi
     mv "${conftmp}" config.status || exit $?
-    echoline "done." >&2
+    echoline "done."
 fi
 
 # okay if this fails
@@ -474,46 +556,20 @@ chmod 755 config.status >/dev/null 2>&1 || :
 makevariables()
 {
     echoline "MAKEFILE = GNUmakefile"
+    echoline "_SHELL := "`mq "${SHELL}"`
     for feature in \
-        date \
-        build \
-        host \
-        srcdir \
-        prefix \
-        exec_prefix \
-        bindir \
-        sbindir \
-        libexecdir \
-        datarootdir \
-        datadir \
-        sysconfdir \
-        sharedstatedir \
-        localstatedir \
-        docdir \
-        includedir \
-        oldincludedir \
-        infodir \
-        libdir \
-        lispdir \
-        localedir \
-        mandir \
-        x_libraries \
-        x_includes \
         ${features}
     do
-        eval '
-_echoline=${'"${feature}"':+echoline}
-${_echoline:-:} "${'"${feature}"':+ifeq (\$(origin '"${feature}"'),undefined)}"
-${_echoline:-:} "${'"${feature}"':+'"${feature}"' := `mq "${'"${feature}"'}"`}"
-${_echoline:-:} "${'"${feature}"':+endif}"
-'
+      echoline 'ifeq ($(subst default,undefined,$(origin '"${feature}"')),undefined)'
+      eval 'echoline "${feature} := "`mq "${'"${feature}"'}"`'
+      echoline 'endif'
     done
     echoline
 }
 
 mqlib()
 {
-    sed -n -e '/START_STRING_QUOTING_LIBRARY/,/END_STRING_QUOTING_LIBRARY/ p' < \
+    ${SED} -n -e '/START_STRING_QUOTING_LIBRARY/,/END_STRING_QUOTING_LIBRARY/ p' < \
         "${srcdir}/Makefile"
 }
 
@@ -564,3 +620,5 @@ then
 fi
 mv "${conftmp}" GNUmakefile || exit $?
 echoline "done." >&2
+
+exit 0
