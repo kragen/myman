@@ -442,6 +442,11 @@ ifeq ($(origin date),undefined)
 date := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=date)
 endif
 
+# build date in ISO 8601 format
+ifeq ($(origin isodate),undefined)
+isodate := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=isodate)
+endif
+
 ## build: type of system to build the program on
 ifeq ($(origin build),undefined)
 build := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=build)
@@ -725,6 +730,7 @@ build \
 CACACFLAGS \
 CACALIBS \
 date \
+isodate \
 DIST_EXE \
 FLTK_CONFIG \
 FLTKCFLAGS \
@@ -2261,6 +2267,7 @@ MYMANVERSION \
 MYMANCOPYRIGHT \
 host \
 date \
+isodate \
 DIST \
 BINDIST \
 MYMANSIZES \
@@ -3478,6 +3485,8 @@ fill-dir-xq-$(call xq,$(CVSDIST)):
 
 cvsdist: compressed-tarball-xq-$(call mwxq,$(CVSDIST))
 	-$(REMOVE) $(call q,$(CVSDIST))$(tar)
+	$(INSTALL_DATA) $(call q,$(CVSDIST))$(tgz) $(call q,$(CVSDIST))-$(isodate)$(tgz)
+	-$(REMOVE) $(call q,$(CVSDIST))$(tgz)
 
 dist:: $(call mw,$(MAKEFILE))
 	@$(MAKE) $(MAKELOOP) \
@@ -3930,6 +3939,8 @@ clean:: wipe-dir-xq-$(call mwxq,$(DIST)) wipe-dir-xq-$(call mwxq,$(BINDIST))
 	-$(REMOVE) $(DIST)$(tgz) $(DIST)$(tar)
 	-$(REMOVE) $(BINDIST)$(tgz) $(BINDIST)$(tar)
 	-$(REMOVE) $(CVSDIST)$(tgz) $(CVSDIST)$(tar)
+	-$(REMOVE) $(CVSDIST)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tgz)
+	-$(REMOVE) $(CVSDIST)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tar)
 ifeq (yes,$(with_zip))
 	-$(REMOVE) $(BINDIST).zip
 endif
