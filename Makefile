@@ -596,7 +596,7 @@ endif
 ## CVSDIST: CVS source snapshot package name (without suffix)
 
 ifeq ($(subst default,undefined,$(origin CVSDIST)),undefined)
-CVSDIST = $(MYMAN)-wip-$(isodate)
+CVSDIST = $(MYMAN)-wip
 endif
 
 ## directories
@@ -3547,18 +3547,18 @@ fill-dir-xq-$(call xq,$(CVSDUMP)):
 .PHONY: push-cvsdist
 
 push-cvsdist: cvsdump cvsdist
-	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDUMP))-$(isodate)$(tgz) $(call q,$(CVSDIST))$(tgz) $(call q,$(UPLOADSRSYNC))
+	$(RSYNC) $(RSYNCFLAGS) -aessh $(call q,$(CVSDUMP))-$(isodate)$(tgz) $(call q,$(CVSDIST))-$(isodate)$(tgz) $(call q,$(UPLOADSRSYNC))
 	@$(ECHOLINE) $(call q,)
 	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:)
 	@$(ECHOLINE) $(call q,    $(UPLOADSWEBSITE))
-	@$(ECHOLINE) $(call q,And add the files $(CVSDUMP)-$(isodate)$(tgz) and $(CVSDIST)$(tgz) to it.)
+	@$(ECHOLINE) $(call q,And add the files $(CVSDUMP)-$(isodate)$(tgz) and $(CVSDIST)-$(isodate)$(tgz) to it.)
 
 .PHONY: cvsdist
 
 cvsdist: fill-dir-xq-$(call xq,$(CVSDUMP)) empty-dir-xq-$(call mwxq,$(CVSDIST))
 	$(CVS) -d $(call q,$(shell pwd)/$(CVSDUMP)) co -P -d $(call q,$(CVSDIST)) myman
-	$(MAKE) -C $(call q,$(CVSDIST)) dist DIST=$(call q,$(CVSDIST))
-	$(INSTALL_DATA) $(call q,$(CVSDIST)/$(CVSDIST))$(tgz) $(call q,$(CVSDIST))$(tgz)
+	$(MAKE) -C $(call q,$(CVSDIST)) dist DIST=$(call q,$(CVSDIST))-$(isodate)
+	$(INSTALL_DATA) $(call q,$(CVSDIST)/$(CVSDIST))-$(isodate)$(tgz) $(call q,$(CVSDIST))-$(isodate)$(tgz)
 	@$(MAKE) $(MAKELOOP) \
             wipe-dir-xq-$(call qxq,$(CVSDIST))
 
@@ -4015,7 +4015,7 @@ clean:: wipe-dir-xq-$(call mwxq,$(DIST)) wipe-dir-xq-$(call mwxq,$(BINDIST)) wip
 	-$(REMOVE) $(CVSDUMP)$(tgz) $(CVSDUMP)$(tar)
 	-$(REMOVE) $(CVSDUMP)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tgz)
 	-$(REMOVE) $(CVSDUMP)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tar)
-	-$(REMOVE) $(CVSDIST)$(tgz)
+	-$(REMOVE) $(CVSDIST)-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]$(tgz)
 ifeq (yes,$(with_zip))
 	-$(REMOVE) $(BINDIST).zip
 endif
