@@ -2674,7 +2674,7 @@ distclean::
 
 distclean mostlyclean:: clean
 
-maintainer-clean:: distclean
+maintainer-clean:: distclean wipe-dir-xq-$(call mwxq,$(CVSDIST))
 
 pdcicon.bmp: $(srcdir)/gfx/myman.png
 	@-$(CONVERT_TO_BMP)
@@ -3921,6 +3921,7 @@ clean:: wipe-dir-xq-$(call mwxq,$(DIST)) wipe-dir-xq-$(call mwxq,$(BINDIST))
 	-$(REMOVE) config.h
 	-$(REMOVE) $(DIST)$(tgz) $(DIST)$(tar)
 	-$(REMOVE) $(BINDIST)$(tgz) $(BINDIST)$(tar)
+	-$(REMOVE) $(CVSDIST)$(tgz) $(CVSDIST)$(tar)
 ifeq (yes,$(with_zip))
 	-$(REMOVE) $(BINDIST).zip
 endif
