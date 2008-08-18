@@ -1,6 +1,10 @@
 ﻿TODO:
 
-        document recent additions to file formats (named parameters) in README
+        allow recording and replay of input so that e.g. screenshots
+        can be automatically updated for a new release. this might
+        even make automatic regression testing possible...
+
+        allow game state to be saved and restored.
 
         refactor
 
