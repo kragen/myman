@@ -3533,7 +3533,7 @@ push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
                 exit $$?; \
             $(RSYNC) $(RSYNCFLAGS) -essh --times --dirs $(call q,$(MYMANWEBSITERSYNC)$(call s,$(call xq,website)%,%,$(dir))/) $(call q,$(srcdir)/$(dir)/) || \
                 exit $$?;)
-	$(RSYNC) $(RSYNCFLAGS) -aessh --delete $(call q,$(srcdir))/website/ $(call q,$(MYMANWEBSITERSYNC)/)
+	$(RSYNC) $(RSYNCFLAGS) -aessh --delete --cvs-exclude --delete-excluded $(call q,$(srcdir))/website/ $(call q,$(MYMANWEBSITERSYNC)/)
 	@$(ECHOLINE) $(call q,)
 	@$(ECHOLINE) $(call q,Now visit the website here:)
 	@$(ECHOLINE) $(call q,    $(MYMANWEBSITE))
