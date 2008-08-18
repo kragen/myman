@@ -1,5 +1,5 @@
 /*
- * rawcurs.h - Win32 Console / *nix TTY driver for the MyMan video game
+ * rawcurs.h - Win32 Console / CONIO / TOS / *nix TTY driver for the MyMan video game
  * Copyright 2007-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
@@ -23,20 +23,21 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-/* NOTE: Right now the stdio (i.e. non-Win32 Console) driver outputs
- * raw ANSI/VT100/XTerm-style, VT52-style, or ADM3A-style escape
- * sequences [probably about 99% of all terminals and emulations still
- * in use that are not block mode and not Tektronix can be convinced
- * to fall into one of these categories] and expects special keys
- * (only LEFT, RIGHT, UP and DOWN so far) and reports (cursor
- * position, title and icon title) in the corresponding format. The
- * VT52-style and ADM3A-style modes don't support color or
+/* NOTE: Right now the stdio (i.e. non-Win32 Console, non-CONIO) driver
+ * outputs raw ANSI/VT100/XTerm-style, VT52-style, or ADM3A-style
+ * escape sequences [probably about 99% of all terminals and
+ * emulations still in use that are not block mode and not Tektronix
+ * can be convinced to fall into one of these categories] and expects
+ * special keys (only LEFT, RIGHT, UP and DOWN so far) and reports
+ * (cursor position, title and icon title) in the corresponding
+ * format. The VT52-style and ADM3A-style modes don't support color or
  * attributes. */
 
 /* FIXME: Maybe we should use termcap or terminfo for the stdio
- * (i.e. non-Win32 Console) case... then again, maybe not. If you have
- * those, you probably have curses too and don't care about this
- * light-weight reimplementation of a curses subset. */
+ * (i.e. non-Win32 Console, non-CONIO, non-TOS) case... then again,
+ * maybe not. If you have those, you probably have curses too and
+ * don't care about this light-weight reimplementation of a curses
+ * subset. */
 
 /* NOTE: You can test the VT52 mode fairly easily using a real VT100,
  * an XTerm, or something compatible.
@@ -131,27 +132,239 @@
  *
  */
 
+#ifndef WIN32
+#if defined(DOS) || defined(__TURBOC__)
+
+/* some DOS C compilers do not define __MSDOS__ */
+#ifndef __MSDOS__
+#define __MSDOS__ 1
+#endif
+
+#endif
+#endif
+
 #ifndef RAWCURS_H_INC
 #define RAWCURS_H_INC 1
 
 #ifdef WIN32
+#ifndef USE_WINCONSOLE
+#define USE_WINCONSOLE 1
+#endif
+#endif
+
+#ifndef USE_WINCONSOLE
+#define USE_WINCONSOLE 0
+#endif
+
+#ifdef WIN32
 
 #include <windows.h>
+#if ! (defined(__DMC__) || defined(__TINYC__))
 #include <psapi.h>
 #include <shlwapi.h>
+#endif
 #include <sys/stat.h>
+#ifndef __TINYC__
 #include <tlhelp32.h>
+#endif
 
-/* work-arounds for Win32 Console */
+/* work-arounds for Win32 */
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 0
+#endif
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 0
+#endif
+
+#ifndef HAVE_TTYNAME
+#define HAVE_TTYNAME 0
+#endif
+
+#ifdef __TINYC__
+#ifndef HAVE_STRUCT_TIMEVAL
+#define HAVE_STRUCT_TIMEVAL 0
+#endif
+#endif
+
+#else /* ! defined(WIN32) */
+
+#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#include <sys.h>
+#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
+#include <fcntl.h>
+#include <sys/types.h>
+#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
+
+#if ! (defined(__MSDOS__) || defined(CPM))
+#include <sys/socket.h>
+#endif /* ! (defined(__MSDOS__) || defined(CPM)) */
+
+#if defined(__MSDOS__) || defined(CPM)
+
+/* workarounds for DOS and CP/M */
+
+#ifdef __MSDOS__
+#include <dos.h>
+#endif
+
+#ifdef CPM
+#include <cpm.h>
+
+#ifndef USE_IOCTL
+#define USE_IOCTL 0
+#endif
+
+#endif
+
+#ifdef __DJGPP__
+
+/* DJGPP supports termios and full Borland-style CONIO */
+
+#ifndef USE_TERMIOS
+#define USE_TERMIOS 1
+#endif
+
+#ifndef USE_CONIO
+#define USE_CONIO 1
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 1
+#endif
+
+#ifndef HAVE_TTYNAME
+#define HAVE_TTYNAME 1
+#endif
+
+#ifndef HAVE_STRUCT_TIMEVAL
+#define HAVE_STRUCT_TIMEVAL 1
+#endif
+
+#endif /* defined(__DJGPP__) */
+
+#ifdef __BCC__
+
+#ifndef HAVE_STRUCT_TIMEVAL
+#define HAVE_STRUCT_TIMEVAL 1
+#endif
+
+#endif
+
+#ifdef __TURBOC__
+
+/* Turbo C supports full Borland-style CONIO */
+
+#ifndef USE_CONIO
+#define USE_CONIO 1
+#endif
+
+#endif /* defined(__TURBOC__) */
+
+#ifndef USE_TERMIOS
+#define USE_TERMIOS 0
+#endif
+
+#ifndef USE_CONIO
+#define USE_CONIO 0
+#endif
+
+#ifndef HAVE_STRUCT_TIMEVAL
+#define HAVE_STRUCT_TIMEVAL 0
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 0
+#endif
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 0
+#endif
+
+#ifndef HAVE_TTYNAME
+#define HAVE_TTYNAME 0
+#endif
+
+/* other DOS environments typically support only Microsoft-style
+ * CONIO */
+
+#ifndef USE_CONIO_INPUT
+#define USE_CONIO_INPUT 1
+#endif
+
+#endif /* defined(__MSDOS__) || defined(CPM) */
+
+/* really old Atari GCC 2.5.8 does not define __atarist__ */
+#ifdef __atarist__
+
+#ifndef USE_TOSCONSOLE
+#define USE_TOSCONSOLE 1
+#endif
+
+#endif /* defined(__atarist__) */
+
+#ifndef HAVE_WCWIDTH
+#if defined(__MSDOS__) || defined(__atarist__)
+#define HAVE_WCWIDTH 0
+#else
+#define HAVE_WCWIDTH 1
+#endif
+
+/* FIXME: this is a horrible hack! */
+#if ! HAVE_WCWIDTH
+#ifdef UNICODE
+#define wcwidth(wc) (((((long) (wc)) >= 0x0020L) && (((long) (wc)) < 0x3000L)) ? 1 : ((((long) (wc)) >= 0x3000L) && (((long) (wc)) <= 0x10fffdL)) ? 2 : -1)
+#else
+#define wcwidth(wc) (((((long) (wc)) >= 0x20L) && (((long) (wc)) < 0xffL)) ? 1 : -1)
+#endif
+#endif
+
+#endif /* defined(__MSDOS__) || defined(__atarist__) */
+
+#ifndef USE_TERMIOS
+#define USE_TERMIOS 1
+#endif
+
+#endif /* ! defined(WIN32) */
+
+#ifndef HAVE_STRUCT_TIMEVAL
+#define HAVE_STRUCT_TIMEVAL 1
+#endif
+
+#if ! HAVE_STRUCT_TIMEVAL
+
+struct timeval
+{
+    long tv_sec;
+    long tv_usec;
+};
+
+#endif /* ! HAVE_STRUCT_TIMEVAL */
+
+#ifndef USE_TERMIOS
+#define USE_TERMIOS 0
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+
+#if ! HAVE_GETTIMEOFDAY
 
 #undef gettimeofday
-
 #define gettimeofday rawcurses_gettimeofday
-
-/* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
 
 static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 {
+
+#if defined(WIN32)
+
+/* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
     union {
         long long ns100;
         FILETIME ft;
@@ -159,8 +372,48 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
     GetSystemTimeAsFileTime(&now.ft);
     tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
     tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+
+#else /* ! defined(WIN32) */
+
+#if defined(__MSDOS__)
+
+/* HACK: this is wildly, wildly wrong for anything but tick counting! */
+
+/* originally from http://www.lightner.net/lightner/bruce/photopc/msdos/patch/usleep.c */
+
+    static unsigned long
+#ifndef __BCC__
+        far
+#endif
+        *p;
+    unsigned long ticks;
+
+    if (!p) p = MK_FP(0, 0x46c);
+    ticks = *p;
+    tv->tv_usec = ((ticks & 0xff) * 55000L) % 1000000L;
+    tv->tv_sec = (ticks & 0xff) * 55L / 1000L;
+
+#else /* ! defined(__MSDOS__) */
+
+#error no gettimeofday(2) implementation for your platform, sorry
+    return 1;
+
+#endif /* ! defined(__MSDOS__) */
+
+#endif /* ! defined(WIN32) */
+
     return 0;
 }
+
+#endif /* ! HAVE_GETTIMEOFDAY */
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 1
+#endif
+
+#if ! HAVE_USLEEP
+
+#ifdef WIN32
 
 #undef usleep
 
@@ -168,23 +421,164 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 #define usleep(t) Sleep((t) / 1000)
 
-#else
+#else /* ! defined(WIN32) */
 
-#include <fcntl.h>
+#undef usleep
+#define usleep rawcurses_usleep
+
+static int
+rawcurses_usleep(unsigned long usecs)
+{
+    while (usecs)
+    {
+        struct timeval tv0, tv1;
+        int ret;
+
+        if (gettimeofday(&tv0, NULL)) break;
+        ret = 0;
+#ifndef LSI_C
+#if ! (defined(__DMC__) || defined(__TURBOC__))
+        ret =
+#endif
+            sleep(0);
+#endif
+        if (ret) break;
+        if (gettimeofday(&tv1, NULL)) break;
+        if (tv1.tv_sec < tv0.tv_sec) break;
+        if ((tv1.tv_sec == tv0.tv_sec)
+            &&
+            (tv1.tv_usec < tv0.tv_usec))
+        {
+            break;
+        }
+        if ((tv1.tv_sec - tv0.tv_sec) > (usecs / 1000000L))
+        {
+            break;
+        }
+        if (((tv1.tv_sec - tv0.tv_sec) * 1000000L
+             +
+             (tv1.tv_usec - tv0.tv_usec))
+            >=
+            usecs)
+        {
+            break;
+        }
+        usecs -= (tv1.tv_sec - tv0.tv_sec) * 1000000L;
+        usecs -= tv1.tv_usec - tv0.tv_usec;
+    }
+    return 0;
+}
+
+#endif /* ! defined(WIN32) */
+
+#endif /* ! HAVE_USLEEP */
+
+#ifndef HAVE_TTYNAME
+#define HAVE_TTYNAME 1
+#endif
+
+#if ! HAVE_TTYNAME
+#undef ttyname
+#define ttyname(fd) (isatty(fileno(stdin)) ? "con" : "stdin")
+#endif
+
+#if USE_TERMIOS
 #include <termios.h>
-#include <sys/ioctl.h>
-#include <sys/types.h>
-#include <sys/socket.h>
+#endif
 
-#ifdef atarist
+#ifndef USE_CONIO
+#define USE_CONIO 0
+#endif
+
+#ifndef USE_CONIO_INPUT
+#define USE_CONIO_INPUT USE_CONIO
+#endif
+
+#ifndef USE_TOSCONSOLE
+#define USE_TOSCONSOLE 0
+#endif
+
+#if USE_TOSCONSOLE
+
+#if defined(__GNUC__) && (__GNUC__ <= 2)
+
+/* Workarounds for TOS; old interfaces */
 #include <aesbind.h>
 #include <keycodes.h>
 #include <osbind.h>
-#endif /* defined(atarist) */
 
+#else /* ! defined(__GNUC__) && (__GNUC__ <= 2) */
+
+/* Workarounds for TOS; new interfaces */
+#include <gem.h>
+#include <osbind.h>
+
+/* once upon a time these were in <keycodes.h>; these days they seem
+ * to be AWOL */
+#define CURS_DN  0x50
+#define CURS_LF  0x4b
+#define CURS_RT  0x4d
+#define CURS_UP  0x48
+#define K_ESC    0x01
+#define K_DEL    0x53
+#define K_RET    0x1c
+#define KP_0     0x70
+#define KP_1     0x6d
+#define KP_2     0x6e
+#define KP_3     0x6f
+#define KP_4     0x6a
+#define KP_5     0x6b
+#define KP_6     0x6c
+#define KP_7     0x67
+#define KP_8     0x68
+#define KP_9     0x69
+#define KP_DOT   0x71
+#define KP_ENTER 0x72
+#define KP_LP    0x63
+#define KP_MINUS 0x4a
+#define KP_PLUS  0x4e
+#define KP_RP    0x64
+#define KP_SLASH 0x65
+#define KP_STAR  0x66
+
+#endif /* ! defined(__GNUC__) && (__GNUC__ <= 2) */
+
+#endif /* USE_TOSCONSOLE */
+
+#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#ifdef __atarist__
+#if ((! defined(__GNUC__)) || (__GNUC__ > 2))
+#include <stdint.h>
+#endif /* ((! defined(__GNUC__)) || (__GNUC__ > 2)) */
+#else /* ! defined(__atarist__) */
+#include <wchar.h>
+#endif /* ! defined(__atarist__) */
+#endif /* ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
+
+#if defined(LSI_C) || defined(__TURBOC__)
+#ifndef wchar_t
+#define wchar_t rawcur_wchar_t
+typedef int rawcur_wchar_t;
+#endif
 #endif
 
-#include <wchar.h>
+#if USE_CONIO || USE_CONIO_INPUT
+
+#ifdef RAWCURSES_CONIO_H
+#include RAWCURSES_CONIO_H
+#else
+#include <conio.h>
+#endif
+
+#ifdef _INCLUDED_TURBOC_H
+/* recover from serious braindamage in TurboC.h */
+#undef short
+#undef int
+#undef unsigned
+#undef long
+#endif /* defined(_INCLUDED_TURBOC_H) */
+
+#endif /* USE_CONIO || USE_CONIO_INPUT */
 
 #ifndef USE_DIM_AND_BRIGHT
 #define USE_DIM_AND_BRIGHT (! (rawcurses_stdio && has_colors() && rawcurses_stdio_nocolorbold && (COLORS == 8)))
@@ -210,7 +604,7 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 #endif
 #endif
 
-#ifdef WIN32
+#if USE_WINCONSOLE
 
 #ifndef USE_SIGWINCH
 #define USE_SIGWINCH 0
@@ -222,8 +616,14 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 #else
 
+#ifdef SIGWINCH
 #ifndef USE_SIGWINCH
 #define USE_SIGWINCH 1
+#endif
+#endif
+
+#ifndef USE_SIGWINCH
+#define USE_SIGWINCH 0
 #endif
 
 #ifndef USE_IOCTL
@@ -232,7 +632,27 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 #endif
 
-typedef long int chtype;
+#if USE_IOCTL
+#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#include <ioctl.h>
+#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C)) */
+#ifdef __TURBOC__
+#include <io.h>
+#else /* ! defined(__TURBOC__) */
+#if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
+#include <sys/ioctl.h>
+#endif
+#endif /* ! defined(__TURBOC__) */
+#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C)) */
+#endif /* USE_IOCTL */
+
+#undef chtype
+#define chtype rawcurses_chtype
+
+typedef long chtype;
+
+#undef attr_t
+#define attr_t rawcurses_attr_t
 
 typedef chtype attr_t;
 
@@ -278,16 +698,22 @@ typedef chtype attr_t;
 
 #define leaveok(stdscr, x)
 
+#undef getyx
 #define getyx(stdscr, y, x) (rawcurses_getyx(&rawcurses_y, &rawcurses_x), (x) = rawcurses_x, (y) = rawcurses_y)
 
-#define wrefresh(stdscr) refresh()
+#undef wrefresh
+#define wrefresh(stdscr) rawcurses_refresh()
 
-#define beep() addch('\a')
+#undef beep
+#define beep() rawcurses_addch('\7')
 
+#undef echo
 #define echo()
 
+#undef use_env
 #define use_env(x)
 
+#undef keypad
 #define keypad(stdscr, x)
 
 #define LINES rawcurses_h
@@ -296,23 +722,31 @@ typedef chtype attr_t;
 
 #define _PAIR_SHIFT 21
 
-#define COLOR_PAIR(p) ((p) << _PAIR_SHIFT)
+#undef COLOR_PAIR
+#define COLOR_PAIR(p) (((chtype) p) << _PAIR_SHIFT)
 
+#undef PAIR_NUMBER
 #define PAIR_NUMBER(a) (((a) & RAWCURSES__A_COLOR) >> _PAIR_SHIFT)
 
+#undef A_CHARTEXT
 #define A_CHARTEXT ((chtype) 0x1fffffL)
 
 #undef RAWCURSES__A_COLOR
 #define RAWCURSES__A_COLOR 0x0fe00000L
 
+#undef A_DIM
 #define A_DIM ((chtype) 0x10000000UL)
 
+#undef A_BOLD
 #define A_BOLD ((chtype) 0x20000000UL)
 
+#undef A_REVERSE
 #define A_REVERSE ((chtype) 0x40000000UL)
 
+#undef A_UNDERLINE
 #define A_UNDERLINE ((chtype) 0x80000000UL)
 
+#undef A_STANDOUT
 #define A_STANDOUT A_REVERSE
 
 #ifndef FOREGROUND_BLUE
@@ -346,6 +780,20 @@ typedef chtype attr_t;
 #ifndef BACKGROUND_INTENSITY
 #define BACKGROUND_INTENSITY 128
 #endif
+
+#undef ACS_LRCORNER
+#undef ACS_URCORNER
+#undef ACS_ULCORNER
+#undef ACS_LLCORNER
+#undef ACS_PLUS
+#undef ACS_HLINE
+#undef ACS_LTEE
+#undef ACS_RTEE
+#undef ACS_BTEE
+#undef ACS_TTEE
+#undef ACS_VLINE
+#undef ACS_BULLET
+#undef ACS_BLOCK
 
 #ifdef UNICODE
 
@@ -421,34 +869,49 @@ typedef chtype attr_t;
 
 #endif
 
-#define KEY_RESIZE 0x100001L
+#undef KEY_RESIZE
+#define KEY_RESIZE 0xef00
 
-#define KEY_UP 0x100002L
+#undef KEY_UP
+#define KEY_UP 0x0f01
 
-#define KEY_DOWN 0x100003L
+#undef KEY_DOWN
+#define KEY_DOWN 0xef02
 
-#define KEY_LEFT 0x100004L
+#undef KEY_LEFT
+#define KEY_LEFT 0xef03
 
-#define KEY_RIGHT 0x100005L
+#undef KEY_RIGHT
+#define KEY_RIGHT 0xef04
 
+#undef COLORS
 #define COLORS ((rawcurses_16color || (rawcurses_stdio && (rawcurses_stdio_88color || rawcurses_stdio_256color))) ? 16 : 8)
 
+#undef COLOR_PAIRS
 #define COLOR_PAIRS (16 * 16 / 2)
 
+#undef COLOR_BLACK
 #define COLOR_BLACK 0
 
+#undef COLOR_BLUE
 #define COLOR_BLUE 4
 
+#undef COLOR_GREEN
 #define COLOR_GREEN 2
 
+#undef COLOR_CYAN
 #define COLOR_CYAN (COLOR_BLUE | COLOR_GREEN)
 
+#undef COLOR_RED
 #define COLOR_RED 1
 
+#undef COLOR_MAGENTA
 #define COLOR_MAGENTA (COLOR_RED | COLOR_BLUE)
 
+#undef COLOR_YELLOW
 #define COLOR_YELLOW (COLOR_RED | COLOR_GREEN)
 
+#undef COLOR_WHITE
 #define COLOR_WHITE (COLOR_RED | COLOR_GREEN | COLOR_BLUE)
 
 #define PEN_BRIGHT 8
@@ -465,7 +928,11 @@ typedef chtype attr_t;
 #define RAWCURSES_GLOBAL(dfn, init) static dfn init
 #endif
 
-RAWCURSES_GLOBAL(chtype rawcurses_ungetch_buffer, = (chtype) ERR);
+#ifndef RAWCURSES_GLOBAL0
+#define RAWCURSES_GLOBAL0(dfn) static dfn
+#endif
+
+RAWCURSES_GLOBAL0(int rawcurses_ungetch_buffer = ERR);
 RAWCURSES_GLOBAL(int rawcurses_debug_utf8, = 0);
 RAWCURSES_GLOBAL(int rawcurses_debug_utf8_y, = 0);
 RAWCURSES_GLOBAL(int rawcurses_after_endwin, = 1);
@@ -477,9 +944,9 @@ RAWCURSES_GLOBAL(int rawcurses_w, = 0);
 RAWCURSES_GLOBAL(int rawcurses_h, = 0);
 RAWCURSES_GLOBAL(int rawcurses_nw, = 0);
 RAWCURSES_GLOBAL(int rawcurses_nh, = 0);
-RAWCURSES_GLOBAL(int rawcurses_x, );
-RAWCURSES_GLOBAL(int rawcurses_y, );
-RAWCURSES_GLOBAL(attr_t rawcurses_attr, );
+RAWCURSES_GLOBAL(int rawcurses_x, = 0);
+RAWCURSES_GLOBAL(int rawcurses_y, = 0);
+RAWCURSES_GLOBAL(attr_t rawcurses_attr, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio, = -1);
 RAWCURSES_GLOBAL(int rawcurses_raw, = 0);
 RAWCURSES_GLOBAL(int rawcurses_builtin_wcwidth, = 0);
@@ -508,8 +975,14 @@ RAWCURSES_GLOBAL(int rawcurses_fixedpal, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_ccc, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_ccc_linux, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
-#ifdef atarist
+#if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
+#endif
+#if USE_CONIO
+RAWCURSES_GLOBAL(int rawcurses_stdio_conio, = 0);
+#endif
+#if USE_CONIO_INPUT
+RAWCURSES_GLOBAL(int rawcurses_stdio_conio_input, = 0);
 #endif
 #ifdef SIGTSTP
 RAWCURSES_GLOBAL(volatile int rawcurses_got_sigtstp, = 0);
@@ -537,44 +1010,45 @@ RAWCURSES_GLOBAL(int rawcurses_input_state, = RAWCURSES_INPUT_STATE_DEFAULT);
 /* should be big enough for even a batched full-palette response to OSC [ 4 ; 0 ; ? ; ... ; 15 ; ? BEL */
 #define INPUT_PARAM_SIZE 4096
 
-RAWCURSES_GLOBAL(char rawcurses_input_param[INPUT_PARAM_SIZE], );
-RAWCURSES_GLOBAL(char rawcurses_input_intermed[INPUT_PARAM_SIZE], );
+RAWCURSES_GLOBAL0(char rawcurses_input_param[INPUT_PARAM_SIZE]);
+RAWCURSES_GLOBAL0(char rawcurses_input_intermed[INPUT_PARAM_SIZE]);
 RAWCURSES_GLOBAL(attr_t rawcurses_old_attr_rgb, = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-RAWCURSES_GLOBAL(char rawcurses_stdio_old_shortname_buf[INPUT_PARAM_SIZE], );
-RAWCURSES_GLOBAL(char rawcurses_stdio_old_title_buf[INPUT_PARAM_SIZE], );
+RAWCURSES_GLOBAL0(char rawcurses_stdio_old_shortname_buf[INPUT_PARAM_SIZE]);
+RAWCURSES_GLOBAL0(char rawcurses_stdio_old_title_buf[INPUT_PARAM_SIZE]);
 RAWCURSES_GLOBAL(char *rawcurses_stdio_old_shortname, = NULL);
 RAWCURSES_GLOBAL(char *rawcurses_stdio_old_title, = NULL);
 RAWCURSES_GLOBAL(char *rawcurses_stdio_new_shortname, = NULL);
 RAWCURSES_GLOBAL(char *rawcurses_stdio_new_title, = NULL);
 
-#ifdef WIN32
-RAWCURSES_GLOBAL(HANDLE rawcurses_stdin, );
-RAWCURSES_GLOBAL(HANDLE rawcurses_stdout, );
-RAWCURSES_GLOBAL(HANDLE rawcurses_stderr, );
-RAWCURSES_GLOBAL(DWORD rawcurses_old_mode, );
+#if USE_WINCONSOLE
+RAWCURSES_GLOBAL0(HANDLE rawcurses_stdin);
+RAWCURSES_GLOBAL0(HANDLE rawcurses_stdout);
+RAWCURSES_GLOBAL0(HANDLE rawcurses_stderr);
+RAWCURSES_GLOBAL0(DWORD rawcurses_old_mode);
 RAWCURSES_GLOBAL(int rawcurses_old_x, = -1);
 RAWCURSES_GLOBAL(int rawcurses_old_y, = -1);
 RAWCURSES_GLOBAL(int rawcurses_old_mode_valid, = 0);
-RAWCURSES_GLOBAL(CONSOLE_CURSOR_INFO rawcurses_old_cursorinfo, );
-RAWCURSES_GLOBAL(CONSOLE_CURSOR_INFO rawcurses_cursorinfo, );
-RAWCURSES_GLOBAL(CONSOLE_SCREEN_BUFFER_INFO rawcurses_csbi, );
-RAWCURSES_GLOBAL(SMALL_RECT rawcurses_old_size, );
-RAWCURSES_GLOBAL(TCHAR rawcurses_old_title[MAX_PATH], );
+RAWCURSES_GLOBAL0(CONSOLE_CURSOR_INFO rawcurses_old_cursorinfo);
+RAWCURSES_GLOBAL0(CONSOLE_CURSOR_INFO rawcurses_cursorinfo);
+RAWCURSES_GLOBAL0(CONSOLE_SCREEN_BUFFER_INFO rawcurses_csbi);
+RAWCURSES_GLOBAL0(SMALL_RECT rawcurses_old_size);
+RAWCURSES_GLOBAL0(TCHAR rawcurses_old_title[MAX_PATH]);
 RAWCURSES_GLOBAL(CHAR_INFO *rawcurses_old_screen, = NULL);
-#else
-RAWCURSES_GLOBAL(struct termios rawcurses_tty, );
-RAWCURSES_GLOBAL(struct termios rawcurses_old_tty, );
+#endif
+#if USE_TERMIOS
+RAWCURSES_GLOBAL0(struct termios rawcurses_tty);
+RAWCURSES_GLOBAL0(struct termios rawcurses_old_tty);
 #endif
 
-RAWCURSES_GLOBAL(chtype rawcurses_pairs[COLOR_PAIRS], );
+RAWCURSES_GLOBAL0(chtype rawcurses_pairs[COLOR_PAIRS]);
 
 typedef struct {
     short r, g, b;
 } rawcurses_rgb_t;
 
-RAWCURSES_GLOBAL(rawcurses_rgb_t rawcurses_palette[16], );
-RAWCURSES_GLOBAL(rawcurses_rgb_t rawcurses_old_palette[16], );
-RAWCURSES_GLOBAL(char rawcurses_reset_palette_buf[INPUT_PARAM_SIZE], );
+RAWCURSES_GLOBAL0(rawcurses_rgb_t rawcurses_palette[16]);
+RAWCURSES_GLOBAL0(rawcurses_rgb_t rawcurses_old_palette[16]);
+RAWCURSES_GLOBAL0(char rawcurses_reset_palette_buf[INPUT_PARAM_SIZE]);
 RAWCURSES_GLOBAL(size_t rawcurses_reset_palette_buflen, = 0);
 RAWCURSES_GLOBAL(int rawcurses_reset_palette_seqs, = 0);
 RAWCURSES_GLOBAL(int rawcurses_palette_changed, = 0);
@@ -582,847 +1056,876 @@ RAWCURSES_GLOBAL(int rawcurses_palette_ever_changed, = 0);
 
 /* list of terminals for which we send Atari ST-type color escape sequences */
 /* NOTE: these are prefix matches */
-#define RAWCURSES_ST52LIKE \
-    "atari" "\0" \
-    "et52" "\0" \
-    "st52" "\0" \
-    "stv52" "\0" \
-    "tw52" "\0" \
-    "wterm" "\0" \
-    "\0\0"
+static const char *RAWCURSES_ST52LIKE =
+    "atari" "\0"
+    "et52" "\0"
+    "st52" "\0"
+    "stv52" "\0"
+    "tw52" "\0"
+    "wterm" "\0"
+    "\0\0";
 
 /* list of terminals for which we send VT52-type escape sequences */
-#define RAWCURSES_VT52LIKE \
-    "addsviewpoint" "\0" \
-    "addsvp60" "\0" \
-    "aepro" "\0" \
-    "alto-h19" "\0" \
-    "alto-heath" "\0" \
-    "altoh19" "\0" \
-    "altoheath" "\0" \
-    "apple-videx3" "\0" \
-    "atari" "\0" \
-    "att4420" "\0" \
-    "cci" "\0" \
-    "cci1" "\0" \
-    "decpro" "\0" \
-    "dmterm" "\0" \
-    "dwk" "\0" \
-    "dwk-vt" "\0" \
-    "elks" "\0" \
-    "elks-vt52" "\0" \
-    "et52" "\0" \
-    "gator-52" "\0" \
-    "gator-52t" "\0" \
-    "h-100" "\0" \
-    "h-100bw" "\0" \
-    "h100" "\0" \
-    "h100bw" "\0" \
-    "h19" "\0" \
-    "h19-b" "\0" \
-    "h19-bs" "\0" \
-    "h19-g" "\0" \
-    "h19-u" "\0" \
-    "h19-us" "\0" \
-    "h19b" "\0" \
-    "h19g" "\0" \
-    "h19k" "\0" \
-    "h19kermit" "\0" \
-    "heath" "\0" \
-    "heathkit" "\0" \
-    "htx11" "\0" \
-    "hz1552" "\0" \
-    "hz1552-rv" "\0" \
-    "i3101" "\0" \
-    "ibm3101" "\0" \
-    "ibm3161" "\0" \
-    "ibm3161-C" "\0" \
-    "ibm3162" "\0" \
-    "ibm3163" "\0" \
-    "ibmaed" "\0" \
-    "intertube" "\0" \
-    "iris40" "\0" \
-    "kermit" "\0" \
-    "kermit-am" "\0" \
-    "mime2a" "\0" \
-    "mime2a-v" "\0" \
-    "modgraph2" "\0" \
-    "msk227" "\0" \
-    "msk22714" "\0" \
-    "msk227am" "\0" \
-    "mskermit227" "\0" \
-    "mskermit22714" "\0" \
-    "mskermit227am" "\0" \
-    "ncr260vppp" "\0" \
-    "ncr7901" "\0" \
-    "p19" "\0" \
-    "pc-coherent" "\0" \
-    "pc-venix" "\0" \
-    "pckermit" "\0" \
-    "pckermit12" "\0" \
-    "pckermit120" "\0" \
-    "pcz19" "\0" \
-    "pro350" "\0" \
-    "qnx" "\0" \
-    "qnx4" "\0" \
-    "rca" "\0" \
-    "regent20" "\0" \
-    "regent25" "\0" \
-    "regent40" "\0" \
-    "regent40+" "\0" \
-    "regent60" "\0" \
-    "sc410" "\0" \
-    "sc415" "\0" \
-    "scanset" "\0" \
-    "scr"/* hmm... */"ewpoint" "\0" \
-    "sibo" "\0" \
-    "st52" "\0" \
-    "stv52" "\0" \
-    "stv52pc" "\0" \
-    "superbrain" "\0" \
-    "t10" "\0" \
-    "t1061" "\0" \
-    "t1061f" "\0" \
-    "t3800" "\0" \
-    "tek4107" "\0" \
-    "tek4109" "\0" \
-    "tek4207-s" "\0" \
-    "teleray" "\0" \
-    "ti931" "\0" \
-    "trs16" "\0" \
-    "trs2" "\0" \
-    "trs80II" "\0" \
-    "trsII" "\0" \
-    "tty4420" "\0" \
-    "tw52" "\0" \
-    "tw52-color" "\0" \
-    "tw52-m" "\0" \
-    "vapple" "\0" \
-    "venix" "\0" \
-    "vi200" "\0" \
-    "vi50" "\0" \
-    "vi500" "\0" \
-    "vi55" "\0" \
-    "viewpoint" "\0" \
-    "viewpoint60" "\0" \
-    "viewpoint90" "\0" \
-    "vp60" "\0" \
-    "vp90" "\0" \
-    "vt-61" "\0" \
-    "vt50h" "\0" \
-    "vt52" "\0" \
-    "vt61" "\0" \
-    "wsiris" "\0" \
-    "wterm" "\0" \
-    "wy60-316X" "\0" \
-    "wyse-vp" "\0" \
-    "wyse60-316X" "\0" \
-    "xterm-vt52" "\0" \
-    "z-100" "\0" \
-    "z-100bw" "\0" \
-    "z100" "\0" \
-    "z100bw" "\0" \
-    "z110" "\0" \
-    "z110bw" "\0" \
-    "z19" "\0" \
-    "z29" "\0" \
-    "z29b" "\0" \
-    "z8001" "\0" \
-    "zen8001" "\0" \
-    "zenith" "\0" \
-    "zenith29" "\0" \
-    "zt-1" "\0" \
-    "ztx" "\0" \
-    "ztx-1-a" "\0" \
-    "ztx11" "\0" \
-    "\0\0"
+static const char *RAWCURSES_VT52LIKE =
+    "addsviewpoint" "\0"
+    "addsvp60" "\0"
+    "aepro" "\0"
+    "alto-h19" "\0"
+    "alto-heath" "\0"
+    "altoh19" "\0"
+    "altoheath" "\0"
+    "apple-videx3" "\0"
+    "atari" "\0"
+    "att4420" "\0"
+    "cci" "\0"
+    "cci1" "\0"
+    "decpro" "\0"
+    "dmterm" "\0"
+    "dwk" "\0"
+    "dwk-vt" "\0"
+    "elks" "\0"
+    "elks-vt52" "\0"
+    "et52" "\0"
+    "gator-52" "\0"
+    "gator-52t" "\0"
+    "h-100" "\0"
+    "h-100bw" "\0"
+    "h100" "\0"
+    "h100bw" "\0"
+    "h19" "\0"
+    "h19-b" "\0"
+    "h19-bs" "\0"
+    "h19-g" "\0"
+    "h19-u" "\0"
+    "h19-us" "\0"
+    "h19b" "\0"
+    "h19g" "\0"
+    "h19k" "\0"
+    "h19kermit" "\0"
+    "heath" "\0"
+    "heathkit" "\0"
+    "htx11" "\0"
+    "hz1552" "\0"
+    "hz1552-rv" "\0"
+    "i3101" "\0"
+    "ibm3101" "\0"
+    "ibm3161" "\0"
+    "ibm3161-C" "\0"
+    "ibm3162" "\0"
+    "ibm3163" "\0"
+    "ibmaed" "\0"
+    "intertube" "\0"
+    "iris40" "\0"
+    "kermit" "\0"
+    "kermit-am" "\0"
+    "mime2a" "\0"
+    "mime2a-v" "\0"
+    "modgraph2" "\0"
+    "msk227" "\0"
+    "msk22714" "\0"
+    "msk227am" "\0"
+    "mskermit227" "\0"
+    "mskermit22714" "\0"
+    "mskermit227am" "\0"
+    "ncr260vppp" "\0"
+    "ncr7901" "\0"
+    "p19" "\0"
+    "pc-coherent" "\0"
+    "pc-venix" "\0"
+    "pckermit" "\0"
+    "pckermit12" "\0"
+    "pckermit120" "\0"
+    "pcz19" "\0"
+    "pro350" "\0"
+    "qnx" "\0"
+    "qnx4" "\0"
+    "rca" "\0"
+    "regent20" "\0"
+    "regent25" "\0"
+    "regent40" "\0"
+    "regent40+" "\0"
+    "regent60" "\0"
+    "sc410" "\0"
+    "sc415" "\0"
+    "scanset" "\0"
+    "scr"/* hmm... */"ewpoint" "\0"
+    "sibo" "\0"
+    "st52" "\0"
+    "stv52" "\0"
+    "stv52pc" "\0"
+    "superbrain" "\0"
+    "t10" "\0"
+    "t1061" "\0"
+    "t1061f" "\0"
+    "t3800" "\0"
+    "tek4107" "\0"
+    "tek4109" "\0"
+    "tek4207-s" "\0"
+    "teleray" "\0"
+    "ti931" "\0"
+    "trs16" "\0"
+    "trs2" "\0"
+    "trs80II" "\0"
+    "trsII" "\0"
+    "tty4420" "\0"
+    "tw52" "\0"
+    "tw52-color" "\0"
+    "tw52-m" "\0"
+    "vapple" "\0"
+    "venix" "\0"
+    "vi200" "\0"
+    "vi50" "\0"
+    "vi500" "\0"
+    "vi55" "\0"
+    "viewpoint" "\0"
+    "viewpoint60" "\0"
+    "viewpoint90" "\0"
+    "vp60" "\0"
+    "vp90" "\0"
+    "vt-61" "\0"
+    "vt50h" "\0"
+    "vt52" "\0"
+    "vt61" "\0"
+    "wsiris" "\0"
+    "wterm" "\0"
+    "wy60-316X" "\0"
+    "wyse-vp" "\0"
+    "wyse60-316X" "\0"
+    "xterm-vt52" "\0"
+    "z-100" "\0"
+    "z-100bw" "\0"
+    "z100" "\0"
+    "z100bw" "\0"
+    "z110" "\0"
+    "z110bw" "\0"
+    "z19" "\0"
+    "z29" "\0"
+    "z29b" "\0"
+    "z8001" "\0"
+    "zen8001" "\0"
+    "zenith" "\0"
+    "zenith29" "\0"
+    "zt-1" "\0"
+    "ztx" "\0"
+    "ztx-1-a" "\0"
+    "ztx11" "\0"
+    "\0\0";
 
 /* list of terminals for which we assume an H19-style alternate
  * character set */
-#define RAWCURSES_H19LIKE \
-    "alto-h19" "\0" \
-    "alto-heath" "\0" \
-    "altoh19" "\0" \
-    "altoheath" "\0" \
-    "h-100" "\0" \
-    "h-100bw" "\0" \
-    "h100" "\0" \
-    "h100bw" "\0" \
-    "h19" "\0" \
-    "h19-a" "\0" \
-    "h19-b" "\0" \
-    "h19-bs" "\0" \
-    "h19-g" "\0" \
-    "h19-u" "\0" \
-    "h19-us" "\0" \
-    "h19a" "\0" \
-    "h19b" "\0" \
-    "h19g" "\0" \
-    "h19k" "\0" \
-    "h19kermit" "\0" \
-    "h29a-kc-bc" "\0" \
-    "h29a-kc-uc" "\0" \
-    "h29a-nkc-bc" "\0" \
-    "h29a-nkc-uc" "\0" \
-    "heath" "\0" \
-    "heath-ansi" "\0" \
-    "heathkit" "\0" \
-    "heathkit-a" "\0" \
-    "p19" "\0" \
-    "z-100" "\0" \
-    "z-100bw" "\0" \
-    "z100" "\0" \
-    "z100bw" "\0" \
-    "z110" "\0" \
-    "z110bw" "\0" \
-    "z19" "\0" \
-    "z29" "\0" \
-    "z29a" "\0" \
-    "z29a-kc-bc" "\0" \
-    "z29a-kc-uc" "\0" \
-    "z29a-nkc-bc" "\0" \
-    "z29a-nkc-uc" "\0" \
-    "z29b" "\0" \
-    "z39-a" "\0" \
-    "z39a" "\0" \
-    "zenith" "\0" \
-    "zenith29" "\0" \
-    "zenith39-a" "\0" \
-    "zenith39-ansi" "\0" \
-    "\0\0"
+static const char *RAWCURSES_H19LIKE =
+    "alto-h19" "\0"
+    "alto-heath" "\0"
+    "altoh19" "\0"
+    "altoheath" "\0"
+    "h-100" "\0"
+    "h-100bw" "\0"
+    "h100" "\0"
+    "h100bw" "\0"
+    "h19" "\0"
+    "h19-a" "\0"
+    "h19-b" "\0"
+    "h19-bs" "\0"
+    "h19-g" "\0"
+    "h19-u" "\0"
+    "h19-us" "\0"
+    "h19a" "\0"
+    "h19b" "\0"
+    "h19g" "\0"
+    "h19k" "\0"
+    "h19kermit" "\0"
+    "h29a-kc-bc" "\0"
+    "h29a-kc-uc" "\0"
+    "h29a-nkc-bc" "\0"
+    "h29a-nkc-uc" "\0"
+    "heath" "\0"
+    "heath-ansi" "\0"
+    "heathkit" "\0"
+    "heathkit-a" "\0"
+    "p19" "\0"
+    "z-100" "\0"
+    "z-100bw" "\0"
+    "z100" "\0"
+    "z100bw" "\0"
+    "z110" "\0"
+    "z110bw" "\0"
+    "z19" "\0"
+    "z29" "\0"
+    "z29a" "\0"
+    "z29a-kc-bc" "\0"
+    "z29a-kc-uc" "\0"
+    "z29a-nkc-bc" "\0"
+    "z29a-nkc-uc" "\0"
+    "z29b" "\0"
+    "z39-a" "\0"
+    "z39a" "\0"
+    "zenith" "\0"
+    "zenith29" "\0"
+    "zenith39-a" "\0"
+    "zenith39-ansi" "\0"
+    "\0\0";
 
 /* list of terminals for which we assume an CP437-style alternate
  * character set */
-#define RAWCURSES_CP437LIKE \
-    "aixterm-m-old" "\0" \
-    "ansi" "\0" \
-    "ansi-color-2-emx" "\0" \
-    "ansi-color-3-emx" "\0" \
-    "ansi-emx" "\0" \
-    "ansi-m" "\0" \
-    "ansi-mono" "\0" \
-    "ansi.sys" "\0" \
-    "ansi.sys-old" "\0" \
-    "ansi.sysk" "\0" \
-    "ansi43m" "\0" \
-    "ansi80x25" "\0" \
-    "ansi80x25-mono" "\0" \
-    "ansi80x30" "\0" \
-    "ansi80x30-mono" "\0" \
-    "ansi80x43" "\0" \
-    "ansi80x43-mono" "\0" \
-    "ansi80x50" "\0" \
-    "ansi80x50-mono" "\0" \
-    "ansi80x60" "\0" \
-    "ansi80x60-mono" "\0" \
-    "ansil" "\0" \
-    "ansil-mono" "\0" \
-    "ansis" "\0" \
-    "ansis-mono" "\0" \
-    "ansisysk" "\0" \
-    "att605-pc" "\0" \
-    "avatar" "\0" \
-    "avatar0" "\0" \
-    "avatar0+" "\0" \
-    "avatar1" "\0" \
-    "bsdos-pc" "\0" \
-    "bsdos-pc-m" "\0" \
-    "bsdos-pc-mono" "\0" \
-    "bsdos-pc-nobold" "\0" \
-    "bsdos-ppc" "\0" \
-    "cons25" "\0" \
-    "cons25-m" "\0" \
-    "cons30" "\0" \
-    "cons30-m" "\0" \
-    "cons43" "\0" \
-    "cons43-m" "\0" \
-    "cons50" "\0" \
-    "cons50-m" "\0" \
-    "cons60" "\0" \
-    "cons60-m" "\0" \
-    "cygwin" "\0" \
-    "cygwinB19" "\0" \
-    "cygwinDBG" "\0" \
-    "djgpp" "\0" \
-    "ecma+sgr" "\0" \
-    "emx-base" "\0" \
-    "hft-c-old" "\0" \
-    "hp700" "\0" \
-    "hpansi" "\0" \
-    "ibm5151" "\0" \
-    "ibm5154" "\0" \
-    "ibm6153" "\0" \
-    "ibm6153-40" "\0" \
-    "ibm6153-90" "\0" \
-    "ibm6154" "\0" \
-    "ibm6155" "\0" \
-    "ibmpc" "\0" \
-    "ibmpc3" "\0" \
-    "ibmpcx" "\0" \
-    "ibmx" "\0" \
-    "interix" "\0" \
-    "interix-nti" "\0" \
-    "klone+acs" "\0" \
-    "klone+sgr" "\0" \
-    "klone+sgr-dumb" "\0" \
-    "lft" "\0" \
-    "LFT-PC850" "\0" \
-    "lft-pc850" "\0" \
-    "linux" "\0" \
-    "linux-basic" "\0" \
-    "linux-c" "\0" \
-    "linux-c-nc" "\0" \
-    "linux-koi8r" "\0" \
-    "linux-m" "\0" \
-    "linux-nic" "\0" \
-    "ms-vt100" "\0" \
-    "ms-vt100+" "\0" \
-    "ms-vt100-color" "\0" \
-    "nansi.sys" "\0" \
-    "nansi.sysk" "\0" \
-    "nansisys" "\0" \
-    "nansisysk" "\0" \
-    "ntconsole" "\0" \
-    "ntconsole-100" "\0" \
-    "ntconsole-100-nti" "\0" \
-    "ntconsole-25" "\0" \
-    "ntconsole-25-nti" "\0" \
-    "ntconsole-25-w" "\0" \
-    "ntconsole-25-w-vt" "\0" \
-    "ntconsole-35" "\0" \
-    "ntconsole-35-nti" "\0" \
-    "ntconsole-35-w" "\0" \
-    "ntconsole-50" "\0" \
-    "ntconsole-50-nti" "\0" \
-    "ntconsole-50-w" "\0" \
-    "ntconsole-60" "\0" \
-    "ntconsole-60-nti" "\0" \
-    "ntconsole-60-w" "\0" \
-    "ntconsole-w" "\0" \
-    "ntconsole-w-vt" "\0" \
-    "opennt" "\0" \
-    "opennt-100" "\0" \
-    "opennt-100-nti" "\0" \
-    "opennt-25" "\0" \
-    "opennt-25-nti" "\0" \
-    "opennt-25-w" "\0" \
-    "opennt-25-w-vt" "\0" \
-    "opennt-35" "\0" \
-    "opennt-35-nti" "\0" \
-    "opennt-35-w" "\0" \
-    "opennt-50" "\0" \
-    "opennt-50-nti" "\0" \
-    "opennt-50-w" "\0" \
-    "opennt-60" "\0" \
-    "opennt-60-nti" "\0" \
-    "opennt-60-w" "\0" \
-    "opennt-nti" "\0" \
-    "opennt-w" "\0" \
-    "opennt-w-vt" "\0" \
-    "origibmpc3" "\0" \
-    "origpc3" "\0" \
-    "pc-minix" "\0" \
-    "pc3" "\0" \
-    "pc3-bold" "\0" \
-    "pcansi" "\0" \
-    "pcansi-25" "\0" \
-    "pcansi-25-m" "\0" \
-    "pcansi-33" "\0" \
-    "pcansi-33-m" "\0" \
-    "pcansi-43" "\0" \
-    "pcansi-43-m" "\0" \
-    "pcansi-m" "\0" \
-    "pcansi-mono" "\0" \
-    "pcansi25" "\0" \
-    "pcansi25m" "\0" \
-    "pcansi33" "\0" \
-    "pcansi33m" "\0" \
-    "pcansi43" "\0" \
-    "qnx" "\0" \
-    "qnx4" "\0" \
-    "qnxm" "\0" \
-    "qnxt" "\0" \
-    "qnxt2" "\0" \
-    "qnxt4" "\0" \
-    "qnxtmono" "\0" \
-    "qnxw" "\0" \
-    "rxvt-cygwin" "\0" \
-    "rxvt-cygwin-native" "\0" \
-    "screen.teraterm" "\0" \
-    "teraterm" "\0" \
-    "uwin" "\0" \
-    "vt100+" "\0" \
-    "vtnt" "\0" \
-    "wy60-AT" "\0" \
-    "wy60-PC" "\0" \
-    "wyse60-AT" "\0" \
-    "wyse60-PC" "\0" \
-    "xenix" "\0" \
-    "\0\0"
+static const char *RAWCURSES_CP437LIKE =
+    "aixterm-m-old" "\0"
+    "ansi" "\0"
+    "ansi-color-2-emx" "\0"
+    "ansi-color-3-emx" "\0"
+    "ansi-emx" "\0"
+    "ansi-m" "\0"
+    "ansi-mono" "\0"
+    "ansi.sys" "\0"
+    "ansi.sys-old" "\0"
+    "ansi.sysk" "\0"
+    "ansi43m" "\0"
+    "ansi80x25" "\0"
+    "ansi80x25-mono" "\0"
+    "ansi80x30" "\0"
+    "ansi80x30-mono" "\0"
+    "ansi80x43" "\0"
+    "ansi80x43-mono" "\0"
+    "ansi80x50" "\0"
+    "ansi80x50-mono" "\0"
+    "ansi80x60" "\0"
+    "ansi80x60-mono" "\0"
+    "ansil" "\0"
+    "ansil-mono" "\0"
+    "ansis" "\0"
+    "ansis-mono" "\0"
+    "ansisysk" "\0"
+    "att605-pc" "\0"
+    "avatar" "\0"
+    "avatar0" "\0"
+    "avatar0+" "\0"
+    "avatar1" "\0"
+    "bsdos-pc" "\0"
+    "bsdos-pc-m" "\0"
+    "bsdos-pc-mono" "\0"
+    "bsdos-pc-nobold" "\0"
+    "bsdos-ppc" "\0"
+    "cons25" "\0"
+    "cons25-m" "\0"
+    "cons30" "\0"
+    "cons30-m" "\0"
+    "cons43" "\0"
+    "cons43-m" "\0"
+    "cons50" "\0"
+    "cons50-m" "\0"
+    "cons60" "\0"
+    "cons60-m" "\0"
+    "cygwin" "\0"
+    "cygwinB19" "\0"
+    "cygwinDBG" "\0"
+    "djgpp" "\0"
+    "ecma+sgr" "\0"
+    "emx-base" "\0"
+    "hft-c-old" "\0"
+    "hp700" "\0"
+    "hpansi" "\0"
+    "ibm5151" "\0"
+    "ibm5154" "\0"
+    "ibm6153" "\0"
+    "ibm6153-40" "\0"
+    "ibm6153-90" "\0"
+    "ibm6154" "\0"
+    "ibm6155" "\0"
+    "ibmpc" "\0"
+    "ibmpc3" "\0"
+    "ibmpcx" "\0"
+    "ibmx" "\0"
+    "interix" "\0"
+    "interix-nti" "\0"
+    "klone+acs" "\0"
+    "klone+sgr" "\0"
+    "klone+sgr-dumb" "\0"
+    "lft" "\0"
+    "LFT-PC850" "\0"
+    "lft-pc850" "\0"
+    "linux" "\0"
+    "linux-basic" "\0"
+    "linux-c" "\0"
+    "linux-c-nc" "\0"
+    "linux-koi8r" "\0"
+    "linux-m" "\0"
+    "linux-nic" "\0"
+    "ms-vt100" "\0"
+    "ms-vt100+" "\0"
+    "ms-vt100-color" "\0"
+    "nansi.sys" "\0"
+    "nansi.sysk" "\0"
+    "nansisys" "\0"
+    "nansisysk" "\0"
+    "ntconsole" "\0"
+    "ntconsole-100" "\0"
+    "ntconsole-100-nti" "\0"
+    "ntconsole-25" "\0"
+    "ntconsole-25-nti" "\0"
+    "ntconsole-25-w" "\0"
+    "ntconsole-25-w-vt" "\0"
+    "ntconsole-35" "\0"
+    "ntconsole-35-nti" "\0"
+    "ntconsole-35-w" "\0"
+    "ntconsole-50" "\0"
+    "ntconsole-50-nti" "\0"
+    "ntconsole-50-w" "\0"
+    "ntconsole-60" "\0"
+    "ntconsole-60-nti" "\0"
+    "ntconsole-60-w" "\0"
+    "ntconsole-w" "\0"
+    "ntconsole-w-vt" "\0"
+    "opennt" "\0"
+    "opennt-100" "\0"
+    "opennt-100-nti" "\0"
+    "opennt-25" "\0"
+    "opennt-25-nti" "\0"
+    "opennt-25-w" "\0"
+    "opennt-25-w-vt" "\0"
+    "opennt-35" "\0"
+    "opennt-35-nti" "\0"
+    "opennt-35-w" "\0"
+    "opennt-50" "\0"
+    "opennt-50-nti" "\0"
+    "opennt-50-w" "\0"
+    "opennt-60" "\0"
+    "opennt-60-nti" "\0"
+    "opennt-60-w" "\0"
+    "opennt-nti" "\0"
+    "opennt-w" "\0"
+    "opennt-w-vt" "\0"
+    "origibmpc3" "\0"
+    "origpc3" "\0"
+    "pc-minix" "\0"
+    "pc3" "\0"
+    "pc3-bold" "\0"
+    "pcansi" "\0"
+    "pcansi-25" "\0"
+    "pcansi-25-m" "\0"
+    "pcansi-33" "\0"
+    "pcansi-33-m" "\0"
+    "pcansi-43" "\0"
+    "pcansi-43-m" "\0"
+    "pcansi-m" "\0"
+    "pcansi-mono" "\0"
+    "pcansi25" "\0"
+    "pcansi25m" "\0"
+    "pcansi33" "\0"
+    "pcansi33m" "\0"
+    "pcansi43" "\0"
+    "qnx" "\0"
+    "qnx4" "\0"
+    "qnxm" "\0"
+    "qnxt" "\0"
+    "qnxt2" "\0"
+    "qnxt4" "\0"
+    "qnxtmono" "\0"
+    "qnxw" "\0"
+    "rxvt-cygwin" "\0"
+    "rxvt-cygwin-native" "\0"
+    "screen.teraterm" "\0"
+    "teraterm" "\0"
+    "uwin" "\0"
+    "vt100+" "\0"
+    "vtnt" "\0"
+    "wy60-AT" "\0"
+    "wy60-PC" "\0"
+    "wyse60-AT" "\0"
+    "wyse60-PC" "\0"
+    "xenix" "\0"
+    "\0\0";
 
 /* list of terminals for which we send ADM3A-type escape sequences */
-#define RAWCURSES_ADM3ALIKE \
-    "1178" "\0" \
-    "a210" "\0" \
-    "a80" "\0" \
-    "abm85" "\0" \
-    "abm85e" "\0" \
-    "abm85h" "\0" \
-    "abm85h-old" "\0" \
-    "adm1" "\0" \
-    "adm11" "\0" \
-    "adm1178" "\0" \
-    "adm12" "\0" \
-    "adm1a" "\0" \
-    "adm2" "\0" \
-    "adm20" "\0" \
-    "adm21" "\0" \
-    "adm22" "\0" \
-    "adm31" "\0" \
-    "adm31-old" "\0" \
-    "adm3a" "\0" \
-    "adm3a+" "\0" \
-    "adm42" "\0" \
-    "adm42-ns" "\0" \
-    "adm5" "\0" \
-    "alt4" "\0" \
-    "alt7" "\0" \
-    "alt7pc" "\0" \
-    "altos-4" "\0" \
-    "altos4" "\0" \
-    "altos7" "\0" \
-    "altos7pc" "\0" \
-    "ampex-232" "\0" \
-    "ampex175" "\0" \
-    "ampex175-b" "\0" \
-    "ampex210" "\0" \
-    "ampex232" "\0" \
-    "ampex232w" "\0" \
-    "ampex80" "\0" \
-    "apple-soroc" "\0" \
-    "basis" "\0" \
-    "d80" "\0" \
-    "dialogue" "\0" \
-    "dialogue80" "\0" \
-    "dumb" "\0" \
-    "f100" "\0" \
-    "f100-rv" "\0" \
-    "f110" "\0" \
-    "f110-14" "\0" \
-    "f110-14w" "\0" \
-    "f110-w" "\0" \
-    "f200" "\0" \
-    "f200-w" "\0" \
-    "f200vi" "\0" \
-    "f200vi-w" "\0" \
-    "falco" "\0" \
-    "falco-p" "\0" \
-    "freedom" "\0" \
-    "freedom-rv" "\0" \
-    "freedom100" "\0" \
-    "freedom110" "\0" \
-    "freedom200" "\0" \
-    "hp700-wy" "\0" \
-    "icl6402" "\0" \
-    "icl6404" "\0" \
-    "icl6404-w" "\0" \
-    "ims950" "\0" \
-    "ims950-b" "\0" \
-    "ims950-rv" "\0" \
-    "iq120" "\0" \
-    "iq140" "\0" \
-    "kaypro" "\0" \
-    "kaypro2" "\0" \
-    "kds6402" "\0" \
-    "kds7372" "\0" \
-    "kds7372-w" "\0" \
-    "kt7" "\0" \
-    "kt7ix" "\0" \
-    "ktm" "\0" \
-    "mime2a-s" "\0" \
-    "mime340" "\0" \
-    "mime3a" "\0" \
-    "mime3ax" "\0" \
-    "mm340" "\0" \
-    "mt-70" "\0" \
-    "mt70" "\0" \
-    "ncr160wy50+pp" "\0" \
-    "ncr160wy50+wpp" "\0" \
-    "ncr160wy60pp" "\0" \
-    "ncr160wy60wpp" "\0" \
-    "ncr260wy325pp" "\0" \
-    "ncr260wy325wpp" "\0" \
-    "ncr260wy350pp" "\0" \
-    "ncr260wy350wpp" "\0" \
-    "ncr260wy50+pp" "\0" \
-    "ncr260wy50+wpp" "\0" \
-    "ncr260wy60pp" "\0" \
-    "ncr260wy60wpp" "\0" \
-    "northstar" "\0" \
-    "o85h" "\0" \
-    "oabm85h" "\0" \
-    "opus3n1+" "\0" \
-    "osborne" "\0" \
-    "osborne-w" "\0" \
-    "osborne1" "\0" \
-    "osborne1-w" "\0" \
-    "osexec" "\0" \
-    "qdss" "\0" \
-    "qdcons" "\0" \
-    "qvt101" "\0" \
-    "qvt101+" "\0" \
-    "qvt101p" "\0" \
-    "qvt102" "\0" \
-    "qvt119" "\0" \
-    "qvt119+" "\0" \
-    "qvt119+-25" "\0" \
-    "qvt119+-25-w" "\0" \
-    "qvt119+-w" "\0" \
-    "qvt119-25-w" "\0" \
-    "qvt119-w" "\0" \
-    "qvt119p" "\0" \
-    "qvt119p-25" "\0" \
-    "qvt119p-25-w" "\0" \
-    "qvt119p-w" "\0" \
-    "soroc" "\0" \
-    "soroc120" "\0" \
-    "soroc140" "\0" \
-    "synertek" "\0" \
-    "synertek380" "\0" \
-    "tandem6510" "\0" \
-    "ts-1" "\0" \
-    "ts-1p" "\0" \
-    "ts1" "\0" \
-    "ts1p" "\0" \
-    "tvi803" "\0" \
-    "tvi9065" "\0" \
-    "tvi910" "\0" \
-    "tvi910+" "\0" \
-    "tvi912" "\0" \
-    "tvi912b" "\0" \
-    "tvi912b-2p" "\0" \
-    "tvi912b-2p-mc" "\0" \
-    "tvi912b-2p-p" "\0" \
-    "tvi912b-2p-unk" "\0" \
-    "tvi912b-mc" "\0" \
-    "tvi912b-p" "\0" \
-    "tvi912b-unk" "\0" \
-    "tvi912b-vb" "\0" \
-    "tvi912b-vb-mc" "\0" \
-    "tvi912b-vb-p" "\0" \
-    "tvi912b-vb-unk" "\0" \
-    "tvi912c" "\0" \
-    "tvi912c-2p" "\0" \
-    "tvi912c-2p-mc" "\0" \
-    "tvi912c-2p-p" "\0" \
-    "tvi912c-2p-unk" "\0" \
-    "tvi912c-mc" "\0" \
-    "tvi912c-p" "\0" \
-    "tvi912c-unk" "\0" \
-    "tvi912c-vb" "\0" \
-    "tvi912c-vb-mc" "\0" \
-    "tvi912c-vb-p" "\0" \
-    "tvi912c-vb-unk" "\0" \
-    "tvi914" "\0" \
-    "tvi920" "\0" \
-    "tvi920b" "\0" \
-    "tvi920b-2p" "\0" \
-    "tvi920b-2p-mc" "\0" \
-    "tvi920b-2p-p" "\0" \
-    "tvi920b-2p-unk" "\0" \
-    "tvi920b-mc" "\0" \
-    "tvi920b-p" "\0" \
-    "tvi920b-unk" "\0" \
-    "tvi920b-vb" "\0" \
-    "tvi920b-vb-mc" "\0" \
-    "tvi920b-vb-p" "\0" \
-    "tvi920b-vb-unk" "\0" \
-    "tvi920c" "\0" \
-    "tvi920c-2p" "\0" \
-    "tvi920c-2p-mc" "\0" \
-    "tvi920c-2p-p" "\0" \
-    "tvi920c-2p-unk" "\0" \
-    "tvi920c-mc" "\0" \
-    "tvi920c-p" "\0" \
-    "tvi920c-unk" "\0" \
-    "tvi920c-vb" "\0" \
-    "tvi920c-vb-mc" "\0" \
-    "tvi920c-vb-p" "\0" \
-    "tvi920c-vb-unk" "\0" \
-    "tvi921" "\0" \
-    "tvi924" "\0" \
-    "tvi925" "\0" \
-    "tvi925-hi" "\0" \
-    "tvi92B" "\0" \
-    "tvi92D" "\0" \
-    "tvi950" "\0" \
-    "tvi950-2p" "\0" \
-    "tvi950-4p" "\0" \
-    "tvi950-rv" "\0" \
-    "tvi950-rv-2p" "\0" \
-    "tvi950-rv-4p" "\0" \
-    "tvipt" "\0" \
-    "vi50adm" "\0" \
-    "vp3a+" "\0" \
-    "wy100" "\0" \
-    "wy100q" "\0" \
-    "wy120" "\0" \
-    "wy120-25" "\0" \
-    "wy120-25-w" "\0" \
-    "wy120-vb" "\0" \
-    "wy120-w" "\0" \
-    "wy120-w-vb" "\0" \
-    "wy120-wvb" "\0" \
-    "wy150" "\0" \
-    "wy150-25" "\0" \
-    "wy150-25-w" "\0" \
-    "wy150-vb" "\0" \
-    "wy150-w" "\0" \
-    "wy150-w-vb" "\0" \
-    "wy150-wvb" "\0" \
-    "wy160" "\0" \
-    "wy160-25" "\0" \
-    "wy160-25-w" "\0" \
-    "wy160-42" "\0" \
-    "wy160-42-w" "\0" \
-    "wy160-43" "\0" \
-    "wy160-43-w" "\0" \
-    "wy160-vb" "\0" \
-    "wy160-w" "\0" \
-    "wy160-w-vb" "\0" \
-    "wy160-wvb" "\0" \
-    "wy30" "\0" \
-    "wy30-mc" "\0" \
-    "wy30-vb" "\0" \
-    "wy325" "\0" \
-    "wy325-25" "\0" \
-    "wy325-25w" "\0" \
-    "wy325-42" "\0" \
-    "wy325-42w" "\0" \
-    "wy325-42w-vb" "\0" \
-    "wy325-42wvb" "\0" \
-    "wy325-43" "\0" \
-    "wy325-43w" "\0" \
-    "wy325-43w-vb" "\0" \
-    "wy325-43wvb" "\0" \
-    "wy325-80" "\0" \
-    "wy325-vb" "\0" \
-    "wy325-w" "\0" \
-    "wy325-w-vb" "\0" \
-    "wy325-wvb" "\0" \
-    "wy325w-24" "\0" \
-    "wy350" "\0" \
-    "wy350-vb" "\0" \
-    "wy350-w" "\0" \
-    "wy350-wvb" "\0" \
-    "wy50" "\0" \
-    "wy50-mc" "\0" \
-    "wy50-vb" "\0" \
-    "wy50-w" "\0" \
-    "wy50-wvb" "\0" \
-    "wy60" "\0" \
-    "wy60-25" "\0" \
-    "wy60-25-w" "\0" \
-    "wy60-42" "\0" \
-    "wy60-42-w" "\0" \
-    "wy60-43" "\0" \
-    "wy60-43-w" "\0" \
-    "wy60-vb" "\0" \
-    "wy60-w" "\0" \
-    "wy60-w-vb" "\0" \
-    "wy60-wvb" "\0" \
-    "wy99f" "\0" \
-    "wy99fa" "\0" \
-    "wy99gt" "\0" \
-    "wy99gt-25" "\0" \
-    "wy99gt-25-w" "\0" \
-    "wy99gt-vb" "\0" \
-    "wy99gt-w" "\0" \
-    "wy99gt-w-vb" "\0" \
-    "wy99gt-wvb" "\0" \
-    "wyse-325" "\0" \
-    "wyse120" "\0" \
-    "wyse120-25" "\0" \
-    "wyse120-25-w" "\0" \
-    "wyse120-vb" "\0" \
-    "wyse120-w" "\0" \
-    "wyse120-w-vb" "\0" \
-    "wyse120-wvb" "\0" \
-    "wyse150" "\0" \
-    "wyse150-25" "\0" \
-    "wyse150-25-w" "\0" \
-    "wyse150-vb" "\0" \
-    "wyse150-w" "\0" \
-    "wyse150-w-vb" "\0" \
-    "wyse150-wvb" "\0" \
-    "wyse160" "\0" \
-    "wyse160-25" "\0" \
-    "wyse160-25-w" "\0" \
-    "wyse160-42" "\0" \
-    "wyse160-42-w" "\0" \
-    "wyse160-43" "\0" \
-    "wyse160-43-w" "\0" \
-    "wyse160-vb" "\0" \
-    "wyse160-w" "\0" \
-    "wyse160-w-vb" "\0" \
-    "wyse160-wvb" "\0" \
-    "wyse30" "\0" \
-    "wyse30-mc" "\0" \
-    "wyse30-vb" "\0" \
-    "wyse325" "\0" \
-    "wyse325-25" "\0" \
-    "wyse325-25w" "\0" \
-    "wyse325-42" "\0" \
-    "wyse325-42w" "\0" \
-    "wyse325-42w-vb" "\0" \
-    "wyse325-42wvb" "\0" \
-    "wyse325-43" "\0" \
-    "wyse325-43w" "\0" \
-    "wyse325-43w-vb" "\0" \
-    "wyse325-43wvb" "\0" \
-    "wyse325-80" "\0" \
-    "wyse325-vb" "\0" \
-    "wyse325-w" "\0" \
-    "wyse325-w-vb" "\0" \
-    "wyse325-wvb" "\0" \
-    "wyse325w-24" "\0" \
-    "wyse350" "\0" \
-    "wyse350-vb" "\0" \
-    "wyse350-w" "\0" \
-    "wyse350-wvb" "\0" \
-    "wyse50" "\0" \
-    "wyse50-mc" "\0" \
-    "wyse50-vb" "\0" \
-    "wyse50-w" "\0" \
-    "wyse50-wvb" "\0" \
-    "wyse60" "\0" \
-    "wyse60-25" "\0" \
-    "wyse60-25-w" "\0" \
-    "wyse60-42" "\0" \
-    "wyse60-42-w" "\0" \
-    "wyse60-43" "\0" \
-    "wyse60-43-w" "\0" \
-    "wyse60-vb" "\0" \
-    "wyse60-w" "\0" \
-    "wyse60-w-vb" "\0" \
-    "wyse60-wvb" "\0" \
-    "wyse99f" "\0" \
-    "wyse99fa" "\0" \
-    "wyse99gt" "\0" \
-    "wyse99gt-25" "\0" \
-    "wyse99gt-25-w" "\0" \
-    "wyse99gt-vb" "\0" \
-    "wyse99gt-w" "\0" \
-    "wyse99gt-w-vb" "\0" \
-    "wyse99gt-wvb" "\0" \
-    "x820" "\0" \
-    "xerox820" "\0" \
-    "z30" "\0" \
-    "z50" "\0" \
-    "zen30" "\0" \
-    "zen50" "\0" \
-    "\0\0"
+static const char *RAWCURSES_ADM3ALIKE =
+    "1178" "\0"
+    "a210" "\0"
+    "a80" "\0"
+    "abm85" "\0"
+    "abm85e" "\0"
+    "abm85h" "\0"
+    "abm85h-old" "\0"
+    "adm1" "\0"
+    "adm11" "\0"
+    "adm1178" "\0"
+    "adm12" "\0"
+    "adm1a" "\0"
+    "adm2" "\0"
+    "adm20" "\0"
+    "adm21" "\0"
+    "adm22" "\0"
+    "adm31" "\0"
+    "adm31-old" "\0"
+    "adm3a" "\0"
+    "adm3a+" "\0"
+    "adm42" "\0"
+    "adm42-ns" "\0"
+    "adm5" "\0"
+    "alt4" "\0"
+    "alt7" "\0"
+    "alt7pc" "\0"
+    "altos-4" "\0"
+    "altos4" "\0"
+    "altos7" "\0"
+    "altos7pc" "\0"
+    "ampex-232" "\0"
+    "ampex175" "\0"
+    "ampex175-b" "\0"
+    "ampex210" "\0"
+    "ampex232" "\0"
+    "ampex232w" "\0"
+    "ampex80" "\0"
+    "apple-soroc" "\0"
+    "basis" "\0"
+    "d80" "\0"
+    "dialogue" "\0"
+    "dialogue80" "\0"
+    "dumb" "\0"
+    "f100" "\0"
+    "f100-rv" "\0"
+    "f110" "\0"
+    "f110-14" "\0"
+    "f110-14w" "\0"
+    "f110-w" "\0"
+    "f200" "\0"
+    "f200-w" "\0"
+    "f200vi" "\0"
+    "f200vi-w" "\0"
+    "falco" "\0"
+    "falco-p" "\0"
+    "freedom" "\0"
+    "freedom-rv" "\0"
+    "freedom100" "\0"
+    "freedom110" "\0"
+    "freedom200" "\0"
+    "hp700-wy" "\0"
+    "icl6402" "\0"
+    "icl6404" "\0"
+    "icl6404-w" "\0"
+    "ims950" "\0"
+    "ims950-b" "\0"
+    "ims950-rv" "\0"
+    "iq120" "\0"
+    "iq140" "\0"
+    "kaypro" "\0"
+    "kaypro2" "\0"
+    "kds6402" "\0"
+    "kds7372" "\0"
+    "kds7372-w" "\0"
+    "kt7" "\0"
+    "kt7ix" "\0"
+    "ktm" "\0"
+    "mime2a-s" "\0"
+    "mime340" "\0"
+    "mime3a" "\0"
+    "mime3ax" "\0"
+    "mm340" "\0"
+    "mt-70" "\0"
+    "mt70" "\0"
+    "ncr160wy50+pp" "\0"
+    "ncr160wy50+wpp" "\0"
+    "ncr160wy60pp" "\0"
+    "ncr160wy60wpp" "\0"
+    "ncr260wy325pp" "\0"
+    "ncr260wy325wpp" "\0"
+    "ncr260wy350pp" "\0"
+    "ncr260wy350wpp" "\0"
+    "ncr260wy50+pp" "\0"
+    "ncr260wy50+wpp" "\0"
+    "ncr260wy60pp" "\0"
+    "ncr260wy60wpp" "\0"
+    "northstar" "\0"
+    "o85h" "\0"
+    "oabm85h" "\0"
+    "opus3n1+" "\0"
+    "osborne" "\0"
+    "osborne-w" "\0"
+    "osborne1" "\0"
+    "osborne1-w" "\0"
+    "osexec" "\0"
+    "qdss" "\0"
+    "qdcons" "\0"
+    "qvt101" "\0"
+    "qvt101+" "\0"
+    "qvt101p" "\0"
+    "qvt102" "\0"
+    "qvt119" "\0"
+    "qvt119+" "\0"
+    "qvt119+-25" "\0"
+    "qvt119+-25-w" "\0"
+    "qvt119+-w" "\0"
+    "qvt119-25-w" "\0"
+    "qvt119-w" "\0"
+    "qvt119p" "\0"
+    "qvt119p-25" "\0"
+    "qvt119p-25-w" "\0"
+    "qvt119p-w" "\0"
+    "soroc" "\0"
+    "soroc120" "\0"
+    "soroc140" "\0"
+    "synertek" "\0"
+    "synertek380" "\0"
+    "tandem6510" "\0"
+    "ts-1" "\0"
+    "ts-1p" "\0"
+    "ts1" "\0"
+    "ts1p" "\0"
+    "tvi803" "\0"
+    "tvi9065" "\0"
+    "tvi910" "\0"
+    "tvi910+" "\0"
+    "tvi912" "\0"
+    "tvi912b" "\0"
+    "tvi912b-2p" "\0"
+    "tvi912b-2p-mc" "\0"
+    "tvi912b-2p-p" "\0"
+    "tvi912b-2p-unk" "\0"
+    "tvi912b-mc" "\0"
+    "tvi912b-p" "\0"
+    "tvi912b-unk" "\0"
+    "tvi912b-vb" "\0"
+    "tvi912b-vb-mc" "\0"
+    "tvi912b-vb-p" "\0"
+    "tvi912b-vb-unk" "\0"
+    "tvi912c" "\0"
+    "tvi912c-2p" "\0"
+    "tvi912c-2p-mc" "\0"
+    "tvi912c-2p-p" "\0"
+    "tvi912c-2p-unk" "\0"
+    "tvi912c-mc" "\0"
+    "tvi912c-p" "\0"
+    "tvi912c-unk" "\0"
+    "tvi912c-vb" "\0"
+    "tvi912c-vb-mc" "\0"
+    "tvi912c-vb-p" "\0"
+    "tvi912c-vb-unk" "\0"
+    "tvi914" "\0"
+    "tvi920" "\0"
+    "tvi920b" "\0"
+    "tvi920b-2p" "\0"
+    "tvi920b-2p-mc" "\0"
+    "tvi920b-2p-p" "\0"
+    "tvi920b-2p-unk" "\0"
+    "tvi920b-mc" "\0"
+    "tvi920b-p" "\0"
+    "tvi920b-unk" "\0"
+    "tvi920b-vb" "\0"
+    "tvi920b-vb-mc" "\0"
+    "tvi920b-vb-p" "\0"
+    "tvi920b-vb-unk" "\0"
+    "tvi920c" "\0"
+    "tvi920c-2p" "\0"
+    "tvi920c-2p-mc" "\0"
+    "tvi920c-2p-p" "\0"
+    "tvi920c-2p-unk" "\0"
+    "tvi920c-mc" "\0"
+    "tvi920c-p" "\0"
+    "tvi920c-unk" "\0"
+    "tvi920c-vb" "\0"
+    "tvi920c-vb-mc" "\0"
+    "tvi920c-vb-p" "\0"
+    "tvi920c-vb-unk" "\0"
+    "tvi921" "\0"
+    "tvi924" "\0"
+    "tvi925" "\0"
+    "tvi925-hi" "\0"
+    "tvi92B" "\0"
+    "tvi92D" "\0"
+    "tvi950" "\0"
+    "tvi950-2p" "\0"
+    "tvi950-4p" "\0"
+    "tvi950-rv" "\0"
+    "tvi950-rv-2p" "\0"
+    "tvi950-rv-4p" "\0"
+    "tvipt" "\0"
+    "vi50adm" "\0"
+    "vp3a+" "\0"
+    "wy100" "\0"
+    "wy100q" "\0"
+    "wy120" "\0"
+    "wy120-25" "\0"
+    "wy120-25-w" "\0"
+    "wy120-vb" "\0"
+    "wy120-w" "\0"
+    "wy120-w-vb" "\0"
+    "wy120-wvb" "\0"
+    "wy150" "\0"
+    "wy150-25" "\0"
+    "wy150-25-w" "\0"
+    "wy150-vb" "\0"
+    "wy150-w" "\0"
+    "wy150-w-vb" "\0"
+    "wy150-wvb" "\0"
+    "wy160" "\0"
+    "wy160-25" "\0"
+    "wy160-25-w" "\0"
+    "wy160-42" "\0"
+    "wy160-42-w" "\0"
+    "wy160-43" "\0"
+    "wy160-43-w" "\0"
+    "wy160-vb" "\0"
+    "wy160-w" "\0"
+    "wy160-w-vb" "\0"
+    "wy160-wvb" "\0"
+    "wy30" "\0"
+    "wy30-mc" "\0"
+    "wy30-vb" "\0"
+    "wy325" "\0"
+    "wy325-25" "\0"
+    "wy325-25w" "\0"
+    "wy325-42" "\0"
+    "wy325-42w" "\0"
+    "wy325-42w-vb" "\0"
+    "wy325-42wvb" "\0"
+    "wy325-43" "\0"
+    "wy325-43w" "\0"
+    "wy325-43w-vb" "\0"
+    "wy325-43wvb" "\0"
+    "wy325-80" "\0"
+    "wy325-vb" "\0"
+    "wy325-w" "\0"
+    "wy325-w-vb" "\0"
+    "wy325-wvb" "\0"
+    "wy325w-24" "\0"
+    "wy350" "\0"
+    "wy350-vb" "\0"
+    "wy350-w" "\0"
+    "wy350-wvb" "\0"
+    "wy50" "\0"
+    "wy50-mc" "\0"
+    "wy50-vb" "\0"
+    "wy50-w" "\0"
+    "wy50-wvb" "\0"
+    "wy60" "\0"
+    "wy60-25" "\0"
+    "wy60-25-w" "\0"
+    "wy60-42" "\0"
+    "wy60-42-w" "\0"
+    "wy60-43" "\0"
+    "wy60-43-w" "\0"
+    "wy60-vb" "\0"
+    "wy60-w" "\0"
+    "wy60-w-vb" "\0"
+    "wy60-wvb" "\0"
+    "wy99f" "\0"
+    "wy99fa" "\0"
+    "wy99gt" "\0"
+    "wy99gt-25" "\0"
+    "wy99gt-25-w" "\0"
+    "wy99gt-vb" "\0"
+    "wy99gt-w" "\0"
+    "wy99gt-w-vb" "\0"
+    "wy99gt-wvb" "\0"
+    "wyse-325" "\0"
+    "wyse120" "\0"
+    "wyse120-25" "\0"
+    "wyse120-25-w" "\0"
+    "wyse120-vb" "\0"
+    "wyse120-w" "\0"
+    "wyse120-w-vb" "\0"
+    "wyse120-wvb" "\0"
+    "wyse150" "\0"
+    "wyse150-25" "\0"
+    "wyse150-25-w" "\0"
+    "wyse150-vb" "\0"
+    "wyse150-w" "\0"
+    "wyse150-w-vb" "\0"
+    "wyse150-wvb" "\0"
+    "wyse160" "\0"
+    "wyse160-25" "\0"
+    "wyse160-25-w" "\0"
+    "wyse160-42" "\0"
+    "wyse160-42-w" "\0"
+    "wyse160-43" "\0"
+    "wyse160-43-w" "\0"
+    "wyse160-vb" "\0"
+    "wyse160-w" "\0"
+    "wyse160-w-vb" "\0"
+    "wyse160-wvb" "\0"
+    "wyse30" "\0"
+    "wyse30-mc" "\0"
+    "wyse30-vb" "\0"
+    "wyse325" "\0"
+    "wyse325-25" "\0"
+    "wyse325-25w" "\0"
+    "wyse325-42" "\0"
+    "wyse325-42w" "\0"
+    "wyse325-42w-vb" "\0"
+    "wyse325-42wvb" "\0"
+    "wyse325-43" "\0"
+    "wyse325-43w" "\0"
+    "wyse325-43w-vb" "\0"
+    "wyse325-43wvb" "\0"
+    "wyse325-80" "\0"
+    "wyse325-vb" "\0"
+    "wyse325-w" "\0"
+    "wyse325-w-vb" "\0"
+    "wyse325-wvb" "\0"
+    "wyse325w-24" "\0"
+    "wyse350" "\0"
+    "wyse350-vb" "\0"
+    "wyse350-w" "\0"
+    "wyse350-wvb" "\0"
+    "wyse50" "\0"
+    "wyse50-mc" "\0"
+    "wyse50-vb" "\0"
+    "wyse50-w" "\0"
+    "wyse50-wvb" "\0"
+    "wyse60" "\0"
+    "wyse60-25" "\0"
+    "wyse60-25-w" "\0"
+    "wyse60-42" "\0"
+    "wyse60-42-w" "\0"
+    "wyse60-43" "\0"
+    "wyse60-43-w" "\0"
+    "wyse60-vb" "\0"
+    "wyse60-w" "\0"
+    "wyse60-w-vb" "\0"
+    "wyse60-wvb" "\0"
+    "wyse99f" "\0"
+    "wyse99fa" "\0"
+    "wyse99gt" "\0"
+    "wyse99gt-25" "\0"
+    "wyse99gt-25-w" "\0"
+    "wyse99gt-vb" "\0"
+    "wyse99gt-w" "\0"
+    "wyse99gt-w-vb" "\0"
+    "wyse99gt-wvb" "\0"
+    "x820" "\0"
+    "xerox820" "\0"
+    "z30" "\0"
+    "z50" "\0"
+    "zen30" "\0"
+    "zen50" "\0"
+    "\0\0";
 
 /* list of ANSI/XTerm-like terminals for which we do not trust the
  * cursor-hiding capability */
-#define RAWCURSES_NOCIVIS \
-    "cxterm" "\0" \
-    "cygwin" "\0" \
-    "cygwinB19" "\0" \
-    "cygwinDBG" "\0" \
-    "darwin" "\0" \
-    "darwin-100x37" "\0" \
-    "darwin-100x37-m" "\0" \
-    "darwin-112x37" "\0" \
-    "darwin-112x37-m" "\0" \
-    "darwin-128x40" "\0" \
-    "darwin-128x40-m" "\0" \
-    "darwin-128x48" "\0" \
-    "darwin-128x48-m" "\0" \
-    "darwin-144x48" "\0" \
-    "darwin-144x48-m" "\0" \
-    "darwin-160x64" "\0" \
-    "darwin-160x64-m" "\0" \
-    "darwin-200x64" "\0" \
-    "darwin-200x64-m" "\0" \
-    "darwin-200x75" "\0" \
-    "darwin-200x75-m" "\0" \
-    "darwin-256x96" "\0" \
-    "darwin-256x96-m" "\0" \
-    "darwin-80x25" "\0" \
-    "darwin-80x25-m" "\0" \
-    "darwin-80x30" "\0" \
-    "darwin-80x30-m" "\0" \
-    "darwin-90x30" "\0" \
-    "darwin-90x30-m" "\0" \
-    "darwin-acs" "\0" \
-    "darwin-b" "\0" \
-    "darwin-b-acs" "\0" \
-    "darwin-f" "\0" \
-    "darwin-f-acs" "\0" \
-    "darwin-f2" "\0" \
-    "darwin-f2-acs" "\0" \
-    "darwin-m" "\0" \
-    "darwin-m-acs" "\0" \
-    "darwin-m-b" "\0" \
-    "darwin-m-b-acs" "\0" \
-    "darwin-m-f" "\0" \
-    "darwin-m-f-acs" "\0" \
-    "darwin-m-f2" "\0" \
-    "darwin-m-f2-acs" "\0" \
-    "eterm" "\0" \
-    "eterm-color" "\0" \
-    "kterm" "\0" \
-    "rxvt-cygwin" "\0" \
-    "rxvt-cygwin-native" "\0" \
-    "uuterm" "\0" \
-    "xnuppc" "\0" \
-    "xnuppc-100x37" "\0" \
-    "xnuppc-100x37-m" "\0" \
-    "xnuppc-112x37" "\0" \
-    "xnuppc-112x37-m" "\0" \
-    "xnuppc-128x40" "\0" \
-    "xnuppc-128x40-m" "\0" \
-    "xnuppc-128x48" "\0" \
-    "xnuppc-128x48-m" "\0" \
-    "xnuppc-144x48" "\0" \
-    "xnuppc-144x48-m" "\0" \
-    "xnuppc-160x64" "\0" \
-    "xnuppc-160x64-m" "\0" \
-    "xnuppc-200x64" "\0" \
-    "xnuppc-200x64-m" "\0" \
-    "xnuppc-200x75" "\0" \
-    "xnuppc-200x75-m" "\0" \
-    "xnuppc-256x96" "\0" \
-    "xnuppc-256x96-m" "\0" \
-    "xnuppc-80x25" "\0" \
-    "xnuppc-80x25-m" "\0" \
-    "xnuppc-80x30" "\0" \
-    "xnuppc-80x30-m" "\0" \
-    "xnuppc-90x30" "\0" \
-    "xnuppc-90x30-m" "\0" \
-    "xnuppc-acs" "\0" \
-    "xnuppc-b" "\0" \
-    "xnuppc-b-acs" "\0" \
-    "xnuppc-f" "\0" \
-    "xnuppc-f-acs" "\0" \
-    "xnuppc-f2" "\0" \
-    "xnuppc-f2-acs" "\0" \
-    "xnuppc-m" "\0" \
-    "xnuppc-m-acs" "\0" \
-    "xnuppc-m-b" "\0" \
-    "xnuppc-m-b-acs" "\0" \
-    "xnuppc-m-f" "\0" \
-    "xnuppc-m-f-acs" "\0" \
-    "xnuppc-m-f2" "\0" \
-    "xnuppc-m-f2-acs" "\0" \
-    "\0\0"
+static const char *RAWCURSES_NOCIVIS =
+    "cxterm" "\0"
+    "cygwin" "\0"
+    "cygwinB19" "\0"
+    "cygwinDBG" "\0"
+    "darwin" "\0"
+    "darwin-100x37" "\0"
+    "darwin-100x37-m" "\0"
+    "darwin-112x37" "\0"
+    "darwin-112x37-m" "\0"
+    "darwin-128x40" "\0"
+    "darwin-128x40-m" "\0"
+    "darwin-128x48" "\0"
+    "darwin-128x48-m" "\0"
+    "darwin-144x48" "\0"
+    "darwin-144x48-m" "\0"
+    "darwin-160x64" "\0"
+    "darwin-160x64-m" "\0"
+    "darwin-200x64" "\0"
+    "darwin-200x64-m" "\0"
+    "darwin-200x75" "\0"
+    "darwin-200x75-m" "\0"
+    "darwin-256x96" "\0"
+    "darwin-256x96-m" "\0"
+    "darwin-80x25" "\0"
+    "darwin-80x25-m" "\0"
+    "darwin-80x30" "\0"
+    "darwin-80x30-m" "\0"
+    "darwin-90x30" "\0"
+    "darwin-90x30-m" "\0"
+    "darwin-acs" "\0"
+    "darwin-b" "\0"
+    "darwin-b-acs" "\0"
+    "darwin-f" "\0"
+    "darwin-f-acs" "\0"
+    "darwin-f2" "\0"
+    "darwin-f2-acs" "\0"
+    "darwin-m" "\0"
+    "darwin-m-acs" "\0"
+    "darwin-m-b" "\0"
+    "darwin-m-b-acs" "\0"
+    "darwin-m-f" "\0"
+    "darwin-m-f-acs" "\0"
+    "darwin-m-f2" "\0"
+    "darwin-m-f2-acs" "\0"
+    "eterm" "\0"
+    "eterm-color" "\0"
+    "kterm" "\0"
+    "rxvt-cygwin" "\0"
+    "rxvt-cygwin-native" "\0"
+    "uuterm" "\0"
+    "xnuppc" "\0"
+    "xnuppc-100x37" "\0"
+    "xnuppc-100x37-m" "\0"
+    "xnuppc-112x37" "\0"
+    "xnuppc-112x37-m" "\0"
+    "xnuppc-128x40" "\0"
+    "xnuppc-128x40-m" "\0"
+    "xnuppc-128x48" "\0"
+    "xnuppc-128x48-m" "\0"
+    "xnuppc-144x48" "\0"
+    "xnuppc-144x48-m" "\0"
+    "xnuppc-160x64" "\0"
+    "xnuppc-160x64-m" "\0"
+    "xnuppc-200x64" "\0"
+    "xnuppc-200x64-m" "\0"
+    "xnuppc-200x75" "\0"
+    "xnuppc-200x75-m" "\0"
+    "xnuppc-256x96" "\0"
+    "xnuppc-256x96-m" "\0"
+    "xnuppc-80x25" "\0"
+    "xnuppc-80x25-m" "\0"
+    "xnuppc-80x30" "\0"
+    "xnuppc-80x30-m" "\0"
+    "xnuppc-90x30" "\0"
+    "xnuppc-90x30-m" "\0"
+    "xnuppc-acs" "\0"
+    "xnuppc-b" "\0"
+    "xnuppc-b-acs" "\0"
+    "xnuppc-f" "\0"
+    "xnuppc-f-acs" "\0"
+    "xnuppc-f2" "\0"
+    "xnuppc-f2-acs" "\0"
+    "xnuppc-m" "\0"
+    "xnuppc-m-acs" "\0"
+    "xnuppc-m-b" "\0"
+    "xnuppc-m-b-acs" "\0"
+    "xnuppc-m-f" "\0"
+    "xnuppc-m-f-acs" "\0"
+    "xnuppc-m-f2" "\0"
+    "xnuppc-m-f2-acs" "\0"
+    "\0\0";
 
 /* The rawcurses_fput_* family return >0 on success, <=0 otherwise;
  * they are somewhat analogous to terminfo but much less flexible. */
 
 static int rawcurses_fput_ich(FILE *fh, int n)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        rawcurses_y = wherey() - 1;
+        rawcurses_x = wherex() - 1;
+#ifdef __TINYC__
+        {
+            int i;
+
+            for (i = rawcurses_w - 1; i >= (rawcurses_x + n); i --)
+            {
+                char buf[4];
+
+                _conio_gettext(i + 1 - n, rawcurses_y + 1,
+                               i + 1 - n, rawcurses_y + 1,
+                               buf);
+                puttext(i + 1, rawcurses_y + 1,
+                        i + 1, rawcurses_y + 1,
+                        buf);
+            }
+        }
+#else /* ! defined(__TINYC__) */
+        movetext(rawcurses_x + 1 + n, rawcurses_y + 1,
+                 rawcurses_w, rawcurses_y + 1,
+                 rawcurses_x + 1, rawcurses_y + 1);
+#endif /* ! defined(__TINYC__) */
+        return 1;
+    }
+#endif /* USE_CONIO */
     if (rawcurses_stdio_adm3a || rawcurses_stdio_vt52) return 0;
     return (fprintf(fh, CSI("%d@"), n) > 0);
 }
@@ -1432,6 +1935,12 @@ static int rawcurses_fput_request_palette(FILE *fh)
     int i;
     int ret = 1;
 
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_adm3a || rawcurses_stdio_vt52) return 0;
     if (! rawcurses_stdio_ccc) return 0;
     if (fputs(OSC("4"), fh) == EOF) ret = 0;
@@ -1439,7 +1948,7 @@ static int rawcurses_fput_request_palette(FILE *fh)
     {
         if (fprintf(fh, ";%d;?", i) <= 0) ret = 0;
     }
-    if (fputs("\a", fh) == EOF) ret = 0;
+    if (fputs("\7", fh) == EOF) ret = 0;
     return ret;
 }
 
@@ -1448,6 +1957,12 @@ static int rawcurses_fput_palette(FILE *fh, rawcurses_rgb_t *palette)
     int i;
     int ret = 1;
 
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_adm3a || rawcurses_stdio_vt52) return 0;
     if (! (rawcurses_stdio_ccc || rawcurses_stdio_ccc_linux)) return (rawcurses_stdio_256color || rawcurses_stdio_88color);
     if ((! rawcurses_stdio_ccc_linux) && (fputs(OSC("4"), fh) == EOF)) ret = 0;
@@ -1460,12 +1975,18 @@ static int rawcurses_fput_palette(FILE *fh, rawcurses_rgb_t *palette)
             ret = 0;
         }
     }
-    if ((! rawcurses_stdio_ccc_linux) && (fputs("\a", fh) == EOF)) ret = 0;
+    if ((! rawcurses_stdio_ccc_linux) && (fputs("\7", fh) == EOF)) ret = 0;
     return ret;
 }
 
 static int rawcurses_fput_palette_reset(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_adm3a || rawcurses_stdio_vt52) return 0;
     if (! rawcurses_stdio_ccc_linux) return (rawcurses_stdio_256color || rawcurses_stdio_88color);
     return fputs(OSC("R") ST, fh) != EOF;
@@ -1473,6 +1994,14 @@ static int rawcurses_fput_palette_reset(FILE *fh)
 
 static int rawcurses_fput_clear(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        clrscr();
+        gotoxy(1, 1);
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_adm3a) return fputs(ESCAPE(";") ESCAPE("*") ESCAPE("+") "\x1a", fh) != EOF;
     if (rawcurses_stdio_vt52) return fputs("\f" ESCAPE("H") ESCAPE("J"), fh) != EOF;
     return fputs(CSI("1;1H") CSI("2J"), fh) != EOF;
@@ -1480,6 +2009,17 @@ static int rawcurses_fput_clear(FILE *fh)
 
 static int rawcurses_fput_civis(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+#ifdef _NOCURSOR
+        _setcursortype(_NOCURSOR);
+        return 1;
+#else
+        return 0;
+#endif
+    }
+#endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("f"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return fputs(CSI("?25l"), fh) != EOF;
@@ -1487,6 +2027,17 @@ static int rawcurses_fput_civis(FILE *fh)
 
 static int rawcurses_fput_cnorm(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+#ifdef _NORMALCURSOR
+        _setcursortype(_NORMALCURSOR);
+        return 1;
+#else
+        return 0;
+#endif
+    }
+#endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("e"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return fputs(CSI("?25h"), fh) != EOF;
@@ -1494,6 +2045,14 @@ static int rawcurses_fput_cnorm(FILE *fh)
 
 static int rawcurses_fput_smcup(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        clrscr();
+        gotoxy(1, 1);
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return rawcurses_fput_clear(fh);
     return fputs(ESCAPE("7") CSI("s") CSI("\?47h") CSI("\?7l") CSI("r"), fh) != EOF;
 }
@@ -1501,12 +2060,24 @@ static int rawcurses_fput_smcup(FILE *fh)
 static int rawcurses_fput_rmcup(FILE *fh, int lines)
 {
     rawcurses_fput_clear(fh);
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 1;
     return (fprintf(fh, CSI("%d;1H") CSI("39;49m") CSI("0m") CSI("\?7h") CSI("\?47l") CSI("u") ESCAPE("8"), lines) > 0);
 }
 
 static int rawcurses_fput_enacs(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_acs_h19 || rawcurses_stdio_cp437) return 1;
     if (! rawcurses_stdio_iso2022) return 1;
@@ -1515,6 +2086,12 @@ static int rawcurses_fput_enacs(FILE *fh)
 
 static int rawcurses_fput_smacs(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("F"), fh) != EOF;
     if (rawcurses_stdio_cp437 && ! rawcurses_stdio_adm3a)
     {
@@ -1527,6 +2104,12 @@ static int rawcurses_fput_smacs(FILE *fh)
 
 static int rawcurses_fput_rmacs(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("G"), fh) != EOF;
     if (rawcurses_stdio_cp437 && ! rawcurses_stdio_adm3a)
     {
@@ -1548,6 +2131,12 @@ static int rawcurses_fput_rmacs(FILE *fh)
 
 static int rawcurses_fput_request_identity(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_adm3a) return 0;
     return fputs(ESCAPE("Z"), fh) != EOF;
 }
@@ -1556,18 +2145,36 @@ static int rawcurses_fput_request_identity(FILE *fh)
 
 static int rawcurses_fput_request_winsize(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return fputs(CSI("999B") CSI("999C") CSI("999;999H") CSI("6n"), fh) != EOF;
 }
 
 static int rawcurses_fput_request_title(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return fputs(CSI("21t"), fh) != EOF;
 }
 
 static int rawcurses_fput_title(FILE *fh, const char *title)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_vt52 && rawcurses_stdio_tw52)
     {
         return (fprintf(fh, ESCAPE("S%s\r"), (title)) > 0);
@@ -1578,23 +2185,48 @@ static int rawcurses_fput_title(FILE *fh, const char *title)
 
 static int rawcurses_fput_request_icon_name(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return fputs(CSI("20t"), fh) != EOF;
 }
 
 static int rawcurses_fput_icon_name(FILE *fh, const char *icon_name)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     return (fprintf(fh, OSC("1;%s" ST), (icon_name)) > 0);
 }
 
 static int rawcurses_fput_bel(FILE *fh)
 {
-    return fputc('\a', fh) != EOF;
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        putch('\7');
+        return 1;
+    }
+#endif
+    return fputc('\7', fh) != EOF;
 }
 
 static int rawcurses_fput_clrtobot(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     if (rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("J"), fh) != EOF;
     return fputs(CSI("0J"), fh) != EOF;
@@ -1602,6 +2234,13 @@ static int rawcurses_fput_clrtobot(FILE *fh)
 
 static int rawcurses_fput_clrtoeol(FILE *fh)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        clreol();
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("K"), fh) != EOF;
     return fputs(CSI("0K"), fh) != EOF;
@@ -1611,6 +2250,12 @@ static int rawcurses_fput_relcup(FILE *fh, int dy, int dx)
 {
     int ret;
 
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        return 0;
+    }
+#endif
     ret = 1;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a)
     {
@@ -1651,6 +2296,13 @@ static int rawcurses_fput_relcup(FILE *fh, int dy, int dx)
 
 static int rawcurses_fput_cup(FILE *fh, int y, int x)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        gotoxy(x + 1, y + 1);
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a)
     {
         int yo, xo, ret;
@@ -1683,73 +2335,20 @@ static int rawcurses_fput_cup(FILE *fh, int y, int x)
     return (fprintf(fh, CSI("%d;%dH"), (y) + 1, (x) + 1) > 0);
 }
 
-/*
-
-Log table for gamma conversion, generated using:
-
-python -c 'import math;print "    \"" + "".join([ \
-  ("\\x%x" % (round(255 * math.log(1.0 + (1.0*i/511)) \
- /math.log(2.0)))) + \
- (((i & 15) == 15) and "\" \\\n    \"" or "") \
- for i in range(512) ]) + "\""'
-
-*/
-
-#define RAWCURSES__LOGSCALE \
-    "\x0\x1\x1\x2\x3\x4\x4\x5\x6\x6\x7\x8\x9\x9\xa\xb" \
-    "\xb\xc\xd\xd\xe\xf\x10\x10\x11\x12\x12\x13\x14\x14\x15\x16" \
-    "\x16\x17\x18\x18\x19\x1a\x1a\x1b\x1c\x1c\x1d\x1e\x1e\x1f\x20\x20" \
-    "\x21\x22\x22\x23\x24\x24\x25\x26\x26\x27\x28\x28\x29\x29\x2a\x2b" \
-    "\x2b\x2c\x2d\x2d\x2e\x2f\x2f\x30\x30\x31\x32\x32\x33\x34\x34\x35" \
-    "\x36\x36\x37\x37\x38\x39\x39\x3a\x3a\x3b\x3c\x3c\x3d\x3e\x3e\x3f" \
-    "\x3f\x40\x41\x41\x42\x42\x43\x44\x44\x45\x45\x46\x47\x47\x48\x48" \
-    "\x49\x49\x4a\x4b\x4b\x4c\x4c\x4d\x4e\x4e\x4f\x4f\x50\x51\x51\x52" \
-    "\x52\x53\x53\x54\x55\x55\x56\x56\x57\x57\x58\x59\x59\x5a\x5a\x5b" \
-    "\x5b\x5c\x5c\x5d\x5e\x5e\x5f\x5f\x60\x60\x61\x61\x62\x63\x63\x64" \
-    "\x64\x65\x65\x66\x66\x67\x67\x68\x69\x69\x6a\x6a\x6b\x6b\x6c\x6c" \
-    "\x6d\x6d\x6e\x6e\x6f\x70\x70\x71\x71\x72\x72\x73\x73\x74\x74\x75" \
-    "\x75\x76\x76\x77\x77\x78\x78\x79\x7a\x7a\x7b\x7b\x7c\x7c\x7d\x7d" \
-    "\x7e\x7e\x7f\x7f\x80\x80\x81\x81\x82\x82\x83\x83\x84\x84\x85\x85" \
-    "\x86\x86\x87\x87\x88\x88\x89\x89\x8a\x8a\x8b\x8b\x8c\x8c\x8d\x8d" \
-    "\x8e\x8e\x8f\x8f\x90\x90\x91\x91\x92\x92\x93\x93\x93\x94\x94\x95" \
-    "\x95\x96\x96\x97\x97\x98\x98\x99\x99\x9a\x9a\x9b\x9b\x9c\x9c\x9d" \
-    "\x9d\x9d\x9e\x9e\x9f\x9f\xa0\xa0\xa1\xa1\xa2\xa2\xa3\xa3\xa4\xa4" \
-    "\xa4\xa5\xa5\xa6\xa6\xa7\xa7\xa8\xa8\xa9\xa9\xa9\xaa\xaa\xab\xab" \
-    "\xac\xac\xad\xad\xae\xae\xae\xaf\xaf\xb0\xb0\xb1\xb1\xb2\xb2\xb2" \
-    "\xb3\xb3\xb4\xb4\xb5\xb5\xb6\xb6\xb6\xb7\xb7\xb8\xb8\xb9\xb9\xb9" \
-    "\xba\xba\xbb\xbb\xbc\xbc\xbd\xbd\xbd\xbe\xbe\xbf\xbf\xc0\xc0\xc0" \
-    "\xc1\xc1\xc2\xc2\xc2\xc3\xc3\xc4\xc4\xc5\xc5\xc5\xc6\xc6\xc7\xc7" \
-    "\xc8\xc8\xc8\xc9\xc9\xca\xca\xca\xcb\xcb\xcc\xcc\xcd\xcd\xcd\xce" \
-    "\xce\xcf\xcf\xcf\xd0\xd0\xd1\xd1\xd1\xd2\xd2\xd3\xd3\xd3\xd4\xd4" \
-    "\xd5\xd5\xd6\xd6\xd6\xd7\xd7\xd8\xd8\xd8\xd9\xd9\xda\xda\xda\xdb" \
-    "\xdb\xdc\xdc\xdc\xdd\xdd\xdd\xde\xde\xdf\xdf\xdf\xe0\xe0\xe1\xe1" \
-    "\xe1\xe2\xe2\xe3\xe3\xe3\xe4\xe4\xe5\xe5\xe5\xe6\xe6\xe6\xe7\xe7" \
-    "\xe8\xe8\xe8\xe9\xe9\xea\xea\xea\xeb\xeb\xeb\xec\xec\xed\xed\xed" \
-    "\xee\xee\xee\xef\xef\xf0\xf0\xf0\xf1\xf1\xf1\xf2\xf2\xf3\xf3\xf3" \
-    "\xf4\xf4\xf4\xf5\xf5\xf6\xf6\xf6\xf7\xf7\xf7\xf8\xf8\xf8\xf9\xf9" \
-    "\xfa\xfa\xfa\xfb\xfb\xfb\xfc\xfc\xfc\xfd\xfd\xfe\xfe\xfe\xff\xff" \
-    ""
-
-/* convert linear pixel value in the range [0, 1000] to log-scale
- * intensity in the range [0, scale - 1] for the XTerm-style 256-color
- * and 88-color cube palettes; in fact XTerm uses a biased linear
- * palette so these colors are not quite right, but if you switch
- * XTerm to a log-scale palette the cube looks a lot better. In
- * practice the two differ little enough that most people probably
- * will not notice a difference. */
-static short rawcurses_mille_to_scale(short n, short scale)
-{
-    /*
-      Should be roughly equivalent to:
-      ((int) (0.5 + ((scale) - 1) * log2(1.0 + ((n) / 1.000e3))));
-    */
-    return (short) (((long) (scale - 1)) * ((long) (unsigned char) RAWCURSES__LOGSCALE[n * 511L / 1000]) / 255);
-}
-
+#undef can_change_color
+#define can_change_color rawcurses_can_change_color
 static int can_change_color(void);
 
 static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
 {
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        textcolor(a_rgb & (FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE | FOREGROUND_INTENSITY));
+        textbackground((a_rgb & (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE | BACKGROUND_INTENSITY)) / BACKGROUND_BLUE);
+        return 1;
+    }
+#endif
     if (rawcurses_stdio_vt52)
     {
         if (rawcurses_stdio_tw52)
@@ -1823,22 +2422,18 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
                          : 0)));
             if (a & (A_STANDOUT | A_REVERSE))
             {
-                a_rgb = (
-                    ((a_rgb & FOREGROUND_RED) ? BACKGROUND_RED : 0)
-                    |
-                    ((a_rgb & FOREGROUND_GREEN) ? BACKGROUND_GREEN : 0)
-                    |
-                    ((a_rgb & FOREGROUND_BLUE) ? BACKGROUND_BLUE : 0)
-                    |
-                    ((a_rgb & FOREGROUND_INTENSITY) ? BACKGROUND_INTENSITY : 0)
-                    |
-                    ((a_rgb & BACKGROUND_RED) ? FOREGROUND_RED : 0)
-                    |
-                    ((a_rgb & BACKGROUND_GREEN) ? FOREGROUND_GREEN : 0)
-                    |
-                    ((a_rgb & BACKGROUND_BLUE) ? FOREGROUND_BLUE : 0)
-                    |
-                    ((a_rgb & BACKGROUND_INTENSITY) ? FOREGROUND_INTENSITY : 0));
+                attr_t tmp;
+
+                tmp = 0;
+                if (a_rgb & FOREGROUND_RED) tmp |= BACKGROUND_RED;
+                if (a_rgb & FOREGROUND_GREEN) tmp |= BACKGROUND_GREEN;
+                if (a_rgb & FOREGROUND_BLUE) tmp |= BACKGROUND_BLUE;
+                if (a_rgb & FOREGROUND_INTENSITY) tmp |= BACKGROUND_INTENSITY;
+                if (a_rgb & BACKGROUND_RED) tmp |= FOREGROUND_RED;
+                if (a_rgb & BACKGROUND_GREEN) tmp |= FOREGROUND_GREEN;
+                if (a_rgb & BACKGROUND_BLUE) tmp |= FOREGROUND_BLUE;
+                if (a_rgb & BACKGROUND_INTENSITY) tmp |= FOREGROUND_INTENSITY;
+                a_rgb = tmp;
             }
         }
         /* FIXME: we should not assume that all VT52-like terminals
@@ -1856,23 +2451,19 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
               ? (BACKGROUND_RED | BACKGROUND_GREEN | BACKGROUND_BLUE)
               : 0)))
         {
+            attr_t tmp;
+
             fputs(ESCAPE("p"), fh);
-            a_rgb = (
-                ((a_rgb & FOREGROUND_RED) ? BACKGROUND_RED : 0)
-                |
-                ((a_rgb & FOREGROUND_GREEN) ? BACKGROUND_GREEN : 0)
-                |
-                ((a_rgb & FOREGROUND_BLUE) ? BACKGROUND_BLUE : 0)
-                |
-                ((a_rgb & FOREGROUND_INTENSITY) ? BACKGROUND_INTENSITY : 0)
-                |
-                ((a_rgb & BACKGROUND_RED) ? FOREGROUND_RED : 0)
-                |
-                ((a_rgb & BACKGROUND_GREEN) ? FOREGROUND_GREEN : 0)
-                |
-                ((a_rgb & BACKGROUND_BLUE) ? FOREGROUND_BLUE : 0)
-                |
-                ((a_rgb & BACKGROUND_INTENSITY) ? FOREGROUND_INTENSITY : 0));
+            tmp = 0;
+            if (a_rgb & FOREGROUND_RED) tmp |= BACKGROUND_RED;
+            if (a_rgb & FOREGROUND_GREEN) tmp |= BACKGROUND_GREEN;
+            if (a_rgb & FOREGROUND_BLUE) tmp |= BACKGROUND_BLUE;
+            if (a_rgb & FOREGROUND_INTENSITY) tmp |= BACKGROUND_INTENSITY;
+            if (a_rgb & BACKGROUND_RED) tmp |= FOREGROUND_RED;
+            if (a_rgb & BACKGROUND_GREEN) tmp |= FOREGROUND_GREEN;
+            if (a_rgb & BACKGROUND_BLUE) tmp |= FOREGROUND_BLUE;
+            if (a_rgb & BACKGROUND_INTENSITY) tmp |= FOREGROUND_INTENSITY;
+            a_rgb = tmp;
         }
         else
         {
@@ -1917,22 +2508,18 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
         &&
         (! rawcurses_stdio_nocolorbold))
     {
-        a_rgb = (
-            ((a_rgb & FOREGROUND_RED) ? BACKGROUND_RED : 0)
-            |
-            ((a_rgb & FOREGROUND_GREEN) ? BACKGROUND_GREEN : 0)
-            |
-            ((a_rgb & FOREGROUND_BLUE) ? BACKGROUND_BLUE : 0)
-            |
-            ((a_rgb & FOREGROUND_INTENSITY) ? BACKGROUND_INTENSITY : 0)
-            |
-            ((a_rgb & BACKGROUND_RED) ? FOREGROUND_RED : 0)
-            |
-            ((a_rgb & BACKGROUND_GREEN) ? FOREGROUND_GREEN : 0)
-            |
-            ((a_rgb & BACKGROUND_BLUE) ? FOREGROUND_BLUE : 0)
-            |
-            ((a_rgb & BACKGROUND_INTENSITY) ? FOREGROUND_INTENSITY : 0));
+        attr_t tmp;
+
+        tmp = 0;
+        if (a_rgb & FOREGROUND_RED) tmp |= BACKGROUND_RED;
+        if (a_rgb & FOREGROUND_GREEN) tmp |= BACKGROUND_GREEN;
+        if (a_rgb & FOREGROUND_BLUE) tmp |= BACKGROUND_BLUE;
+        if (a_rgb & FOREGROUND_INTENSITY) tmp |= BACKGROUND_INTENSITY;
+        if (a_rgb & BACKGROUND_RED) tmp |= FOREGROUND_RED;
+        if (a_rgb & BACKGROUND_GREEN) tmp |= FOREGROUND_GREEN;
+        if (a_rgb & BACKGROUND_BLUE) tmp |= FOREGROUND_BLUE;
+        if (a_rgb & BACKGROUND_INTENSITY) tmp |= FOREGROUND_INTENSITY;
+        a_rgb = tmp;
         fputs(";7", fh);
     }
     if ((a & A_BOLD) || ((a_rgb & FOREGROUND_INTENSITY) && ! rawcurses_stdio_nocolorbold)) fputs(";1", fh);
@@ -1968,9 +2555,9 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
 
             rgbscale = rawcurses_stdio_256color ? 6 : 4;
             grayscale = rawcurses_stdio_256color ? 26 : 10;
-            fg_rgb.r = rawcurses_mille_to_scale(rawcurses_palette[ansifg].r, rgbscale);
-            fg_rgb.g = rawcurses_mille_to_scale(rawcurses_palette[ansifg].g, rgbscale);
-            fg_rgb.b = rawcurses_mille_to_scale(rawcurses_palette[ansifg].b, rgbscale);
+            fg_rgb.r = mille_to_scale(rawcurses_palette[ansifg].r, rgbscale);
+            fg_rgb.g = mille_to_scale(rawcurses_palette[ansifg].g, rgbscale);
+            fg_rgb.b = mille_to_scale(rawcurses_palette[ansifg].b, rgbscale);
             if (fg_rgb.r
                 &&
                 (fg_rgb.r < (rgbscale - 1))
@@ -1983,17 +2570,17 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
                  ==
                  fg_rgb.b)
                 &&
-                ((((long) fg_rgb.r) * (grayscale - 1) / (rgbscale - 1)) != (long) rawcurses_mille_to_scale(rawcurses_palette[ansifg].r, grayscale)))
+                ((((long) fg_rgb.r) * (grayscale - 1) / (rgbscale - 1)) != (long) mille_to_scale(rawcurses_palette[ansifg].r, grayscale)))
             {
-                fg = 16 + rgbscale * rgbscale * rgbscale + rawcurses_mille_to_scale(299L * rawcurses_palette[ansifg].r / 1000 + 587L * rawcurses_palette[ansifg].g / 1000 + 114L * rawcurses_palette[ansifg].b / 1000, grayscale) - 1;
+                fg = 16 + rgbscale * rgbscale * rgbscale + mille_to_scale(299L * rawcurses_palette[ansifg].r / 1000 + 587L * rawcurses_palette[ansifg].g / 1000 + 114L * rawcurses_palette[ansifg].b / 1000, grayscale) - 1;
             }
             else
             {
                 fg = 16 + rgbscale * (rgbscale * fg_rgb.r + fg_rgb.g) + fg_rgb.b;
             }
-            bg_rgb.r = rawcurses_mille_to_scale(rawcurses_palette[ansibg].r, rgbscale);
-            bg_rgb.g = rawcurses_mille_to_scale(rawcurses_palette[ansibg].g, rgbscale);
-            bg_rgb.b = rawcurses_mille_to_scale(rawcurses_palette[ansibg].b, rgbscale);
+            bg_rgb.r = mille_to_scale(rawcurses_palette[ansibg].r, rgbscale);
+            bg_rgb.g = mille_to_scale(rawcurses_palette[ansibg].g, rgbscale);
+            bg_rgb.b = mille_to_scale(rawcurses_palette[ansibg].b, rgbscale);
             if (bg_rgb.r
                 &&
                 (bg_rgb.r < (rgbscale - 1))
@@ -2006,9 +2593,9 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
                  ==
                  bg_rgb.b)
                 &&
-                ((((long) bg_rgb.r) * (grayscale - 1) / (rgbscale - 1)) != (long) rawcurses_mille_to_scale(rawcurses_palette[ansibg].r, grayscale)))
+                ((((long) bg_rgb.r) * (grayscale - 1) / (rgbscale - 1)) != (long) mille_to_scale(rawcurses_palette[ansibg].r, grayscale)))
             {
-                bg = 16 + rgbscale * rgbscale * rgbscale + rawcurses_mille_to_scale(299L * rawcurses_palette[ansibg].r / 1000 + 587L * rawcurses_palette[ansibg].g / 1000 + 114L * rawcurses_palette[ansibg].b / 1000, grayscale) - 1;
+                bg = 16 + rgbscale * rgbscale * rgbscale + mille_to_scale(299L * rawcurses_palette[ansibg].r / 1000 + 587L * rawcurses_palette[ansibg].g / 1000 + 114L * rawcurses_palette[ansibg].b / 1000, grayscale) - 1;
             }
             else
             {
@@ -2218,7 +2805,7 @@ static chtype rawcurses_map_acs(chtype ch)
     return ch;
 }
 
-#ifdef WIN32
+#if USE_WINCONSOLE
 
 /* Information on this undocumented console configuration message is
  * from http://www.catch22.net/source/files/setconsoleinfo.c */
@@ -2298,10 +2885,15 @@ typedef HANDLE WINAPI (*rawcurses_kernel32_CreateToolhelp32Snapshot_t)(DWORD, DW
 typedef HWND WINAPI (*rawcurses_kernel32_GetConsoleWindow_t)(void);
 typedef BOOL WINAPI (*rawcurses_kernel32_GetConsoleScreenBufferInfoEx_t)(HANDLE, rawcurses_win32_console_screen_buffer_info_ex_t *);
 typedef COORD WINAPI (*rawcurses_kernel32_GetConsoleFontSize_t)(HANDLE, DWORD);
+
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
+/* these do not exist at all in Wine */
 typedef BOOL WINAPI (*rawcurses_kernel32_GetCurrentConsoleFont_t)(HANDLE, BOOL, PCONSOLE_FONT_INFO);
 /* UNDOCUMENTED: this allows setting the console font index for a
  * given console window */
 typedef BOOL WINAPI (*rawcurses_kernel32_SetConsoleFont_t)(HANDLE, DWORD);
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
+
 typedef BOOL WINAPI (*rawcurses_kernel32_SetConsoleScreenBufferInfoEx_t)(HANDLE, rawcurses_win32_console_screen_buffer_info_ex_t *);
 typedef BOOL WINAPI (*rawcurses_kernel32_QueryFullProcessImageNameW_t)(HANDLE, DWORD, LPWSTR, PDWORD);
 typedef BOOL WINAPI (*rawcurses_kernel32_QueryFullProcessImageNameA_t)(HANDLE, DWORD, LPSTR, PDWORD);
@@ -2329,7 +2921,8 @@ static HWND rawcurses_win32_get_console_window(void)
     {
         rawcurses_kernel32_GetConsoleWindow_t rawcurses_GetConsoleWindow;
 
-        if ((rawcurses_GetConsoleWindow = (rawcurses_kernel32_GetConsoleWindow_t)(GetProcAddress(kernel32, "GetConsoleWindow"))));
+        rawcurses_GetConsoleWindow = (rawcurses_kernel32_GetConsoleWindow_t)(GetProcAddress(kernel32, "GetConsoleWindow"));
+        if (rawcurses_GetConsoleWindow)
         {
             ret = rawcurses_GetConsoleWindow();
         }
@@ -2432,7 +3025,8 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
     }
     /* FIXME: need to figure out what character this should actually be */
 #define RAWCURSES_WIN32_CAPTION_DELIMITER TEXT(" - ")
-    if ((texename = GetCommandLine()))
+    texename = GetCommandLine();
+    if (texename)
     {
         if (rawcurses_old_title
             &&
@@ -2541,6 +3135,7 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                         }
                     }
                 }
+#ifndef __TINYC__
                 if (kernel32)
                 {
                     rawcurses_kernel32_CreateToolhelp32Snapshot_t rawcurses_CreateToolhelp32Snapshot;
@@ -2572,12 +3167,15 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                         }
                     }
                 }
+#endif /* ! defined(__TINYC__) */
                 CloseHandle(hConsoleProcess);
             }
+#if ! (defined(__WINE__) || defined(__WATCOMC__))
             if (tty_pid == GetCurrentProcessId())
             {
                 exename = _pgmptr;
             }
+#endif /* ! (defined(__WINE__) || defined(__WATCOMC__)) */
         }
     }
     if (texename && lstrlen(texename))
@@ -2759,7 +3357,11 @@ static int rawcurses_win32_get_palette(rawcurses_rgb_t *palette)
     {
         WCHAR buf[MAX_PATH];
 
-        swprintf(buf, L"ColorTable%2.2d", i);
+        swprintf(buf,
+#ifndef __MSVCRT__
+                 MAX_PATH - 1,
+#endif /* ! defined(__MSVCRT__) */
+                 L"ColorTable%2.2d", i);
         if (i == 6) ColorTable[i] = RGB(126, 63, 0);
         else ColorTable[i] = RGB(((i & 4) ? 126 : 0) + ((i & 8) ? 63 : 0), \
                                  ((i & 2) ? 126 : 0) + ((i & 8) ? 63 : 0), \
@@ -2846,11 +3448,13 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
     if (! ret)
     {
         rawcurses_win32_console_info_t cc;
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
         CONSOLE_FONT_INFO cfi;
 
         cfi.nFont = (DWORD) -1;
         cfi.dwFontSize.X = 0;
         cfi.dwFontSize.Y = 0;
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
         if (GetConsoleScreenBufferInfo(rawcurses_stdout, &rawcurses_csbi))
         {
             int i;
@@ -2949,6 +3553,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                         */
                         RegCloseKey(hkWine);
                     }
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
                     else if (kernel32)
                     {
                         rawcurses_kernel32_GetCurrentConsoleFont_t rawcurses_GetCurrentConsoleFont;
@@ -2973,6 +3578,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                             cc.dwFontSize.X = 0;
                         }
                     }
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
                     hConsoleProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, tty_pid);
                     if ((hConsoleProcess != INVALID_HANDLE_VALUE)
                         &&
@@ -3011,6 +3617,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                                     {
                                         SendMessage(cc.hConsoleWindow, RAWCURSES_WM_SETCONSOLEINFO, (WPARAM) remote_mapping, 0);
                                     }
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
                                     if (kernel32)
                                     {
                                         rawcurses_kernel32_SetConsoleFont_t rawcurses_SetConsoleFont;
@@ -3021,6 +3628,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                                             rawcurses_SetConsoleFont(rawcurses_stdout, cfi.nFont);
                                         }
                                     }
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
                                     if (DuplicateHandle(hConsoleProcess, remote_mapping,
                                                         GetCurrentProcess(), &local_mapping,
                                                         0,
@@ -3050,30 +3658,47 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
 
 #endif
 
+#undef attrset
+#define attrset rawcurses_attrset
 static int attrset(attr_t a);
 
+#undef move
+#define move rawcurses_move
 static int move(int y, int x);
 
+#undef addch
+#define addch rawcurses_addch
 static int addch(chtype ch);
 
+#undef addstr
+#define addstr rawcurses_addstr
 static int addstr(const char *s);
 
 static void rawcurses_getyx(int *y, int *x);
 
+#undef erase
+#define erase rawcurses_erase
 static int erase(void);
 
+#undef has_colors
 #define has_colors() (rawcurses_color != 0)
 
+#undef can_change_color
+#define can_change_color rawcurses_can_change_color
 static int can_change_color(void)
 {
     return has_colors() && (! rawcurses_fixedpal) && (rawcurses_stdio ? ((rawcurses_stdio_ccc || rawcurses_stdio_ccc_linux) || rawcurses_stdio_256color || rawcurses_stdio_88color) : 1);
 }
 
+#undef start_color
+#define start_color rawcurses_start_color
 static int start_color(void)
 {
     return OK;
 }
 
+#undef color_content
+#define color_content rawcurses_color_content
 static int color_content(short i, short *r, short *g, short *b)
 {
     if (! can_change_color()) return ERR;
@@ -3084,6 +3709,8 @@ static int color_content(short i, short *r, short *g, short *b)
     return OK;
 }
 
+#undef init_color
+#define init_color rawcurses_init_color
 static int init_color(short i, short r, short g, short b)
 {
     if (! can_change_color()) return ERR;
@@ -3104,8 +3731,12 @@ static int init_color(short i, short r, short g, short b)
     return OK;
 }
 
+#undef refresh
+#define refresh rawcurses_refresh
 static int refresh(void);
 
+#undef curs_set
+#define curs_set rawcurses_curs_set
 static int curs_set(int visibility)
 {
     int old_visibility;
@@ -3115,7 +3746,7 @@ static int curs_set(int visibility)
     rawcurses_cursor_visibility = visibility;
     if (rawcurses_civis)
     {
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (! rawcurses_stdio)
         {
             rawcurses_cursorinfo.bVisible = rawcurses_cursor_visibility ? TRUE : FALSE;
@@ -3138,58 +3769,43 @@ static int curs_set(int visibility)
     return old_visibility;
 }
 
+#undef init_pair
+#define init_pair rawcurses_init_pair
 static int init_pair(short i, short fg, short bg)
 {
     if ((i < 0) || (i > COLOR_PAIRS)) return ERR;
-    rawcurses_pairs[i] = (
-        ((fg & COLOR_RED) ? FOREGROUND_RED : 0)
-        |
-        ((fg & COLOR_GREEN) ? FOREGROUND_GREEN : 0)
-        |
-        ((fg & COLOR_BLUE) ? FOREGROUND_BLUE : 0)
-        |
-        ((fg & PEN_BRIGHT) ? FOREGROUND_INTENSITY : 0)
-        |
-        ((bg & COLOR_RED) ? BACKGROUND_RED : 0)
-        |
-        ((bg & COLOR_GREEN) ? BACKGROUND_GREEN : 0)
-        |
-        ((bg & COLOR_BLUE) ? BACKGROUND_BLUE : 0)
-        |
-        ((bg & PEN_BRIGHT) ? BACKGROUND_INTENSITY : 0));
+    rawcurses_pairs[i] = 0;
+    if (fg & COLOR_RED) rawcurses_pairs[i] |= FOREGROUND_RED;
+    if (fg & COLOR_GREEN) rawcurses_pairs[i] |= FOREGROUND_GREEN;
+    if (fg & COLOR_BLUE) rawcurses_pairs[i] |= FOREGROUND_BLUE;
+    if (fg & PEN_BRIGHT) rawcurses_pairs[i] |= FOREGROUND_INTENSITY;
+    if (bg & COLOR_RED) rawcurses_pairs[i] |= BACKGROUND_RED;
+    if (bg & COLOR_GREEN) rawcurses_pairs[i] |= BACKGROUND_GREEN;
+    if (bg & COLOR_BLUE) rawcurses_pairs[i] |= BACKGROUND_BLUE;
+    if (bg & PEN_BRIGHT) rawcurses_pairs[i] |= BACKGROUND_INTENSITY;
     return OK;
 }
 
+#undef pair_content
+#define pair_content rawcurses_pair_content
 static int pair_content(short i, short *fg, short *bg)
 {
     if (! has_colors()) return ERR;
     if ((i < 0) || (i > COLOR_PAIRS)) return ERR;
-    *fg = (
-        ((rawcurses_pairs[i] & FOREGROUND_RED) ? COLOR_RED : 0)
-        |
-        ((rawcurses_pairs[i] & FOREGROUND_GREEN) ? COLOR_GREEN : 0)
-        |
-        ((rawcurses_pairs[i] & FOREGROUND_BLUE) ? COLOR_BLUE : 0)
-        |
-        ((rawcurses_pairs[i] & FOREGROUND_INTENSITY) ? PEN_BRIGHT : 0));
-    *bg = (
-        ((rawcurses_pairs[i] & BACKGROUND_RED) ? COLOR_RED : 0)
-        |
-        ((rawcurses_pairs[i] & BACKGROUND_GREEN) ? COLOR_GREEN : 0)
-        |
-        ((rawcurses_pairs[i] & BACKGROUND_BLUE) ? COLOR_BLUE : 0)
-        |
-        ((rawcurses_pairs[i] & BACKGROUND_INTENSITY) ? PEN_BRIGHT : 0));
+    *fg = 0;
+    if (rawcurses_pairs[i] & FOREGROUND_RED) *fg |= COLOR_RED;
+    if (rawcurses_pairs[i] & FOREGROUND_GREEN) *fg |= COLOR_GREEN;
+    if (rawcurses_pairs[i] & FOREGROUND_BLUE) *fg |= COLOR_BLUE;
+    if (rawcurses_pairs[i] & FOREGROUND_INTENSITY) *fg |= PEN_BRIGHT;
+    *bg = 0;
+    if (rawcurses_pairs[i] & BACKGROUND_RED) *bg |= COLOR_RED;
+    if (rawcurses_pairs[i] & BACKGROUND_GREEN) *bg |= COLOR_GREEN;
+    if (rawcurses_pairs[i] & BACKGROUND_BLUE) *bg |= COLOR_BLUE;
+    if (rawcurses_pairs[i] & BACKGROUND_INTENSITY) *bg |= PEN_BRIGHT;
     return OK;
 }
 
-#ifndef NEED_LOCALE_IS_UTF8
-#define NEED_LOCALE_IS_UTF8 1
-#endif
-
-static int locale_is_utf8(void);
-
-static chtype rawcurses_getch(void);
+static int rawcurses_getch(void);
 
 #ifdef SIGTSTP
 
@@ -3373,13 +3989,21 @@ static const char *rawcurses_term_type(void)
     {
         termType = "tw52-color";
     }
-#ifdef atarist
+#if USE_TOSCONSOLE
     if (! termType) termType = "st52";
+#endif
+#ifdef __MSDOS__
+    if (! termType) termType = "ansi.sys";
 #endif
     /* this seems like a sane default... */
     if (! termType) termType = "vt100";
     return termType;
 }
+
+#ifndef NEED_LOCALE_IS_UTF8
+#define NEED_LOCALE_IS_UTF8 1
+#endif
+static int locale_is_utf8(void);
 
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
@@ -3717,6 +4341,16 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             ||
             rawcurses_stdio_vt52
             ||
+            (! strncmp(termType, "pcansi", strlen("pcansi")))
+            ||
+            (! strncmp(termType, "ansi", strlen("ansi")))
+            ||
+            (! strncmp(termType, "ibmpc", strlen("ibmpc")))
+            ||
+            (! strncmp(termType, "origibmpc", strlen("origibmpc")))
+            ||
+            (! strncmp(termType, "nansi.sys", strlen("nansi.sys")))
+            ||
             (! strncmp(termType, "cygwin", strlen("cygwin"))))
         {
             rawcurses_stdio_iso2022 = 0;
@@ -3956,10 +4590,14 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     rawcurses_y = -1;
     rawcurses_attr = -1;
     rawcurses_old_attr_rgb = FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE;
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (rawcurses_getenv_boolean("RAWCURSES_STDIO"))
     {
         rawcurses_stdio = *(rawcurses_getenv_boolean("RAWCURSES_STDIO")) ? 1 : 0;
+    }
+    else if (rawcurses_getenv_boolean("RAWCURSES_CONIO"))
+    {
+        rawcurses_stdio = *(rawcurses_getenv_boolean("RAWCURSES_CONIO")) ? 1 : 0;
     }
     rawcurses_stdin = GetStdHandle(STD_INPUT_HANDLE);
     rawcurses_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -4085,8 +4723,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
         SetNamedPipeHandleState(rawcurses_stdin, &pipemode, NULL, NULL);
     }
-#else
-#ifdef atarist
+#else /* ! USE_WINCONSOLE */
+#if USE_TOSCONSOLE
     {
         char *stdindev;
 
@@ -4102,7 +4740,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             rawcurses_stdio_stcon = 0;
         }
     }
-#endif /* defined(atarist) */
+#endif /* USE_TOSCONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
 #ifdef TIOCGWINSZ
@@ -4126,6 +4764,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #endif
     }
 #endif
+#endif /* ! USE_WINCONSOLE */
+#if USE_TERMIOS
     {
         fflush(stdout);
         tcgetattr(fileno(stdin), &rawcurses_old_tty);
@@ -4140,7 +4780,129 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
         setbuf(stdin, NULL);
     }
+#endif /* USE_TERMIOS */
+#if USE_CONIO || USE_CONIO_INPUT
+#if USE_CONIO
+    rawcurses_stdio_conio = -1;
 #endif
+#if USE_CONIO_INPUT
+    rawcurses_stdio_conio_input = -1;
+#endif
+#if USE_CONIO
+    if (rawcurses_getenv_boolean("RAWCURSES_CONIO"))
+    {
+        rawcurses_stdio_conio = *(rawcurses_getenv_boolean("RAWCURSES_CONIO")) ? 1 : 0;
+#if USE_CONIO_INPUT
+        rawcurses_stdio_conio_input = *(rawcurses_getenv_boolean("RAWCURSES_CONIO")) ? 1 : 0;
+#endif
+    }
+#endif /* USE_CONIO */
+#if USE_CONIO_INPUT
+    if (rawcurses_getenv_boolean("RAWCURSES_CONIO_INPUT"))
+    {
+        rawcurses_stdio_conio_input = *(rawcurses_getenv_boolean("RAWCURSES_CONIO_INPUT")) ? 1 : 0;
+    }
+#endif
+#if USE_CONIO
+    if (rawcurses_stdio_conio == -1)
+    {
+        if (rawcurses_getenv_boolean("RAWCURSES_STDIO"))
+        {
+            rawcurses_stdio_conio = ! (*(rawcurses_getenv_boolean("RAWCURSES_STDIO")) ? 1 : 0);
+#if USE_CONIO_INPUT
+            if (rawcurses_stdio_conio_input == -1)
+            {
+                rawcurses_stdio_conio_input = rawcurses_stdio_conio;
+            }
+#endif /* USE_CONIO_INPUT */
+        }
+    }
+#endif /* USE_CONIO */
+    {
+        char *stdindev;
+
+        stdindev = ttyname(fileno(stdin));
+#if USE_CONIO_INPUT
+        if ((rawcurses_stdio_conio_input == 1)
+            ||
+            (stdindev
+             &&
+             (! strcmp(stdindev, "con"))
+             &&
+             (rawcurses_stdio_conio_input != 0)))
+        {
+            rawcurses_stdio_conio_input = 1;
+        }
+        else
+        {
+            rawcurses_stdio_conio_input = 0;
+        }
+#endif /* USE_CONIO_INPUT */
+#if USE_CONIO
+        if ((rawcurses_stdio_conio == 1)
+            ||
+            (stdindev
+             &&
+             (! strcmp(stdindev, "con"))
+             &&
+             (rawcurses_stdio_conio != 0)))
+        {
+#ifndef __TINYC__
+            struct text_info screensize_info;
+#endif /* ! defined(__TINYC__) */
+
+            rawcurses_stdio_conio = 1;
+#ifndef __TINYC__
+#ifndef WIN32
+            screensize_info.currmode = -1;
+#endif
+            screensize_info.screenwidth = 0;
+            screensize_info.screenheight = 0;
+            gettextinfo(&screensize_info);
+#ifndef WIN32
+            switch (screensize_info.currmode)
+            {
+            case BW40:
+            case C40:
+                rawcurses_w = 40;
+                rawcurses_h = 25;
+                break;
+            case BW80:
+            case C80:
+                rawcurses_w = 80;
+                rawcurses_h = 25;
+                break;
+            case MONO:
+                break;
+#ifndef __TURBOC__
+            case C4350:
+                rawcurses_w = 80;
+                rawcurses_h = 43;
+                break;
+#endif
+            }
+#endif /* ! defined(WIN32) */
+            if (screensize_info.screenwidth)
+            {
+                rawcurses_w = screensize_info.screenwidth;
+            }
+            if (screensize_info.screenheight)
+            {
+                rawcurses_h = screensize_info.screenheight;
+            }
+#ifdef _NOCURSOR
+            if (rawcurses_civis == -1) rawcurses_civis = 1;
+#endif
+            if (rawcurses_civis == -1) rawcurses_civis = 0;
+#endif /* ! defined(__TINYC__) */
+        }
+        else
+        {
+            rawcurses_stdio_conio = 0;
+        }
+#endif /* USE_CONIO */
+    }
+#endif /* USE_CONIO || USE_CONIO_INPUT */
     if (rawcurses_stdio)
     {
         rawcurses_stdio = 1;
@@ -4255,7 +5017,28 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         else
         {
             rawcurses_color = rawcurses_stdio ? (! ((rawcurses_stdio_vt52 && ! rawcurses_stdio_st52) || rawcurses_stdio_adm3a)) : 1;
-#ifdef atarist
+#if USE_CONIO
+#ifndef WIN32
+            if (rawcurses_stdio_conio)
+            {
+                struct text_info color_info;
+
+                color_info.currmode = -1;
+                gettextinfo(&color_info);
+                switch (color_info.currmode)
+                {
+                case BW40:
+                case BW80:
+                case MONO:
+                    rawcurses_color = 0;
+                    break;
+                default:
+                    rawcurses_color = 1;
+                }
+            }
+#endif /* ! defined(WIN32) */
+#endif /* USE_CONIO */
+#if USE_TOSCONSOLE
             if (rawcurses_stdio_stcon)
             {
                 int vmode;
@@ -4272,7 +5055,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                     rawcurses_color = 0;
                 }
             }
-#endif /* defined(atarist) */
+#endif /* USE_TOSCONSOLE */
         }
     }
     if (rawcurses_getenv_boolean("RAWCURSES_FIXEDPAL"))
@@ -4333,7 +5116,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
         else
         {
-#ifdef WIN32
+#if USE_WINCONSOLE
             if (! rawcurses_stdio)
             {
                 rawcurses_win32_get_palette(rawcurses_palette);
@@ -4348,7 +5131,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
 static void rawcurses_palette_snoop(void)
 {
-#ifdef WIN32
+#if USE_WINCONSOLE
     if ((! rawcurses_stdio) && rawcurses_palette_changed)
     {
         if (! rawcurses_palette_ever_changed)
@@ -4367,7 +5150,7 @@ static void rawcurses_palette_snoop(void)
             fflush(stdout);
             if (rawcurses_fput_request_palette(stdout) > 0)
             {
-                chtype ch;
+                int ch;
                 int i;
                 int got_key_resize;
 
@@ -4381,7 +5164,7 @@ static void rawcurses_palette_snoop(void)
                     {
                         got_key_resize = 1;
                     }
-                    else if (ch != (chtype) ERR)
+                    else if (ch != ERR)
                     {
                         rawcurses_ungetch_buffer = ch;
                         break;
@@ -4406,7 +5189,7 @@ static void rawcurses_palette_snoop(void)
 
 static void rawcurses_palette_reset(void)
 {
-#ifdef WIN32
+#if USE_WINCONSOLE
     if ((! rawcurses_stdio) && rawcurses_palette_ever_changed)
     {
         if (memcmp((void *) rawcurses_old_palette, (void *) rawcurses_palette, sizeof(rawcurses_palette)))
@@ -4429,6 +5212,8 @@ static void rawcurses_palette_reset(void)
     }
 }
 
+#undef endwin
+#define endwin rawcurses_endwin
 static void endwin(void)
 {
     rawcurses_winsize_on_clear = 0;
@@ -4475,10 +5260,10 @@ static void endwin(void)
         }
         if (rawcurses_winsize_pending && rawcurses_got_winsize)
         {
-            chtype ch;
+            int ch;
 
             usleep(RAWCURSES_RESIZE_QUIESCE_USECS);
-            while ((ch = rawcurses_getch()) != (chtype) ERR)
+            while ((ch = rawcurses_getch()) != ERR)
             {
                 if (ch != KEY_RESIZE)
                 {
@@ -4488,7 +5273,7 @@ static void endwin(void)
             }
         }
     }
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (! rawcurses_stdio)
     {
         SetConsoleWindowInfo(rawcurses_stdout, TRUE, &rawcurses_old_size);
@@ -4531,7 +5316,8 @@ static void endwin(void)
     {
         SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
     }
-#else
+#endif /* USE_WINCONSOLE */
+#if USE_TERMIOS
     tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
 }
@@ -4567,9 +5353,9 @@ static int refresh(void)
     return OK;
 }
 
-static chtype rawcurses_getch(void)
+static int rawcurses_getch(void)
 {
-    chtype ret = (chtype) ERR;
+    int ret = ERR;
     int soft_ERR;
 
 #ifdef SIGTSTP
@@ -4585,21 +5371,23 @@ static chtype rawcurses_getch(void)
         attrset(0);
         rawcurses_fput_rmcup(stdout, rawcurses_h);
         fflush(stdout);
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
         {
             SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
         }
-#else
+#endif /* USE_WINCONSOLE */
+#if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
         raise(SIGTSTP);
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
         {
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
-#else
+#endif /* USE_WINCONSOLE */
+#if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
 #endif
         signal(SIGTSTP, rawcurses_sigtstp_handler);
@@ -4627,21 +5415,23 @@ static chtype rawcurses_getch(void)
         attrset(0);
         rawcurses_fput_rmcup(stdout, rawcurses_h);
         fflush(stdout);
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
         {
             SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
         }
-#else
+#endif /* USE_WINCONSOLE */
+#if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
         raise(SIGINT);
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
         {
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
-#else
+#endif /* USE_WINCONSOLE */
+#if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
 #endif
         signal(SIGINT, rawcurses_sigint_handler);
@@ -4659,13 +5449,13 @@ static chtype rawcurses_getch(void)
     soft_ERR = 0;
     do
     {
-        if (rawcurses_ungetch_buffer != (chtype) ERR)
+        if (rawcurses_ungetch_buffer != ERR)
         {
             ret = rawcurses_ungetch_buffer;
-            rawcurses_ungetch_buffer = (chtype) ERR;
+            rawcurses_ungetch_buffer = ERR;
             return ret;
         }
-#ifdef WIN32
+#if USE_WINCONSOLE
         {
             DWORD nevents;
 
@@ -4698,12 +5488,12 @@ static chtype rawcurses_getch(void)
                                 case VK_RSHIFT:
                                 case VK_RCONTROL:
                                 case VK_RMENU:
-                                    return (chtype) ERR;
+                                    return ERR;
                                 }
 #if UNICODE
-                                ret = (chtype) (unsigned short) irec.Event.KeyEvent.uChar.UnicodeChar;
+                                ret = (unsigned short) irec.Event.KeyEvent.uChar.UnicodeChar;
 #else
-                                ret = (chtype) (unsigned char) irec.Event.KeyEvent.uChar.AsciiChar;
+                                ret = (unsigned char) irec.Event.KeyEvent.uChar.AsciiChar;
 #endif
                             }
                             break;
@@ -4728,11 +5518,11 @@ static chtype rawcurses_getch(void)
                                     rawcurses_nh = h;
                                     return KEY_RESIZE;
                                 }
-                                return (chtype) ERR;
+                                return ERR;
                             }
                             break;
                         default:
-                            return (chtype) ERR;
+                            return ERR;
                         }
                     }
                 }
@@ -4749,7 +5539,7 @@ static chtype rawcurses_getch(void)
                     if (ReadFile(rawcurses_stdin, (LPVOID) buf, 1, &nbytes, NULL))
                     {
                         if (nbytes) ret = buf[0];
-                        else ret = (chtype) ERR;
+                        else ret = ERR;
                     }
                 }
             }
@@ -4760,8 +5550,21 @@ static chtype rawcurses_getch(void)
             int avail;
 
             avail = -1;
-#ifdef atarist
-            if (rawcurses_stdio_stcon)
+#if USE_CONIO_INPUT
+            if ((avail == -1) && rawcurses_stdio_conio_input)
+            {
+                if (kbhit())
+                {
+                    avail = 1;
+                }
+                else
+                {
+                    avail = 0;
+                }
+            }
+#endif /* USE_CONIO_INPUT */
+#if USE_TOSCONSOLE
+            if ((avail == -1) && rawcurses_stdio_stcon)
             {
                 if (Cconis())
                 {
@@ -4798,7 +5601,37 @@ static chtype rawcurses_getch(void)
                 }
             }
 #endif
-#ifdef atarist
+#if USE_CONIO_INPUT
+            if (rawcurses_stdio_conio_input)
+            {
+                if (avail)
+                {
+                    ret = getch();
+                    if (ret == 0)
+                    {
+                        ret = getch();
+                        switch (ret)
+                        {
+                        case 0x00:
+                        case 0x03:
+                            return 0;
+                        case 0x48:
+                            return KEY_UP;
+                        case 0x4b:
+                            return KEY_LEFT;
+                        case 0x4d:
+                            return KEY_RIGHT;
+                        case 0x50:
+                            return KEY_DOWN;
+                        default:
+                            ret = ERR;
+                        }
+                    }
+                }
+            }
+            else
+#endif /* USE_CONIO_INPUT */
+#if USE_TOSCONSOLE
             if (rawcurses_stdio_stcon)
             {
                 if (avail)
@@ -4806,9 +5639,9 @@ static chtype rawcurses_getch(void)
                     unsigned long kcode;
 
                     kcode = (unsigned long) Crawcin();
-                    if (kcode & 0xffUL)
+                    if (kcode & 0xffU)
                     {
-                        ret = (chtype) (kcode & 0xffUL);
+                        ret = (kcode & 0xffU);
                     }
                     else
                     {
@@ -4827,11 +5660,11 @@ static chtype rawcurses_getch(void)
                         switch (kcode)
                         {
                         case K_ESC:
-                            return (chtype) (unsigned char) '\x1b';
+                            return (unsigned char) '\x1b';
                         case K_RET:
-                            return (chtype) (unsigned char) '\r';
+                            return (unsigned char) '\r';
                         case K_DEL:
-                            return (chtype) (unsigned char) '\x7f';
+                            return (unsigned char) '\x7f';
                         case CURS_UP:
                             return KEY_UP;
                         case CURS_DN:
@@ -4841,43 +5674,43 @@ static chtype rawcurses_getch(void)
                         case CURS_LF:
                             return KEY_LEFT;
                         case KP_MINUS:
-                            return (chtype) (unsigned char) '-';
+                            return (unsigned char) '-';
                         case KP_PLUS:
-                            return (chtype) (unsigned char) '+';
+                            return (unsigned char) '+';
                         case KP_LP:
-                            return (chtype) (unsigned char) '(';
+                            return (unsigned char) '(';
                         case KP_RP:
-                            return (chtype) (unsigned char) ')';
+                            return (unsigned char) ')';
                         case KP_SLASH:
-                            return (chtype) (unsigned char) '/';
+                            return (unsigned char) '/';
                         case KP_STAR:
-                            return (chtype) (unsigned char) '*';
+                            return (unsigned char) '*';
                         case KP_0:
-                            return (chtype) (unsigned char) '0';
+                            return (unsigned char) '0';
                         case KP_1:
-                            return (chtype) (unsigned char) '1';
+                            return (unsigned char) '1';
                         case KP_2:
-                            return (chtype) (unsigned char) '2';
+                            return (unsigned char) '2';
                         case KP_3:
-                            return (chtype) (unsigned char) '3';
+                            return (unsigned char) '3';
                         case KP_4:
-                            return (chtype) (unsigned char) '4';
+                            return (unsigned char) '4';
                         case KP_5:
-                            return (chtype) (unsigned char) '5';
+                            return (unsigned char) '5';
                         case KP_6:
-                            return (chtype) (unsigned char) '6';
+                            return (unsigned char) '6';
                         case KP_7:
-                            return (chtype) (unsigned char) '7';
+                            return (unsigned char) '7';
                         case KP_8:
-                            return (chtype) (unsigned char) '8';
+                            return (unsigned char) '8';
                         case KP_9:
-                            return (chtype) (unsigned char) '9';
+                            return (unsigned char) '9';
                         case KP_DOT:
-                            return (chtype) (unsigned char) '.';
+                            return (unsigned char) '.';
                         case KP_ENTER:
-                            return (chtype) (unsigned char) '\n';
+                            return (unsigned char) '\n';
                         default:
-                            ret = (chtype) ERR;
+                            ret = ERR;
                             soft_ERR = 1;
                             continue;
                         }
@@ -4885,7 +5718,7 @@ static chtype rawcurses_getch(void)
                 }
             }
             else
-#endif /* defined(atarist) */
+#endif /* USE_TOSCONSOLE */
             {
 #ifdef FIONREAD
                 if (! avail) ioctl(fileno(stdin), FIONREAD, &avail);
@@ -4897,8 +5730,8 @@ static chtype rawcurses_getch(void)
             }
         }
 #endif
-        soft_ERR = (ret == (chtype) ERR) ? 0 : 1;
-        if (rawcurses_stdio && rawcurses_stdio_utf8 && (ret != (chtype) ERR))
+        soft_ERR = (ret == ERR) ? 0 : 1;
+        if (rawcurses_stdio && rawcurses_stdio_utf8 && (ret != ERR))
         {
             int looks_like_st;
 
@@ -4916,12 +5749,12 @@ static chtype rawcurses_getch(void)
                     rawcurses_ungetch_buffer = ret;
                     rawcurses_stdio_utf8_state = 0UL;
                     rawcurses_stdio_utf8_remaining = 0;
-                    ret = 0xfffdUL;
+                    ret = 0xfffdU;
                 }
             }
             else if ((ret >= 0xc2) && (ret <= 0xf4))
             {
-                chtype mask;
+                int mask;
                 int remaining;
 
                 mask = 0x80;
@@ -4935,12 +5768,12 @@ static chtype rawcurses_getch(void)
                 if (rawcurses_stdio_utf8_remaining)
                 {
                     rawcurses_stdio_utf8_state = ret;
-                    ret = 0xfffdUL;
+                    ret = 0xfffdU;
                 }
                 else
                 {
                     rawcurses_stdio_utf8_state = ret;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                 }
                 rawcurses_stdio_utf8_remaining = remaining;
             }
@@ -4949,18 +5782,18 @@ static chtype rawcurses_getch(void)
                 rawcurses_stdio_utf8_state <<= 6;
                 rawcurses_stdio_utf8_state |= ret & 0x3f;
                 rawcurses_stdio_utf8_remaining --;
-                ret = (chtype) ERR;
+                ret = ERR;
                 if (! rawcurses_stdio_utf8_remaining)
                 {
                     ret = rawcurses_stdio_utf8_state;
                     rawcurses_stdio_utf8_state = 0;
-                    if (((ret & (chtype) 0xfffeUL) == (chtype) 0xfffeUL)
+                    if (((ret & 0xfffeU) == 0xfffeU)
                         ||
-                        (ret > (chtype) 0x10fffdUL)
+                        (ret > 0x10fffdU)
                         ||
-                        ((ret >= (chtype) 0xd800UL) && (ret <= (chtype) 0xdfffUL)))
+                        ((ret >= 0xd800U) && (ret <= 0xdfffU)))
                     {
-                        ret = (chtype) 0xfffdUL;
+                        ret = 0xfffdU;
                     }
                 }
             }
@@ -4968,9 +5801,9 @@ static chtype rawcurses_getch(void)
             {
                 rawcurses_stdio_utf8_state = 0UL;
                 rawcurses_stdio_utf8_remaining = 0UL;
-                ret = (chtype) 0xfffdUL;
+                ret = 0xfffdU;
             }
-            if (ret == (chtype) ERR)
+            if (ret == ERR)
             {
                 continue;
             }
@@ -4981,7 +5814,7 @@ static chtype rawcurses_getch(void)
                  ||
                  (rawcurses_input_state == RAWCURSES_INPUT_STATE_OSC_ESC))
                 &&
-                (ret == (chtype) 0xfffdUL))
+                (ret == 0xfffdU))
             {
                 ret = 0x9c;
             }
@@ -4997,11 +5830,11 @@ static chtype rawcurses_getch(void)
                 rawcurses_debug_utf8_y %= LINES;
                 move(rawcurses_debug_utf8_y, 0);
                 rawcurses_debug_utf8_y ++;
-                if (ret < (chtype) 0x100000UL) addch(' ');
-                if (ret < (chtype) 0x10000UL) addch(' ');
+                if (ret < 0x100000U) addch(' ');
+                if (ret < 0x10000U) addch(' ');
                 addstr("U+");
-                if (ret >= (chtype) 0x100000UL) addch(("0123456789ABCDEF")[(ret >> 20) & 0xf]);
-                if (ret >= (chtype) 0x10000UL) addch(("0123456789ABCDEF")[(ret >> 16) & 0xf]);
+                if (ret >= 0x100000U) addch(("0123456789ABCDEF")[(ret >> 20) & 0xf]);
+                if (ret >= 0x10000U) addch(("0123456789ABCDEF")[(ret >> 16) & 0xf]);
                 addch(("0123456789ABCDEF")[(ret >> 12) & 0xf]);
                 addch(("0123456789ABCDEF")[(ret >> 8) & 0xf]);
                 addch(("0123456789ABCDEF")[(ret >> 4) & 0xf]);
@@ -5027,7 +5860,7 @@ static chtype rawcurses_getch(void)
             (rawcurses_input_state != RAWCURSES_INPUT_STATE_IGNORE_CR))
         {
             /* ignore RUBout inside an ESCape sequence */
-            ret = (chtype) ERR;
+            ret = ERR;
         }
         if (rawcurses_stdio_adm3a)
         {
@@ -5043,7 +5876,7 @@ static chtype rawcurses_getch(void)
                 return KEY_RIGHT;
             }
         }
-        if ((ret >= 0x20) || (ret == 0x1b) || (ret == (chtype) ERR)
+        if ((ret >= 0x20) || (ret == 0x1b) || (ret == ERR)
             ||
             ((rawcurses_input_state == RAWCURSES_INPUT_STATE_IGNORE_CR)
              &&
@@ -5057,7 +5890,7 @@ static chtype rawcurses_getch(void)
               ||
               (rawcurses_input_state == RAWCURSES_INPUT_STATE_OSC_ESC))
              &&
-             (ret == '\a')))
+             (ret == '\7')))
         {
             switch (rawcurses_input_state)
             {
@@ -5078,7 +5911,7 @@ static chtype rawcurses_getch(void)
                     ret = KEY_LEFT;
                     break;
                 default:
-                    if (rawcurses_ungetch_buffer == (chtype) ERR)
+                    if (rawcurses_ungetch_buffer == ERR)
                     {
                         rawcurses_ungetch_buffer = ret;
                     }
@@ -5101,7 +5934,7 @@ static chtype rawcurses_getch(void)
                              * but we pretend to care... */
                             rawcurses_stdio_vt52 = 1;
                             rawcurses_stdio_adm3a = 0;
-                            ret = (chtype) ERR;
+                            ret = ERR;
                         }
                     }
                 }
@@ -5117,7 +5950,7 @@ static chtype rawcurses_getch(void)
                      * might not) have turned into LF somewhere along
                      * the way. */
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_DEFAULT;
-                    if ((ret == '\r') || (ret == '\n')) ret = (chtype) ERR;
+                    if ((ret == '\r') || (ret == '\n')) ret = ERR;
                 }
             case RAWCURSES_INPUT_STATE_ETERM_KEY:
                 if (rawcurses_input_state == RAWCURSES_INPUT_STATE_ETERM_KEY)
@@ -5152,26 +5985,26 @@ static chtype rawcurses_getch(void)
                     if (rawcurses_stdio_st52)
                     {
                         rawcurses_input_state = RAWCURSES_INPUT_STATE_ET52_KEY;
-                        ret = (chtype) ERR;
+                        ret = ERR;
                     }
                     break;
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x8f:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9d:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 }
                 break;
@@ -5181,39 +6014,39 @@ static chtype rawcurses_getch(void)
                 {
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x8f:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9d:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case '[':
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 'O':
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case ']':
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 'o':
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ETERM_KEY;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 'A': /* VT52 */
                     ret = KEY_UP;
@@ -5228,7 +6061,7 @@ static chtype rawcurses_getch(void)
                     ret = KEY_LEFT;
                     break;
                 case '/':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_IDENTITY_VT52;
                     break;
                 case ERR:
@@ -5241,7 +6074,7 @@ static chtype rawcurses_getch(void)
                         ret = 0x1b;
                     }
                 default:
-                    ret = (chtype) ERR;
+                    ret = ERR;
                 }
                 break;
             case RAWCURSES_INPUT_STATE_CSI:
@@ -5251,21 +6084,21 @@ static chtype rawcurses_getch(void)
                 {
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x8f:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9d:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                     /* parameter bytes: */
                 case '0':
@@ -5289,9 +6122,9 @@ static chtype rawcurses_getch(void)
                         rawcurses_input_param[strlen(rawcurses_input_param) + 1] = '\0';
                         rawcurses_input_param[strlen(rawcurses_input_param)] = (char) ret;
                     }
-                case (chtype) ERR:
+                case ERR:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 }
                 if (rawcurses_input_state != RAWCURSES_INPUT_STATE_CSI_DONE)
@@ -5324,50 +6157,50 @@ static chtype rawcurses_getch(void)
                         rawcurses_input_intermed[strlen(rawcurses_input_intermed) + 1] = '\0';
                         rawcurses_input_intermed[strlen(rawcurses_input_intermed)] = (char) ret;
                     }
-                    ret = (chtype) ERR;
-                case (chtype) ERR:
+                    ret = ERR;
+                case ERR:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI_DONE;
                     break;
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x8f:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9d:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 'A':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                         ret = KEY_UP;
                     break;
                 case 'B':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                         ret = KEY_DOWN;
                     break;
                 case 'C':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                         ret = KEY_RIGHT;
                     break;
                 case 'D':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                         ret = KEY_LEFT;
                     break;
                 case 'R':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                     {
                         int w, h;
@@ -5425,7 +6258,7 @@ static chtype rawcurses_getch(void)
                         }
                         else
                         {
-                            ret = (chtype) ERR;
+                            ret = ERR;
                             if (rawcurses_stdio_new_shortname && ! rawcurses_stdio_old_shortname)
                             {
                                 rawcurses_fput_request_icon_name(stdout);
@@ -5440,7 +6273,7 @@ static chtype rawcurses_getch(void)
                         break;
                     }
                 case 'c':
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
                     {
                         /* "I am a VTxxx" or some such
@@ -5450,33 +6283,33 @@ static chtype rawcurses_getch(void)
                         rawcurses_stdio_adm3a = 0;
                     }
                 default:
-                    ret = (chtype) ERR;
+                    ret = ERR;
                 }
                 break;
             case RAWCURSES_INPUT_STATE_SS3:
                 rawcurses_input_state = RAWCURSES_INPUT_STATE_DEFAULT;
                 switch (ret)
                 {
-                case (chtype) ERR:
+                case ERR:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
                     break;
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x8f:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_SS3;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_CSI;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x9d:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     rawcurses_input_param[0] = '\0';
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 'A':
                     ret = KEY_UP;
@@ -5491,7 +6324,7 @@ static chtype rawcurses_getch(void)
                     ret = KEY_LEFT;
                     break;
                 default:
-                    ret = (chtype) ERR;
+                    ret = ERR;
                 }
                 break;
             case RAWCURSES_INPUT_STATE_OSC_ESC:
@@ -5500,7 +6333,7 @@ static chtype rawcurses_getch(void)
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
                     switch (ret)
                     {
-                    case (chtype) ERR:
+                    case ERR:
                         rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC_ESC;
                         break;
                     case '\\':
@@ -5518,9 +6351,9 @@ static chtype rawcurses_getch(void)
             case RAWCURSES_INPUT_STATE_OSC:
                 switch (ret)
                 {
-                case (chtype) ERR:
+                case ERR:
                     break;
-                case '\a':
+                case '\7':
                 case 0x9c:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_DEFAULT;
                     switch (rawcurses_input_param[0])
@@ -5570,7 +6403,7 @@ static chtype rawcurses_getch(void)
                             if (rawcurses_reset_palette_seqs < COLORS)
                             {
                                 rawcurses_reset_palette_seqs ++;
-                                if ((rawcurses_reset_palette_buflen + strlen(OSC("4")) + strlen(rawcurses_input_param + 1) + strlen("\a") + 1)
+                                if ((rawcurses_reset_palette_buflen + strlen(OSC("4")) + strlen(rawcurses_input_param + 1) + strlen("\7") + 1)
                                     <
                                     sizeof(rawcurses_reset_palette_buf))
                                 {
@@ -5578,11 +6411,11 @@ static chtype rawcurses_getch(void)
                                     {
                                         *rawcurses_reset_palette_buf = '\0';
                                     }
-                                    if ((strlen(rawcurses_reset_palette_buf) < strlen("\a"))
+                                    if ((strlen(rawcurses_reset_palette_buf) < strlen("\7"))
                                         ||
-                                        memcmp((void *) (rawcurses_reset_palette_buf + strlen(rawcurses_reset_palette_buf) - strlen("\a")),
-                                               (void *) ("\a"),
-                                               strlen("\a")))
+                                        memcmp((void *) (rawcurses_reset_palette_buf + strlen(rawcurses_reset_palette_buf) - strlen("\7")),
+                                               (void *) ("\7"),
+                                               strlen("\7")))
                                     {
                                         memcpy((void *) (rawcurses_reset_palette_buf + strlen(rawcurses_reset_palette_buf)),
                                                (void *) (OSC("4")),
@@ -5594,7 +6427,7 @@ static chtype rawcurses_getch(void)
                                                          +
                                                          strlen(rawcurses_reset_palette_buf)
                                                          -
-                                                         strlen("\a")),
+                                                         strlen("\7")),
                                                (void *) (""),
                                                strlen("") + 1);
                                     }
@@ -5602,19 +6435,19 @@ static chtype rawcurses_getch(void)
                                            (void *) (rawcurses_input_param + 1),
                                            strlen(rawcurses_input_param + 1) + 1);
                                     memcpy((void *) (rawcurses_reset_palette_buf + strlen(rawcurses_reset_palette_buf)),
-                                           (void *) ("\a"),
-                                           strlen("\a") + 1);
+                                           (void *) ("\7"),
+                                           strlen("\7") + 1);
                                     rawcurses_reset_palette_buflen = strlen(rawcurses_reset_palette_buf);
                                 }
                             }
                         }
                         break;
                     }
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 case 0x1b:
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC_ESC;
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 default:
                     if ((strlen(rawcurses_input_param) + 1) < sizeof(rawcurses_input_param))
@@ -5622,14 +6455,14 @@ static chtype rawcurses_getch(void)
                         rawcurses_input_param[strlen(rawcurses_input_param) + 1] = '\0';
                         rawcurses_input_param[strlen(rawcurses_input_param)] = (char) ret;
                     }
-                    ret = (chtype) ERR;
+                    ret = ERR;
                     break;
                 }
                 break;
             }
         }
     }
-    while (soft_ERR && (ret == (chtype) ERR));
+    while (soft_ERR && (ret == ERR));
     return ret;
 }
 
@@ -5736,7 +6569,7 @@ static int attrset(attr_t a)
     if (a != rawcurses_attr)
     {
         rawcurses_attr = a;
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (! rawcurses_stdio)
         {
             if (SetConsoleTextAttribute(rawcurses_stdout, a_rgb))
@@ -5757,11 +6590,15 @@ static int attrset(attr_t a)
     return OK;
 }
 
+#undef standout
+#define standout rawcurses_standout
 static void standout(void)
 {
     attrset(rawcurses_attr | A_STANDOUT);
 }
 
+#undef standend
+#define standend rawcurses_standend
 static void standend(void)
 {
     attrset(0);
@@ -5772,7 +6609,7 @@ static int move(int y, int x) {
         ||
         (rawcurses_y != y))
     {
-#ifdef WIN32
+#if USE_WINCONSOLE
         if (! rawcurses_stdio)
         {
             COORD coord;
@@ -5788,9 +6625,10 @@ static int move(int y, int x) {
             return ERR;
         }
 #endif
-        if (rawcurses_stdio_relcup)
+        if (rawcurses_stdio_relcup
+            &&
+            (rawcurses_fput_relcup(stdout, y - rawcurses_y, x - rawcurses_x) > 0))
         {
-            rawcurses_fput_relcup(stdout, y - rawcurses_y, x - rawcurses_x);
         }
         else
         {
@@ -5851,15 +6689,15 @@ static int wctoa(chtype ch)
         }
     }
 #ifdef UNICODE
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (! rawcurses_stdio) return ch;
 #endif
-#else
+#else /* ! defined(UNICODE) */
     ch = (unsigned char) (char) ch;
-#ifdef WIN32
+#if USE_WINCONSOLE
     if ((! rawcurses_stdio) && (GetConsoleOutputCP() == 437)) return ch;
 #endif
-#endif
+#endif /* ! defined(UNICODE) */
     switch (ch)
     {
     case ACS_BLOCK:
@@ -5981,6 +6819,15 @@ static int rawcurses_wcwidth(wchar_t wc)
     if (! wc) return 0;
     if ((wctoa(wc) == RAWCURSES_ASCII_REPLACEMENT_CHARACTER) && (wc != RAWCURSES_ASCII_REPLACEMENT_CHARACTER)) return defwidth;
     if ((wc) == (wc & 0x1f)) return defwidth;
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        if ((wc) != (wc & 0xff))
+        {
+            return defwidth;
+        }
+    }
+#endif /* USE_CONIO */
     if ((rawcurses_builtin_wcwidth > 0)
         &&
         (wc >= 0x0080))
@@ -5988,7 +6835,7 @@ static int rawcurses_wcwidth(wchar_t wc)
         return rawcurses_builtin_wcwidth;
     }
 #ifdef UNICODE
-#ifdef WIN32
+#if USE_WINCONSOLE
     {
         UINT codepage;
 
@@ -6029,42 +6876,35 @@ static int rawcurses_wcwidth(wchar_t wc)
             }
         }
     }
-#else
+#else /* ! USE_WINCONSOLE */
     if (! rawcurses_builtin_wcwidth)
     {
         int ret;
 
-        ret = wcwidth(wc);
+#if USE_CONIO
+        if (rawcurses_stdio_conio)
+        {
+            ret = ((wc < 0x20) || (wc > 0xff)) ? -1 : 1;
+        }
+        else
+#endif /* USE_CONIO */
+        {
+            ret = wcwidth(wc);
+        }
         if (ret > 0) return ret;
         return defwidth;
     }
-#endif
+#endif /* ! USE_WINCONSOLE */
 /* FIXME: this is a horrible hack! */
     if ((wc >= 0x0020) && (wc < 0x3000)) return 1;
     return 2;
-#else
+#else /* ! defined(unicode) */
     return 1;
-#endif
+#endif /* ! defined(unicode) */
 }
 
 #undef wcwidth
-
 #define wcwidth(wc) rawcurses_wcwidth(wc)
-
-#ifdef UNICODE
-static int fputc_utf8(unsigned long u, FILE *stream);
-
-#ifndef NEED_FPUTC_UTF8
-#define NEED_FPUTC_UTF8 1
-#endif
-
-#endif
-
-static int fputc_utf8_cp437(int c, FILE *stream);
-
-#ifndef NEED_FPUTC_UTF8_CP437
-#define NEED_FPUTC_UTF8_CP437 1
-#endif
 
 static int addch(chtype ch) {
     int wcw;
@@ -6108,7 +6948,7 @@ static int addch(chtype ch) {
         }
         return OK;
     }
-    else if (ch == '\a')
+    else if (ch == '\7')
     {
         rawcurses_fput_bel(stdout);
         fflush(stdout);
@@ -6121,7 +6961,7 @@ static int addch(chtype ch) {
         return ERR;
     }
     rawcurses_x += wcw;
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (! rawcurses_stdio)
     {
         DWORD buflen;
@@ -6223,9 +7063,21 @@ static int addch(chtype ch) {
 
                 for (i = 0; i < wcw; i ++)
                 {
-                    fputc(' ', stdout);
+#if USE_CONIO
+                    if (rawcurses_stdio_conio)
+                    {
+                        putch(' ');
+                    }
+                    else
+#endif
+                    {
+                        fputc(' ', stdout);
+                    }
                 }
-                rawcurses_fput_relcup(stdout, 0, -wcw);
+                if (rawcurses_fput_relcup(stdout, 0, -wcw) <= 0)
+                {
+                    rawcurses_fput_cup(stdout, y, x);
+                }
             }
         }
         while (wcw > 0)
@@ -6275,6 +7127,18 @@ static int addch(chtype ch) {
             {
                 rawcurses_fput_smacs(stdout);
             }
+#if USE_CONIO
+            if (rawcurses_stdio_conio)
+            {
+                if (ch != (chtype) (0xff & (unsigned char) ch))
+                {
+                    ch = RAWCURSES_ASCII_REPLACEMENT_CHARACTER;
+                }
+                putch((int) (unsigned char) ch);
+                wcw --;
+            }
+            else
+#endif
             if ((rawcurses_raw) && (ch != (chtype) (0x7f & (unsigned char) ch)))
             {
 #ifdef UNICODE
@@ -6319,10 +7183,12 @@ static int addch(chtype ch) {
         if (rawcurses_x >= rawcurses_w)
         {
             rawcurses_x = rawcurses_w - 1;
-            if (rawcurses_stdio_relcup)
+            if (rawcurses_stdio_relcup
+                &&
+                (rawcurses_fput_relcup(stdout, -999, -999) > 0)
+                &&
+                (rawcurses_fput_relcup(stdout, rawcurses_y, rawcurses_h) > 0))
             {
-                rawcurses_fput_relcup(stdout, -999, -999);
-                rawcurses_fput_relcup(stdout, rawcurses_y, rawcurses_h);
             }
             else
             {
@@ -6333,6 +7199,8 @@ static int addch(chtype ch) {
     return OK;
 }
 
+#undef insch
+#define insch rawcurses_insch
 static int insch(chtype ch)
 {
     /* FIXME: should implement this for WIN32 too */
@@ -6353,6 +7221,8 @@ static int insch(chtype ch)
     return ERR;
 }
 
+#undef clrtoeol
+#define clrtoeol rawcurses_clrtoeol
 static int clrtoeol(void)
 {
     if (rawcurses_stdio)
@@ -6388,6 +7258,8 @@ static int clrtoeol(void)
     return OK;
 }
 
+#undef clrtobot
+#define clrtobot rawcurses_clrtobot
 static int clrtobot(void) {
     if (rawcurses_stdio)
     {
@@ -6422,11 +7294,15 @@ static int addstr(const char *s) {
     return OK;
 }
 
+#undef mvprintw
+#define mvprintw rawcurses_mvprintw
 static int mvprintw(int y, int x, const char *s) {
     move(y, x);
     return addstr(s);
 }
 
+#undef resizeterm
+#define resizeterm rawcurses_resizeterm
 static int resizeterm(int y, int x)
 {
     if (x && y
@@ -6455,7 +7331,7 @@ static int resizeterm(int y, int x)
 
 static void rawcurses_getyx(int *y, int *x)
 {
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (! rawcurses_stdio)
     {
         int old_left;
@@ -6485,7 +7361,7 @@ static void rawcurses_getyx(int *y, int *x)
             {
                 rawcurses_nw = w;
                 rawcurses_nh = h;
-                if (rawcurses_ungetch_buffer == (chtype) ERR)
+                if (rawcurses_ungetch_buffer == ERR)
                 {
                     rawcurses_ungetch_buffer = KEY_RESIZE;
                 }
@@ -6500,12 +7376,11 @@ static void rawcurses_getyx(int *y, int *x)
 }
 
 #undef getch
-
 #define getch rawcurses_getch
 
 static int erase(void)
 {
-#ifdef WIN32
+#if USE_WINCONSOLE
     if (! rawcurses_stdio)
     {
         COORD home;
@@ -6543,6 +7418,8 @@ static int erase(void)
     return OK;
 }
 
+#undef clear
+#define clear rawcurses_clear
 static int clear(void) {
     if (rawcurses_stdio && (! rawcurses_after_endwin) && (! rawcurses_winsize_pending) && rawcurses_got_winsize && rawcurses_winsize_on_clear)
     {
