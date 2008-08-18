@@ -582,6 +582,12 @@ ifeq ($(subst default,undefined,$(origin BINDIST)),undefined)
 BINDIST = $(DIST)-$(host)
 endif
 
+## CVSDIST: CVS snapshot package name (without suffix)
+
+ifeq ($(subst default,undefined,$(origin CVSDIST)),undefined)
+CVSDIST = $(MYMAN)-cvs
+endif
+
 ## directories
 
 # distroot: subdirectory inside package that corresponds to the root
@@ -2713,6 +2719,7 @@ utl/txt2asc.sh
 
 dist_data_files = \
 $(doc_files) \
+.cvsignore \
 Makefile \
 chr/chr1.asc \
 chr/chr1.txt \
@@ -3454,9 +3461,26 @@ ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
 UTILS = $(call mw,$(srcdir)/inc/utils.h) $(call mw,$(srcdir)/src/utils.c)
 endif
 
-.PHONY: fill-dir-$(DIST)
+.PHONY: fill-dir-xq-$(call mwxq,$(CVSDIST))
 
-fill-dir-$(DIST):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(srcdir))/,$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(srcdir)/$(file)))
+fill-dir-xq-$(call xq,$(CVSDIST)):
+	rsync -av --delete 'rsync://myman.cvs.sourceforge.net/cvsroot/myman/*' $(call q,$(CVSDIST))
+
+.PHONY: cvsdist
+
+cvsdist: compressed-tarball-xq-$(call mwxq,$(CVSDIST))
+	-$(REMOVE) $(call q,$(CVSDIST))$(tar)
+
+dist:: $(call mw,$(MAKEFILE))
+	@$(MAKE) $(MAKELOOP) \
+            compressed-tarball-xq-$(call qxq,$(DIST))
+	-$(REMOVE) $(DIST)$(tar)
+	@$(MAKE) $(MAKELOOP) \
+            wipe-dir-xq-$(call qxq,$(DIST))
+
+.PHONY: fill-dir-xq-$(DIST)
+
+fill-dir-xq-$(DIST):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(srcdir))/,$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(srcdir)/$(file)))
 	@$(MAKE) $(MAKELOOP) \
             $(foreach dir,$(dist_dirs),install-dir-xq-$(call qxq,$(DIST)/$(dir)))
 	$(POST_UNPACK)
@@ -3680,9 +3704,9 @@ endif
 
 endif
 
-.PHONY: fill-dir-$(BINDIST)
+.PHONY: fill-dir-xq-$(BINDIST)
 
-fill-dir-$(BINDIST):: $(call mw,$(MAKEFILE)) all $(addprefix $(call mw,$(srcdir))/,$(doc_files)) empty-dir-xq-$(call mwxq,$(BINDIST))
+fill-dir-xq-$(BINDIST):: $(call mw,$(MAKEFILE)) all $(addprefix $(call mw,$(srcdir))/,$(doc_files)) empty-dir-xq-$(call mwxq,$(BINDIST))
 	@-$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(BINDIST)/$(MYMAN)$(txt)) \
              data_file=$(MYMAN)$(txt)
@@ -4509,12 +4533,16 @@ empty-dir-xq-%: wipe-dir-xq-%
 	@$(MAKE) $(MAKELOOP) \
             $(call qs,empty-dir-xq-%,install-dir-xq-%,$@)
 
+.PHONY: tarball-xq-%
+
 tarball-xq-%:
 	@$(MAKE) $(MAKELOOP) \
-            $(call qsxu,tarball-xq-%,fill-dir-%,$@)
+            $(call qsxu,tarball-xq-%,fill-dir-xq-%,$@)
 	test ! -f $(call qsxu,tarball-xq-%,%$(call xq,$(tar)),$@) || \
             $(REMOVE) $(call qsxu,tarball-xq-%,%$(call xq,$(tar)),$@)
 	tar -cf $(call qsxu,tarball-xq-%,%$(call xq,$(tar)),$@) $(call qsxu,tarball-xq-%,%,$@)
+
+.PHONY: compressed-tarball-xq-%
 
 compressed-tarball-xq-%: tarball-xq-%
 	test ! -f $(call qsxu,compressed-tarball-xq-%,%$(call xq,$(tgz)),$@) || \
