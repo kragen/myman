@@ -5823,6 +5823,7 @@ static int rawcurses_getch(void)
             {
                 int y, x;
                 attr_t a;
+                static const char *hex = "0123456789ABCDEF";
 
                 a = rawcurses_attr;
                 rawcurses_getyx(&y, &x);
@@ -5833,12 +5834,12 @@ static int rawcurses_getch(void)
                 if (ret < 0x100000U) addch(' ');
                 if (ret < 0x10000U) addch(' ');
                 addstr("U+");
-                if (ret >= 0x100000U) addch(("0123456789ABCDEF")[(ret >> 20) & 0xf]);
-                if (ret >= 0x10000U) addch(("0123456789ABCDEF")[(ret >> 16) & 0xf]);
-                addch(("0123456789ABCDEF")[(ret >> 12) & 0xf]);
-                addch(("0123456789ABCDEF")[(ret >> 8) & 0xf]);
-                addch(("0123456789ABCDEF")[(ret >> 4) & 0xf]);
-                addch(("0123456789ABCDEF")[ret & 0xf]);
+                if (ret >= 0x100000U) addch(hex[(ret >> 20) & 0xf]);
+                if (ret >= 0x10000U) addch(hex[(ret >> 16) & 0xf]);
+                addch(hex[(ret >> 12) & 0xf]);
+                addch(hex[(ret >> 8) & 0xf]);
+                addch(hex[(ret >> 4) & 0xf]);
+                addch(hex[ret & 0xf]);
                 addch(' ');
                 if (((ret >= 0x20) && (ret <= 0x7e))
                     ||
