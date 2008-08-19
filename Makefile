@@ -423,6 +423,15 @@ ifeq ($(subst default,undefined,$(origin srcdir)),undefined)
 srcdir = .
 endif
 
+# source file directory prefix (i.e. with the trailing slash)
+ifeq ($(subst default,undefined,$(origin src)),undefined)
+ifeq ($(srcdir),.)
+src =
+else
+src = $(srcdir)/
+endif
+endif
+
 # object file directory for package
 ifeq ($(subst default,undefined,$(origin objdir)),undefined)
 objdir = obj
@@ -439,17 +448,17 @@ endif
 
 # build date
 ifeq ($(origin date),undefined)
-date := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=date)
+date := $(call shell,$(SHELL) $(call q,$(src))configure --dump=date)
 endif
 
 # build date in ISO 8601 format
 ifeq ($(origin isodate),undefined)
-isodate := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=isodate)
+isodate := $(call shell,$(SHELL) $(call q,$(src))configure --dump=isodate)
 endif
 
 ## build: type of system to build the program on
 ifeq ($(origin build),undefined)
-build := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=build)
+build := $(call shell,$(SHELL) $(call q,$(src))configure --dump=build)
 endif
 
 ## host: type of system to build the program for
@@ -459,7 +468,7 @@ endif
 # single-quoted string, double-quoted string, globbing pattern, suffix
 # pattern
 ifeq ($(origin host),undefined)
-host := $(call shell,$(SHELL) $(call q,$(srcdir))/configure --dump=host)
+host := $(call shell,$(SHELL) $(call q,$(src))configure --dump=host)
 endif
 
 ifneq ($(host),$(build))
@@ -559,12 +568,12 @@ endif
 # tools (namely Solaris makewhatis) cannot parse a .TH line in a
 # manual page with more than one ascii hyphen-minus
 ifeq ($(origin MYMANVERSION),undefined)
-MYMANVERSION := $(call shell,cat $(call q,$(srcdir))/VERSION)
+MYMANVERSION := $(call shell,cat $(call q,$(src))VERSION)
 endif
 
 ## MYMANCOPYRIGHT: human-readable copyright information
 ifeq ($(origin MYMANCOPYRIGHT),undefined)
-MYMANCOPYRIGHT := $(call shell,cat $(call q,$(srcdir))/COPYRIGHT)
+MYMANCOPYRIGHT := $(call shell,cat $(call q,$(src))COPYRIGHT)
 endif
 
 ## DIST: full, versioned package name (without suffix)
@@ -718,7 +727,7 @@ dir_vars = $(public_dir_vars) $($(DIST)_dir_vars) $($(DIST)_subdir_vars)
 
 # How to find this makefile
 ifeq ($(subst default,undefined,$(origin MAKEFILE)),undefined)
-MAKEFILE = $(srcdir)/Makefile
+MAKEFILE = $(src)Makefile
 endif
 
 ## MAKELOOP: loopback recursive $(MAKE)
@@ -799,10 +808,10 @@ endif
 
 # MYGETOPT_H is the argument to #include in order to include the
 # 'getopt.h' file from $(MYGETOPTDIR) from a source file inside the
-# $(srcdir)/src directory. MYGETOPTCPPFLAGS includes preprocessor
+# $(src)src directory. MYGETOPTCPPFLAGS includes preprocessor
 # options needed for this arrangement.
 ifeq ($(subst default,undefined,$(origin MYGETOPTCPPFLAGS)),undefined)
-MYGETOPTCPPFLAGS = -I$(srcdir)/mygetopt
+MYGETOPTCPPFLAGS = -I$(src)mygetopt
 endif
 ifeq ($(subst default,undefined,$(origin MYGETOPT_H)),undefined)
 MYGETOPT_H = $(char_quotation_mark)getopt.h$(char_quotation_mark)
@@ -1367,7 +1376,7 @@ endif
 ## non-backslash-interpreting "echo"-equivalent used during file
 ## generation (internal version invoked directly by make subshell)
 ifeq ($(subst default,undefined,$(origin ECHOLINE_internal)),undefined)
-ECHOLINE_internal = $(SHELL) $(call q,$(srcdir))/configure --dump=non_option_arguments --
+ECHOLINE_internal = $(SHELL) $(call q,$(src))configure --dump=non_option_arguments --
 endif
 
 ## non-backslash-interpreting "echo"-equivalent used during file generation
@@ -1377,7 +1386,7 @@ endif
 
 ## like $(ECHOLINE), but does C string-style quoting (apostrophe is not quoted)
 ifeq ($(subst default,undefined,$(origin ECHOLINEX)),undefined)
-ECHOLINEX = $(SHELL) $(call q,$(srcdir))/configure --dump=non_option_arguments --dump-escaped --
+ECHOLINEX = $(SHELL) $(call q,$(src))configure --dump=non_option_arguments --dump-escaped --
 endif
 
 # special human-readable variable used to distinguish source from
@@ -1488,7 +1497,7 @@ ifeq ($(subst default,undefined,$(origin HOSTCPPFLAGS)),undefined)
 HOSTCPPFLAGS = $(CPPFLAGS)
 endif
 ifeq ($(subst default,undefined,$(origin CINCLUDES)),undefined)
-CINCLUDES = -I$(srcdir)/inc -I. $(EXTRACINCLUDES)
+CINCLUDES = -I$(src)inc -I. $(EXTRACINCLUDES)
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCINCLUDES)),undefined)
 HOSTCINCLUDES = $(CINCLUDES)
@@ -2507,17 +2516,17 @@ TILEFILE_custom = khr1b.txt
 SPRITEFILE_custom = spr3.txt
 
 # Tile and sprite definitions for the selected size
-tilefile = $(srcdir)/chr/$(firstword $(TILEFILE_$1) $1.txt)
+tilefile = $(src)chr/$(firstword $(TILEFILE_$1) $1.txt)
 tiledefs = -DTILEFILE=\"$(call qcq,$(call tilefile,$1))\"
 
-spritefile = $(srcdir)/spr/$(firstword $(SPRITEFILE_$1) $1.txt)
+spritefile = $(src)spr/$(firstword $(SPRITEFILE_$1) $1.txt)
 spritedefs = -DSPRITEFILE=\"$(call qcq,$(call spritefile,$1))\"
 
 ## Mazes
 MAZEFILE_myman = maze.txt
 
 # Maze definitions for the selected variant
-mazefile = $(srcdir)/lvl/$(firstword $(MAZEFILE_$1) $1.txt)
+mazefile = $(src)lvl/$(firstword $(MAZEFILE_$1) $1.txt)
 mazedefs = -DMAZEFILE=\"$(call qcq,$(call mazefile,$1))\"
 
 # Definitions for compiling the selected variant at the selected size
@@ -2672,7 +2681,7 @@ configure.ok: $(call mw,$(MAKEFILE))
             :; \
         else \
             echo $@: configure check failed >&2; \
-            $(ECHOLINEX) '** ' $(call q,$(SHELL) $(srcdir)/configure --dump=date) failed, >&2; \
+            $(ECHOLINEX) '** ' $(call q,$(SHELL) $(call q,$(src))configure --dump=date) failed, >&2; \
             echo '** ' your shell might not work\; see INSTALL for hints >&2; \
             exit 1; \
         fi)
@@ -2731,10 +2740,10 @@ distclean mostlyclean:: clean
 
 maintainer-clean:: distclean wipe-dir-xq-$(call mwxq,$(CVSDUMP))
 
-pdcicon.bmp: $(srcdir)/gfx/myman.png
+pdcicon.bmp: $(src)gfx/myman.png
 	@-$(CONVERT_TO_BMP)
 
-myman_ico_deps = $(srcdir)/gfx/myman64.png $(srcdir)/gfx/myman48.png $(srcdir)/gfx/myman32.png
+myman_ico_deps = $(src)gfx/myman64.png $(src)gfx/myman48.png $(src)gfx/myman32.png
 
 $(obj)myman.ico: $(foreach dep,$(myman_ico_deps),$(call mw,$(dep)))
 	@-$(ECHOLINEX) creating $(call q,$@) from $(call q,$(myman_ico_deps)) && \
@@ -3516,24 +3525,24 @@ $(dist_program_files) \
 $(dist_data_files)
 
 ifeq ($(subst default,undefined,$(origin DRIVERS)),undefined)
-DRIVERS = $(call mw,$(srcdir)/inc/sdlcurs.h) $(call mw,$(srcdir)/inc/ggicurs.h) $(call mw,$(srcdir)/inc/twcurses.h) $(call mw,$(srcdir)/inc/aacurses.h) $(call mw,$(srcdir)/inc/allegcur.h) $(call mw,$(srcdir)/inc/cacacurs.h) $(call mw,$(srcdir)/inc/rawcurs.h) $(call mw,$(srcdir)/inc/maccurs.h) $(call mw,$(srcdir)/inc/newtcurs.h) $(call mw,$(srcdir)/inc/dispcurs.h) $(call mw,$(srcdir)/inc/coniocur.h) $(call mw,$(srcdir)/inc/fltkcurs.h) $(call mw,$(srcdir)/inc/gtkcurs.h) $(call mw,$(srcdir)/inc/optcurs.h)
+DRIVERS = $(call mw,$(src)inc/sdlcurs.h) $(call mw,$(src)inc/ggicurs.h) $(call mw,$(src)inc/twcurses.h) $(call mw,$(src)inc/aacurses.h) $(call mw,$(src)inc/allegcur.h) $(call mw,$(src)inc/cacacurs.h) $(call mw,$(src)inc/rawcurs.h) $(call mw,$(src)inc/maccurs.h) $(call mw,$(src)inc/newtcurs.h) $(call mw,$(src)inc/dispcurs.h) $(call mw,$(src)inc/coniocur.h) $(call mw,$(src)inc/fltkcurs.h) $(call mw,$(src)inc/gtkcurs.h) $(call mw,$(src)inc/optcurs.h)
 endif
 
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
-UTILS = $(call mw,$(srcdir)/inc/utils.h) $(call mw,$(srcdir)/src/utils.c)
+UTILS = $(call mw,$(src)inc/utils.h) $(call mw,$(src)src/utils.c)
 endif
 
 .PHONY: push-website
 
-push-website: $(foreach file,$(website_files),$(call mw,$(srcdir)/$(file)))
+push-website: $(foreach file,$(website_files),$(call mw,$(src)$(file)))
 	$(foreach dir,$(website_dirs),\
             test -d $(call q,$(dir)) || \
             ($(ECHOLINEX) creating directory $(call q,$(dir)) && \
                 $(INSTALL_DIR) $(call q,$(dir))) || \
                 exit $$?; \
-            $(RSYNC) $(RSYNCFLAGS) -essh --times --dirs $(call q,$(MYMANWEBSITERSYNC)$(call s,$(call xq,website)%,%,$(dir))/) $(call q,$(srcdir)/$(dir)/) || \
+            $(RSYNC) $(RSYNCFLAGS) -essh --times --dirs $(call q,$(MYMANWEBSITERSYNC)$(call s,$(call xq,website)%,%,$(dir))/) $(call q,$(src)$(dir)/) || \
                 exit $$?;)
-	$(RSYNC) $(RSYNCFLAGS) -aessh --delete --cvs-exclude --delete-excluded $(call q,$(srcdir))/website/ $(call q,$(MYMANWEBSITERSYNC)/)
+	$(RSYNC) $(RSYNCFLAGS) -aessh --delete --cvs-exclude --delete-excluded $(call q,$(src))website/ $(call q,$(MYMANWEBSITERSYNC)/)
 	@$(ECHOLINE) $(call q,)
 	@$(ECHOLINE) $(call q,Now visit the website here:)
 	@$(ECHOLINE) $(call q,    $(MYMANWEBSITE))
@@ -3571,18 +3580,18 @@ cvsdump: compressed-tarball-xq-$(call mwxq,$(CVSDUMP))
 
 .PHONY: fill-dir-xq-$(DIST)
 
-fill-dir-xq-$(DIST):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(srcdir))/,$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(srcdir)/$(file)))
+fill-dir-xq-$(DIST):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(src)),$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(src)$(file)))
 	@$(MAKE) $(MAKELOOP) \
             $(foreach dir,$(dist_dirs),install-dir-xq-$(call qxq,$(DIST)/$(dir)))
 	$(POST_UNPACK)
 	@($(foreach file,$(dist_data_files), \
             $(ECHOLINEX) installing data file $(call q,$(DIST)/$(file)); \
-            $(INSTALL_DATA) $(call q,$(srcdir)/$(file)) $(call q,$(DIST)/$(file)) \
+            $(INSTALL_DATA) $(call q,$(src)$(file)) $(call q,$(DIST)/$(file)) \
                 || exit $$?; \
         ))
 	@($(foreach file,$(dist_program_files), \
             $(ECHOLINEX) installing program file $(call q,$(DIST)/$(file)); \
-            $(INSTALL_PROGRAM) $(call q,$(srcdir)/$(file)) $(call q,$(DIST)/$(file)) \
+            $(INSTALL_PROGRAM) $(call q,$(src)$(file)) $(call q,$(DIST)/$(file)) \
                 || exit $$?; \
         ))
 	$(NORMAL_UNPACK)
@@ -3602,7 +3611,7 @@ ifneq ($script_stage,)
 
 .PHONY: genscript-$(script_stage)_$(script_target)
 
-genscript-$(script_stage)_$(script_target): $(call mw,$(srcdir))/configure $(call mw,$(MAKEFILE))
+genscript-$(script_stage)_$(script_target): $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@echo $(call q,$(POST_UNPACK))
 	@echo "## $(script_stage)_$(script_target) start"
 	@$(ECHOLINE) $(call q,$(firstword $(MAKE)))'() { : ; }'
@@ -3626,7 +3635,7 @@ endif
 
 .PHONY: genscript-$(script_target)-header
 
-genscript-$(script_target)-header: $(call mw,$(srcdir))/configure $(call mw,$(MAKEFILE))
+genscript-$(script_target)-header: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@$(ECHOLINE) '#'\!$(call q,$(SHELL))' --'
 	@echo '# '$(call qq,$(script_target).sh - binary-$(script_target) script for the MyMan video game)
 	@echo
@@ -3797,7 +3806,7 @@ endif
 
 .PHONY: fill-dir-xq-$(BINDIST)
 
-fill-dir-xq-$(BINDIST):: $(call mw,$(MAKEFILE)) all $(addprefix $(call mw,$(srcdir))/,$(doc_files)) empty-dir-xq-$(call mwxq,$(BINDIST))
+fill-dir-xq-$(BINDIST):: $(call mw,$(MAKEFILE)) all $(addprefix $(call mw,$(src)),$(doc_files)) empty-dir-xq-$(call mwxq,$(BINDIST))
 	@-$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(BINDIST)/$(MYMAN)$(txt)) \
              data_file=$(MYMAN)$(txt)
@@ -3813,7 +3822,7 @@ fill-dir-xq-$(BINDIST):: $(call mw,$(MAKEFILE)) all $(addprefix $(call mw,$(srcd
 	$(POST_UNPACK)
 	@($(foreach file,$(doc_files), \
             $(ECHOLINEX) installing data file $(call q,$(BINDIST)/$(file)); \
-            $(INSTALL_DATA) $(call q,$(srcdir)/$(file)) $(call q,$(BINDIST)/$(file)) \
+            $(INSTALL_DATA) $(call q,$(src)$(file)) $(call q,$(BINDIST)/$(file)) \
                 || exit $$?; \
         ))
 	$(NORMAL_UNPACK)
@@ -3880,8 +3889,8 @@ info check installcheck:
 	@$(ECHOLINEX) $(call q,$(MAKEFILE)): warning: target $@ not implemented
 	@-(exit 1)
 
-TAGS:: $(addprefix $(call mw,$(srcdir))/,$(dist_files))
-	etags -o $@ $(addprefix $(call q,$(srcdir))/,$(dist_files))
+TAGS:: $(addprefix $(call mw,$(src)),$(dist_files))
+	etags -o $@ $(addprefix $(call q,$(src)),$(dist_files))
 
 all:: $(call mw,$(MAKEFILE)) $(MYMAN)$x $(call mw,$(MYMANCOMMAND))
 
@@ -3910,8 +3919,8 @@ ifeq (yes,$(with_mac_icon))
 
 all:: $(call mw,$(obj)$(MYMAN).icns)
 
-$(obj)$(MYMAN).tiff: $(srcdir)/gfx/myman.png $(srcdir)/gfx/myman64.png $(srcdir)/gfx/myman48.png $(srcdir)/gfx/myman32.png
-	-$(TIFFUTIL) -cat $(srcdir)/gfx/myman.png $(srcdir)/gfx/myman64.png $(srcdir)/gfx/myman48.png $(srcdir)/gfx/myman32.png -out $(call q,$@) || \
+$(obj)$(MYMAN).tiff: $(src)gfx/myman.png $(src)gfx/myman64.png $(src)gfx/myman48.png $(src)gfx/myman32.png
+	-$(TIFFUTIL) -cat $(src)gfx/myman.png $(src)gfx/myman64.png $(src)gfx/myman48.png $(src)gfx/myman32.png -out $(call q,$@) || \
             ( \
                 $(REMOVE) $(call q,$@) ; \
                 exit 1 \
@@ -3934,7 +3943,7 @@ ifeq (yes,$(with_mac_icon))
 all:: $(MYMAN).app/Contents/Resources/$(MYMAN).icns
 endif
 
-$(obj)$(MYMAN).plist: $(call mw,$(srcdir))/configure $(call mw,$(MAKEFILE))
+$(obj)$(MYMAN).plist: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@-$(REMOVE) $(call q,$@)
 	@$(ECHOLINEX) creating $(call q,$@) && \
 	(touch $(call q,$@) && \
@@ -3955,7 +3964,7 @@ ifeq (yes,$(with_mac_icon))
             )
 endif
 
-$(MYMAN).app/Contents/Info.plist: $(call mw,$(srcdir))/configure $(call mw,$(MAKEFILE))
+$(MYMAN).app/Contents/Info.plist: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@$(MKPARENTDIR)
 	@-$(REMOVE) $(call q,$@)
 	@$(ECHOLINEX) creating $(call q,$@) && \
@@ -3998,7 +4007,7 @@ endif
 
 .PHONY: docs
 
-docs: $(MYMAN)$(man6ext) $(MYMAN)$(txt) $(MYMAN).ps dvi $(MYMAN)$(htm) $(addprefix $(call mw,$(srcdir))/,$(doc_files))
+docs: $(MYMAN)$(man6ext) $(MYMAN)$(txt) $(MYMAN).ps dvi $(MYMAN)$(htm) $(addprefix $(call mw,$(src)),$(doc_files))
 
 .PHONY: dvi
 
@@ -4054,23 +4063,23 @@ endif
 
 all install-files:: docs
 
-install-files:: $(call mw,$(MAKEFILE)) installdirs $(MYMAN)$x $(call mw,$(MYMANCOMMAND)) $(call mw,$(srcdir))/utl/myman.ct $(foreach variant,$(MYMANVARIANTS),$(call mw,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call mw,$(call tilefile,$(size))) $(call mw,$(call spritefile,$(size)))) $(srcdir)/gfx/myman.png $(srcdir)/gfx/myman64.png $(srcdir)/gfx/myman48.png $(srcdir)/gfx/myman32.png
+install-files:: $(call mw,$(MAKEFILE)) installdirs $(MYMAN)$x $(call mw,$(MYMANCOMMAND)) $(call mw,$(src))utl/myman.ct $(foreach variant,$(MYMANVARIANTS),$(call mw,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call mw,$(call tilefile,$(size))) $(call mw,$(call spritefile,$(size)))) $(src)gfx/myman.png $(src)gfx/myman64.png $(src)gfx/myman48.png $(src)gfx/myman32.png
 	@$(MAKE) $(MAKELOOP) \
              install-program-xq-$(call qxq,$(DESTDIR)$(bindir)/$(MYMAN_EXE)$x) \
              program_file=$(call qmq,$(MYMAN)$x) \
              INSTALLFLAGS=$(call qmq,$(INSTALLFLAGS) $(STRIPINSTALLFLAGS))
 	@$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(DESTDIR)$(gfxdir)/myman.png) \
-             data_file=$(call qmq,$(srcdir)/gfx/myman.png)
+             data_file=$(call qmq,$(src)gfx/myman.png)
 	@$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(DESTDIR)$(gfxdir)/myman64.png) \
-             data_file=$(call qmq,$(srcdir)/gfx/myman64.png)
+             data_file=$(call qmq,$(src)gfx/myman64.png)
 	@$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(DESTDIR)$(gfxdir)/myman48.png) \
-             data_file=$(call qmq,$(srcdir)/gfx/myman48.png)
+             data_file=$(call qmq,$(src)gfx/myman48.png)
 	@$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(DESTDIR)$(gfxdir)/myman32.png) \
-             data_file=$(call qmq,$(srcdir)/gfx/myman32.png)
+             data_file=$(call qmq,$(src)gfx/myman32.png)
 ifeq (yes,$(with_mac_icon))
 	@-($(call set_mac_icon,$(obj)$(MYMAN).icns) $(call q,$(DESTDIR)/$(bindir)/$(MYMAN_EXE)$x))
 endif
@@ -4146,12 +4155,12 @@ endif
 ifeq (yes,$(with_ctheme))
 	@$(MAKE) $(MAKELOOP) \
              install-program-xq-$(call qxq,$(DESTDIR)$(bindir)/$(MYMAN_CT_EXE)) \
-             program_file=$(call qmq,$(srcdir)/utl/myman.ct)
+             program_file=$(call qmq,$(src)utl/myman.ct)
 endif
 	$(POST_UNPACK)
 	@($(foreach file,$(doc_files), \
             $(ECHOLINEX) installing data file $(call q,$(DESTDIR)$(privatedocdir)/$(file)); \
-            $(INSTALL_DATA) $(call q,$(srcdir)/$(file)) $(call q,$(DESTDIR)$(privatedocdir)/$(file)) \
+            $(INSTALL_DATA) $(call q,$(src)$(file)) $(call q,$(DESTDIR)$(privatedocdir)/$(file)) \
                 || exit $$?; \
         ))
 	$(NORMAL_UNPACK)
@@ -4283,18 +4292,18 @@ ifeq (yes,$(with_xtheme))
 endif
 	$(POST_UNPACK)
 	@($(foreach file,$(foreach variant,$(MYMANVARIANTS),$(call mazefile,$(variant))), \
-            $(ECHOLINEX) installing maze file $(call q,$(DESTDIR)$(mazedir)/$(call s,$(call xq,$(srcdir)/lvl/)%,%,$(file))); \
-            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(mazedir)/$(call s,$(call xq,$(srcdir)/lvl/)%,%,$(file))) \
+            $(ECHOLINEX) installing maze file $(call q,$(DESTDIR)$(mazedir)/$(call s,$(call xq,$(src)lvl/)%,%,$(file))); \
+            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(mazedir)/$(call s,$(call xq,$(src)lvl/)%,%,$(file))) \
                 || exit $$?; \
         ))
 	@($(foreach file,$(foreach size,$(MYMANSIZES),$(call tilefile,$(size))), \
-            $(ECHOLINEX) installing tile file $(call q,$(DESTDIR)$(tiledir)/$(call s,$(call xq,$(srcdir)/chr/)%,%,$(file))); \
-            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(tiledir)/$(call s,$(call xq,$(srcdir)/chr/)%,%,$(file))) \
+            $(ECHOLINEX) installing tile file $(call q,$(DESTDIR)$(tiledir)/$(call s,$(call xq,$(src)chr/)%,%,$(file))); \
+            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(tiledir)/$(call s,$(call xq,$(src)chr/)%,%,$(file))) \
                 || exit $$?; \
         ))
 	@($(foreach file,$(foreach size,$(MYMANSIZES),$(call spritefile,$(size))), \
-            $(ECHOLINEX) installing sprite file $(call q,$(DESTDIR)$(spritedir)/$(call s,$(call xq,$(srcdir)/spr/)%,%,$(file))); \
-            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(spritedir)/$(call s,$(call xq,$(srcdir)/spr/)%,%,$(file))) \
+            $(ECHOLINEX) installing sprite file $(call q,$(DESTDIR)$(spritedir)/$(call s,$(call xq,$(src)spr/)%,%,$(file))); \
+            $(INSTALL_DATA) $(call q,$(file)) $(call q,$(DESTDIR)$(spritedir)/$(call s,$(call xq,$(src)spr/)%,%,$(file))) \
                 || exit $$?; \
         ))
 	$(NORMAL_UNPACK)
@@ -4327,7 +4336,7 @@ ifeq (yes,$(with_mac))
 	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS_PLATFORM)/$(MYMAN_EXE)$x))
 	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS_RESOURCES)/$(MYMAN_ICNS)))
 endif
-	@($(foreach file,$(DESTDIR)$(bindir)/$(MYMAN_EXE)$x $(DESTDIR)$(bindir)/$(DIST_EXE)$x $(DESTDIR)$(bindir)/$(XMYMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN2_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN3_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN4_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBIGMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XHUGEMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN2_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN3_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN4_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN5_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN6_EXE)$(sh) $(DESTDIR)$(bindir)/$(XQUACKMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(MYMANCOMMAND_EXE) $(DESTDIR)$(bindir)/$(MYMAN_CT_EXE) $(DESTDIR)$(privatedocdir)/$(MYMAN)$(txt) $(DESTDIR)$(privatedocdir)/$(MYMAN).ps $(DESTDIR)$(privatedocdir)/$(MYMAN).dvi $(DESTDIR)$(privatedocdir)/$(MYMAN)$(htm) $(DESTDIR)$(man6dir)/$(MYMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMAN_CT_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XQUACKMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMANCOMMAND_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XHUGEMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN2_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN3_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN4_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN5_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN6_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBIGMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN4_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN3_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN2_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(DIST_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMAN_EXE)$x$(man6ext) $(DESTDIR)$(man6dir)/$(DIST_EXE)$x$(man6ext) $(DESTDIR)$(man6dir)/$(XQUACKMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XHUGEMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN2_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN3_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN4_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN5_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN6_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBIGMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN4_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN3_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN2_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(gfxdir)/myman.png $(DESTDIR)$(gfxdir)/myman64.png $(DESTDIR)$(gfxdir)/myman48.png $(DESTDIR)$(gfxdir)/myman32.png $(foreach file,$(doc_files),$(DESTDIR)$(privatedocdir)/$(file)) $(foreach variant,$(MYMANVARIANTS),$(call s,$(call xq,$(srcdir)/lvl/)%,$(call xq,$(DESTDIR)$(mazedir)/)%,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call s,$(call xq,$(srcdir)/chr/)%,$(call xq,$(DESTDIR)$(tiledir)/)%,$(call tilefile,$(size))) $(call s,$(call xq,$(srcdir)/spr/)%,$(call xq,$(DESTDIR)$(spritedir)/)%,$(call spritefile,$(size)))),\
+	@($(foreach file,$(DESTDIR)$(bindir)/$(MYMAN_EXE)$x $(DESTDIR)$(bindir)/$(DIST_EXE)$x $(DESTDIR)$(bindir)/$(XMYMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN2_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN3_EXE)$(sh) $(DESTDIR)$(bindir)/$(XMYMAN4_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBIGMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XHUGEMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN2_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN3_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN4_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN5_EXE)$(sh) $(DESTDIR)$(bindir)/$(XBITMAN6_EXE)$(sh) $(DESTDIR)$(bindir)/$(XQUACKMAN_EXE)$(sh) $(DESTDIR)$(bindir)/$(MYMANCOMMAND_EXE) $(DESTDIR)$(bindir)/$(MYMAN_CT_EXE) $(DESTDIR)$(privatedocdir)/$(MYMAN)$(txt) $(DESTDIR)$(privatedocdir)/$(MYMAN).ps $(DESTDIR)$(privatedocdir)/$(MYMAN).dvi $(DESTDIR)$(privatedocdir)/$(MYMAN)$(htm) $(DESTDIR)$(man6dir)/$(MYMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMAN_CT_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XQUACKMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMANCOMMAND_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XHUGEMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN2_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN3_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN4_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN5_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN6_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XBIGMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN4_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN3_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN2_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(DIST_EXE)$(man6ext) $(DESTDIR)$(man6dir)/$(MYMAN_EXE)$x$(man6ext) $(DESTDIR)$(man6dir)/$(DIST_EXE)$x$(man6ext) $(DESTDIR)$(man6dir)/$(XQUACKMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XHUGEMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN2_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN3_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN4_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN5_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBITMAN6_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XBIGMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN4_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN3_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN2_EXE)$(sh)$(man6ext) $(DESTDIR)$(man6dir)/$(XMYMAN_EXE)$(sh)$(man6ext) $(DESTDIR)$(gfxdir)/myman.png $(DESTDIR)$(gfxdir)/myman64.png $(DESTDIR)$(gfxdir)/myman48.png $(DESTDIR)$(gfxdir)/myman32.png $(foreach file,$(doc_files),$(DESTDIR)$(privatedocdir)/$(file)) $(foreach variant,$(MYMANVARIANTS),$(call s,$(call xq,$(src)lvl/)%,$(call xq,$(DESTDIR)$(mazedir)/)%,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call s,$(call xq,$(src)chr/)%,$(call xq,$(DESTDIR)$(tiledir)/)%,$(call tilefile,$(size))) $(call s,$(call xq,$(src)spr/)%,$(call xq,$(DESTDIR)$(spritedir)/)%,$(call spritefile,$(size)))),\
             $(call uninstall_file,$(file)) \
                 || exit $$?; \
         ))
@@ -4401,35 +4410,35 @@ $(char_newline)) | \
                 exit 1 \
             )
 
-$(obj)mygetopt$O: $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.c $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h config.h
+$(obj)mygetopt$O: $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.c $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h config.h
 	@$(MKPARENTDIR)
 	$(COMPILE)
 
 ifneq ($(obj)mygetopt$O,$(obj)$(hostprefix)mygetopt$o)
 
-$(obj)$(hostprefix)mygetopt$o: $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.c $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h config.h
+$(obj)$(hostprefix)mygetopt$o: $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.c $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h config.h
 	@$(MKPARENTDIR)
 	$(HOSTCOMPILE)
 
 endif
 
-$(obj)$(MYMAN)$o: $(call mw,$(srcdir))/src/main.c $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT $(call mw,$(MAKEFILE)) config.h $(UTILS)
+$(obj)$(MYMAN)$o: $(call mw,$(src))src/main.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(call mw,$(MAKEFILE)) config.h $(UTILS)
 	@$(MKPARENTDIR)
 	$(HOSTCOMPILE) $(WRAPPERDEFS) $(BUILTINDEFS)
 
-$(obj)utils$O: $(call mw,$(srcdir))/src/utils.c config.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(UTILS)
+$(obj)utils$O: $(call mw,$(src))src/utils.c config.h $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(UTILS)
 	@$(MKPARENTDIR)
 	$(COMPILE) $(WRAPPERDEFS)
 
 ifneq ($(obj)utils$O,$(obj)$(hostprefix)utils$o)
 
-$(obj)$(hostprefix)utils$o: $(call mw,$(srcdir))/src/utils.c config.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(UTILS)
+$(obj)$(hostprefix)utils$o: $(call mw,$(src))src/utils.c config.h $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(UTILS)
 	@$(MKPARENTDIR)
 	$(HOSTCOMPILE) $(WRAPPERDEFS)
 
 endif
 
-$(MYMAN)$x: $(foreach variant,$(MYMANVARIANTS),$(call mw,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call mw,$(call tilefile,$(size))) $(call mw,$(call spritefile,$(size)))) $(call mw,$(srcdir))/src/myman.c $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT $(DRIVERS) $(UTILS)
+$(MYMAN)$x: $(foreach variant,$(MYMANVARIANTS),$(call mw,$(call mazefile,$(variant)))) $(foreach size,$(MYMANSIZES),$(call mw,$(call tilefile,$(size))) $(call mw,$(call spritefile,$(size)))) $(call mw,$(src))src/myman.c $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS)
 
 ifneq (,$(findstring pdcurses,$(CURSES_FLAVOR)))
 $(MYMAN)$x: $(call mw,pdcicon.bmp)
@@ -4455,63 +4464,63 @@ ifeq (yes,$(with_mac_icon))
 	@-($(call set_mac_icon,$(obj)$(MYMAN).icns) $(call q,$@))
 endif
 
-$(XMYMAN)$(sh): $(call mw,$(srcdir))/utl/xmyman.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XMYMAN)$(sh): $(call mw,$(src))utl/xmyman.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XMYMAN2)$(sh): $(call mw,$(srcdir))/utl/xmyman2.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XMYMAN2)$(sh): $(call mw,$(src))utl/xmyman2.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XMYMAN3)$(sh): $(call mw,$(srcdir))/utl/xmyman3.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XMYMAN3)$(sh): $(call mw,$(src))utl/xmyman3.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XMYMAN4)$(sh): $(call mw,$(srcdir))/utl/xmyman4.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XMYMAN4)$(sh): $(call mw,$(src))utl/xmyman4.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBIGMAN)$(sh): $(call mw,$(srcdir))/utl/xbigman.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBIGMAN)$(sh): $(call mw,$(src))utl/xbigman.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XQUACKMAN)$(sh): $(call mw,$(srcdir))/utl/xquack.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XQUACKMAN)$(sh): $(call mw,$(src))utl/xquack.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(MYMANCOMMAND): $(call mw,$(srcdir))/utl/mymancmd.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(MYMANCOMMAND): $(call mw,$(src))utl/mymancmd.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XHUGEMAN)$(sh): $(call mw,$(srcdir))/utl/xhugeman.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XHUGEMAN)$(sh): $(call mw,$(src))utl/xhugeman.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN)$(sh): $(call mw,$(srcdir))/utl/xbitman.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN)$(sh): $(call mw,$(src))utl/xbitman.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN2)$(sh): $(call mw,$(srcdir))/utl/xbitman2.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN2)$(sh): $(call mw,$(src))utl/xbitman2.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN3)$(sh): $(call mw,$(srcdir))/utl/xbitman3.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN3)$(sh): $(call mw,$(src))utl/xbitman3.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN4)$(sh): $(call mw,$(srcdir))/utl/xbitman4.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN4)$(sh): $(call mw,$(src))utl/xbitman4.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN5)$(sh): $(call mw,$(srcdir))/utl/xbitman5.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN5)$(sh): $(call mw,$(src))utl/xbitman5.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(XBITMAN6)$(sh): $(call mw,$(srcdir))/utl/xbitman6.in $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(XBITMAN6)$(sh): $(call mw,$(src))utl/xbitman6.in $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(SH_SUBSTITUTE)
 	-chmod 755 $(call q,$@)
 
-$(MYMAN)$(man6ext): $(call mw,$(srcdir))/src/myman.man $(call mw,$(MAKEFILE)) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(MYMAN)$(man6ext): $(call mw,$(src))src/myman.man $(call mw,$(MAKEFILE)) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@$(TROFF_SUBSTITUTE)
 
 $(MYMAN)$(txt): $(MYMAN)$(man6ext)
@@ -4526,17 +4535,17 @@ $(MYMAN).dvi: $(MYMAN)$(man6ext)
 $(MYMAN)$(htm): $(MYMAN)$(man6ext)
 	@-$(MANTOHTML)
 
-$(obj)$(GAME)$O: $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
+$(obj)$(GAME)$O: $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
 
-$(obj)$(GAME)$O: $(call mw,$(srcdir))/src/myman.c $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT $(DRIVERS) $(UTILS) config.h
+$(obj)$(GAME)$O: $(call mw,$(src))src/myman.c $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
 	$(COMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(CURSESINCLUDE) $(EXTRAICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
 
 ifneq ($(obj)$(GAME)$O,$(obj)$(hostprefix)$(GAME)$o)
 
-$(obj)$(hostprefix)$(GAME)$o: $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
+$(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
 
-$(obj)$(hostprefix)$(GAME)$o: $(call mw,$(srcdir))/src/myman.c $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT $(DRIVERS) $(UTILS) config.h
+$(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
 	$(HOSTCOMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(EXTRAICONVOPTS) $(CURSESINCLUDE) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
 
@@ -4562,7 +4571,7 @@ $(BOOTSTRAP)$X: $(call mw,$(BOOTSTRAP)$O) $(call mw,$(obj)mygetopt$O) $(call mw,
 	@$(MKPARENTDIR)
 	$(LINK) $(CURSESLIBS) $(ICONVLIBS) $(call q,$(obj)mygetopt$O) $(call mw,$(obj)utils$O) $(LIBS)
 
-$(BOOTSTRAP)$O: $(call mw,$(srcdir))/src/myman.c $(call mw,$(srcdir))/$(MYGETOPTDIR)/getopt.h $(call mw,$(srcdir))/$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS) $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT $(DRIVERS) $(UTILS) config.h
+$(BOOTSTRAP)$O: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
 	$(COMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(CURSESINCLUDE) $(EXTRAICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS)
 
@@ -4588,7 +4597,7 @@ endef
 
 $(eval $(foreach size,$(MYMANSIZES),$(call size_template,$(size))$(char_newline)))
 
-$(call mw,$(MAKEFILE)):: $(call mw,$(srcdir))/VERSION $(call mw,$(srcdir))/COPYRIGHT
+$(call mw,$(MAKEFILE)):: $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT
 	@touch $(call q,$@)
 
 # use these to help diagnose mis-set makefile variables; replace '%'
