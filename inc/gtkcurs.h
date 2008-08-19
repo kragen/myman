@@ -94,6 +94,143 @@
 #define USE_ICONV 0
 #endif
 
+#ifdef WIN32
+
+#include <windows.h>
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 0
+#endif
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 0
+#endif
+
+#endif
+
+#ifndef HAVE_GETTIMEOFDAY
+#define HAVE_GETTIMEOFDAY 1
+#endif
+
+#ifndef HAVE_USLEEP
+#define HAVE_USLEEP 1
+#endif
+
+#if ! HAVE_GETTIMEOFDAY
+
+#undef gettimeofday
+#define gettimeofday rawcurses_gettimeofday
+
+static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
+{
+
+#if defined(WIN32)
+
+/* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
+    union {
+        long long ns100;
+        FILETIME ft;
+    } now;
+    GetSystemTimeAsFileTime(&now.ft);
+    tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
+    tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+
+#else /* ! defined(WIN32) */
+
+#if defined(__MSDOS__)
+
+/* HACK: this is wildly, wildly wrong for anything but tick counting! */
+
+/* originally from http://www.lightner.net/lightner/bruce/photopc/msdos/patch/usleep.c */
+
+    static unsigned long
+#ifndef __BCC__
+        far
+#endif
+        *p;
+    unsigned long ticks;
+
+    if (!p) p = MK_FP(0, 0x46c);
+    ticks = *p;
+    tv->tv_usec = ((ticks & 0xff) * 55000L) % 1000000L;
+    tv->tv_sec = (ticks & 0xff) * 55L / 1000L;
+
+#else /* ! defined(__MSDOS__) */
+
+#error no gettimeofday(2) implementation for your platform, sorry
+    return 1;
+
+#endif /* ! defined(__MSDOS__) */
+
+#endif /* ! defined(WIN32) */
+
+    return 0;
+}
+
+#endif /* ! HAVE_GETTIMEOFDAY */
+
+#if ! HAVE_USLEEP
+
+#ifdef WIN32
+
+#undef usleep
+
+/* originally from http://wyw.dcweb.cn/sleep.h.txt by Wu Yongwei */
+
+#define usleep(t) Sleep((t) / 1000)
+
+#else /* ! defined(WIN32) */
+
+#undef usleep
+#define usleep rawcurses_usleep
+
+static int
+rawcurses_usleep(unsigned long usecs)
+{
+    while (usecs)
+    {
+        struct timeval tv0, tv1;
+        int ret;
+
+        if (gettimeofday(&tv0, NULL)) break;
+        ret = 0;
+#ifndef LSI_C
+#if ! (defined(__DMC__) || defined(__TURBOC__))
+        ret =
+#endif
+            sleep(0);
+#endif
+        if (ret) break;
+        if (gettimeofday(&tv1, NULL)) break;
+        if (tv1.tv_sec < tv0.tv_sec) break;
+        if ((tv1.tv_sec == tv0.tv_sec)
+            &&
+            (tv1.tv_usec < tv0.tv_usec))
+        {
+            break;
+        }
+        if ((tv1.tv_sec - tv0.tv_sec) > (usecs / 1000000L))
+        {
+            break;
+        }
+        if (((tv1.tv_sec - tv0.tv_sec) * 1000000L
+             +
+             (tv1.tv_usec - tv0.tv_usec))
+            >=
+            usecs)
+        {
+            break;
+        }
+        usecs -= (tv1.tv_sec - tv0.tv_sec) * 1000000L;
+        usecs -= tv1.tv_usec - tv0.tv_usec;
+    }
+    return 0;
+}
+
+#endif /* ! defined(WIN32) */
+
+#endif /* ! HAVE_USLEEP */
+
 #if USE_ICONV
 #include <iconv.h>
 /* for uint32_t */
@@ -830,6 +967,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     if (icon && ! *icon) icon = NULL;
     font = getenv("GTKCURSES_FONT");
     if (font && ! *font) font = NULL;
+    if (font && ! *font) font = NULL;
     gtkcurses_bitmap = (getenv("GTKCURSES_BITMAP") && *getenv("GTKCURSES_BITMAP")) ? (strcmp("0", getenv("GTKCURSES_BITMAP"))) : 0;
     if (! h) h = 25;
     if (! w) w = 80;
@@ -854,7 +992,17 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         locale = gdk_set_locale();
         gtkcurses_idleAdd(gtkcurses_onIdle, NULL);
 #if USE_PANGO
-        gtkcurses_fontDescription = pango_font_description_from_string(font ? font : "fixed");
+        gtkcurses_fontDescription = pango_font_description_from_string(font ? font :
+#ifdef WIN32
+                                                                       "Courier"
+#else
+                                                                       "fixed"
+#endif
+            );
+        if (! pango_font_description_get_size(gtkcurses_fontDescription))
+        {
+            pango_font_description_set_size(gtkcurses_fontDescription, 12);
+        }
 #else
         if (font)
         {

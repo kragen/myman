@@ -8700,7 +8700,11 @@ main(int argc, char *argv[]
 #ifdef GTKCURSES
         if (((! getenv("GTKCURSES_ICON")) || ! *(getenv("GTKCURSES_ICON"))) && MYMANICONPNG && *MYMANICONPNG)
         {
+#ifdef WIN32
+            SetEnvironmentVariableA("GTKCURSES_ICON", MYMANICONPNG);
+#else
             setenv("GTKCURSES_ICON", MYMANICONPNG, 1);
+#endif
         }
 #endif
 #ifdef INITSCR_WITH_HINTS
