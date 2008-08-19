@@ -1,4 +1,4 @@
-/*BINFMTC:-lcurses -I../inc
+/*BINFMTC:-lcurses -I../inc src/utils.c
  * myman.c - game logic for the MyMan video game
  * Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
@@ -23,211 +23,9 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#undef DATADIR /* FIXME: conflicts with Win32 header files */
-
-/* base name for package (without version number or suffix) */
-#ifndef MYMAN
-#define MYMAN "myman"
-#endif
-
-/* copyright information for the program as a whole */
-#ifndef MYMANCOPYRIGHT
-#define MYMANCOPYRIGHT "Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>"
-#endif
-
-/* package version number */
-#ifndef MYMANVERSION
-#define MYMANVERSION "devel"
-#endif
-
-/* notice to display on the intro screen */
-#ifndef MYMANNOTICE
-#define MYMANNOTICE "DEDICATED TO TORU"
-#endif
-
-/* legal notice to display before starting */
-#ifndef MYMANLEGALNOTICE
-#define MYMANLEGALNOTICE \
-"LEGAL NOTICE" "\n" \
-"\n" \
-"MyMan is an unofficial and unlicensed clone of the original Pac-Man" " " \
-"and Puckman games and of their sequels and imitators, and is not" " " \
-"endorsed by Namco Bandai Games Inc., owners of the Pac-Man and Puckman" " " \
-"registered trademarks and copyrights. Any trademarks used herein are" " " \
-"the property of their respective owners. No mention of a trademark," " " \
-"trademark owner, or other party shall be construed as an endorsement" " " \
-"of MyMan or any other product by any party. If you believe that by" " " \
-"using or posessing MyMan the rights of others would be infringed, you" " " \
-"are strongly encouraged to cease using MyMan and its derivatives and" " " \
-"delete all copies of the MyMan software and its derivatives, and to" " " \
-"inform the author or authors of MyMan and the distributor or" " " \
-"distributors from whom you obtained MyMan of the reasons for such" " " \
-"belief so that the infringing part may be removed or replaced. Any" " " \
-"imitation by MyMan of other software is intended to be purely for" " " \
-"purposes of humor and amusement." "\n" \
-"\n" \
-MYMAN " - The MyMan video game" "\n" \
-MYMANCOPYRIGHT "\n" \
-"\n" \
-"Permission is hereby granted, free of charge, to any person" " " \
-"obtaining a copy of this software and associated documentation" " " \
-"files (the \"Software\"), to deal in the Software without" " " \
-"restriction, including without limitation the rights to use, copy," " " \
-"modify, merge, publish, distribute, sublicense, and/or sell copies" " " \
-"of the Software, and to permit persons to whom the Software is" " " \
-"furnished to do so, subject to the following conditions:" "\n" \
-"\n" \
-"The above copyright notice and this permission notice shall be" " " \
-"included in all copies or substantial portions of the Software." "\n" \
-"\n" \
-"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND," " " \
-"EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF" " " \
-"MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND" " " \
-"NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT" " " \
-"HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY," " " \
-"WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM," " " \
-"OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER" " " \
-"DEALINGS IN THE SOFTWARE." "\n" \
-"\n" \
-"Author contact information:" "\n" \
-"\n" \
-"Benjamin C. W. Sittler <bsittler@gmail.com>" "\n" \
-"2806 Foothill Boulevard" "\n" \
-"Oakland, California 94601" "\n" \
-"U.S.A." "\n" \
-"\n" \
-"Press \? or Ctrl-H during the game for help and additional notices." "\n" \
-""
-#endif
-
-/* used for HTML screenshots */
-#ifndef HTM_SUFFIX
-#define HTM_SUFFIX ".html"
-#endif
-
-/* used for text screenshots */
-#ifndef TXT_SUFFIX
-#define TXT_SUFFIX ".txt"
-#endif 
-
-#ifndef maze_ABOUT_prefix
-#define maze_ABOUT_prefix "\n" \
-"Maze: "
-#endif
-
-#ifndef maze_FIXME_prefix
-#define maze_FIXME_prefix "\n" \
-"FIXME (Maze): "
-#endif
-
-#ifndef maze_NOTE_prefix
-#define maze_NOTE_prefix "\n" \
-"NOTE (Maze): "
-#endif
-
-#ifndef tile_ABOUT_prefix
-#define tile_ABOUT_prefix "\n" \
-"Tiles: "
-#endif
-
-#ifndef tile_FIXME_prefix
-#define tile_FIXME_prefix "\n" \
-"FIXME (Tiles): "
-#endif
-
-#ifndef tile_NOTE_prefix
-#define tile_NOTE_prefix "\n" \
-"NOTE (Tiles): "
-#endif
-
-#ifndef sprite_ABOUT_prefix
-#define sprite_ABOUT_prefix "\n" \
-"Sprites: "
-#endif
-
-#ifndef sprite_FIXME_prefix
-#define sprite_FIXME_prefix "\n" \
-"FIXME (Sprites): "
-#endif
-
-#ifndef sprite_NOTE_prefix
-#define sprite_NOTE_prefix "\n" \
-"NOTE (Sprites): "
-#endif
-
-#ifndef MYMANKEYS_prefix
-#define MYMANKEYS_prefix "Keyboard Map" "\n" \
-"\n"
-#endif
-
-#ifndef MYMANKEYS
-#define MYMANKEYS \
-"The following case-insensitive keystroke commands are recognized during" " " \
-"the game:" "\n" \
-"Q or Ctrl-C: quit the game" "\n" \
-"P or ESC: pause the game" "\n" \
-"Ctrl-Q: re-enable output (after Ctrl-S)" "\n" \
-"R, Ctrl-L or Ctrl-R: refresh (redraw) the screen" "\n" \
-"@: reset the display subsystem and refresh (redraw) the screen" "\n" \
-"Ctrl-S: inhibit output until Ctrl-Q is typed" "\n" \
-"S: toggle sound on/off" "\n" \
-"W: warp to the next level (after consuming the next dot)" "\n" \
-"C: toggle color on/off (if enabled at compile-time)" "\n" \
-"B: toggle use of dim and bold attributes for missing colors" "\n" \
-"U: toggle underlining of walls on/off (if enabled at compile-time)" "\n" \
-"D: toggle maze debugging on/off" "\n" \
-"T: save an HTML screenshot to the file snap####" HTM_SUFFIX ", where #### is" " " \
-"a four-digit sequence number, and flash the screen briefly; a" " " \
-"plain text version is saved as snap####" TXT_SUFFIX " using backspacing" " " \
-"to represent underlined and bold text" "\n" \
-"O or 0: toggle appearance of power pellets and dots" "\n" \
-"A: toggle between ASCII altcharset translations and your terminal\'s" " " \
-"altcharset translations" "\n" \
-"I: toggle between using your terminal\'s vertical scrolling capabilities" " " \
-"and redrawing the screen" "\n" \
-"X: toggle between raw tile characters (CP437 or UCS/Unicode character" " " \
-"graphics) and altcharset translations (VT100-style graphics)" "\n" \
-"E: toggle between UCS/Unicode and CP437 for internal representation" " " \
-"of raw tile characters" "\n" \
-"H, 4, Ctrl-B or LEFT: move left" "\n" \
-"J, 2, Ctrl-N or DOWN: move down" "\n" \
-"K, 8, Ctrl-P or UP: move up" "\n" \
-"L, 6, Ctrl-F or RIGHT: move right" "\n" \
-", (comma) or <: cancel pending vertical move" "\n" \
-". (full stop) or >: cancel pending horizontal move" "\n" \
-"/ or \\: toggle diagonal maze reflection" "\n" \
-"\? or Ctrl-H: display help screen" "\n" \
-"\n" \
-"The pager recognizes the following special commands:" "\n" \
-"SPACE: display next page or finish" "\n" \
-"ESC: finish immediately" "\n" \
-"Move left then right with no intervening keystrokes:" " " \
-"equivalent to ESC" "\n" \
-""
-#endif
-
-#ifndef MOREMESSAGE
-#define MOREMESSAGE "[Space: more, Q: quit]"
-#endif
-
-#ifndef DONEMESSAGE
-#define DONEMESSAGE "[Space: OK, Q: quit]"
-#endif
-
-#ifndef BONUSHERO
-#define BONUSHERO 10000
-#endif
-
-#ifndef BONUSHERO2
-#define BONUSHERO2 50000
-#endif
-
-#ifndef BONUSHEROTEXT
-#if BONUSHERO
-#define BONUSHEROTEXT "BONUS MYMAN FOR 10000 \x9es"
-#else
-#define BONUSHEROTEXT "BONUS MYMAN FOR 50000 \x9es"
-#endif
+/* configuration information */
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 /* used in macbuild.txt to avoid 8bit chars */
@@ -250,25 +48,57 @@ MYMANCOPYRIGHT "\n" \
 #endif
 
 #include <errno.h>
+
 #include <signal.h>
+
+#ifndef SIG_ERR
+#define SIG_ERR ((void (*) (int)) -1)
+#endif
+
+#if defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C)
+#ifndef HAVE_RAISE
+#define HAVE_RAISE 0
+#endif
+#endif
+
+#ifndef HAVE_RAISE
+#define HAVE_RAISE 1
+#endif
+
+#if ! HAVE_RAISE
+#undef raise
+#define raise(sig) kill(getpid(), (sig))
+#endif
+
 #include <limits.h>
+#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
 #include <locale.h>
+#endif
 #include <math.h>
 #include <ctype.h>
-#ifndef macintosh
+#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
 #include <unistd.h>
 #endif
 #include <string.h>
 #include <stdio.h>
+#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#include <unixio.h>
+#endif
 #include <stdlib.h>
-#ifndef macintosh
+#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__))
 #include <sys/time.h>
 #endif
 #include <time.h>
-#ifndef WIN32
-#ifndef macintosh
+
+/* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
+#include "utils.h"
+
+#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__))
 #include <langinfo.h>
 #endif
+
+#ifndef F_OK
+#define F_OK 0
 #endif
 
 #ifndef USE_SDL_MIXER
@@ -311,59 +141,112 @@ MYMANCOPYRIGHT "\n" \
 #endif
 #endif
 
-#ifdef MY_CURSES_H
-#include MY_CURSES_H
-#else
+#ifndef MY_CURSES_H
 #ifdef SLCURSES
-#include <slcurses.h>
-#else
-#ifdef XCURSES
-#include <xcurses.h>
-#else
-#ifdef CACACURSES
-#include "cacacurs.h"
-#include "optcurs.h"
-#else
-#ifdef AACURSES
-#include "aacurses.h"
-#else
-#ifdef RAWCURSES
-#include "rawcurs.h"
-#include "optcurs.h"
-#else
-#ifdef MACCURSES
-#include "maccurs.h"
-#include "optcurs.h"
-#else
-#ifdef ALLEGROCURSES
-#include "allegcur.h"
-#include "optcurs.h"
-#else
-#ifdef TWCURSES
-#include "twcurses.h"
-#else
-#ifdef GGICURSES
-#include "ggicurs.h"
-#include "optcurs.h"
-#else
-#ifdef SDLCURSES
-#include "sdlcurs.h"
-#include "optcurs.h"
-#else
-#include <curses.h>
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
+#define MY_CURSES_H <slcurses.h>
 #endif
 #endif
 
-#include "utils.h"
+#ifndef MY_CURSES_H
+#ifdef XCURSES
+#define MY_CURSES_H <xcurses.h>
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef CACACURSES
+#include "cacacurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef GTKCURSES
+#include "gtkcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef FLTKCURSES
+#include "fltkcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef AACURSES
+#define MY_CURSES_H "aacurses.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef NEWTCURSES
+#include "newtcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef DISPCURSES
+#include "dispcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef CONIOCURSES
+#include "coniocur.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef RAWCURSES
+#include "rawcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef MACCURSES
+#include "maccurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef ALLEGROCURSES
+#include "allegcur.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef TWCURSES
+#define MY_CURSES_H "twcurses.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef GGICURSES
+#include "ggicurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef SDLCURSES
+#include "sdlcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifdef MY_CURSES_H
+#include MY_CURSES_H
+#else
+#include <curses.h>
+#endif
 
 /* work-arounds for slcurses */
 #ifdef SLCURSES
@@ -417,7 +300,15 @@ MYMANCOPYRIGHT "\n" \
 #endif
 
 #if USE_IOCTL
+#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#include <ioctl.h>
+#else
+#ifndef __TURBOC__
+#if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
 #include <sys/ioctl.h>
+#endif
+#endif
+#endif
 #ifdef TIOCGWINSZ
 #include <termios.h>
 #endif
@@ -436,8 +327,8 @@ MYMANCOPYRIGHT "\n" \
 #endif
 
 /* command-line argument parser */
-#ifdef MY_GETOPT_H
-#include MY_GETOPT_H
+#ifdef MYGETOPT_H
+#include MYGETOPT_H
 #else
 #include <getopt.h>
 #endif
@@ -461,8 +352,9 @@ static iconv_t cd_to_uni = (iconv_t) -1;
 
 static wchar_t ucs_to_wchar(unsigned long ucs)
 {
-    uint32_t ucsbuf[2];
     wchar_t wcbuf[2];
+#ifdef LC_CTYPE
+    uint32_t ucsbuf[2];
     const char *ibuf;
     char *obuf;
     size_t ibl;
@@ -528,12 +420,15 @@ static wchar_t ucs_to_wchar(unsigned long ucs)
     {
         setlocale(LC_CTYPE, my_locale);
     }
+#else /* ! defined(LC_CTYPE) */
+    wcbuf[0] = 0;
+#endif /* ! defined(LC_CTYPE) */
     return wcbuf[0] ? wcbuf[0] : (((ucs >= 0x20) && (ucs <= 0x7e)) ? ((wchar_t) ucs) : 0);
 }
 
 #else
 
-#define ucs_to_wchar(ucs) ((((unsigned long) (wchar_t) (unsigned long) (ucs)) == (unsigned long) (ucs)) ? ((wchar_t) (unsigned long) (ucs)) : ((wchar_t) 0))
+#define ucs_to_wchar(ucs) ((((unsigned long) (wchar_t) (unsigned long) (ucs)) == ((unsigned long) (ucs))) ? ((wchar_t) (unsigned long) (ucs)) : ((wchar_t) 0))
 
 #endif
 
@@ -566,7 +461,7 @@ static void sigwinch_handler(int signum)
 #endif
 #ifndef USE_RAW_UCS
 #define USE_RAW_UCS 0
-#endif USE_RAW_UCS
+#endif /* ! defined(USE_RAW_UCS) */
 #endif
 #endif
 #ifdef PDC_BUILD
@@ -607,30 +502,30 @@ static void sigwinch_handler(int signum)
 #define USE_A_CHARTEXT 0
 #endif
 
-#ifndef CTRL
-#define CTRL(x) (((x) == '\?') ? 0x7f : ((x) & ~0x60))
+#ifndef MYMANCTRL
+#define MYMANCTRL(x) (((x) == '\?') ? 0x7f : ((x) & ~0x60))
 #endif
 
 #ifndef KEY_LEFT
-#define KEY_LEFT CTRL('B')
+#define KEY_LEFT MYMANCTRL('B')
 #endif
 
 #ifndef KEY_RIGHT
-#define KEY_RIGHT CTRL('F')
+#define KEY_RIGHT MYMANCTRL('F')
 #endif
 
 #ifndef KEY_UP
-#define KEY_UP CTRL('P')
+#define KEY_UP MYMANCTRL('P')
 #endif
 
 #ifndef KEY_DOWN
-#define KEY_DOWN CTRL('N')
+#define KEY_DOWN MYMANCTRL('N')
 #endif
 
-#define IS_LEFT_ARROW(k) ((k == 'h') || (k == 'H') || (k == '4') || (k == KEY_LEFT) || (k == CTRL('B')))
-#define IS_RIGHT_ARROW(k) ((k == 'l') || (k == 'L') || (k == '6') || (k == KEY_RIGHT) || (k == CTRL('F')))
-#define IS_UP_ARROW(k) ((k == 'k') || (k == 'K') || (k == '8') || (k == KEY_UP) || (k == CTRL('P')))
-#define IS_DOWN_ARROW(k) ((k == 'j') || (k == 'J') || (k == '2') || (k == KEY_DOWN) || (k == CTRL('N')))
+#define IS_LEFT_ARROW(k) ((k == 'h') || (k == 'H') || (k == '4') || (k == KEY_LEFT) || (k == MYMANCTRL('B')))
+#define IS_RIGHT_ARROW(k) ((k == 'l') || (k == 'L') || (k == '6') || (k == KEY_RIGHT) || (k == MYMANCTRL('F')))
+#define IS_UP_ARROW(k) ((k == 'k') || (k == 'K') || (k == '8') || (k == KEY_UP) || (k == MYMANCTRL('P')))
+#define IS_DOWN_ARROW(k) ((k == 'j') || (k == 'J') || (k == '2') || (k == KEY_DOWN) || (k == MYMANCTRL('N')))
 
 #ifndef USE_DIM_AND_BRIGHT
 #define USE_DIM_AND_BRIGHT 1
@@ -659,6 +554,7 @@ static int locale_is_utf8(void)
     int is_utf8 = 0;
     int i;
 
+#ifdef LC_CTYPE
     my_locale = setlocale(LC_CTYPE, "");
     if (my_locale)
     {
@@ -703,9 +599,10 @@ static int locale_is_utf8(void)
                 }
             }
         }
-#endif
+#endif /* defined(CODESET) */
         setlocale(LC_CTYPE, my_locale);
     }
+#endif /* defined(LC_CTYPE) */
     /* for broken systems that do not yet support UTF-8 locales
      * (Cygwin comes to mind) */
     my_locale = getenv("LC_CTYPE");
@@ -1622,30 +1519,12 @@ static const char *MYMANSIZE_str = MYMANSIZE;
 #ifdef BUILTIN_TILE
 #undef TILEFILE
 #define TILEFILE 0
-#define tile_storage extern
-tile_storage const char *builtin_tilefile;
+extern const char *builtin_tilefile;
 #else
 static const char TILEFILE_str[] = TILEFILE;
 #undef TILEFILE
 #define TILEFILE TILEFILE_str
-#define tile_storage static
 #define builtin_tilefile TILEFILE
-#endif
-
-tile_storage int tile_w;
-tile_storage int tile_h;
-tile_storage int tile_flags;
-tile_storage const char *tile_args;
-tile_storage const char *tile;
-tile_storage int tile_used[256];
-tile_storage int tile_color[256];
-
-#ifndef SOLID_WALLS
-#define SOLID_WALLS ((tile_flags) & 2)
-#endif
-
-#ifndef SOLID_WALLS_BGCOLOR
-#define SOLID_WALLS_BGCOLOR ((tile_flags) & 4)
 #endif
 
 #ifndef SPRITEFILE
@@ -1655,26 +1534,12 @@ tile_storage int tile_color[256];
 #ifdef BUILTIN_SPRITE
 #undef SPRITEFILE
 #define SPRITEFILE 0
-#define sprite_storage extern
-sprite_storage const char *builtin_spritefile;
+extern const char *builtin_spritefile;
 #else
 static const char SPRITEFILE_str[] = SPRITEFILE;
 #undef SPRITEFILE
 #define SPRITEFILE SPRITEFILE_str
-#define sprite_storage static
 #define builtin_spritefile SPRITEFILE
-#endif
-
-sprite_storage int sprite_w;
-sprite_storage int sprite_h;
-sprite_storage int sprite_flags;
-sprite_storage const char *sprite_args;
-sprite_storage const char *sprite;
-sprite_storage int sprite_used[256];
-sprite_storage int sprite_color[256];
-
-#ifndef VISIBLE_EYES
-#define VISIBLE_EYES (! ((sprite_flags) & 1))
 #endif
 
 /* mapping from CP437 to VT-100 altcharset */
@@ -1732,7 +1597,7 @@ static int my_wcwidth(wchar_t wc)
             wchar_t twc;
 
             wcwidth_is_suspect = 0;
-            twc = ucs_to_wchar(0xff21); // U+FF21 FULLWIDTH LATIN CAPITAL LETTER A
+            twc = ucs_to_wchar(0xff21); /* U+FF21 FULLWIDTH LATIN CAPITAL LETTER A */
             if (twc
                 &&
                 (twc != 0xff21)
@@ -2387,6 +2252,8 @@ static int use_raw = USE_RAW;
 
 static int use_raw_ucs = USE_RAW_UCS;
 
+int use_underline = USE_UNDERLINE;
+
 static int use_idlok = 1;
 
 static int use_acs = 1;
@@ -2397,8 +2264,6 @@ static int use_dim_and_bright_p = 0;
 
 static int use_color = 0;
 static int use_color_p = 0;
-
-static int use_underline = USE_UNDERLINE;
 
 static int use_bullet_for_dots = 0;
 static int use_bullet_for_dots_p = 0;
@@ -2434,21 +2299,11 @@ static const char *MYMANVARIANT_str = MYMANVARIANT;
 #endif
 
 #ifdef BUILTIN_MAZE
-#define maze_storage extern
-maze_storage const char *maze_data;
-maze_storage const char *maze_color_data;
-#else
-#define maze_storage static
-#endif
-maze_storage int maze_n;
-maze_storage int maze_w;
-maze_storage int maze_h;
-maze_storage int maze_flags;
-maze_storage const char *maze_args;
-#ifdef BUILTIN_MAZE
+extern const char *maze_data;
+extern const char *maze_color_data;
+extern const char *builtin_mazefile;
 #undef MAZEFILE
 #define MAZEFILE 0
-maze_storage const char *builtin_mazefile;
 #else
 static char MAZEFILE_str[] = MAZEFILE;
 #undef MAZEFILE
@@ -2456,62 +2311,6 @@ static char MAZEFILE_str[] = MAZEFILE;
 #define builtin_mazefile MAZEFILE
 #endif
 
-#ifndef MIN
-#define MIN(x,y) (((x) < (y)) ? (x) : (y))
-#endif
-
-#ifndef MAX
-#define MAX(x,y) (((y) <= (x)) ? (x) : (y))
-#endif
-
-/* which level to show intermissions after */
-#ifndef INTERMISSION
-#define INTERMISSION(level) \
-    (((level) == 2) || \
-     (((level) >= 5) && (! (((level) - 1) % 4))))
-#endif
-
-/* intermission length */
-#ifndef INTERMISSION_TIME
-#define INTERMISSION_TIME (PIX_W * 3 + TWOSECS)
-#endif
-
-/* how many times to show a given intermission */
-#ifndef INTERMISSION_REPEAT
-#define INTERMISSION_REPEAT(intermission) \
-    (((intermission) == 2) ? 3 : 1)
-#endif
-
-/* how many intermissions are there? */
-#ifndef INTERMISSION_N
-#define INTERMISSION_N 3
-#endif
-
-/* whether to always switch maze levels, rather than only during intermissions */
-#ifndef FLIP_ALWAYS
-#define FLIP_ALWAYS (! ((maze_flags) & 1))
-#endif
-
-/* whether to repeat the flip_to maze after showing the last one */
-#ifndef FLIP_LOCK
-#define FLIP_LOCK ((maze_flags) & 2)
-#endif
-
-/* if set, base the WALL_COLOR vs. MORTAR_COLOR choice on wall thickness rather than wall edge vs. wall fill*/
-#ifndef BICOLOR_WALLS
-#define BICOLOR_WALLS ((maze_flags) & 4)
-#endif
-
-static char *maze = NULL;
-static char *maze_color = NULL;
-static char *blank_maze = NULL;
-static char *blank_maze_color = NULL;
-static unsigned char *dirty_cell = NULL;
-static int all_dirty;
-#define CLEAN_ALL() do { memset((void *)dirty_cell, 0, sizeof(dirty_cell)); all_dirty = 0; } while (0)
-#define DIRTY_ALL() do { all_dirty = 1; } while (0)
-#define DIRTY_CELL(x,y) do { if ((! all_dirty) && ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h))) dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]|=(1<<((x)&7)); } while (0)
-#define IS_CELL_DIRTY(x,y) (all_dirty || ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h) && (dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]&(1<<((x)&7)))))
 static unsigned short *inside_wall = NULL;
 #define INSIDE_WALL_INVERTED 0x0001
 #define INSIDE_WALL_NON_INVERTABLE 0x0002
@@ -2564,1074 +2363,8 @@ direction not blocked by an appropriate wall
 
 */
 
-#ifndef LIVES
-#define LIVES 3
-#endif
-
-#ifndef GHOSTS
-#define GHOSTS 4
-#endif
-
-#ifndef MAXGHOSTS
-#if GHOSTS > 16
-#define MAXGHOSTS GHOSTS
-#else
-#define MAXGHOSTS 16
-#endif
-#endif
-
-/* sprite register numbers */
-#define GHOSTEYES(ghost) ((ghost) * 2)
-#define UNGHOSTEYES(sprite_register) ((sprite_register) / 2)
-#define MEANGHOST(ghost) (GHOSTEYES(ghost) + 1)
-#define HERO MEANGHOST(MAXGHOSTS)
-#define BLUEGHOST(ghost) ((ghost) + HERO + 1)
-#define FRUIT BLUEGHOST(MAXGHOSTS)
-#define GHOST_SCORE (FRUIT + 1)
-#define FRUIT_SCORE (GHOST_SCORE + 1)
-/* large hero sprite register, split into four quadrants */
-#define BIGHERO_UL (FRUIT_SCORE + 1)
-#define BIGHERO_UR (BIGHERO_UL + 1)
-#define BIGHERO_LL (BIGHERO_UR + 1)
-#define BIGHERO_LR (BIGHERO_LL + 1)
-/* total sprite register count */
-#define SPRITE_REGISTERS (BIGHERO_LR + 1)
-
-static unsigned char sprite_register[SPRITE_REGISTERS];
-static int sprite_register_frame[SPRITE_REGISTERS];
-static int sprite_register_x[SPRITE_REGISTERS], sprite_register_y[SPRITE_REGISTERS];
-static int sprite_register_used[SPRITE_REGISTERS];
-static int sprite_register_timer[SPRITE_REGISTERS];
-#if USE_COLOR
-static int sprite_register_color[SPRITE_REGISTERS];
-#endif
-
-static int ghost_dir[MAXGHOSTS], ghost_mem[MAXGHOSTS], ghost_man[MAXGHOSTS], ghost_timer[MAXGHOSTS];
-static unsigned char *home_dir = NULL;
-
-#define SPRITE_FRUIT 0x00
-#define SPRITE_MEAN 0x08
-#define SPRITE_EYES 0x0a
-#define SPRITE_BLUE 0x0e
-#define SPRITE_HERO 0x10
-#define SPRITE_FRUIT_SCORE 0x29
-#define SPRITE_200 0x31
-#define SPRITE_400 0x32
-#define SPRITE_800 0x33
-#define SPRITE_1600 0x34
-#define SPRITE_WHITE 0x35
-#define SPRITE_LIFE 0x37
-/* rightward-facing large hero sprite, split into four quadrants with four frames each */
-#define SPRITE_BIGHERO_UL 0x38
-#define SPRITE_BIGHERO_UR 0x3C
-#define SPRITE_BIGHERO_LL 0x40
-#define SPRITE_BIGHERO_LR 0x44
-
-static unsigned char reflect_sprite[256] = {
-    /* 0x00 */
-    /*%8*/0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, /*"^*/0x0b, /*"<*/0x0a, /*"v*/0x0d, /*">*/0x0c, /*m2*/0x0e, 0x0f,
-    /* 0x10 */
-    /*C<4*/0x14, 0x15, 0x16, 0x17, /*C^4*/0x10, 0x11, 0x12, 0x13,
-    /*CX4*/0x18, 0x19, 0x1a, 0x1b, /*Cv4*/0x20, 0x21, 0x22, 0x23,
-    /* 0x20 */
-    /*C>4*/0x1c, 0x1d, 0x1e, 0x1f,
-    /**/0x24, 0x25, 0x26, 0x27,
-    /**/0x28, /*1*/0x29, /*3*/0x2a, /*5*/0x2b, /*7*/0x2c, /*10*/0x2d, /*20*/0x2e, /*30*/0x2f,
-    /* 0x30 */
-    /*50*/0x30, /*2*/0x31, /*4*/0x32, /*8*/0x33, /*16*/0x34, /*M2*/0x35, 0x36, /*C*/0x37,
-    /*C(UL)*/0x38, 0x39, 0x3a, 0x3b,
-    /*C(UR)*/0x40, 0x41, 0x42, 0x43,
-    /* 0x40 */
-    /*C(LL)*/0x3c, 0x3d, 0x3e, 0x3f,
-    /*C(LR)*/0x44, 0x45, 0x46, 0x47,
-    0x48, 0x49, 0x4a, 0x4b, 0x4c, 0x4d, 0x4e, 0x4f,
-    /* 0x50 */
-    0x50, 0x51, 0x52, 0x53, 0x54, 0x55, 0x56, 0x57,
-    0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f,
-    /* 0x60 */
-    0x60, 0x61, 0x62, 0x63, 0x64, 0x65, 0x66, 0x67,
-    0x68, 0x69, 0x6a, 0x6b, 0x6c, 0x6d, 0x6e, 0x6f,
-    /* 0x70 */
-    0x70, 0x71, 0x72, 0x73, 0x74, 0x75, 0x76, 0x77,
-    0x78, 0x79, 0x7a, 0x7b, 0x7c, 0x7d, 0x7e, 0x7f,
-    /* 0x80 */
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
-    0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-    /* 0x90 */
-    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
-    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-    /* 0xa0 */
-    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
-    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, 0xae, 0xaf,
-    /* 0xb0 */
-    0xb0, 0xb1, 0xb2, 0xb3, 0xb4, 0xb5, 0xb6, 0xb7,
-    0xb8, 0xb9, 0xba, 0xbb, 0xbc, 0xbd, 0xbe, 0xbf,
-    /* 0xc0 */
-    0xc0, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc6, 0xc7,
-    0xc8, 0xc9, 0xca, 0xcb, 0xcc, 0xcd, 0xce, 0xcf,
-    /* 0xd0 */
-    0xd0, 0xd1, 0xd2, 0xd3, 0xd4, 0xd5, 0xd6, 0xd7,
-    0xd8, 0xd9, 0xda, 0xdb, 0xdc, 0xdd, 0xde, 0xdf,
-    /* 0xe0 */
-    0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-    0xe8, 0xe9, 0xea, 0xeb, 0xec, 0xed, 0xee, 0xef,
-    /* 0xf0 */
-    0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
-    0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
-};
-
-static unsigned char cp437_sprite[256] = {
-    /* 0x00 */
-    /*%8*/'%', 'v', '@', '@', '@', 'Y', 'A', 'F',
-    'A', 'A', /*"^*/'\"', /*"<*/'\"', /*"v*/'\"', /*">*/'\"', /*m2*/'m', 'm',
-    /* 0x10 */
-    /*C<4*/'C', 'c', 'C', 'c', /*C^4*/'C', 'c', 'C', 'c',
-    /*CX4*/'C', '(', '*', '\'', /*Cv4*/'C', 'c', 'C', 'c',
-    /* 0x20 */
-    /*C>4*/'C', 'c', 'C', 'c',
-    /**/0x00, 0x00, 0x00, 0x00,
-    /**/0x00,
-    /*1*/'1', /*3*/'3', /*5*/'5', /*7*/'7', /*10*/'1', /*20*/'2', /*30*/'3',
-    /* 0x30 */
-    /*50*/'5', /*2*/'2', /*4*/'4', /*8*/'8', /*16*/'!', /*M2*/'M', 'M', /*C*/'C',
-    /*C(UL)*/'/', '/', '/', '/',
-    /*C(UR)*/'\\', '-', '/', '-',
-    /* 0x40 */
-    /*C(LL)*/'\\', '\\', '\\', '\\',
-    /*C(LR)*/'/', '-', '\\', '-',
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0x50 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0x60 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0x70 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0x80 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0x90 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xa0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xb0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xc0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xd0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xe0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    /* 0xf0 */
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-#define XWRAP(x) (((x) + maze_w + 1) % (maze_w + 1))
-#define YWRAP(y) (((y) + maze_h) % maze_h)
-
-#define XWRAP2(x) (XWRAP(x) % maze_w)
-
-#define ISTEXT(c) (((c) == '!') || (((c) >= '0') && ((c) <= '9')) || ((c) == '@') || (((c) >= 'A') && ((c) <= 'Z')))
-#define ISDOT(c) (((c) == 249) || ((c) == '.'))
-#define ISPELLET(c) (((c) == 254) || ((c) == 'o'))
-#define ISZAPLEFT(c) (((c) == '<') || (c == 174))
-#define ISZAPRIGHT(c) (((c) == '>') || (c == 175))
-#define ISZAPUP(c) ((c) == '^')
-#define ISZAPDOWN(c) ((c) == 'v')
-#define ISOPEN(c) (((c) == ' ') || ISDOT(c) || ISPELLET(c) || \
-((c) == '!') || (((c) >= 'A') && ((c) <= 'Z')) || ((c) == 'l') || ((c) == '~') || ISZAPRIGHT(c) || ISZAPLEFT(c) || ISZAPUP(c) || ISZAPDOWN(c))
-#define ISDOOR(c) (((c) == '=') || (c == ':') || \
-((c) == 240) || (c == 255))
-
-static const unsigned char
-udlr[256] = {
-/*00*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*10*/
-    0x08, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x40, 0x01, 0x04, 0x00, 0x00, 0x20, 0x80,
-/*20*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x55, 0x00, 0x05, 0x00, 0x00,
-/*30*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x0f, 0x00, 0x00,
-/*40*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*50*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*60*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x00, 0x00,
-/*70*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x50, 0x00, 0x05, 0x00,
-/*80*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*90*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*A0*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*B0*/
-    0x00, 0x00, 0x00, 0x50, 0x54, 0x58, 0xa4, 0x64, 0x19, 0xa8, 0xa0, 0x28, 0x88, 0x94, 0x49, 0x14,
-/*C0*/
-    0x41, 0x45, 0x15, 0x51, 0x05, 0x55, 0x52, 0xa1, 0x82, 0x22, 0x8a, 0x2a, 0x82, 0x0a, 0xaa, 0x4a,
-/*D0*/
-    0x85, 0x1a, 0x25, 0x91, 0x46, 0x16, 0x61, 0xa5, 0x5a, 0x44, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*E0*/
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-/*F0*/
-    0x0f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-
-#define ISWALLCENTER(c) ((((unsigned char) (char) (c)) == 0x07) || (((unsigned char) (char) (c)) == 0x12) || (((unsigned char) (char) (c)) == 0x1d) || (((unsigned char) (char) (c)) == 0x3c) || (((unsigned char) (char) (c)) == 0x3e) || (((unsigned char) (char) (c)) == 0x5e) || (((unsigned char) (char) (c)) == 0x76) || (((unsigned char) (char) (c)) == 0xae) || (((unsigned char) (char) (c)) == 0xaf))
-#define ISWALLUP(c) (udlr[(unsigned int) (unsigned char) (c)] & 0xc0)
-#define ISWALLDOWN(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x30)
-#define ISWALLLEFT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x0c)
-#define ISWALLRIGHT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x03)
-#define ISWALL(c) (ISWALLUP(c) || ISWALLDOWN(c) || ISWALLLEFT(c) || ISWALLRIGHT(c) || ISWALLCENTER(c))
-#define ISNONINVERTABLE(c) (ISPELLET(c) || ISDOT(c) || ISZAPLEFT(c) || ISZAPRIGHT(c) || ISZAPUP(c) || ISZAPDOWN(c) || ISDOOR(c))
-
-#define UP 1
-#define LEFT 2
-#define DOWN 3
-#define RIGHT 4
-
-#ifndef DIRHERO
-#define DIRHERO LEFT
-#endif
-
-#define DIRWRAP(dir) (((dir) + 3) % 4 + 1)
-
-#define XDIR(dir) (((dir) == RIGHT) - ((dir) == LEFT))
-#define YDIR(dir) (((dir) == DOWN) - ((dir) == UP))
-
-#define YLEAVING(dir, y) ( -(((dir) == UP) && ! NOTTOP(y)) + \
-(((dir) == DOWN) && ! NOTBOTTOM(y)))
-#define XLEAVING(dir, x) ( -(((dir) == LEFT) && ! NOTLEFT(x)) + \
-(((dir) == RIGHT) && ! NOTRIGHT(x)))
-
-#ifndef CHERO
-#define CHERO (maze_CHERO_len ? maze_CHERO[maze_level % maze_CHERO_len] : (maze_w * 0.5))
-#endif
-
-#ifndef RHERO
-#define RHERO (maze_RHERO_len ? maze_RHERO[maze_level % maze_RHERO_len] : 23.5)
-#endif
-
-#ifndef CFRUIT
-#define CFRUIT (maze_CFRUIT_len ? maze_CFRUIT[maze_level % maze_CFRUIT_len] : CHERO)
-#endif
-
-#ifndef RFRUIT
-#define RFRUIT (maze_RFRUIT_len ? maze_RFRUIT[maze_level % maze_RFRUIT_len] : 17.5)
-#endif
-
-#ifndef RGHOST
-#define RGHOST (maze_RGHOST_len ? maze_RGHOST[maze_level % maze_RGHOST_len] : (RFRUIT - 3.0))
-#endif
-
-#ifndef CGHOST
-#define CGHOST (maze_CGHOST_len ? maze_CGHOST[maze_level % maze_CGHOST_len] : CHERO)
-#endif
-
-#ifndef COGHOST
-#define COGHOST (maze_COGHOST_len ? maze_COGHOST[maze_level % maze_COGHOST_len] : 2)
-#endif
-
-#ifndef ROGHOST
-#define ROGHOST (maze_ROGHOST_len ? maze_ROGHOST[maze_level % maze_ROGHOST_len] : 3)
-#endif
-
-#ifndef RTOP
-#define RTOP (maze_RTOP_len ? maze_RTOP[maze_level % maze_RTOP_len] : (RFRUIT - 5.0))
-#endif
-
-#ifndef CMSG
-#define CMSG (maze_CMSG_len ? maze_CMSG[maze_level % maze_CMSG_len] : 9)
-#endif
-
-#ifndef RMSG
-#define RMSG (maze_RMSG_len ? maze_RMSG[maze_level % maze_RMSG_len] : 17)
-#endif
-
-#ifndef CMSG2
-#define CMSG2 (maze_CMSG2_len ? maze_CMSG2[maze_level % maze_CMSG2_len] : 9)
-#endif
-
-#ifndef RMSG2
-#define RMSG2 (maze_RMSG2_len ? maze_RMSG2[maze_level % maze_RMSG2_len] : 11)
-#endif
-
-#ifndef PLAYER1
-#define PLAYER1  "PLAYER ONE"
-#endif
-
-#ifndef PLAYER2
-#define PLAYER2  "PLAYER TWO"
-#endif
-
-#ifndef MAXPLAYERS
-#define MAXPLAYERS 2
-#endif
-
-#define PLAYER(n) \
-(((n) == 1) \
-? msg_PLAYER1 \
-: msg_PLAYER2)
-
-#ifndef START
-#define START "PUSH START BUTTON"
-#endif
-
-#ifndef CREDIT1
-#define CREDIT1 "1 PLAYER ONLY"
-#endif
-
-#ifndef CREDIT2
-#define CREDIT2 "1 OR 2 PLAYERS"
-#endif
-
-#define CREDIT(n) (((n) > 1) ? CREDIT1 : CREDIT1)
-
-#ifndef READY
-#define READY    "  READY!  "
-#endif
-
-#ifndef GAMEOVER
-#define GAMEOVER "GAME  OVER"
-#endif
-
-#ifndef PAUSE
-#define PAUSE " - PAUSED - "
-#endif
-
-#define BONUS(n) \
-(((n) < 4) \
-? ((n) - 1) \
-: (((n) < 15) \
-? ((n) + 1) / 2 \
-: 7))
-
-static int bonus_score[8] = {100, 300, 500, 700, 1000, 2000, 3000, 5000};
-
-#ifndef MYMANDELAY
-#define MYMANDELAY 166667
-#endif
-
-#ifndef SPEEDUP
-#define SPEEDUP 1000
-#endif
-
-static unsigned char fallback_cp437[256] = {
-/* 0x00 */
-    0x00, '@', '@', '*', '+', '%', '&', 'o',
-    '#', 'o', '#', 'd', 'q', 'l', 'H', '*',
-/* 0x10 */
-    0xcd, 0xcd, 0xb3, '!', 'P', '$', '#', 'L',
-    0xb3, 0xb3, 0xc4, 0xc4, '!', 0xc4, 0xba, 0xba,
-/* 0x20 */
-    ' ', '!', '\"', '0', '$', '%', '&', '\'',
-    '(', ')', '*', '+', ',', '-', '.', '/',
-/* 0x30 */
-    '0', '1', '2', '3', '4', '5', '6', '7',
-    '8', '9', ':', ';', '<', '-', '>', '\?',
-/* 0x40 */
-    'C', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-/* 0x50 */
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z', '[', '\\', ']', '^', '_',
-/* 0x60 */
-    '`', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-/* 0x70 */
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z', '{', '|', '}', '-', 'D',
-/* 0x80 */
-    'C', 'u', 'e', 'a', 'a', 'a', 'a', 'c',
-    'e', 'e', 'a', 'i', 'i', 'i', 'A', 'A',
-/* 0x90 */
-    'E', 'e', 'E', 'o', 'o', 'o', 'u', 'u',
-    'y', 'O', 'U', 'c', 'L', 'Y', 'P', 'f',
-/* 0xA0 */
-    'a', 'i', 'o', 'u', 'n', 'N', 'a', 'o',
-    '\?', '-', '-', '%', '%', '!', '<', '>',
-/* 0xB0 */
-    0xb1, '#', 0xb1, '|', 0xc5, 0xb4, 0xb4, 0xb6,
-    0xd1, 0xb4, 0xb3, 0xbf, 0xd9, 0xb6, 0xcf, 0xc5,
-/* 0xC0 */
-    0xc5, 0xc5, 0xc5, 0xc5, '-', '+', 0xc3, 0xc3,
-    0xc0, 0xda, 0xc1, 0xc2, 0xc3, 0xc4, 0xc5, 0xc1,
-/* 0xD0 */
-    0xc1, 0xc2, 0xc2, 0xc7, 0xcf, 0xd1, 0xc7, 0xc5,
-    0xc5, 0xc5, 0xc5, '#', '_', 0xb1, 0xb1, '\"',
-/* 0xE0 */
-    'a', 'B', 'G', 'p', 'S', 's', 'm', 't',
-    'p', 't', 'W', 'd', '8', 'f', 'e', '^',
-/* 0xF0 */
-    '=', '+', '>', '<', 's', 's', '%', '=',
-    0x09, '.', 0x07, 'V', 'n', '2', 0xfa, ' '
-};
-
-static unsigned char reflect_cp437[256] = {
-/* 0x00 */
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-/* 0x10 */
-    0x1f, 0x1e, 0x1d, '=', 0x14, 0x15, 0x16, 0x17,
-    0x1a, 0x1b, 0x18, 0x19, 0x1c, 0x12, 0x11, 0x10,
-/* 0x20 */
-    ' ', '!', '\"', '#', '$', '%', '&', ',',
-    '^', '_', '*', '+', '\'', '|', '.', '/',
-/* 0x30 */
-    '0', '1', '2', '3', '4', '5', '6', '7',
-    '8', '9', ':', ';', '^', '!', 'v', '\?',
-/* 0x40 */
-    '@', 'A', 'B', 'C', 'D', 'E', 'F', 'G',
-    'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
-/* 0x50 */
-    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
-    'X', 'Y', 'Z', '-', '\\', '-', '<', '|',
-/* 0x60 */
-    '`', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
-    'h', 'i', 'j', 'k', '~', 'm', 'n', 'o',
-/* 0x70 */
-    'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
-    'x', 'y', 'z', '-', '-', '-', 'l', 0x7f,
-/* 0x80 */
-    0x80, 0x81, 0x82, 0x83, 0x84, 0x85, 0x86, 0x87,
-    0x88, 0x89, 0x8a, 0x8b, 0x8c, 0x8d, 0x8e, 0x8f,
-/* 0x90 */
-    0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96, 0x97,
-    0x98, 0x99, 0x9a, 0x9b, 0x9c, 0x9d, 0x9e, 0x9f,
-/* 0xA0 */
-    0xa0, 0xa1, 0xa2, 0xa3, 0xa4, 0xa5, 0xa6, 0xa7,
-    0xa8, 0xa9, 0xaa, 0xab, 0xac, 0xad, '^', 'v',
-/* 0xB0 */
-    0xb0, 0xb1, 0xb2, 0xc4, 0xc1, 0xd0, 0xcf, 0xd4,
-    0xd3, 0xca, 0xcd, 0xc8, 0xbc, 0xbe, 0xbd, 0xc0,
-/* 0xC0 */
-    0xbf, 0xb4, 0xc3, 0xc2, 0xb3, 0xc5, 0xd2, 0xd1,
-    0xbb, 0xc9, 0xb9, 0xcc, 0xcb, 0xba, 0xce, 0xb6,
-/* 0xD0 */
-    0xb5, 0xc7, 0xc6, 0xb8, 0xb7, 0xd6, 0xd5, 0xd8,
-    0xd7, 0xd9, 0xda, 0xdb, 0xde, 0xdf, 0xdc, 0xdd,
-/* 0xE0 */
-    0xe0, 0xe1, 0xe2, 0xe3, 0xe4, 0xe5, 0xe6, 0xe7,
-    0xe8, 0xe9, 0xea, 0xeb, '8', 0xed, 'm', 'c',
-/* 0xF0 */
-    0xba, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, '$',
-    0xf8, 0xf9, 0xfa, '7', 0xfc, 0xfd, 0xfe, 0xff
-};
-
-#define CJK_MODE (uni_cp437[0x20] == uni_cp437_fullwidth[0x20])
-
 static chtype
-pen[256];
-
-static const char *progname = NULL;
-
-static FILE *fopen_datafile(const char *path, const char *mode)
-{
-    char *buf = NULL;
-    FILE *ret = NULL;
-
-    ret = fopen(path, mode);
-#ifdef macintosh
-    if (strrchr(path, '/'))
-    {
-        buf = strdup(path);
-        if (buf)
-        {
-            *(strrchr(buf, '/')) = ':';
-            ret = fopen_datafile(buf, mode);
-            free((void *) buf);
-            buf = NULL;
-        }        
-    }
-#endif
-    if (progname && *progname && (! ret))
-    {
-        buf = (char *) malloc(strlen(progname) + 1 + strlen(path) + 1);
-        if (buf)
-        {
-            char *sep;
-
-            strcpy(buf, progname);
-            sep = strrchr(buf, '/');
-            if (! sep)
-            {
-                sep = buf;
-            }
-#ifdef WIN32
-            if (strrchr(sep, '\\'))
-            {
-                sep = strrchr(sep, '\\');
-            }
-#endif
-#ifdef macintosh
-            if (strrchr(sep, ':'))
-            {
-                sep = strrchr(sep, ':');
-            }
-#endif
-            if (sep && (sep != buf))
-            {
-                sep += 1;
-                sep[0] = '\0';
-                strcpy(sep, path);
-                ret = fopen(buf, mode);
-                if (! ret)
-                {
-                    strcpy(buf, progname);
-                    sep = strstr(buf, ".app/");
-                    if (sep)
-                    {
-                        sep += strlen(".app");
-                        sep[0] = '\0';
-                    }
-#ifdef WIN32
-                    if (strstr(buf, ".app\\"))
-                    {
-                        sep = strstr(buf, ".app\\");
-                        sep += strlen(".app");
-                        sep[0] = '\0';
-                    }
-#endif
-#ifdef macintosh
-                    if (strstr(buf, ".app:"))
-                    {
-                        sep = strstr(buf, ".app:");
-                        sep += strlen(".app");
-                        sep[0] = '\0';
-                    }
-#endif
-                    if (sep)
-                    {
-                        sep = strrchr(buf, '/');
-                        if (! sep)
-                        {
-                            sep = buf;
-                        }
-#ifdef WIN32
-                        if (strrchr(sep, '\\'))
-                        {
-                            sep = strrchr(sep, '\\');
-                        }
-#endif
-#ifdef macintosh
-                        if (strrchr(sep, ':'))
-                        {
-                            sep = strrchr(sep, ':');
-                        }
-#endif
-                        if (sep && (sep != buf))
-                        {
-                            sep += 1;
-                            sep[0] = '\0';
-                            strcpy(sep, path);
-                            ret = fopen(buf, mode);
-                        }
-                    }
-                }
-            }
-            free((void *) buf);
-            buf = NULL;
-        }
-    }
-#ifdef PRIVATEDATADIR
-    if ((! ret) && (PRIVATEDATADIR)[0])
-    {
-        buf = (char *) malloc(strlen(PRIVATEDATADIR) + 1 + strlen(path) + 1);
-        if (buf)
-        {
-            sprintf(buf,
-                    "%s%c%s",
-                    strlen(PRIVATEDATADIR) ? PRIVATEDATADIR :
-#ifdef macintosh
-                    ""
-#else
-                    "."
-#endif
-                    ,
-#ifdef macintosh
-                    ':'
-#else
-                    '/'
-#endif
-                    ,
-                    path);
-            ret = fopen(buf, mode);
-            free((void *) buf);
-            buf = NULL;
-        }
-    }
-#endif
-    if ((! ret)
-        &&
-        ((strlen(path) < strlen(".txt"))
-         ||
-         (strcmp(path + strlen(path) - strlen(".txt"), ".txt"))))
-    {
-        buf = (char *) malloc(strlen(path) + strlen(".txt") + 1);
-        if (buf)
-        {
-            sprintf(buf, "%s%s", path, ".txt");
-            return fopen_datafile(buf, mode);
-            free((void *) buf);
-            buf = NULL;
-        }
-    }
-    return ret;
-}
-
-static int
-readmaze(const char *mazefile,
-         int *levels,
-         int *w,
-         int *h,
-         char **maze,
-         int *flags,
-         char **color,
-         const char **args)
-{
-    char X;
-    int c = ERR, i, j;
-    int n;
-    FILE *infile = NULL;
-
-    if (! (infile = fopen_datafile(mazefile, "rb"))) {
-        perror(mazefile);
-        return 1;
-    }
-    ignore_bom_utf8(infile);
-    {
-        int rn, rw, rh;
-
-        if ((fscanf(infile, "%d%d%c%d", &rn, &rw, &X, &rh) != 4) ||
-            (tolower(X) != 'x'))
-        {
-            fprintf(stderr, "%s: can't find a dimension specification N WxH\n",
-                    mazefile);
-            return 1;
-        }
-        if ((rw < 1) || (rh < 1) || (rn < 1)) {
-            fprintf(stderr, "%s: dimension specification %d %dx%d is too small\n",
-                    mazefile, rn, rw, rh);
-            return 1;
-        }
-        *levels = rn;
-        *h = rh;
-        *w = rw;
-    }
-    *flags = 0;
-    *args = NULL;
-    if (! feof(infile))
-    {
-        c = fgetc_cp437_utf8(infile);
-        if (c == '~')
-        {
-            if (fscanf(infile, "%d", flags) != 1)
-            {
-                fprintf(stderr, "%s: can't find flags ~F after dimension specification %d %dx%d\n",
-                        mazefile,
-                        *levels, *w, *h);
-                return 1;
-            }
-        }
-        else
-        {
-            ungetc_cp437_utf8(c, infile);
-        }
-        c = fgetc_cp437_utf8(infile);
-        if ((c == ' ') || (c == '\t'))
-        {
-            char *args_tmp = NULL;
-            size_t args_tmp_len = 0;
-            int escaped = 0;
-
-            args_tmp = strdup("");
-            if (! args_tmp)
-            {
-                perror("strdup");
-                return 1;
-            }
-            while (((c = fgetc_cp437_utf8(infile)) != EOF)
-                   &&
-                   (c != '\v') && (c != '\f') && (c != '\n') && (c != '\r'))
-            {
-                if (c == '\\')
-                {
-                    int c2;
-
-                    escaped = ! escaped;
-                    if (escaped)
-                    {
-                        c2 = fgetc_cp437_utf8(infile);
-                        if (c2 == '\r')
-                        {
-                            int c3;
-
-                            c3 = fgetc_cp437_utf8(infile);
-                            if (c3 == '\n')
-                            {
-                                c2 = c3;
-                            }
-                            else
-                            {
-                                ungetc_cp437_utf8(c3, infile);
-                            }
-                        }
-                        if ((c2 == '\v') || (c2 == '\f') || (c2 == '\n') || (c2 == '\r'))
-                        {
-                            escaped = 0;
-                            continue;
-                        }
-                        ungetc_cp437_utf8(c2, infile);
-                    }
-                }
-                args_tmp = (char *) realloc((void *) args_tmp, args_tmp_len + 1 + ((c == 0) ? 4 : 1));
-                if (! args_tmp)
-                {
-                    perror("realloc");
-                    return 1;
-                }
-                if (c == 0)
-                {
-                    if (! escaped)
-                    {
-                        args_tmp[args_tmp_len] = '\\';
-                        args_tmp_len ++;
-                    }
-                    args_tmp[args_tmp_len] = 'x';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '0';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '0';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '\0';
-                }
-                else
-                {
-                    args_tmp[args_tmp_len] = c;
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '\0';
-                }
-            }
-            if (args_tmp_len)
-            {
-                *args = args_tmp;
-            }
-            else
-            {
-                free((void *) args_tmp);
-                args_tmp = NULL;
-            }
-        }
-        ungetc_cp437_utf8(c, infile);
-    }
-    if ((! feof(infile))
-        &&
-        (((X = fgetc_cp437_utf8(infile)) != '\n') &&
-         (X != '\r') && (X != '\v') && (X != '\f')))
-    {
-        fprintf(stderr, "%s: garbage after dimension specification %d %dx%d~%d%s%s %X\n",
-                mazefile,
-                *levels, *w, *h, *flags, *args ? " " : "", *args ? *args : "", X);
-        return 1;
-    }
-    *maze = (char *) malloc(*levels * *h * (*w + 1) * sizeof(**maze));
-    if (! *maze)
-    {
-        perror("malloc");
-        return 1;
-    }
-    memset((void *) *maze, 0, *levels * *h * (*w + 1) * sizeof(**maze));
-    *color = (char *) malloc(*levels * *h * (*w + 1) * sizeof(**color));
-    if (! *color)
-    {
-        perror("malloc");
-        return 1;
-    }
-    memset((void *) *color, 0, *levels * *h * (*w + 1) * sizeof(**color));
-    for (n = 0; n < *levels; n ++)
-    {
-        for (i = 0; i < *h; i ++)
-        {
-            for (j = 0; j < *w; j ++)
-            {
-                if ((c = fgetc_cp437_utf8(infile)) == EOF)
-                {
-                    if (feof(infile))
-                        fprintf(stderr, "%s: premature EOF\n", mazefile);
-                    else
-                        perror(mazefile);
-                    return 1;
-                } else if ((c == '\r') || (c == '\n') || (c == '\f') || (c == '\v'))
-                    j --;
-                else
-                    (*maze)[(n * *h+i) * (*w + 1)+j] = (char) (unsigned char) c;
-            }
-            if (ISPELLET(c) || ISDOT(c))
-            {
-                c = ' ';
-            }
-            (*maze)[(n * *h+i) * (*w + 1)+*w] = (char) (unsigned char) c;
-        }
-    }
-    fclose(infile);
-    return 0;
-}
-
-static int
-readfont(const char *fontfile,
-         int *w,
-         int *h,
-         const char **font,
-         int *used,
-         int *flags,
-         int *color,
-         const char **args)
-{
-    FILE *infile;
-    int c, i, j, k;
-    int rw, rh;
-    char X;
-    char *font_dynamic;
-
-    *args = NULL;
-    *flags = 0;
-    for (i = 0; i < 256; i ++) {
-        used[i] = 0;
-        color[i] = 0;
-    }
-    if (! (infile = fopen_datafile(fontfile, "rb"))) {
-        perror(fontfile);
-        return 1;
-    }
-    ignore_bom_utf8(infile);
-    if ((fscanf(infile, "%d%c%d", &rw, &X, &rh) != 3) ||
-        (tolower(X) != 'x')) {
-        fprintf(stderr, "%s: can't find a dimension specification WxH\n",
-                fontfile);
-        return 1;
-    }
-    *w = rw;
-    *h = rh;
-    *font = font_dynamic = (char *) malloc(256 * rh * rw);
-    if (! font_dynamic)
-    {
-        perror("malloc");
-        return 1;
-    }
-    if (! feof(infile))
-    {
-        c = fgetc(infile);
-        if (c == '~')
-        {
-            if (fscanf(infile, "%d", flags) != 1)
-            {
-                fprintf(stderr, "%s: can't find flags ~F after dimension specification %dx%d\n",
-                        fontfile,
-                        rw, rh);
-                return 1;
-            }
-        }
-        else
-        {
-            ungetc(c, infile);
-        }
-    }
-    if (! feof(infile))
-    {
-        c = fgetc_cp437_utf8(infile);
-        if ((c == ' ') || (c == '\t'))
-        {
-            char *args_tmp = NULL;
-            size_t args_tmp_len = 0;
-            int escaped = 0;
-
-            args_tmp = strdup("");
-            if (! args_tmp)
-            {
-                perror("strdup");
-                return 1;
-            }
-            while (((c = fgetc_cp437_utf8(infile)) != EOF)
-                   &&
-                   (c != '\v') && (c != '\f') && (c != '\n') && (c != '\r'))
-            {
-                if (c == '\\')
-                {
-                    int c2;
-
-                    escaped = ! escaped;
-                    if (escaped)
-                    {
-                        c2 = fgetc_cp437_utf8(infile);
-                        if (c2 == '\r')
-                        {
-                            int c3;
-
-                            c3 = fgetc_cp437_utf8(infile);
-                            if (c3 == '\n')
-                            {
-                                c2 = c3;
-                            }
-                            else
-                            {
-                                ungetc_cp437_utf8(c3, infile);
-                            }
-                        }
-                        if ((c2 == '\v') || (c2 == '\f') || (c2 == '\n') || (c2 == '\r'))
-                        {
-                            escaped = 0;
-                            continue;
-                        }
-                        ungetc_cp437_utf8(c2, infile);
-                    }
-                }
-                args_tmp = (char *) realloc((void *) args_tmp, args_tmp_len + 1 + ((c == 0) ? 4 : 1));
-                if (! args_tmp)
-                {
-                    perror("realloc");
-                    return 1;
-                }
-                if (c == 0)
-                {
-                    if (! escaped)
-                    {
-                        args_tmp[args_tmp_len] = '\\';
-                        args_tmp_len ++;
-                    }
-                    args_tmp[args_tmp_len] = 'x';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '0';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '0';
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '\0';
-                }
-                else
-                {
-                    args_tmp[args_tmp_len] = c;
-                    args_tmp_len ++;
-                    args_tmp[args_tmp_len] = '\0';
-                }
-            }
-            if (args_tmp_len)
-            {
-                *args = args_tmp;
-            }
-            else
-            {
-                free((void *) args_tmp);
-                args_tmp = NULL;
-            }
-        }
-        else
-        {
-            ungetc_cp437_utf8(c, infile);
-        }
-    }
-    while (! feof(infile))
-    {
-        if (fscanf(infile, "%x", &i) != 1)
-        {
-            if (! feof(infile))
-            {
-                long offset;
-
-                offset = ftell(infile);
-                fprintf(stderr, "%s: can't find an index at byte %ld near \'\\u%4.4lx\' or equivalent\n",
-                        fontfile, offset, uni_cp437[(unsigned int) (unsigned char) fgetc_cp437_utf8(infile)]);
-                return 1;
-            }
-            continue;
-        }
-        if ((i < 0) || (i > 255))
-        {
-            fprintf(stderr, "%s: invalid index %2.2X ignored\n", fontfile, i);
-            continue;
-        }
-        if (used[i])
-            fprintf(stderr, "%s: duplicate definition for %2.2X\n", fontfile, i);
-        used[i] = 1;
-        if ((c = fgetc_cp437_utf8(infile)) == '~')
-        {
-            if (fscanf(infile, "%x", &c) != 1)
-            {
-                if (! feof(infile))
-                {
-                    fprintf(stderr, "%s: can't find a color for index %2.2X\n",
-                            fontfile, i);
-                    return 1;
-                }
-                continue;
-            }
-            if ((c < 0) || (c >= (int) (sizeof(pen)/sizeof(*pen))))
-                fprintf(stderr, "%s: invalid color %2.2X ignored\n", fontfile, c);
-            else
-                color[i] = c;
-        }
-        else
-            ungetc_cp437_utf8(c, infile);
-        for (j = 0; j < rh; j ++)
-            for (k = 0; k < rw; k ++)
-                font_dynamic[(i * rh + j) * rw + k] = ' ';
-        for (j = 0; j < rh; j ++)
-        {
-            while ((c = fgetc_cp437_utf8(infile)) != ':')
-                if (c == EOF)
-                {
-                    if (! feof(infile))
-                        perror(fontfile);
-                    else
-                        fprintf(stderr, "%s: premature EOF in index %2.2X\n",
-                                fontfile, i);
-                    return 1;
-                }
-            if ((c = fgetc_cp437_utf8(infile)) == EOF)
-                if (! feof(infile))
-                {
-                    perror(fontfile);
-                    return 1;
-                }
-            for (k = 0;
-                 (k < rw) &&
-                     (c != '\v') && (c != '\f') &&
-                     (c != '\n') && (c != '\r') && ! feof(infile);
-                 k ++)
-            {
-                font_dynamic[(i * rh + j) * rw + k] = c;
-                if ((c = fgetc_cp437_utf8(infile)) == EOF) {
-                    if (feof(infile))
-                        continue;
-                    perror(fontfile);
-                    return 1;
-                }
-            }
-            while ((c != '\v') && (c != '\f') &&
-                   (c != '\n') && (c != '\r') && ! feof(infile)) {
-                if (c == EOF) {
-                    if (feof(infile))
-                        continue;
-                    perror(fontfile);
-                    return 1;
-                }
-                c = fgetc_cp437_utf8(infile);
-            }
-        }
-    }
-    fclose(infile);
-    return 0;
-}
+pen[NPENS];
 
 /* color palette for USE_PALETTE and HTML snapshots */
 static const short
@@ -3655,66 +2388,6 @@ pen_pal[16][3] =
     {1000, 1000,    0}, /* E: yellow (myman, ship, READY!) */
     { 867,  867,  867}, /* F: light grey (text, eye, apple/cherry shine, key, bell) */
 };
-
-#ifndef WALL_COLORS
-#define WALL_COLORS "\x00"
-#endif
-
-#ifndef DOT_COLORS
-#define DOT_COLORS "\x07"
-#endif
-
-#ifndef PELLET_COLORS
-#define PELLET_COLORS "\x00"
-#endif
-
-#ifndef MORTAR_COLORS
-#define MORTAR_COLORS "\x09"
-#endif
-
-#ifndef WALL_COLOR
-#define WALL_COLOR maze_WALL_COLORS[maze_level % maze_WALL_COLORS_len]
-#endif
-
-#ifndef DOT_COLOR
-#define DOT_COLOR maze_DOT_COLORS[maze_level % maze_DOT_COLORS_len]
-#endif
-
-#ifndef PELLET_COLOR
-#define PELLET_COLOR maze_PELLET_COLORS[maze_level % maze_PELLET_COLORS_len]
-#endif
-
-#ifndef MORTAR_COLOR
-#define MORTAR_COLOR maze_MORTAR_COLORS[maze_level % maze_MORTAR_COLORS_len]
-#endif
-
-#define TRANSLATED_MORTAR_COLOR (((BICOLOR_WALLS) && (udlr[(unsigned char) (char) maze[(maze_level*maze_h+ytile)*(maze_w+1)+xtile]] & 0xAA)) ? (WALL_COLOR) : (MORTAR_COLOR))
-
-#define TRANSLATED_WALL_COLOR ((BICOLOR_WALLS) ? TRANSLATED_MORTAR_COLOR : (WALL_COLOR))
-
-#define EFFECTIVE_MORTAR_COLOR (((TRANSLATED_WALL_COLOR) && ! (SOLID_WALLS || SOLID_WALLS_BGCOLOR)) ? (TRANSLATED_WALL_COLOR) : (TRANSLATED_MORTAR_COLOR))
-
-#define NET_LIVES ((int) lives + (int) earned - (int) lives_used + (myman_demo ? 1 : 0))
-
-#ifndef MSG_COLOR
-#define MSG_COLOR ((NET_LIVES && ! myman_demo) ? 0xE : 0xC)
-#endif
-
-#ifndef MSG2_COLOR
-#define MSG2_COLOR 0xB
-#endif
-
-#ifndef TEXT_COLOR
-#define TEXT_COLOR 0xF
-#endif
-
-#ifndef PAUSE_COLOR
-#define PAUSE_COLOR 0xF0
-#endif
-
-#ifndef EXTRA_GHOST_COLORS
-#define EXTRA_GHOST_COLORS "\x0A\x05\x04\x03"
-#endif
 
 #if USE_COLOR
 
@@ -3760,46 +2433,6 @@ static short old_pair[256][2];
 #endif
 #define my_init_pair(x,y,z) init_pair(x,y,z) MY_INIT_PAIR_RET
 
-#define _MYMAN_LINEARSCALE \
-    "\x0\x0\x1\x1\x2\x2\x3\x3\x4\x4\x5\x5\x6\x6\x7\x7" \
-    "\x8\x8\x9\x9\xa\xa\xb\xb\xc\xc\xd\xd\xe\xe\xf\xf" \
-    "\x10\x10\x11\x11\x12\x12\x13\x13\x14\x14\x15\x15\x16\x16\x17\x17" \
-    "\x18\x18\x19\x19\x1a\x1a\x1b\x1b\x1c\x1c\x1d\x1d\x1e\x1e\x1f\x1f" \
-    "\x20\x20\x21\x21\x22\x22\x23\x23\x24\x24\x25\x25\x26\x26\x27\x27" \
-    "\x28\x28\x29\x29\x2a\x2a\x2b\x2b\x2c\x2c\x2d\x2d\x2e\x2e\x2f\x2f" \
-    "\x30\x30\x31\x31\x32\x32\x33\x33\x34\x34\x35\x35\x36\x36\x37\x37" \
-    "\x38\x38\x39\x39\x3a\x3a\x3b\x3b\x3c\x3c\x3d\x3d\x3e\x3e\x3f\x3f" \
-    "\x40\x40\x41\x41\x42\x42\x43\x43\x44\x44\x45\x45\x46\x46\x47\x47" \
-    "\x48\x48\x49\x49\x4a\x4a\x4b\x4b\x4c\x4c\x4d\x4d\x4e\x4e\x4f\x4f" \
-    "\x50\x50\x51\x51\x52\x52\x53\x53\x54\x54\x55\x55\x56\x56\x57\x57" \
-    "\x58\x58\x59\x59\x5a\x5a\x5b\x5b\x5c\x5c\x5d\x5d\x5e\x5e\x5f\x5f" \
-    "\x60\x60\x61\x61\x62\x62\x63\x63\x64\x64\x65\x65\x66\x66\x67\x67" \
-    "\x68\x68\x69\x69\x6a\x6a\x6b\x6b\x6c\x6c\x6d\x6d\x6e\x6e\x6f\x6f" \
-    "\x70\x70\x71\x71\x72\x72\x73\x73\x74\x74\x75\x75\x76\x76\x77\x77" \
-    "\x78\x78\x79\x79\x7a\x7a\x7b\x7b\x7c\x7c\x7d\x7d\x7e\x7e\x7f\x7f" \
-    "\x80\x80\x81\x81\x82\x82\x83\x83\x84\x84\x85\x85\x86\x86\x87\x87" \
-    "\x88\x88\x89\x89\x8a\x8a\x8b\x8b\x8c\x8c\x8d\x8d\x8e\x8e\x8f\x8f" \
-    "\x90\x90\x91\x91\x92\x92\x93\x93\x94\x94\x95\x95\x96\x96\x97\x97" \
-    "\x98\x98\x99\x99\x9a\x9a\x9b\x9b\x9c\x9c\x9d\x9d\x9e\x9e\x9f\x9f" \
-    "\xa0\xa0\xa1\xa1\xa2\xa2\xa3\xa3\xa4\xa4\xa5\xa5\xa6\xa6\xa7\xa7" \
-    "\xa8\xa8\xa9\xa9\xaa\xaa\xab\xab\xac\xac\xad\xad\xae\xae\xaf\xaf" \
-    "\xb0\xb0\xb1\xb1\xb2\xb2\xb3\xb3\xb4\xb4\xb5\xb5\xb6\xb6\xb7\xb7" \
-    "\xb8\xb8\xb9\xb9\xba\xba\xbb\xbb\xbc\xbc\xbd\xbd\xbe\xbe\xbf\xbf" \
-    "\xc0\xc0\xc1\xc1\xc2\xc2\xc3\xc3\xc4\xc4\xc5\xc5\xc6\xc6\xc7\xc7" \
-    "\xc8\xc8\xc9\xc9\xca\xca\xcb\xcb\xcc\xcc\xcd\xcd\xce\xce\xcf\xcf" \
-    "\xd0\xd0\xd1\xd1\xd2\xd2\xd3\xd3\xd4\xd4\xd5\xd5\xd6\xd6\xd7\xd7" \
-    "\xd8\xd8\xd9\xd9\xda\xda\xdb\xdb\xdc\xdc\xdd\xdd\xde\xde\xdf\xdf" \
-    "\xe0\xe0\xe1\xe1\xe2\xe2\xe3\xe3\xe4\xe4\xe5\xe5\xe6\xe6\xe7\xe7" \
-    "\xe8\xe8\xe9\xe9\xea\xea\xeb\xeb\xec\xec\xed\xed\xee\xee\xef\xef" \
-    "\xf0\xf0\xf1\xf1\xf2\xf2\xf3\xf3\xf4\xf4\xf5\xf5\xf6\xf6\xf7\xf7" \
-    "\xf8\xf8\xf9\xf9\xfa\xfa\xfb\xfb\xfc\xfc\xfd\xfd\xfe\xfe\xff\xff" \
-    ""
-
-static short mille_to_scale(short n, short scale)
-{
-    return (short) (((long) (scale - 1)) * ((long) (unsigned char) _MYMAN_LINEARSCALE[n * 511L / 1000]) / 255);
-}
-
 static void
 destroy_pen(void)
 {
@@ -3821,8 +2454,9 @@ init_pen(void)
 {
     int i;
     int nextpair;
-    unsigned char pair_allocated[32] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    unsigned char pair_allocated[32];
 
+    memset((void *) pair_allocated, 0, sizeof(pair_allocated));
     for (i = 0; i < 256; i ++)
         if (i < COLOR_PAIRS)
             pair_content(i, old_pair[i], old_pair[i] + 1);
@@ -4294,7 +2928,7 @@ snapshot_attrset_active(chtype attrs)
                     b = (255 * pen_pal[i % 16][2]) / 1000;
                     fprintf(snapshot,
                             "<font color=\"#%2.2lX%2.2lX%2.2lX\"",
-                            r, g, b);
+                            r & 0xffUL, g & 0xffUL, b & 0xffUL);
                     if (i / 16)
                     {
                         r = (255 * pen_pal[i / 16][0]) / 1000;
@@ -4303,7 +2937,7 @@ snapshot_attrset_active(chtype attrs)
                         fprintf(snapshot,
                                 " style=\"%sbackground:#%2.2lX%2.2lX%2.2lX\"",
                                 ((i / 16) == (i % 16)) ? "color: #000000; " : "",
-                                r, g, b);
+                                r & 0xffUL, g & 0xffUL, b & 0xffUL);
                     }
                     fprintf(snapshot,
                             ">");
@@ -4354,7 +2988,9 @@ my_erase(void)
         const char *my_locale = "en";
         char *my_locale_dynamic = NULL;
 
+#ifdef LC_CTYPE
         my_locale = setlocale(LC_CTYPE, "");
+#endif /* defined(LC_CTYPE) */
         if ((! my_locale) || (! *my_locale))
         {
             my_locale = "en";
@@ -4472,7 +3108,9 @@ my_erase(void)
         }
         if (my_locale)
         {
+#ifdef LC_CTYPE
             setlocale(LC_CTYPE, my_locale);
+#endif /* defined(LC_CTYPE) */
             if (my_locale_dynamic)
             {
                 free((void *) my_locale_dynamic);
@@ -4502,11 +3140,17 @@ my_erase(void)
     }
 }
 
-static int
+int
 my_clear(void)
 {
     location_is_suspect = 0;
     return clear();
+}
+
+void
+my_clearok(int ok)
+{
+    clearok(curscr, (ok ? TRUE : FALSE));
 }
 
 static int
@@ -5754,100 +4398,6 @@ my_addstr(const char *s, chtype attrs)
     return ret;
 }
 
-#define MYMAN_ISPRINT(c) ((' ' == 0x20) ? (((c) >= 0x20) && ((c) <= 0x7e)) : isprint(c))
-
-static void
-escape(const char *s, int len)
-{
-    int c;
-    int i;
-
-    for (i = 0; i < len; i ++)
-        if (MYMAN_ISPRINT((c = (unsigned char) s[i]))) {
-            if ((c == '\"') || (c == '\\') || (c == '\'') || (c == '\?'))
-                putchar('\\');
-            putchar(c);
-        }
-        else
-        {
-            if (((i + 1 == len) || ! isdigit((unsigned char) s[i + 1])) && (c == '\0'))
-                printf("\\0");
-            else
-                printf("\\%3.3o", c);
-        }
-}
-
-static void
-writefont(const char *file,
-          const char *prefix,
-          int w, int h,
-          const char *font,
-          int *used,
-          int flags,
-          int *color,
-          const char *args
-    )
-{
-    int c, i, j;
-
-    printf("static const char builtin_%sfile_str[] = \"", prefix);
-    escape(file, strlen(file));
-    printf("\";\n");
-    printf("const char *builtin_%sfile = builtin_%sfile_str;\n", prefix, prefix);
-    printf("int %s_flags = %d;\n", prefix, flags);
-    printf("int %s_w = %d;\n", prefix, w);
-    printf("int %s_h = %d;\n", prefix, h);
-    printf("const char *%s_args = ", prefix);
-    if (args)
-    {
-        printf("\"");
-        escape(args, strlen(args));
-        printf("\"");
-    }
-    else
-    {
-        printf("0");
-    }
-    printf(";\n");
-    printf("static const char builtin_%s_data[256 * %d * %d] = {", prefix, h, w);
-    for (c = 0; c < 256; c ++) {
-        printf("\n/* 0x%2.2X */", c);
-        for (i = 0; i < h; i ++) {
-            printf("\n ");
-            for (j = 0; j < w; j ++) {
-                char k;
-
-                printf(" \'");
-                k = font[(c * h + i) * w + j];
-                escape(&k, 1);
-                printf("\'");
-                if (((c + 1) < 256) || ((i + 1) < h) || ((j + 1) < w))
-                    printf(",");
-            }
-        }
-    }
-    printf("};\n");
-    printf("const char *%s = builtin_%s_data;", prefix, prefix);
-    printf("int %s_used[256] = {\n", prefix);
-    for (c = 0; c < 256; c ++) {
-        if (c && ! (c & 3))
-            printf(",\n");
-        else if (c)
-            printf(", ");
-        printf("/* 0x%2.2X */ %d", c, used[c]);
-    }
-    printf("};\n");
-    printf("int %s_color[256] = {\n", prefix);
-    for (c = 0; c < 256; c ++) {
-        if (c && ! (c & 3))
-            printf(",\n");
-        else if (c)
-            printf(", ");
-        printf("/* 0x%2.2X */ 0x%X", c, color[c]);
-    }
-    printf("};\n");
-}
-
 #ifdef XCURSES
 #define XCURSES_USAGE \
 " [ -- toolkit-options]"
@@ -5860,66 +4410,7 @@ writefont(const char *file,
 XCURSES_USAGE \
 "\n", progname
 
-/* heuristic for rewriting maze tiles */
-static long
-maze_visual(int n, int i, int j)
-{
-    long c;
-
-    c = (unsigned char) maze[(n*maze_h+i) * (maze_w + 1)+j];
-    switch (c)
-    {
-    case 0xb5:
-        if ((! ISWALLUP(blank_maze[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]))
-            ||
-            (! ISWALLDOWN(blank_maze[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j])))
-            c = 0x10;
-        break;
-    case 0xc6:
-        if ((! ISWALLUP(blank_maze[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]))
-            ||
-            (! ISWALLDOWN(blank_maze[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j])))
-            c = 0x11;
-        break;
-    case 'l':
-    case 0xb3:
-        if ((! ISWALLUP(blank_maze[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]))
-            &&
-            (! ISWALLDOWN(blank_maze[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j])))
-            c = 0x12;
-        else if (! ISWALLUP(blank_maze[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]))
-            c = 0x19;
-        else if (! ISWALLDOWN(blank_maze[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]))
-            c = 0x18;
-        break;
-    case 0xd0:
-        if ((! ISWALLLEFT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j + 1)]))
-            ||
-            (! ISWALLRIGHT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j - 1)])))
-            c = 0x1f;
-        break;
-    case 0xd2:
-        if ((! ISWALLLEFT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j + 1)]))
-            ||
-            (! ISWALLRIGHT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j - 1)])))
-            c = 0x1e;
-        break;
-    case '~':
-    case 0xc4:
-        if ((! ISWALLLEFT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j + 1)]))
-            &&
-            (! ISWALLRIGHT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j - 1)])))
-            c = 0x1d;
-        else if (! ISWALLLEFT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j + 1)]))
-            c = 0x1b;
-        else if (! ISWALLRIGHT(blank_maze[(n*maze_h+i) * (maze_w + 1)+XWRAP(j - 1)]))
-            c = 0x1a;
-        break;
-    }
-    return c;
-}
-
-static const char * pager_notice = MYMANLEGALNOTICE;
+static const char * pager_notice = 0;
 static const char * pager_remaining = 0;
 /* left then right in the pager is equivalent to space */
 static int pager_arrow_magic = 0;
@@ -5945,11 +4436,13 @@ static int pager_arrow_magic = 0;
 #define PAGER_A_STANDOUT (((USE_COLOR) && use_color) ? pen[PAUSE_COLOR] : PAGER_A_REVERSE)
 #endif
 
-#define pager_move(y,x) do \
-{ \
-    my_move((pager_big ? ((y) * pager_tile_h) : y), \
-            ((pager_big ? ((x) * tile_w) : x) * (use_fullwidth ? 2 : 1))); \
-} while(0)
+static void
+pager_move(int y, int x)
+{
+    my_move((pager_big ? ((y) * pager_tile_h) : y),
+            ((pager_big ? ((x) * tile_w) : x) * (use_fullwidth ? 2 : 1)));
+}
+
 #define pager_getyx(stdscr,y,x) do \
 { \
     getyx(stdscr, y, x); \
@@ -5960,110 +4453,114 @@ static int pager_arrow_magic = 0;
     } \
     (x) /= use_fullwidth ? 2 : 1; \
 } while(0)
-#define pager_addch(c,a) do \
-{ \
-    int pager_addch__x, pager_addch__y, pager_addch__i, pager_addch__j; \
-     \
-    pager_getyx(stdscr, pager_addch__y, pager_addch__x); \
-    if (pager_addch__x >= PAGER_COLS) \
-    { \
-        pager_addch__x = 0; \
-        pager_addch__y ++; \
-    } \
-    if (pager_addch__y >= PAGER_LINES) \
-    { \
-        pager_move(PAGER_LINES - 1, PAGER_COLS - 1); \
-    } \
-    else \
-    { \
-        if (pager_big) \
-        { \
-            unsigned long pager_addch__c, pager_addch__cc; \
-            chtype pager_addch__a; \
-     \
-            pager_addch__c = (unsigned long) (unsigned char) (c); \
-            pager_addch__cc = pager_addch__c; \
-            while ((! tile_used[pager_addch__cc]) \
-                   && \
-                   (fallback_cp437[pager_addch__cc] != pager_addch__c) \
-                   && \
-                   (fallback_cp437[pager_addch__cc] != pager_addch__cc)) \
-            { \
-                pager_addch__cc = (unsigned long) (unsigned char) fallback_cp437[pager_addch__cc]; \
-            } \
-            pager_addch__c = pager_addch__cc; \
-            pager_addch__a = (a); \
-            for (pager_addch__j = 0; \
-                 pager_addch__j < (((pager_addch__y + 1) == PAGER_LINES) \
-                                   ? \
-                                   (LINES - pager_addch__y * pager_tile_h) \
-                                   : \
-                                   pager_tile_h); \
-                 pager_addch__j ++) \
-            { \
-                for (pager_addch__i = 0; pager_addch__i < tile_w; pager_addch__i ++) \
-                { \
-                    pager_addch__cc = (unsigned long) (unsigned char) ((pager_addch__j < tile_h) ? tile[(pager_addch__c * tile_h + pager_addch__j) * tile_w + pager_addch__i] : ' '); \
-                    if (! pager_addch__cc) pager_addch__cc = (unsigned long) (unsigned char) ' '; \
-                    my_move(pager_addch__y * pager_tile_h + pager_addch__j, \
-                            (pager_addch__x * tile_w + pager_addch__i) * (use_fullwidth ? 2 : 1)); \
-                    my_addch(pager_addch__cc, \
-                             (pager_addch__j < pager_tile_h) \
-                             ? \
-                             pager_addch__a \
-                             : \
-                             ((USE_COLOR && use_color) \
-                              ? \
-                              pen[TEXT_COLOR] \
-                              : \
-                              0)); \
-                } \
-                if ((pager_addch__x + 1) == PAGER_COLS) \
-                { \
-                    for (pager_addch__i = (pager_addch__x + 1) * tile_w; pager_addch__i < MY_COLS; pager_addch__i ++) \
-                    { \
-                        my_move(pager_addch__y * pager_tile_h + pager_addch__j, \
-                                pager_addch__i * (use_fullwidth ? 2 : 1)); \
-                        my_addch((unsigned long) (unsigned char) ' ', \
-                                 (USE_COLOR && use_color) \
-                                 ? \
-                                 pen[TEXT_COLOR] \
-                                 : \
-                                 0); \
-                    } \
-                } \
-            } \
-        } \
-        else \
-        { \
-            my_addch(c, a); \
-        } \
-        if ((pager_addch__x + 1) < PAGER_COLS) \
-        { \
-            pager_move(pager_addch__y, pager_addch__x + 1); \
-        } \
-        else if ((pager_addch__y + 1) < PAGER_LINES) \
-        { \
-            pager_move(pager_addch__y + 1, 0); \
-        } \
-        else \
-        { \
-            pager_move(PAGER_LINES - 1, PAGER_COLS - 1); \
-        } \
-    } \
-} while(0)
-#define pager_addstr(s,a) do \
-{ \
-    const char *pager_addstr__s = (s); \
- \
-    while (*pager_addstr__s) \
-    { \
-        pager_addch((unsigned long) (unsigned char) *pager_addstr__s, (a)); \
-        pager_addstr__s ++; \
-    } \
-} while(0)
 
-void
+static void
+pager_addch(unsigned long c, chtype a)
+{
+    int pager_addch__x, pager_addch__y, pager_addch__i, pager_addch__j;
+    
+    pager_getyx(stdscr, pager_addch__y, pager_addch__x);
+    if (pager_addch__x >= PAGER_COLS)
+    {
+        pager_addch__x = 0;
+        pager_addch__y ++;
+    }
+    if (pager_addch__y >= PAGER_LINES)
+    {
+        pager_move(PAGER_LINES - 1, PAGER_COLS - 1);
+    }
+    else
+    {
+        if (pager_big)
+        {
+            unsigned long pager_addch__c, pager_addch__cc;
+            chtype pager_addch__a;
+    
+            pager_addch__c = (unsigned long) (unsigned char) (c);
+            pager_addch__cc = pager_addch__c;
+            while ((! tile_used[pager_addch__cc])
+                   &&
+                   (fallback_cp437[pager_addch__cc] != pager_addch__c)
+                   &&
+                   (fallback_cp437[pager_addch__cc] != pager_addch__cc))
+            {
+                pager_addch__cc = (unsigned long) (unsigned char) fallback_cp437[pager_addch__cc];
+            }
+            pager_addch__c = pager_addch__cc;
+            pager_addch__a = (a);
+            for (pager_addch__j = 0;
+                 pager_addch__j < (((pager_addch__y + 1) == PAGER_LINES)
+                                   ?
+                                   (LINES - pager_addch__y * pager_tile_h)
+                                   :
+                                   pager_tile_h);
+                 pager_addch__j ++)
+            {
+                for (pager_addch__i = 0; pager_addch__i < tile_w; pager_addch__i ++)
+                {
+                    pager_addch__cc = (unsigned long) (unsigned char) ((pager_addch__j < tile_h) ? tile[(pager_addch__c * tile_h + pager_addch__j) * tile_w + pager_addch__i] : ' ');
+                    if (! pager_addch__cc) pager_addch__cc = (unsigned long) (unsigned char) ' ';
+                    my_move(pager_addch__y * pager_tile_h + pager_addch__j,
+                            (pager_addch__x * tile_w + pager_addch__i) * (use_fullwidth ? 2 : 1));
+                    my_addch(pager_addch__cc,
+                             (pager_addch__j < pager_tile_h)
+                             ?
+                             pager_addch__a
+                             :
+                             ((USE_COLOR && use_color)
+                              ?
+                              pen[TEXT_COLOR]
+                              :
+                              0));
+                }
+                if ((pager_addch__x + 1) == PAGER_COLS)
+                {
+                    for (pager_addch__i = (pager_addch__x + 1) * tile_w; pager_addch__i < MY_COLS; pager_addch__i ++)
+                    {
+                        my_move(pager_addch__y * pager_tile_h + pager_addch__j,
+                                pager_addch__i * (use_fullwidth ? 2 : 1));
+                        my_addch((unsigned long) (unsigned char) ' ',
+                                 (USE_COLOR && use_color)
+                                 ?
+                                 pen[TEXT_COLOR]
+                                 :
+                                 0);
+                    }
+                }
+            }
+        }
+        else
+        {
+            my_addch(c, a);
+        }
+        if ((pager_addch__x + 1) < PAGER_COLS)
+        {
+            pager_move(pager_addch__y, pager_addch__x + 1);
+        }
+        else if ((pager_addch__y + 1) < PAGER_LINES)
+        {
+            pager_move(pager_addch__y + 1, 0);
+        }
+        else
+        {
+            pager_move(PAGER_LINES - 1, PAGER_COLS - 1);
+        }
+    }
+}
+
+static void
+pager_addstr(const char *s, chtype a)
+{
+    const char *pager_addstr__s = (s);
+
+    while (*pager_addstr__s)
+    {
+        pager_addch((unsigned long) (unsigned char) *pager_addstr__s, (a));
+        pager_addstr__s ++;
+    }
+}
+
+static void
 pager(void)
 {
     int c = ERR;
@@ -6370,7 +4867,7 @@ pager(void)
                             pager = pager_remaining;
                             break;
                         }
-                        else if ((k == 'r') || (k == 'R') || (k == CTRL('L')) || (k == CTRL('R')))
+                        else if ((k == 'r') || (k == 'R') || (k == MYMANCTRL('L')) || (k == MYMANCTRL('R')))
                         {
                             my_clear();
                             clearok(curscr, TRUE);
@@ -6385,7 +4882,7 @@ pager(void)
                             pager = pager_remaining;
                             break;
                         }
-                        else if ((k == 'q') || (k == 'Q') || (k == CTRL('C')))
+                        else if ((k == 'q') || (k == 'Q') || (k == MYMANCTRL('C')))
                         {
                             quit_requested = 1;
                             pager = pager_remaining;
@@ -6403,7 +4900,8 @@ pager(void)
 #if USE_COLOR
                         else if ((k == 'c') || (k == 'C'))
                         {
-                            if ((use_color = ! use_color))
+                            use_color = ! use_color;
+                            if (use_color)
                                 init_pen();
                             else
                                 destroy_pen();
@@ -6467,19 +4965,19 @@ pager(void)
                             pager = pager_remaining;
                             break;
                         }
-                        else if (k == CTRL('@'))
+                        else if (k == MYMANCTRL('@'))
                         {
                             /* NUL - idle keepalive (iTerm, maybe others?) */
                             pager = pager_remaining;
                             break;
                         }
-                        else if (k == CTRL('S'))
+                        else if (k == MYMANCTRL('S'))
                         {
                             xoff_received = 1;
                             pager = pager_remaining;
                             break;
                         }
-                        else if (k == CTRL('Q'))
+                        else if (k == MYMANCTRL('Q'))
                         {
                             xoff_received = 0;
                             pager = pager_remaining;
@@ -6578,7 +5076,7 @@ pager(void)
                     pager_notice = 0;
                     pager_remaining = 0;
                 }
-                else if ((k == 'q') || (k == 'Q') || (k == CTRL('C')))
+                else if ((k == 'q') || (k == 'Q') || (k == MYMANCTRL('C')))
                 {
                     quit_requested = 1;
                 }
@@ -6592,7 +5090,8 @@ pager(void)
 #if USE_COLOR
                 else if ((k == 'c') || (k == 'C'))
                 {
-                    if ((use_color = ! use_color))
+                    use_color = ! use_color;
+                    if (use_color)
                         init_pen();
                     else
                         destroy_pen();
@@ -6642,7 +5141,7 @@ pager(void)
                 else if (IS_LEFT_ARROW(k) || IS_RIGHT_ARROW(k))
                 {
                 }
-                else if ((k == 'r') || (k == 'R') || (k == CTRL('L')) || (k == CTRL('R')))
+                else if ((k == 'r') || (k == 'R') || (k == MYMANCTRL('L')) || (k == MYMANCTRL('R')))
                 {
                     my_clear();
                     clearok(curscr, TRUE);
@@ -6656,15 +5155,15 @@ pager(void)
                     got_sigwinch = 0;
                     reinit_requested = 1;
                 }
-                else if (k == CTRL('@'))
+                else if (k == MYMANCTRL('@'))
                 {
                     /* NUL - idle keepalive (iTerm, maybe others?) */
                 }
-                else if (k == CTRL('S'))
+                else if (k == MYMANCTRL('S'))
                 {
                     xoff_received = 1;
                 }
-                else if (k == CTRL('Q'))
+                else if (k == MYMANCTRL('Q'))
                 {
                     xoff_received = 0;
                 }
@@ -6695,430 +5194,1132 @@ pager(void)
     }
 }
 
-#define rmsg (RMSG % maze_h)
-#define cmsg (CMSG % maze_w)
-#define rmsg2 (RMSG2 % maze_h)
-#define cmsg2 (CMSG2 % maze_w)
+int key_buffer = ERR;
+int key_buffer_ERR = ERR;
 
-#define COMPLEXITY_ADJUST(x) ((x) * (maze_h + maze_w) / (28 + 31))
-
-#define TWOSECS    (10 * FIFTH)
-#define ONESEC     (TWOSECS / 2)
-#define FRUITLIFE  COMPLEXITY_ADJUST(TWOSECS * 15 / 4)
-#define DEATHSHIFT 3
-#define DEATHDELAY (1 << (DEATHSHIFT + 2))
-#define MEMDELAY(ghost) (COMPLEXITY_ADJUST((3 + ((ghost) > 3) * (1.0 * ((ghost) - 3) / (ghosts - 3))) * TWOSECS))
-
-#define maze_erase() \
-        do { \
-            memset((void *) (maze + maze_level * maze_h * (maze_w + 1)), 0, (maze_w + 1) * maze_h); \
-            memset((void *) (maze_color + maze_level * maze_h * (maze_w + 1)), 0, (maze_w + 1) * maze_h); \
-            DIRTY_ALL(); \
-        } while(0)
-#define maze_puts(y, x, c, s) \
-        do { \
-            int _mpi; \
-            unsigned char _mpc; \
-            int _mpy, _mpx; \
-             \
-            _mpy = (y); \
-            _mpx = (x); \
-            if (_mpy < 0) continue; \
-            if (_mpy >= maze_h) continue; \
-            for (_mpi = 0; (_mpc = (unsigned char) (s)[_mpi]); _mpi ++) \
-            { \
-                if (((_mpx + _mpi) >= 0) && ((_mpx + _mpi) < maze_w)) \
-                { \
-                    maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = _mpc; \
-                    maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = (unsigned char) (c); \
-                    DIRTY_CELL(XWRAP(_mpx + _mpi), YWRAP(_mpy)); \
-                } \
-            } \
-        } while(0)
-#define maze_putsn_nonblank(y, x, c, s, n) \
-        do { \
-            int _mpi; \
-            unsigned char _mpc; \
-            int _mpy, _mpx; \
-             \
-            _mpy = (y); \
-            _mpx = (x); \
-            if (_mpy < 0) continue; \
-            if (_mpy >= maze_h) continue; \
-            for (_mpi = 0; (_mpi < (n)) && ((_mpc = (unsigned char) (s)[_mpi])); _mpi ++) \
-            { \
-                int _mpcc; \
-                 \
-                _mpcc = (c); \
-                if (((_mpx + _mpi) >= 0) && ((_mpx + _mpi) < maze_w)) \
-                { \
-                    if (_mpc == ' ') \
-                    { \
-                        _mpc = blank_maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)]; \
-                        _mpcc = blank_maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)]; \
-                    } \
-                    maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = _mpc; \
-                    maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = (unsigned char) _mpcc; \
-                    DIRTY_CELL(XWRAP(_mpx + _mpi), YWRAP(_mpy)); \
-                } \
-            } \
-        } while(0)
-
-#define REFLECT_LARGE (reflect && (tile_w == tile_h) && (sprite_w == sprite_h))
-
-#define gfx2(c) (((reflect ^ gfx_reflect) && ! REFLECT_LARGE) ? reflect_cp437[(unsigned long) (unsigned char) (c)] : (c))
-#define gfx1(c,y,x,w,h) ((reflect ^ ((reflect ^ gfx_reflect) && ! REFLECT_LARGE)) ? (((c) * (h) + (x)) * (w) + (y)) : (((c) * (h) + (y)) * (w) + (x)))
-#define gfx0(c,m) ((REFLECT_LARGE | gfx_reflect) ? ((unsigned long) (unsigned char) ((m)[(unsigned long) (unsigned char) (c)])) : (c))
-
-#define gfx_w (gfx_reflect ? tile_h : tile_w)
-#define gfx_h (gfx_reflect ? tile_w : tile_h)
-#define gfx(c,y,x) ((unsigned long) (unsigned char) gfx2(tile[gfx1(gfx0((c), (reflect_cp437)), (y) % gfx_h, (x) % gfx_w, tile_w, tile_h)]))
-
-#define sgfx_w (gfx_reflect ? sprite_h : sprite_w)
-#define sgfx_h (gfx_reflect ? sprite_w : sprite_h)
-#define sgfx(c,y,x) ((unsigned long) (unsigned char) gfx2(sprite[gfx1(gfx0((c), (reflect_sprite)), (y) % sgfx_h, (x) % sgfx_w, sprite_w, sprite_h)]))
-
-#define XTILE(x) ((x) / gfx_w)
-#define YTILE(y) ((y) / gfx_h)
-
-#define DIRTY_SPRITE_REGISTER(s) \
-    do { \
-        int _dirty_sprite_register_x, _dirty_sprite_register_y; \
-        for (_dirty_sprite_register_y = 0; _dirty_sprite_register_y < ((gfx_h > sgfx_h) ? gfx_h : sgfx_h); _dirty_sprite_register_y ++) \
-            for (_dirty_sprite_register_x = 0; _dirty_sprite_register_x < ((gfx_w > sgfx_w) ? gfx_w : sgfx_w); _dirty_sprite_register_x ++) \
-            { \
-                DIRTY_CELL(XTILE(sprite_register_x[s] + _dirty_sprite_register_x - ((gfx_w > sgfx_w) ? gfx_w : sgfx_w) / 2), \
-                           YTILE(sprite_register_y[s] + _dirty_sprite_register_y - ((gfx_h > sgfx_h) ? gfx_h : sgfx_h) / 2)); \
-            } \
-    } while (0)
-
-#define collide(s1, s2) ((XTILE(sprite_register_x[s1] - sgfx_w / 2) == XTILE(sprite_register_x[s2] - sgfx_w / 2)) \
-&& (YTILE(sprite_register_y[s1] - sgfx_h / 2) == YTILE(sprite_register_y[s2] - sgfx_h / 2)))
-
-#define PIX_W ((maze_w + 1) * gfx_w)
-#define PIX_H (maze_h * gfx_h)
-
-#define XPIXWRAP(x) (((x) + PIX_W) % PIX_W)
-#define YPIXWRAP(y) (((y) + PIX_H) % PIX_H)
-
-#define NOTTOP(y) (y >= (gfx_h / 2))
-#define NOTBOTTOM(y) (y <= (gfx_h / 2))
-#define NOTLEFT(x) (x >= (gfx_w / 2))
-#define NOTRIGHT(x) (x <= (gfx_w / 2))
-
-#define XHERO (CHERO * gfx_w)
-#define YHERO (RHERO * gfx_h)
-#define XFRUIT (CFRUIT * gfx_w)
-#define YFRUIT (RFRUIT * gfx_h)
-#define YGHOST (RGHOST * gfx_h)
-#define XGHOST (CGHOST * gfx_w)
-#define YTOP (RTOP * gfx_h)
-
-#ifndef MAXFRAMESKIP
-#define MAXFRAMESKIP (1 + tile_w)
-#endif
-
-#define SQUARE ((tile_h + tile_h) > tile_w)
-
-#define FIFTH     (tile_w * (SQUARE ? 2 : 1))
-
-#define PELLET_ADJUST(x) (COMPLEXITY_ADJUST(x * 4) / (pellets[maze_level] ? pellets[maze_level] : 4))
-
-#define GHOST0 ((ghosts > 2) ? 0 : 2)
-#define GHOST1 1
-#define GHOST2 ((ghosts > 2) ? 2 : 0)
-#define GHOST3 3
-
-#ifndef NAME_HEADER
-#define NAME_HEADER "CHARACTER /"
-#endif
-
-#ifndef NICK_HEADER
-#define NICK_HEADER " NICKNAME"
-#endif
-
-#ifndef GHOST_NAMES
-#define GHOST_NAMES GHOST_NAMES_XLT
-#endif
-
-#define GHOST_NAMES_JA 0
-
-#define GHOST_NAMES_ALT 1
-
-#define GHOST_NAMES_EN 2
-
-#define GHOST_NAMES_XLT 3
-
-#if GHOST_NAMES == GHOST_NAMES_JA
-
-#ifndef GHOST0_NAME
-#define GHOST0_NAME " KIMAGURE--"
-#endif
-
-#ifndef GHOST0_NICK
-#define GHOST0_NICK "\"AOSUKE\""
-#endif
-
-#ifndef GHOST2_NAME
-#define GHOST2_NAME " MACHIBUSE-"
-#endif
-
-#ifndef GHOST2_NICK
-#define GHOST2_NICK "-\"PINKY\""
-#endif
-
-#ifndef GHOST1_NAME
-#define GHOST1_NAME " OIKAKE----"
-#endif
-
-#ifndef GHOST1_NICK
-#define GHOST1_NICK "\"AKABEI\""
-#endif
-
-#ifndef GHOST3_NAME
-#define GHOST3_NAME " OTOBOKE---"
-#endif
-
-#ifndef GHOST3_NICK
-#define GHOST3_NICK "\"GUZUTA\""
-#endif
-
-#endif
-
-#if GHOST_NAMES == GHOST_NAMES_ALT
-
-#ifndef GHOST0_NAME
-#define GHOST0_NAME " STYLIST"
-#endif
-
-#ifndef GHOST0_NICK
-#define GHOST0_NICK "\"MUCKY\""
-#endif
-
-#ifndef GHOST2_NAME
-#define GHOST2_NAME " ROMP"
-#endif
-
-#ifndef GHOST2_NICK
-#define GHOST2_NICK "\"MICKY\""
-#endif
-
-#ifndef GHOST1_NAME
-#define GHOST1_NAME " URCHIN"
-#endif
-
-#ifndef GHOST1_NICK
-#define GHOST1_NICK "\"MACKY\""
-#endif
-
-#ifndef GHOST3_NAME
-#define GHOST3_NAME " CRYBABY"
-#endif
-
-#ifndef GHOST3_NICK
-#define GHOST3_NICK "\"MOCKY\""
-#endif
-
-#endif
-
-#if GHOST_NAMES == GHOST_NAMES_EN
-
-#ifndef GHOST0_NAME
-#define GHOST0_NAME "-BASHFUL"
-#endif
-
-#ifndef GHOST0_NICK
-#define GHOST0_NICK "\"INKY\""
-#endif
-
-#ifndef GHOST2_NAME
-#define GHOST2_NAME "-SPEEDY"
-#endif
-
-#ifndef GHOST2_NICK
-#define GHOST2_NICK "\"PINKY\""
-#endif
-
-#ifndef GHOST1_NAME
-#define GHOST1_NAME "-SHADOW"
-#endif
-
-#ifndef GHOST1_NICK
-#define GHOST1_NICK "\"BLINKY\""
-#endif
-
-#ifndef GHOST3_NAME
-#define GHOST3_NAME "-POKEY"
-#endif
-
-#ifndef GHOST3_NICK
-#define GHOST3_NICK "\"CLYDE\""
-#endif
-
-#endif
-
-#if GHOST_NAMES == GHOST_NAMES_XLT
-
-#ifndef GHOST0_NAME
-#define GHOST0_NAME " WHIMSICAL-"
-#endif
-
-#ifndef GHOST0_NICK
-#define GHOST0_NICK "---\"CYAN\""
-#endif
-
-#ifndef GHOST2_NAME
-#define GHOST2_NAME " AMBUSHER--"
-#endif
-
-#ifndef GHOST2_NICK
-#define GHOST2_NICK "--\"MAUVE\""
-#endif
-
-#ifndef GHOST1_NAME
-#define GHOST1_NAME " CHASER----"
-#endif
-
-#ifndef GHOST1_NICK
-#define GHOST1_NICK "\"SCARLET\""
-#endif
-
-#ifndef GHOST3_NAME
-#define GHOST3_NAME " CLOWN-----"
-#endif
-
-#ifndef GHOST3_NICK
-#define GHOST3_NICK "--\"SLOTH\""
-#endif
-
-#endif
-
-#define WHOSE_HOME_DIR(r,c) (home_dir[(GHOST2 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST2 \
-: home_dir[(GHOST0 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST0 \
-: home_dir[(GHOST3 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST3 \
-: GHOST1)
-
-#define HOME_DIR(s,r,c) (home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)] \
-                         ? \
-                         home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)] \
-                         : \
-                         home_dir[((s)*maze_h+(r))*(maze_w+1)+(c)])
-
-static long myman_intro = 1;
-static unsigned long myman_start = 0;
-static unsigned long myman_demo = 0;
-static int munched = HERO;
-static int old_lines, old_cols, old_score, old_showlives, old_level;
-static int ignore_delay = 0;
-static long frameskip = 0, frameskip0 = 0, frameskip1 = 0;
-static long scrolling = 0;
-static long frames = 0;
-static long winning = 1;
-static unsigned long delay = MYMANDELAY;
-static unsigned long mindelay = MYMANDELAY / 2;
-static int ghost_eaten_timer = 0;
-static int paused = 0;
-static int reflect = 0;
-static int gfx_reflect = 0;
-static long intermission_running = 0;
-static unsigned long myman_demo_setup = 0;
-static int need_reset = 0;
-static int level = 0,
-    maze_level = 0,
-    intermission = 0,
-    intermission_shown = 0,
-    cycles = 0,
-    score = 0,
-    dots = 0,
-    points = 0,
-    lives = LIVES,
-    lives_used = 0,
-    earned = 0,
-    dying = 0,
-    dead = 0,
-    deadpan = 0,
-    lines = 0,
-    columns = 0,
-    oldplayer = 0,
-    player = 1;
-static int key_buffer = ERR;
-static long pellet_timer = 0,
-    pellet_time = 0;
 static struct timeval tv, tvt, tvt2;
 static int tvt_used = 0;
-static char *tmp_notice = 0;
-static const char * maze_ABOUT = 0;
-static const char * maze_FIXME = 0;
-static const char * maze_NOTE = 0;
-static const char * tile_ABOUT = 0;
-static const char * tile_FIXME = 0;
-static const char * tile_NOTE = 0;
-static const char * sprite_ABOUT = 0;
-static const char * sprite_FIXME = 0;
-static const char * sprite_NOTE = 0;
-static const char *msg_READY = READY;
-static const char *msg_GAMEOVER = GAMEOVER;
-static const char *msg_PLAYER1 = PLAYER1;
-static const char *msg_PLAYER2 = PLAYER2;
-static const char *maze_WALL_COLORS = WALL_COLORS;
-static size_t maze_WALL_COLORS_len = sizeof(WALL_COLORS) - 1;
-static const char *maze_DOT_COLORS = DOT_COLORS;
-static size_t maze_DOT_COLORS_len = sizeof(DOT_COLORS) - 1;
-static const char *maze_PELLET_COLORS = PELLET_COLORS;
-static size_t maze_PELLET_COLORS_len = sizeof(PELLET_COLORS) - 1;
-static const char *maze_MORTAR_COLORS = MORTAR_COLORS;
-static size_t maze_MORTAR_COLORS_len = sizeof(MORTAR_COLORS) - 1;
-static double *maze_RGHOST = NULL;
-static size_t maze_RGHOST_len = 0;
-static double *maze_CGHOST = NULL;
-static size_t maze_CGHOST_len = 0;
-static double *maze_ROGHOST = NULL;
-static size_t maze_ROGHOST_len = 0;
-static double *maze_COGHOST = NULL;
-static size_t maze_COGHOST_len = 0;
-static double *maze_RFRUIT = NULL;
-static size_t maze_RFRUIT_len = 0;
-static double *maze_CFRUIT = NULL;
-static size_t maze_CFRUIT_len = 0;
-static double *maze_RTOP = NULL;
-static size_t maze_RTOP_len = 0;
-static double *maze_RHERO = NULL;
-static size_t maze_RHERO_len = 0;
-static double *maze_CHERO = NULL;
-static size_t maze_CHERO_len = 0;
-static long *maze_RMSG = NULL;
-static size_t maze_RMSG_len = 0;
-static long *maze_CMSG = NULL;
-static size_t maze_CMSG_len = 0;
-static long *maze_RMSG2 = NULL;
-static size_t maze_RMSG2_len = 0;
-static long *maze_CMSG2 = NULL;
-static size_t maze_CMSG2_len = 0;
-static int dirhero = DIRHERO;
-static long scroll_offset_x0 = 0;
-static long scroll_offset_y0 = 0;
-static int msglen = 0;
-static int hero_dir;
-static int *total_dots = NULL;
-static int *pellets = NULL;
-static long flip_to = 0;
-static int debug = 0;
-static int ghosts = GHOSTS;
-static int ghosts_p = 0;
 #if USE_SDL_MIXER
 static int sdl_audio_open = 0;
 #endif
 
+static void
+gamesfx(void)
+{
+#ifdef ALLEGROCURSES
+#define handle_sfx(n) \
+            do { if (myman_sfx & myman_sfx_ ## n) \
+            { \
+                static MIDI *n##_music = 0; \
+                myman_sfx &= ~myman_sfx_ ## n; \
+                if ((use_sound && ! myman_demo) && ! n##_music) \
+                { \
+                    n##_music = load_midi("sfx/"#n".mid"); \
+                } \
+                if ((use_sound && ! myman_demo) && n##_music) \
+                { \
+                    stop_midi(); \
+                    play_midi(n##_music, 0); \
+                } \
+            } } while (0)
+#else
+#if USE_SDL_MIXER
+#define handle_sfx(n) \
+            do { if ((myman_sfx & myman_sfx_ ## n) && sdl_audio_open) \
+            { \
+                static Mix_Music *n##_music = 0; \
+                myman_sfx &= ~myman_sfx_ ## n; \
+                if ((use_sound && ! myman_demo) && ! n##_music) \
+                { \
+                    n##_music = Mix_LoadMUS("sfx/"#n".xm"); \
+                } \
+                if ((use_sound && ! myman_demo) && ! n##_music) \
+                { \
+                    n##_music = Mix_LoadMUS("sfx/"#n".mid"); \
+                } \
+                if ((use_sound && ! myman_demo) && n##_music) \
+                { \
+                    if (! Mix_PlayingMusic()) Mix_PlayMusic(n##_music, 1); \
+                } \
+            } } while (0)
+#else
+#define handle_sfx(n) do { if (myman_sfx & myman_sfx_ ## n) { myman_sfx &= ~myman_sfx_##n; if ((myman_sfx_##n & ~myman_sfx_nobeep_mask) && use_sound && ! myman_demo) beep(); } } while (0)
+#endif
+#endif
+    handle_sfx(credit);
+    handle_sfx(dot);
+    handle_sfx(dying);
+    handle_sfx(ghost);
+    handle_sfx(intermission);
+    handle_sfx(pellet);
+    handle_sfx(siren0_down);
+    handle_sfx(siren0_up);
+    handle_sfx(siren1_down);
+    handle_sfx(siren1_up);
+    handle_sfx(siren2_down);
+    handle_sfx(siren2_up);
+    handle_sfx(start);
+    handle_sfx(fruit);
+    handle_sfx(life);
+    handle_sfx(level);
+    handle_sfx(bonus);
+    if (myman_sfx) { myman_sfx = 0UL; if (use_sound && ! myman_demo) beep(); }
+}
+
+static void
+gamerender(void)
+{
+    int i, j;
+    long c = 0;
+    int x1, y1;
+    int r_off, c_off;
+    int line, col;
+    int vline, vcol;
+    int pause_shown;
+
+    pause_shown = 0;
+    {
+        int s;
+        for (s = 0; s < SPRITE_REGISTERS; s ++)
+        {
+            if (sprite_register_used[s])
+            {
+                mark_sprite_register(s);
+            }
+        }
+    }
+    if (snapshot || snapshot_txt || all_dirty)
+    {
+        my_erase();
+        DIRTY_ALL();
+        ignore_delay = 1;
+        frameskip = 0;
+    }
+#define VLINES (reflect ? MY_COLS : LINES)
+#define VCOLS (reflect ? LINES : MY_COLS)
+#define vmove(y, x) (reflect ? my_move((x), (y) * (use_fullwidth ? 2 : 1)) :  my_move((y), (x) * (use_fullwidth ? 2 : 1)))
+    x1 = sprite_register_x[HERO] - VCOLS / 2;
+    y1 = sprite_register_y[HERO] - VLINES / 2 - deadpan;
+    if (x1 + VCOLS - (reflect ? 1 : 0) > maze_w * gfx_w)
+        x1 = maze_w * gfx_w - (VCOLS - (reflect ? 1 : 0));
+    if (y1 + VLINES - (reflect ? 0 : 1) > maze_h * gfx_h)
+        y1 = maze_h * gfx_h - (VLINES - (reflect ? 0 : 1));
+    if (x1 < 0)
+        x1 = 0;
+    if (y1 < 0)
+        y1 = 0;
+    r_off = 0;
+    c_off = 0;
+    if (((gfx_h * maze_h + (reflect ? 0 : (3 * tile_h + sprite_h)))) <= VLINES)
+        r_off = (VLINES - (reflect ? 0 : (3 * tile_h + sprite_h)) - gfx_h * maze_h + 1) / 2 + (reflect ? 0 : (3 * tile_h));
+    else if (((gfx_h * maze_h + (reflect ? 0 : (2 * tile_h + sprite_h)))) <= VLINES)
+        r_off = (VLINES - (reflect ? 0 : (2 * tile_h + sprite_h)) - gfx_h * maze_h + 1) / 2 + (reflect ? 0 : (2 * tile_h));
+    else if (gfx_h * maze_h <= VLINES)
+        r_off = (VLINES - gfx_h * maze_h + 1) / 2;
+    if (r_off < 0) r_off = 0;
+    if ((gfx_w * maze_w + (reflect ? (3 * tile_h + sprite_h) : 0)) <= VCOLS)
+        c_off = (VCOLS - (reflect ? (3 * tile_h + sprite_h) : 0) - gfx_w * maze_w + 1) / 2 + (reflect ? (3 * tile_h) : 0);
+    else if ((gfx_w * maze_w + (reflect ? (2 * tile_h + sprite_h) : 0)) <= VCOLS)
+        c_off = (VCOLS - (reflect ? (2 * tile_h + sprite_h) : 0) - gfx_w * maze_w + 1) / 2 + (reflect ? (2 * tile_h) : 0);
+    else if (gfx_w * maze_w <= VCOLS)
+        c_off = (VCOLS - gfx_w * maze_w + 1) / 2;
+    if (c_off < 0) c_off = 0;
+    attrset(0);
+    for (vline = -(3 * tile_h); (vline < LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
+    {
+        if ((vline + (reflect ? c_off : r_off)) < 0) continue;
+        if ((vline + (reflect ? c_off : r_off)) >= LINES) continue;
+        if ((vline < 0) || (vline >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))
+        {
+            for (vcol = 0; (vcol < MY_COLS) && (vcol < (reflect ? (gfx_h * maze_h) : (gfx_w * maze_w))); vcol++)
+            {
+                int filler_tile = 0;
+                chtype a = 0;
+
+                if (snapshot || snapshot_txt || all_dirty)
+                {
+                    filler_tile = ' ';
+                }
+
+                if ((reflect ? c_off : r_off) >= (2 * tile_h))
+                {
+                    int player_anchor;
+
+                    player_anchor = (reflect ? r_off : c_off) + 7 * tile_w - 1;
+                    if (player_anchor >= MY_COLS) player_anchor = MY_COLS - 1;
+                    line = vline + (((reflect ? c_off : r_off) >= (3 * tile_h)) ? (3 * tile_h) : (2 * tile_h));
+                    if ((line >= 0) && (line < tile_h))
+                    {
+                        col = (vcol + (reflect ? r_off : c_off));
+                        if ((col >= 0) && (col < MY_COLS))
+                        {
+                            if (col <= player_anchor)
+                            {
+                                int player_col;
+                                int player_tile_x;
+                                unsigned char player_tile;
+                                int tmp, tmp2;
+
+                                player_tile = 0;
+                                player_col = (player_anchor - col) / tile_w;
+                                player_tile_x = tile_w - 1 - (player_anchor - col) % tile_w;
+                                {
+                                    player_tile = (player_col > 3) ? 0 : '0';
+                                    if (player_col < 3)
+                                    {
+                                        player_tile = "UP "[2 - player_col];
+                                    }
+                                    else
+                                    {
+                                        tmp = player * 1000;
+                                        tmp2 = player * 1000;
+                                        while (player_col)
+                                        {
+                                            player_col --;
+                                            tmp /= 10;
+                                            tmp2 /= 10;
+                                        }
+                                        if (tmp)
+                                        {
+                                            player_tile = '0' + (tmp % 10);
+                                        }
+                                        else if (tmp2)
+                                        {
+                                            player_tile = ' ';
+                                        }
+                                    }
+                                }
+                                if (player_tile
+                                    &&
+                                    ! ((! intermission_running)
+                                       &&
+                                       ((((cycles * 2) % TWOSECS) <= ONESEC)
+                                        ||
+                                        myman_demo
+                                        ||
+                                        myman_start
+                                        ||
+                                        myman_intro)
+                                       &&
+                                       (0 < (NET_LIVES - ((munched == HERO) && dying && sprite_register_used[HERO])))))
+                                {
+                                    player_tile = ' ';
+                                }
+                                if (player_tile && tile_used[player_tile])
+                                {
+                                    filler_tile = player_tile;
+                                }
+                            }
+                        }
+                    }
+                }
+                if ((reflect ? c_off : r_off) >= tile_h)
+                {
+                    int score_anchor;
+
+                    score_anchor = (reflect ? r_off : c_off) + 7 * tile_w - 1;
+                    if (score_anchor >= MY_COLS) score_anchor = MY_COLS - 1;
+                    line = vline + (((reflect ? c_off : r_off) >= (3 * tile_h)) ? (2 * tile_h) : tile_h);
+                    if ((line >= 0) && (line < tile_h))
+                    {
+                        col = (vcol + (reflect ? r_off : c_off));
+                        if ((col >= 0) && (col < MY_COLS))
+                        {
+                            if ((col <= score_anchor)
+                                &&
+                                ! intermission_running)
+                            {
+                                int score_col;
+                                int score_tile_x;
+                                unsigned char score_tile;
+                                int tmp;
+
+                                score_col = (score_anchor - col) / tile_w;
+                                score_tile_x = tile_w - 1 - (score_anchor - col) % tile_w;
+                                score_tile = (score_col > 1) ? ' ' : '0';
+                                tmp = score;
+                                while (score_col)
+                                {
+                                    score_col --;
+                                    tmp /= 10;
+                                }
+                                if (tmp)
+                                {
+                                    score_tile = '0' + (tmp % 10);
+                                }
+                                if (tile_used[score_tile] && (score_tile != ' '))
+                                {
+                                    filler_tile = score_tile;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (filler_tile && tile_used[filler_tile])
+                {
+#if USE_COLOR
+                    if (use_color) {
+                        a = tile_color[filler_tile];
+                        if (! a) a = TEXT_COLOR;
+                        a = pen[a];
+                    }
+#endif
+                    my_move(vline + (reflect ? c_off : r_off), (vcol + (reflect ? r_off : c_off)) * (use_fullwidth ? 2 : 1));
+                    my_addch((unsigned long) (unsigned char) tile[(filler_tile * tile_h + ((vline + (3 * tile_h)) % tile_h)) * tile_w + (vcol % tile_w)], a);
+                }
+            }
+            continue;
+        }
+        if (((reflect ? c_off : r_off) < tile_h)
+            &&
+            ((reflect ? r_off : c_off) >= (5 * tile_w))
+            &&
+            (vline < tile_h)
+            &&
+            (! intermission_running))
+        {
+            int hud_score_anchor;
+
+            hud_score_anchor = (reflect ? r_off : c_off) - 1;
+            for (col = 0; col <= hud_score_anchor; col ++)
+            {
+                int score_x;
+                int score_col;
+                int tmp;
+
+                score_x = hud_score_anchor - col;
+                score_col = 0;
+                tmp = score;
+                while (score_col < score_x / tile_w)
+                {
+                    score_col ++;
+                    tmp /= 10;
+                }
+                if (tmp
+                    ||
+                    (score_col < 2))
+                {
+                    unsigned char score_tile;
+
+                    score_tile = (tmp % 10) + '0';
+                    if (tile_used[score_tile])
+                    {
+                        chtype a;
+
+                        a = 0;
+#if USE_COLOR
+                        if (use_color) {
+                            a = tile_color[score_tile];
+                            if (! a) a = TEXT_COLOR;
+                            a = pen[a];
+                        }
+#endif
+                        my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
+                        my_addch((unsigned long) (unsigned char) tile[(score_tile * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
+
+                    }
+                }
+            }
+        }
+        else if (((reflect ? r_off : c_off) >= sprite_w)
+                 &&
+                 (! intermission_running)
+                 &&
+                 (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+                 &&
+                 (LINES >= (tile_h + sprite_h))
+                 &&
+                 (((vline + sprite_h) >= LINES)
+                  ||
+                  ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
+        {
+            int hud_line;
+            int hud_life_anchor;
+
+            hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
+            hud_life_anchor = showlives * sprite_w;
+            for (col = 0; col < hud_life_anchor; col ++)
+            {
+                int life_sprite;
+
+                life_sprite = SPRITE_LIFE;
+                if (! sprite_used[life_sprite])
+                {
+                    life_sprite = SPRITE_HERO + 4 + 2;
+                }
+                if (sprite_used[life_sprite])
+                {
+                    chtype a;
+
+                    c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + hud_line) * sprite_w + (col % sprite_w)];
+                    if (c)
+                    {
+                        a = 0;
+#if USE_COLOR
+                        if (use_color) {
+                            a = sprite_color[life_sprite];
+                            if (! a)
+                            {
+                                a = sprite_register_color[HERO];
+                            }
+                            a = pen[a];
+                        }
+                        else
+#endif
+                        {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                            a |= use_dim_and_bright ? MY_A_BOLD : 0;
+#endif
+#endif
+                        }
+                        if ((col + (reflect ? r_off : c_off) - hud_life_anchor) >= 0)
+                        {
+                            my_move(vline + (reflect ? c_off : r_off),
+                                    (col + (reflect ? r_off : c_off) - hud_life_anchor) * (use_fullwidth ? 2 : 1));
+                            my_addch((unsigned long) (unsigned char) c, a);
+                        }
+                        continue;
+                    }
+                }
+            }
+        }
+        for (vcol = 0; (vcol < MY_COLS) && (vcol < (reflect ? (gfx_h * maze_h) : (gfx_w * maze_w))); vcol++) {
+            int xtile, ytile;
+            int x_off, y_off;
+            int s;
+            chtype a = 0;
+            int is_wall = 0;
+
+            if (reflect)
+            {
+                line = vcol;
+                col = vline;
+            }
+            else
+            {
+                line = vline;
+                col = vcol;
+            }
+            a = 0;
+            c = 0;
+            xtile = XTILE((i = col + x1));
+            ytile = YTILE((j = line + y1));
+            if (! (line || col))
+            {
+                int nscrolling;
+
+                nscrolling = (i != scroll_offset_x0) ? 2 : (j != scroll_offset_y0) ? 1 : 0;
+                scroll_offset_x0 = i;
+                scroll_offset_y0 = j;
+                if ((scrolling != nscrolling))
+                {
+                    if (! nscrolling)
+                    {
+                        frameskip1 = frameskip;
+                        frameskip = (frameskip > frameskip0) ? frameskip0 : frameskip;
+                        ignore_delay = 1;
+                    }
+                    else
+                    {
+                        frameskip0 = frameskip;
+                        frameskip = (frameskip1 > frameskip) ? frameskip1 : frameskip;
+                        ignore_delay = 1;
+                    }
+                    scrolling = nscrolling;
+                }
+                if (scrolling)
+                {
+                    DIRTY_ALL();
+                }
+            }
+            if ((paused && ! (snapshot || snapshot_txt))
+                &&
+                ((vcol + (reflect ? r_off : c_off)) >= (MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2)
+                &&
+                ((vcol + (reflect ? r_off : c_off)) < ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2 + tile_w * (int) strlen(PAUSE)))
+                &&
+                (MY_COLS >= tile_w * (int) strlen(PAUSE))
+                &&
+                ((reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) >= tile_w * (int) strlen(PAUSE))
+                &&
+                ((vline + (reflect ? c_off : r_off)) >= (LINES - tile_h + 1) / 2)
+                &&
+                ((vline + (reflect ? c_off : r_off)) < ((LINES - tile_h + 1) / 2 + tile_h))
+                &&
+                ((reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) >= tile_h))
+            {
+                int pause_x;
+                int pause_y;
+                unsigned char pause_tile;
+
+                pause_shown = 1;
+                pause_x = vcol + (reflect ? r_off : c_off) - ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2);
+                pause_y = vline + (reflect ? c_off : r_off) - ((LINES - tile_h + 1) / 2);
+                pause_tile = (unsigned long) (unsigned char) PAUSE[pause_x / tile_w];
+                if (tile_used[pause_tile])
+                {
+                    c = (unsigned long) (unsigned char) tile[(PAUSE[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
+                    if (! c)
+                    {
+                        c = ' ';
+                    }
+#if USE_COLOR
+                    if (use_color)
+                    {
+                        a = pen[PAUSE_COLOR];
+                    }
+                    else
+#endif
+                    {
+                        a = 0;
+#if USE_ATTR
+#ifdef MY_A_REVERSE
+                        a |= MY_A_REVERSE;
+#endif
+#endif
+                    }
+                }
+            }
+            if (IS_CELL_DIRTY(xtile, ytile)
+                ||
+                ISPELLET((unsigned char) (char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+                ||
+                winning)
+            {
+                if (! c)
+                {
+                    for (s = 0; s < SPRITE_REGISTERS; s ++) {
+                        int t, x, y, iseyes;
+
+                        t = sprite_register[s] + ((sprite_register_frame[s] < 0) ? (-sprite_register_frame[s]) : sprite_register_frame[s]);
+                        iseyes = ((s == GHOSTEYES(UNGHOSTEYES(s)))
+                                  &&
+                                  (UNGHOSTEYES(s) >= 0)
+                                  &&
+                                  (UNGHOSTEYES(s) < ghosts));
+                        if (debug
+                            && sprite_register_used[s]
+                            && ((x = sprite_register_x[s]) == i)
+                            && ((y = sprite_register_y[s]) == j))
+                        {
+                            if (iseyes)
+                            {
+                                c = (".^<v>")[ghost_mem[UNGHOSTEYES(s)]];
+                            }
+                            else
+                            {
+                                c = '.';
+                            }
+#if USE_COLOR
+                            if (use_color) {
+                                a = sprite_color[t];
+                                if (! a)
+                                    a = sprite_register_color[s];
+                                a = pen[a];
+                            }
+                            else
+#endif
+                            {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                {
+                                    a |= use_dim_and_bright ? MY_A_BOLD : 0;
+                                    break;
+                                }
+#endif
+#ifdef MY_A_UNDERLINE
+                                if (sprite_register[s] == SPRITE_BLUE)
+                                {
+                                    a |= use_underline ? MY_A_UNDERLINE : 0;
+                                    break;
+                                }
+#endif
+#endif
+                            }
+                            break;
+                        } else if (sprite_register_used[s]
+                                   && sprite_used[t]
+                                   && ((x = sprite_register_x[s] - sgfx_w / 2) <= i)
+                                   && ((x_off = i - x) < sgfx_w)
+                                   && ((y = sprite_register_y[s] - sgfx_h / 2) <= j)
+                                   && ((y_off = j - y) < sgfx_h)
+                                   && ((c = sgfx(t, y_off, x_off)) != 0)) {
+#if USE_COLOR
+                            if (use_color) {
+                                a = sprite_color[t];
+                                if (! a)
+                                    a = sprite_register_color[s];
+                                a = pen[a];
+                            }
+                            else
+#endif
+                            {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                {
+                                    a |= use_dim_and_bright ? MY_A_BOLD : 0;
+                                    break;
+                                }
+#endif
+#ifdef MY_A_UNDERLINE
+                                if (sprite_register[s] == SPRITE_BLUE)
+                                {
+                                    a |= use_underline ? MY_A_UNDERLINE : 0;
+                                    break;
+                                }
+#endif
+#endif
+                            }
+                            break;
+                        } else if (sprite_register_used[s]
+                                   && (! sprite_used[t])
+                                   && cp437_sprite[t]
+                                   && tile_used[(unsigned long) (unsigned char) cp437_sprite[t]]
+                                   && ((x = sprite_register_x[s] - gfx_w / 2) <= i)
+                                   && ((x_off = i - x) < gfx_w)
+                                   && ((y = sprite_register_y[s] - gfx_h / 2) <= j)
+                                   && ((y_off = j - y) < gfx_h)
+                                   && ((c = gfx((unsigned long) (unsigned char) cp437_sprite[t], y_off, x_off)) != 0))
+                        {
+#if USE_COLOR
+                            if (use_color)
+                            {
+                                a = tile_color[t];
+                                if (! a)
+                                    a = sprite_register_color[s];
+                                a = pen[a];
+                            }
+                            else
+#endif
+                            {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                {
+                                    a |= use_dim_and_bright ? MY_A_BOLD : 0;
+                                    break;
+                                }
+#endif
+#ifdef MY_A_UNDERLINE
+                                if (sprite_register[s] == SPRITE_BLUE)
+                                {
+                                    a |= use_underline ? MY_A_UNDERLINE : 0;
+                                    break;
+                                }
+#endif
+#endif
+                            }
+                            break;
+                        }
+                    }
+                }
+                if ((! c) && (ytile < maze_h) && (xtile < maze_w)) {
+                    c = maze_visual(maze_level, ytile, xtile);
+                    {
+                        int c_mapped;
+
+                        c_mapped = c;
+                        if (c_mapped == ':')
+                        {
+                            c_mapped = ' ';
+                        }
+                        else if (c_mapped == 'l')
+                        {
+                            c_mapped = 179;
+                        }
+                        else if (c_mapped == '~')
+                        {
+                            c_mapped = 196;
+                        }
+                        else if ((c_mapped == 'o') && (! tile_used[c_mapped]))
+                        {
+                            c_mapped = 254;
+                        }
+                        while ((! tile_used[c_mapped])
+                               &&
+                               (fallback_cp437[c_mapped] != c)
+                               &&
+                               (fallback_cp437[c_mapped] != c_mapped))
+                        {
+                            c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
+                        }
+                        if (tile_used[c_mapped]) {
+                            if ((ISWALL(c) && ! ISDOOR(c)) || (c == ' '))
+                            {
+                                is_wall = 1;
+                            }
+#if USE_COLOR
+                            if (use_color)
+                            {
+                                a = (int) (unsigned char) maze_color[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+                                if (! a)
+                                {
+                                    a = tile_color[c_mapped];
+                                }
+                                if (! a)
+                                {
+                                    if (ISPELLET(c))
+                                    {
+                                        a = PELLET_COLOR ? PELLET_COLOR : DOT_COLOR;
+                                    }
+                                    else if (ISDOT(c))
+                                    {
+                                        a = DOT_COLOR;
+                                    }
+                                    else if (is_wall)
+                                    {
+                                        a = EFFECTIVE_MORTAR_COLOR;
+                                    }
+                                    else if (ISTEXT(c))
+                                    {
+                                        a = TEXT_COLOR;
+                                    }
+                                }
+                                a = pen[a];
+                            }
+                            else
+#endif
+                            {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                                if (ISPELLET(c))
+                                    a |= use_dim_and_bright ? MY_A_BOLD : 0;
+#endif
+#ifdef MY_A_UNDERLINE
+                                if (use_underline)
+                                    if (ISWALL(c) && (! ISDOOR(c)))
+                                        a |= MY_A_UNDERLINE;
+#endif
+#endif
+                            }
+                            if (debug) {
+                                int s = WHOSE_HOME_DIR(ytile, xtile);
+                                unsigned char d;
+                                            
+                                d = home_dir[(s % ghosts*maze_h+ytile)*(maze_w+1)+xtile];
+                                c = (d == UP) ? '^'
+                                    : (d == DOWN) ? 'v'
+                                    : (d == LEFT) ? '<'
+                                    : (d == RIGHT) ? '>'
+                                    : ISDOT(c) ? ','
+                                    : ISPELLET(c) ? ';'
+                                    : ISOPEN(c) ? ' '
+                                    : ISDOOR(c) ? 'X'
+                                    : '@';
+#if USE_COLOR
+                                if (use_color && d) {
+                                    a = sprite_color[sprite_register[MEANGHOST(s)] + sprite_register_frame[MEANGHOST(s)]];
+                                    if (! a)
+                                        a = sprite_register_color[MEANGHOST(s)];
+                                    a = pen[a];
+                                }
+#endif
+                            }
+                            else
+                            {
+                                if ((ISPELLET(c) && ((cycles / MYMANFIFTH) & 4) && (! dead) &&
+                                     ! (sprite_register_used[HERO] && ghost_eaten_timer)) ||
+                                    ((winning < ONESEC) && winning && (! myman_intro) && (! intermission_running) && (! myman_start) &&
+                                     (ISDOT(c) || ISPELLET(c) || (((winning / MYMANFIFTH) & 4) && ISDOOR(c)))))
+                                {
+                                    is_wall = 0;
+                                    c_mapped = ' ';
+                                }
+                                else if ((winning < (2 * TWOSECS)) && ((winning / MYMANFIFTH) & 4) && ! ghost_eaten_timer)
+                                {
+                                    is_wall = 0;
+#if USE_COLOR
+                                    if (use_color)
+                                        a = pen[0xF];
+                                    else
+#endif
+                                        c_mapped = ' ';
+                                }
+                                c = gfx(c_mapped, j, i);
+                                if ((SOLID_WALLS || SOLID_WALLS_BGCOLOR)
+                                    &&
+                                    TRANSLATED_WALL_COLOR
+                                    &&
+                                    is_wall
+                                    &&
+                                    (! (myman_intro || myman_start || intermission_running))
+                                    &&
+                                    (! IS_FULLY_NON_INVERTED(xtile, ytile)))
+                                {
+                                    if (SOLID_WALLS
+                                        &&
+                                        (((c == ' ') && (IS_FULLY_INVERTED(xtile, ytile) || (! IS_INVERTED(xtile, ytile))))
+                                         ||
+                                         ((c == '\0') && (IS_FULLY_INVERTED(xtile, ytile) || IS_INVERTED(xtile, ytile)))))
+                                    {
+                                        if (! SOLID_WALLS_BGCOLOR)
+                                        {
+                                            c = '\xdb';
+                                        }
+                                        else
+                                        {
+                                            c = ' ';
+                                        }
+#if USE_COLOR
+                                        if (use_color)
+                                        {
+                                            if (TRANSLATED_WALL_COLOR)
+                                            {
+                                                a = pen[(((unsigned long) (unsigned char) TRANSLATED_WALL_COLOR) * (SOLID_WALLS_BGCOLOR ? 16 : 1)) % 256];
+                                            }
+                                        }
+                                        else
+#endif
+                                        {
+#if USE_ATTR
+#ifdef MY_A_REVERSE
+                                            if (SOLID_WALLS_BGCOLOR)
+                                            {
+                                                a |= MY_A_REVERSE;
+                                            }
+#endif
+#ifdef MY_A_UNDERLINE
+                                            if (use_underline)
+                                                a |= MY_A_UNDERLINE;
+#endif
+#endif
+                                        }
+                                    }
+                                    else if ((c_mapped != ' ')
+                                             &&
+                                             (! ISNONINVERTABLE(c_mapped))
+                                             &&
+                                             SOLID_WALLS_BGCOLOR
+                                             &&
+                                             (((c != '\0') && (IS_FULLY_INVERTED(xtile, ytile) || (! IS_INVERTED(xtile, ytile))))
+                                              ||
+                                              ((c != ' ') && (IS_FULLY_INVERTED(xtile, ytile) || IS_INVERTED(xtile, ytile)))))
+                                    {
+#if USE_COLOR
+                                        if (use_color)
+                                        {
+                                            if (TRANSLATED_WALL_COLOR)
+                                            {
+                                                a = pen[(((unsigned long) (unsigned char) EFFECTIVE_MORTAR_COLOR)
+                                                         |
+                                                         (((unsigned long) (unsigned char) TRANSLATED_WALL_COLOR) * 16)) % 256];
+                                            }
+                                        }
+                                        else
+#endif
+                                        {
+#if USE_ATTR
+#ifdef MY_A_REVERSE
+                                            if (SOLID_WALLS_BGCOLOR)
+                                            {
+                                                a |= MY_A_REVERSE;
+                                            }
+#endif
+#ifdef MY_A_UNDERLINE
+                                            if (use_underline)
+                                                a |= MY_A_UNDERLINE;
+#endif
+#endif
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        else
+                            c = ' ';
+                    }
+                }
+                if (! c)
+                    c = ' ';
+            }
+            if (c)
+            {
+                vmove(line + r_off, c_off + col);
+#if USE_ATTR
+#ifdef MY_A_UNDERLINE
+#if USE_COLOR
+                if (! use_color)
+#endif
+                    if (use_underline
+                        &&
+                        (a & MY_A_UNDERLINE)
+                        &&
+#ifdef MY_A_REVERSE
+                        (! (a & MY_A_REVERSE))
+                        &&
+#endif
+                        (c == ' '))
+                    {
+                        a &= ~MY_A_UNDERLINE;
+                    }
+#endif
+#endif
+                my_addch((unsigned long) (unsigned char) c, a);
+            }
+        }
+        if (((MY_COLS - (reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w))) >= sprite_w)
+            &&
+            (LINES >= (tile_h + sprite_h))
+            &&
+            (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+            &&
+            (((vline + sprite_h) >= LINES)
+             ||
+             ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
+        {
+            int hud_line;
+            int hud_level_anchor;
+            int hud_level_anchor2;
+
+            hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
+            hud_level_anchor = reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w);
+            hud_level_anchor2 = hud_level_anchor + sprite_w * ((level > 7) ? 7 : level) - 1;
+            if (hud_level_anchor2 >= MY_COLS)
+            {
+                hud_level_anchor2 = MY_COLS - 1;
+            }
+            for (col = hud_level_anchor; col <= hud_level_anchor2; col ++)
+            {
+                int level_sprite;
+                int level_x;
+
+                level_x = col - hud_level_anchor;
+                level_sprite = SPRITE_FRUIT + BONUS(level - (level_x / sprite_w));
+                if (sprite_used[level_sprite] && ! myman_demo)
+                {
+                    chtype a;
+
+                    c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + hud_line) * sprite_w + (level_x % sprite_w)];
+                    if (c)
+                    {
+                        a = 0;
+#if USE_COLOR
+                        if (use_color) {
+                            a = sprite_color[level_sprite];
+                            if (! a)
+                            {
+                                a = sprite_register_color[FRUIT];
+                            }
+                            a = pen[a];
+                        }
+#endif
+                        my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
+                        my_addch((unsigned long) (unsigned char) c, a);
+                        continue;
+                    }
+                }
+            }
+        }
+    }
+    if (LINES >= ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+    {
+        int life_anchor;
+        int level_anchor;
+        int level_anchor2;
+
+        life_anchor = showlives * sprite_w + (reflect ? r_off : c_off) + 2 * tile_w - 1;
+        level_anchor2 = (reflect ? r_off : c_off) + ((reflect ? r_off : c_off) ? (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) : MY_COLS) - 2 * tile_w - 1;
+        level_anchor = level_anchor2 + 1 - ((level > 7) ? 7 : level) * sprite_w;
+        while ((level_anchor <= life_anchor)
+               &&
+               ((level_anchor + 2 * sprite_w - 1) <= level_anchor2))
+        {
+            level_anchor += sprite_w;
+        }
+        while ((life_anchor >= level_anchor)
+               &&
+               ((life_anchor + 1 - (reflect ? r_off : c_off) - 2 * sprite_w) >= 2 * tile_w))
+        {
+            life_anchor -= sprite_w;
+        }
+        for (line = 0; line < sprite_h; line ++)
+        {
+            for (col = 0; col < MY_COLS; col ++)
+            {
+                if ((col - (reflect ? r_off : c_off) >= (2 * tile_w))
+                    &&
+                    (col <= life_anchor)
+                    &&
+                    (! intermission_running))
+                {
+                    int life_sprite;
+
+                    my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
+                    life_sprite = SPRITE_LIFE;
+                    if (! sprite_used[life_sprite])
+                    {
+                        life_sprite = SPRITE_HERO + 4 + 2;
+                    }
+                    if (sprite_used[life_sprite])
+                    {
+                        chtype a;
+
+                        c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + line) * sprite_w + ((col - (reflect ? r_off : c_off) - 2 * tile_w) % sprite_w)];
+                        if (c)
+                        {
+                            a = 0;
+#if USE_COLOR
+                            if (use_color) {
+                                a = sprite_color[life_sprite];
+                                if (! a)
+                                {
+                                    a = sprite_register_color[HERO];
+                                }
+                                a = pen[a];
+                            }
+                            else
+#endif
+                            {
+#if USE_ATTR
+#ifdef MY_A_BOLD
+                                a |= use_dim_and_bright ? MY_A_BOLD : 0;
+#endif
+#endif
+                            }
+                            my_addch((unsigned long) (unsigned char) c, a);
+                            continue;
+                        }
+                    }
+                } else if ((col <= level_anchor2)
+                           &&
+                           (col >= level_anchor))
+                {
+                    int level_sprite;
+                    int level_x;
+
+                    my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
+                    level_x = col - level_anchor;
+                    level_sprite = SPRITE_FRUIT + BONUS(level - (level_x / sprite_w));
+                    if (sprite_used[level_sprite] && ! myman_demo)
+                    {
+                        chtype a;
+
+                        c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + line) * sprite_w + (level_x % sprite_w)];
+                        if (c)
+                        {
+                            a = 0;
+#if USE_COLOR
+                            if (use_color) {
+                                a = sprite_color[level_sprite];
+                                if (! a)
+                                {
+                                    a = sprite_register_color[FRUIT];
+                                }
+                                a = pen[a];
+                            }
+#endif
+                            my_addch((unsigned long) (unsigned char) c, a);
+                            continue;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    my_attrset(0);
+    if (debug)
+    {
+        my_move(0, 0);
+        for (i = 0; i < MAXFRAMESKIP; i ++)
+        {
+            if (i <= frameskip)
+            {
+                my_addstr("\xdb", 0);
+            }
+            else
+            {
+                my_addstr(" ", 0);
+            }
+        }
+    }
+    if (sprite_register_used[FRUIT] && (LINES > 6) && ! use_sound) {
+        static char msg[8][12] = {" <  <N>  > ",
+                                  "<  <ONU>  >",
+                                  "  <BONUS>  ",
+                                  " < BONUS > ",
+                                  "<  BONUS  >",
+                                  " > BONUS < ",
+                                  "  >BONUS<  ",
+                                  ">  >ONU<  <"};
+
+        my_move(LINES - 1, 1 * (use_fullwidth ? 2 : 1));
+        my_addstr(msg[(cycles / MYMANFIFTH) & 7], 0);
+    }
+    if ((! myman_demo)
+        &&
+        (! myman_intro)
+        &&
+        (! myman_start)
+        &&
+        ((LINES > 6) && (MY_COLS > 46))
+        &&
+        (((reflect ? c_off : r_off) < tile_h)
+         ||
+         ((LINES - ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))) < sprite_h))
+        &&
+        ((LINES < (tile_h + sprite_h))
+         ||
+         ((reflect ? r_off : c_off) < (5 * tile_w))
+         ||
+         ((reflect ? r_off : c_off) < sprite_w)
+         ||
+         ((MY_COLS - (reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w))) < sprite_w)))
+    {
+        static char buf[128];
+
+        sprintf(buf,
+                " Level: %-10u Lives: %d Score: %-10u ",
+                level, NET_LIVES, score);
+        my_move(LINES - 1, (MY_COLS - 46) * (use_fullwidth ? 2 : 1));
+        my_addstr(buf, 0);
+    }
+    if (paused && ! (snapshot || snapshot_txt || pause_shown))
+    {
+        standout();
+        mvprintw(LINES / 2, ((COLS - (int) strlen(PAUSE)) & ~(use_fullwidth ? 1 : 0)) / 2, PAUSE);
+        standend();
+    }
+    {
+        int was_inverted;
+
+        was_inverted = snapshot || snapshot_txt;
+        my_refresh();
+        if (was_inverted)
+        {
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+        }
+        else
+        {
+            CLEAN_ALL();
+        }
+    }
+    {
+        int s;
+        for (s = 0; s < SPRITE_REGISTERS; s ++)
+        {
+            if (sprite_register_used[s])
+            {
+                mark_sprite_register(s);
+            }
+        }
+    }
+}
+
 static int
 gamecycle(void)
 {
-    long c = 0;
-    int i, j, k;
-    int s, x1, y1, line, col, xtile, ytile, x_off, y_off, vline, vcol, pause_shown;
-    int r_off, c_off;
-    int visible_frame;
-    static unsigned long sfx = 0UL;
-    int showlives;
+    int k;
+    int s, xtile, ytile, x_off, y_off;
+    int hero_can_move_left = 0;
+    int hero_can_move_right = 0;
+    int hero_can_move_up = 0;
+    int hero_can_move_down = 0;
+    unsigned char m1, m2;
 
     showlives = ((myman_intro || myman_start || myman_demo) ? 0 : NET_LIVES) - 1 + (((munched == HERO) && (! sprite_register_used[HERO])) ? 1 : 0);
     if ((old_lines != LINES)
@@ -7142,82 +6343,7 @@ gamecycle(void)
         old_showlives = showlives;
         old_level = level;
     }
-#define sfx_credit 0x1UL
-#define sfx_dot 0x2UL
-#define sfx_dying 0x4UL
-#define sfx_ghost 0x8UL
-#define sfx_intermission 0x10UL
-#define sfx_pellet 0x20UL
-#define sfx_siren0_down 0x40UL
-#define sfx_siren0_up 0x80UL
-#define sfx_siren1_down 0x100UL
-#define sfx_siren1_up 0x200UL
-#define sfx_siren2_down 0x400UL
-#define sfx_siren2_up 0x800UL
-#define sfx_start 0x1000UL
-#define sfx_fruit 0x2000UL
-#define sfx_life 0x4000UL
-#define sfx_level 0x8000UL
-#define sfx_bonus 0x10000UL
-#define sfx_nobeep_mask (sfx_siren0_up|sfx_siren0_down|sfx_siren1_up|sfx_siren1_down|sfx_siren2_up|sfx_siren2_down|sfx_dot)
-#ifdef ALLEGROCURSES
-#define handle_sfx(n) \
-            do { if (sfx & sfx_ ## n) \
-            { \
-                static MIDI *n##_music = 0; \
-                sfx &= ~sfx_ ## n; \
-                if ((use_sound && ! myman_demo) && ! n##_music) \
-                { \
-                    n##_music = load_midi("sfx/"#n".mid"); \
-                } \
-                if ((use_sound && ! myman_demo) && n##_music) \
-                { \
-                    stop_midi(); \
-                    play_midi(n##_music, 0); \
-                } \
-            } } while (0)
-#else
-#if USE_SDL_MIXER
-#define handle_sfx(n) \
-            do { if ((sfx & sfx_ ## n) && sdl_audio_open) \
-            { \
-                static Mix_Music *n##_music = 0; \
-                sfx &= ~sfx_ ## n; \
-                if ((use_sound && ! myman_demo) && ! n##_music) \
-                { \
-                    n##_music = Mix_LoadMUS("sfx/"#n".xm"); \
-                } \
-                if ((use_sound && ! myman_demo) && ! n##_music) \
-                { \
-                    n##_music = Mix_LoadMUS("sfx/"#n".mid"); \
-                } \
-                if ((use_sound && ! myman_demo) && n##_music) \
-                { \
-                    if (! Mix_PlayingMusic()) Mix_PlayMusic(n##_music, 1); \
-                } \
-            } } while (0)
-#else
-#define handle_sfx(n) do { if (sfx & sfx_ ## n) { sfx &= ~sfx_##n; if ((sfx_##n & ~sfx_nobeep_mask) && use_sound && ! myman_demo) beep(); } } while (0)
-#endif
-#endif
-    handle_sfx(credit);
-    handle_sfx(dot);
-    handle_sfx(dying);
-    handle_sfx(ghost);
-    handle_sfx(intermission);
-    handle_sfx(pellet);
-    handle_sfx(siren0_down);
-    handle_sfx(siren0_up);
-    handle_sfx(siren1_down);
-    handle_sfx(siren1_up);
-    handle_sfx(siren2_down);
-    handle_sfx(siren2_up);
-    handle_sfx(start);
-    handle_sfx(fruit);
-    handle_sfx(life);
-    handle_sfx(level);
-    handle_sfx(bonus);
-    if (sfx) { sfx = 0UL; if (use_sound && ! myman_demo) beep(); }
+    gamesfx();
     if (! (winning || NET_LIVES || dead || dying || ghost_eaten_timer || myman_intro || myman_demo || myman_start || intermission_running || need_reset))
     {
         key_buffer = ERR;
@@ -7250,9 +6376,8 @@ gamecycle(void)
         deadpan = 0;
         dying = 0;
     }
-    pause_shown = 0;
 #if MYMANDELAY
-    if (delay
+    if (mymandelay
         &&
         (! myman_demo_setup)
         &&
@@ -7263,7 +6388,7 @@ gamecycle(void)
 
         do
         {
-            actual_delay = (myman_demo ? ((delay + mindelay) / 2) : delay) * (frameskip ? frameskip : 1);
+            actual_delay = (myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1);
             if (gettimeofday(&tv2, 0))
             {
                 tv.tv_sec = 0;
@@ -7325,7 +6450,7 @@ gamecycle(void)
                     {
                         frameskip = (unsigned long) (nframeskip + 0.5);
                     }
-                    actual_delay = (myman_demo ? ((delay + mindelay) / 2) : delay) * (frameskip ? frameskip : 1);
+                    actual_delay = (myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1);
                     if (delta <= actual_delay)
                     {
                         actual_delay -= delta;
@@ -7350,7 +6475,7 @@ gamecycle(void)
                 {
                     usleep(actual_delay % 999999UL);
                 }
-                if (actual_delay == ((myman_demo ? ((delay + mindelay) / 2) : delay) * (frameskip ? frameskip : 1)))
+                if (actual_delay == ((myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1)))
                 {
                     break;
                 }
@@ -7395,33 +6520,57 @@ gamecycle(void)
             frameskip = 0;
         }
     }
+    m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
+    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+    hero_can_move_left =
+        ISOPEN(m1)
+        ||
+        ISZAPLEFT(m2);
+    m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
+    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+    hero_can_move_right =
+        ISOPEN(m1)
+        ||
+        ISZAPRIGHT(m2);
+    m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
+    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+    hero_can_move_up =
+        ISOPEN(m1)
+        ||
+        ISZAPUP(m2);
+    m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
+    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+    hero_can_move_down =
+        ISOPEN(m1)
+        ||
+        ISZAPDOWN(m2);
 #ifdef KEY_RESIZE
     if (k == KEY_RESIZE)
     {
         k = '@';
     }
 #endif
-    if ((k == 'q') || (k == 'Q') || (k == CTRL('C')) || quit_requested)
+    if ((k == 'q') || (k == 'Q') || (k == MYMANCTRL('C')) || quit_requested)
     {
         quit_requested = 0;
         return 0;
     }
-    else if (k == CTRL('@'))
+    else if (k == MYMANCTRL('@'))
     {
         /* NUL - idle keepalive (iTerm, maybe others?) */
         return 1;
     }
-    else if (k == CTRL('S'))
+    else if (k == MYMANCTRL('S'))
     {
         xoff_received = 1;
         return 1;
     }
-    else if (k == CTRL('Q'))
+    else if (k == MYMANCTRL('Q'))
     {
         xoff_received = 0;
         return 1;
     }
-    else if ((k == '\?') || (k == CTRL('H')))
+    else if ((k == '\?') || (k == MYMANCTRL('H')))
     {
         if (MYMANKEYS
             || maze_ABOUT || maze_FIXME || maze_NOTE
@@ -7467,7 +6616,7 @@ gamecycle(void)
         got_sigwinch = 0;
         reinit_requested = 1;
         return 0;
-    } else if ((k == 'r') || (k == 'R') || (k == CTRL('L')) || (k == CTRL('R'))) {
+    } else if ((k == 'r') || (k == 'R') || (k == MYMANCTRL('L')) || (k == MYMANCTRL('R'))) {
         my_clear();
         clearok(curscr, TRUE);
         DIRTY_ALL();
@@ -7490,7 +6639,8 @@ gamecycle(void)
 #endif
 #if USE_COLOR
     } else if ((k == 'c') || (k == 'C')) {
-        if ((use_color = ! use_color))
+        use_color = ! use_color;
+        if (use_color)
             init_pen();
         else
             destroy_pen();
@@ -7648,36 +6798,32 @@ gamecycle(void)
         frameskip = 0;
         goto nextkey;
     } else if ((reflect ? IS_UP_ARROW(((k == ERR) ? key_buffer : k)) : IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)))
-               && (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))])
-                   ||
-                   ISZAPLEFT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))) {
+               && hero_can_move_left)
+    {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
             hero_dir = LEFT;
             sprite_register[HERO] = SPRITE_HERO + 4;
         }
     } else if ((reflect ? IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)) : IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)))
-               && (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))])
-                   ||
-                   ISZAPRIGHT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))) {
+               && hero_can_move_right)
+    {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
             hero_dir = RIGHT;
             sprite_register[HERO] = SPRITE_HERO + 12;
         }
     } else if ((reflect ? IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)) : IS_UP_ARROW(((k == ERR) ? key_buffer : k)))
-               && (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile])
-                   ||
-                   ISZAPUP((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))) {
+               && hero_can_move_up)
+    {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
             hero_dir = UP;
             sprite_register[HERO] = SPRITE_HERO;
         }
     } else if ((reflect ? IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)) : IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)))
-               && (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile])
-                   ||
-                   ISZAPDOWN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))) {
+               && hero_can_move_down)
+    {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
             hero_dir = DOWN;
@@ -7703,279 +6849,7 @@ gamecycle(void)
     visible_frame = ! ((frames ++) % (frameskip ? frameskip : 1));
     if (myman_intro && ! (paused || snapshot || snapshot_txt))
     {
-        int s;
-
-        if (myman_intro == 1)
-        {
-            cycles = -1;
-            for (s = 0; s < SPRITE_REGISTERS; s ++)
-            {
-                sprite_register_used[s] = 0;
-                sprite_register_timer[s] = 0;
-            }
-            maze_erase();
-            ghost_eaten_timer = 0;
-        }
-        for (s = 0; s < 4; s ++)
-        {
-            int eyes;
-            int mean;
-            int blue;
-            int ghost;
-            int nick_col, nick_row;
-            int name_col, name_row;
-            const char *ghost_name;
-            const char *ghost_nick;
-
-            ghost = (s == 0) ? GHOST1 : (s == 1) ? GHOST2 : (s == 2) ? GHOST0 : (s == 3) ? GHOST3 : s;
-            ghost_nick = (ghost == GHOST0) ? GHOST0_NICK : (ghost == GHOST2) ? GHOST2_NICK : (ghost == GHOST1) ? GHOST1_NICK : (ghost == GHOST3) ? GHOST3_NICK : "";
-            ghost_name = (ghost == GHOST0) ? GHOST0_NAME : (ghost == GHOST2) ? GHOST2_NAME : (ghost == GHOST1) ? GHOST1_NAME : (ghost == GHOST3) ? GHOST3_NAME : "-?????";
-            name_row = 3 * (s + 1) + 1;
-            if (name_row < 2) name_row = 2;
-            name_col = 7 + (maze_w - 28) / 2;
-            if (name_col < (sgfx_w + gfx_w - 1) / gfx_w) name_col = (sgfx_w + gfx_w - 1) / gfx_w;
-            nick_row = name_row;
-            nick_col = name_col + (int) strlen(NAME_HEADER);
-            if (nick_col + (int) strlen(NICK_HEADER) > maze_w)
-            {
-                nick_col = name_col + 1;
-                nick_row = name_row + 1;
-            }
-            if ((! s) && (myman_intro == 1))
-            {
-                maze_puts(name_row - 2, name_col, 0xF, NAME_HEADER);
-                maze_puts(nick_row - 2, nick_col, 0xF, NICK_HEADER);
-            }
-            if (ghost >= ghosts) continue;
-            eyes = GHOSTEYES(ghost);
-            mean = MEANGHOST(ghost);
-            blue = BLUEGHOST(ghost);
-            if (myman_intro == (1 + s * 3 * TWOSECS / 4))
-            {
-                int hero_x;
-
-                hero_x = (9 + maze_w - 28) * gfx_w / 2;
-                if (hero_x < sgfx_w / 2)
-                {
-                    hero_x = XPIXWRAP(sgfx_w / 2);
-                }
-                sprite_register_used[eyes] = VISIBLE_EYES;
-                sprite_register_used[mean] = 1;
-                sprite_register_used[blue] = 0;
-                sprite_register_frame[mean] = 0;
-                sprite_register_x[HERO] =
-                    sprite_register_x[eyes] =
-                    sprite_register_x[mean] = hero_x;
-                sprite_register_y[HERO] =
-                    sprite_register_y[eyes] =
-                    sprite_register_y[mean] = (6 * s + 9) * gfx_h / 2;
-                if (sprite_register_y[HERO] < sgfx_h / 2)
-                {
-                    sprite_register_y[HERO] =
-                        sprite_register_y[eyes] =
-                        sprite_register_y[mean] = YPIXWRAP(sgfx_h / 2);
-                }
-                deadpan = 0;
-                sprite_register_frame[eyes] = RIGHT - 1;
-            }
-            else if ((myman_intro > (1 + s * 3 * TWOSECS / 4))
-                     &&
-                     (myman_intro < (1 + (s * 3 + 1) * TWOSECS / 4)))
-            {
-                sprite_register_x[HERO] -= ((myman_intro - 1) - (1 + s * 3 * TWOSECS / 4)) * (name_col * gfx_w - sprite_register_x[mean]) / (1 + TWOSECS / 4);
-                sprite_register_x[HERO] += (myman_intro - (1 + s * 3 * TWOSECS / 4)) * (name_col * gfx_w - sprite_register_x[mean]) / (1 + TWOSECS / 4);
-            }
-            if (myman_intro == (1 + (s * 3 + 1) * TWOSECS / 4))
-            {
-#if USE_COLOR
-#define MEANCOLOR sprite_register_color[mean]
-#else
-#define MEANCOLOR 0xF
-#endif                            
-                sprite_register_x[HERO] = name_col * gfx_w + gfx_w / 2;
-                maze_puts(name_row, name_col,
-                          sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
-                          ?
-                          sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
-                          :
-                          MEANCOLOR
-                          ,
-                          ghost_name);
-            }
-            else if ((myman_intro > (1 + (s * 3 + 1) * TWOSECS / 4))
-                     &&
-                     (myman_intro < (1 + (s * 3 + 2) * TWOSECS / 4)))
-            {
-                sprite_register_x[HERO] -= ((myman_intro - 1) - (1 + (s * 3 + 1) * TWOSECS / 4)) * ((int) strlen(NAME_HEADER) * gfx_w) / (1 + TWOSECS / 4);
-                sprite_register_x[HERO] += (myman_intro - (1 + (s * 3 + 1) * TWOSECS / 4)) * ((int) strlen(NAME_HEADER) * gfx_w) / (1 + TWOSECS / 4);
-            }
-            if (myman_intro == (1 + (s * 3 + 2) * TWOSECS / 4))
-            {
-                sprite_register_x[HERO] = nick_col * gfx_w + gfx_w / 2;
-                maze_puts(nick_row, nick_col,
-                          sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
-                          ?
-                          sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
-                          :
-                          MEANCOLOR
-                          ,
-                          ghost_nick);
-            }
-            else if ((myman_intro > (1 + (s * 3 + 2) * TWOSECS / 4))
-                     &&
-                     (myman_intro < (1 + ((s + 1) * 3) * TWOSECS / 4)))
-            {
-                sprite_register_x[HERO] -= ((myman_intro - 1) - (1 + (s * 3 + 2) * TWOSECS / 4)) * ((int) strlen(NICK_HEADER) * gfx_w) / (1 + TWOSECS / 4);
-                sprite_register_x[HERO] += (myman_intro - (1 + (s * 3 + 2) * TWOSECS / 4)) * ((int) strlen(NICK_HEADER) * gfx_w) / (1 + TWOSECS / 4);
-            }
-            if (myman_intro > (4 * 3 * TWOSECS / 4))
-            {
-                sprite_register_frame[mean] = ((myman_intro / FIFTH) & 1) ? 1 : 0;
-            }
-        }
-        if (myman_intro == (1 + 4 * 3 * TWOSECS / 4))
-        {
-            sprite_register_x[HERO] = gfx_w * (maze_w + 1) - sgfx_w;
-            sprite_register_y[HERO] = ((17 * 2 + 1) * gfx_h) / 2;
-            if ((YTILE(sprite_register_y[HERO]) + 6) >= maze_h)
-            {
-                maze_erase();
-                for (s = 0; s < SPRITE_REGISTERS; s ++)
-                {
-                    sprite_register_used[s] = 0;
-                    sprite_register_timer[s] = 0;
-                    sprite_register_frame[s] = 0;
-                }
-                sprite_register_y[HERO] = 3 * gfx_h / 2;
-            }
-            sprite_register_frame[HERO] = 0;
-            sprite_register[HERO] = SPRITE_HERO + 4;
-            sprite_register_used[HERO] = 1;
-            if ((YTILE(sprite_register_y[HERO]) + 11) < maze_h)
-            {
-                maze_puts(YWRAP(YTILE(sprite_register_y[HERO]) + 11), ((int) maze_w - (int) strlen(MYMANNOTICE)) / 2, 0xD, MYMANNOTICE);
-            }
-            else
-            {
-                maze_puts(YWRAP(maze_h - 1), ((int) maze_w - (int) strlen(MYMANNOTICE)) / 2, 0xD, MYMANNOTICE);
-            }
-            maze_puts(YTILE(sprite_register_y[HERO]) + 6, 12 + (maze_w - 28) / 2, 0xF, "50 \x9es");
-            maze_puts(YTILE(sprite_register_y[HERO]) + 4, 12 + (maze_w - 28) / 2, 0xF, "10 \x9es");
-            maze_puts(YTILE(sprite_register_y[HERO]) + 6, 10 + (maze_w - 28) / 2, 0x7, "\xfe");
-            maze_puts(YTILE(sprite_register_y[HERO]) + 4, 10 + (maze_w - 28) / 2, 0x7, "\xf9");
-            maze_puts(YTILE(sprite_register_y[HERO]), 4 + (maze_w - 28) / 2, 0x7, "\xfe");
-        }
-        else if (sprite_register_used[HERO] || ghost_eaten_timer)
-        {
-            if (ghost_eaten_timer)
-            {
-                ghost_eaten_timer --;
-                if (! ghost_eaten_timer)
-                {
-                    sprite_register_used[HERO] = 1;
-                    sprite_register_used[GHOST_SCORE] = 0;
-                }
-            }
-            else
-            {
-                sprite_register_frame[HERO] = (myman_intro / (1 + (FIFTH / 2))) % 4;
-                if ((sprite_register[HERO] == (SPRITE_HERO + 4))
-                    &&
-                    (sprite_register_x[HERO] == gfx_w * (4 + (maze_w - 28) / 2)))
-                {
-                    maze_puts(YTILE(sprite_register_y[HERO]), 4 + (maze_w - 28) / 2, 0x7, " ");
-                    sprite_register[HERO] = SPRITE_HERO + 12;
-                    sprite_register_frame[HERO] = 0;
-                }
-                else if (sprite_register[HERO] == (SPRITE_HERO + 4))
-                {
-                    sprite_register_x[HERO] --;
-                }
-                else
-                {
-                    sprite_register_x[HERO] ++;
-                }
-            }
-            for (s = 0; s < 4; s ++)
-            {
-                int eyes;
-                int mean;
-                int blue;
-                int ghost;
-                            
-                ghost = MAXGHOSTS - 4 + ((s == 0) ? GHOST1 : (s == 1) ? GHOST2 : (s == 2) ? GHOST0 : (s == 3) ? GHOST3 : s);
-                if ((ghost < ghosts) || (ghost >= MAXGHOSTS)) continue;
-                eyes = GHOSTEYES(ghost);
-                mean = MEANGHOST(ghost);
-                blue = BLUEGHOST(ghost);
-                sprite_register[eyes] = SPRITE_EYES;
-                sprite_register[mean] = SPRITE_MEAN;
-                sprite_register[blue] = SPRITE_BLUE;
-                sprite_register_y[eyes] =
-                    sprite_register_y[mean] =
-                    sprite_register_y[blue] = sprite_register_y[HERO];
-                sprite_register_frame[eyes] = RIGHT - 1;
-                sprite_register_frame[blue] =
-                    (sprite_register_frame[mean] = ((myman_intro / FIFTH) & 1) ? 1 : 0);
-                if ((sprite_register[HERO] == (SPRITE_HERO + 4)) && ! ghost_eaten_timer)
-                {
-                    sprite_register_frame[eyes] = LEFT - 1;
-                    sprite_register_used[eyes] = VISIBLE_EYES;
-                    sprite_register_used[mean] = 1;
-                    sprite_register_used[blue] = 0;
-                    sprite_register_x[eyes] =
-                        sprite_register_x[mean] =
-                        sprite_register_x[blue] = 3 * (sprite_register_x[HERO] - gfx_w * (3 + (maze_w - 28) / 2)) / 2 + sgfx_w * s + gfx_w * (4 + (maze_w - 28) / 2);
-                }
-                else if (sprite_register_used[mean] && ! ghost_eaten_timer)
-                {
-                    sprite_register_used[eyes] =
-                        sprite_register_used[mean] = 0;
-                    sprite_register_used[blue] = 1;
-                }
-                else if (sprite_register_used[eyes])
-                {
-                    sprite_register_x[eyes] =
-                        sprite_register_x[mean] =
-                        sprite_register_x[blue] += 2;
-                }
-                else if (sprite_register_used[blue] && collide(blue, HERO) && ! ghost_eaten_timer)
-                {
-                    sprite_register_used[blue] = 0;
-                    sprite_register_used[eyes] = 1;
-                    ghost_eaten_timer = ONESEC;
-                    sprite_register_frame[HERO] = 0;
-                    sprite_register_used[HERO] = 0;
-                    sprite_register_used[GHOST_SCORE] = 1;
-                    sprite_register_x[GHOST_SCORE] = sprite_register_x[blue];
-                    sprite_register_y[GHOST_SCORE] = sprite_register_y[blue];
-                    sprite_register_frame[GHOST_SCORE] = s;
-                }
-                else if (sprite_register_used[blue] && (myman_intro & 1) && ! ghost_eaten_timer)
-                {
-                    sprite_register_x[eyes] =
-                        sprite_register_x[mean] =
-                        sprite_register_x[blue] ++;
-                }
-#if USE_COLOR
-                sprite_register_color[eyes] = 0xF;
-                sprite_register_color[blue] = 0x9;
-                sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(s % strlen(EXTRA_GHOST_COLORS))];
-                if (s == 2) sprite_register_color[mean] = 0xB;
-                if (s == 0) sprite_register_color[mean] = 0xC;
-                if (s == 1) sprite_register_color[mean] = 0xD;
-                if (s == 3) sprite_register_color[mean] = 0x6;
-#endif
-            }
-        }
-        if (! ghost_eaten_timer)
-            for (s = 0; s < SPRITE_REGISTERS; s ++) {
-                if (sprite_register_used[s] && sprite_register_timer[s])
-                    if (! -- sprite_register_timer[s])
-                        sprite_register_used[s] = 0;
-            }
-        myman_intro ++;
-        cycles ++;
+        gameintro();
         if (((! ghost_eaten_timer)
              &&
              ((sprite_register_frame[GHOST_SCORE] == 3)
@@ -7994,157 +6868,7 @@ gamecycle(void)
     }
     if (myman_demo && ! (paused || snapshot || snapshot_txt))
     {
-        if ((myman_demo == 1) && (! myman_demo_setup))
-        {
-            level = 0;
-            maze_level = 0;
-            intermission = 0;
-            intermission_shown = 0;
-            for (s = 0; s < SPRITE_REGISTERS; s ++)
-            {
-                sprite_register_used[s] = 0;
-                sprite_register_timer[s] = 0;
-                sprite_register_frame[s] = 0;
-            }
-            maze_erase();
-            ghost_eaten_timer = 0;
-            winning = 1;
-            oldplayer = 0;
-            player = 1;
-            pellet_timer = 0;
-            pellet_time = PELLET_ADJUST(7 * ONESEC);
-            for (s = 0; s < frames % 8; s ++)
-            {
-                pellet_time -= PELLET_ADJUST(7 * ONESEC);
-                if (level && (FLIP_ALWAYS ||
-                              INTERMISSION(level)))
-                {
-                    ++ maze_level;
-                    maze_level %= maze_n;
-                    if (! maze_level)
-                    {
-                        maze_level = flip_to % maze_n;
-                    }
-                    if (FLIP_LOCK && ! maze_level)
-                    {
-                        maze_level = maze_n - 1;
-                    }
-                }
-                ++ level;
-                sprite_register_frame[FRUIT] =
-                    sprite_register_frame[FRUIT_SCORE] = BONUS(level);
-                pellet_time += PELLET_ADJUST(7 * ONESEC);
-                if (pellet_time > PELLET_ADJUST(ONESEC))
-                    pellet_time -= PELLET_ADJUST(ONESEC);
-                else
-                    pellet_time = 0;
-            }
-            cycles = 0;
-            dots = 0;
-            dead = 0;
-            deadpan = 0;
-            dying = 0;
-            myman_demo_setup = 1 + (15UL * (maze_h * maze_w) * TWOSECS / (28 * 31)) / 2;
-        }
-        if (! (winning || dying || (dead && ! ghost_eaten_timer)))
-        {
-            if (! (frames % ((TWOSECS / 20) + 1)))
-            {
-                if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))])
-                    &&
-                    ISPELLET((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))]))
-                {
-                    hero_dir = LEFT;
-                    sprite_register[HERO] = SPRITE_HERO + 4;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         ISPELLET((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile]))
-                {
-                    hero_dir = DOWN;
-                    sprite_register[HERO] = SPRITE_HERO + 16;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))])
-                         &&
-                         ISPELLET((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))]))
-                {
-                    hero_dir = RIGHT;
-                    sprite_register[HERO] = SPRITE_HERO + 12;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         ISPELLET((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile]))
-                {
-                    hero_dir = UP;
-                    sprite_register[HERO] = SPRITE_HERO;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         ISDOT((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile]))
-                {
-                    hero_dir = UP;
-                    sprite_register[HERO] = SPRITE_HERO;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))])
-                         &&
-                         ISDOT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))]))
-                {
-                    hero_dir = LEFT;
-                    sprite_register[HERO] = SPRITE_HERO + 4;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         ISDOT((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile]))
-                {
-                    hero_dir = DOWN;
-                    sprite_register[HERO] = SPRITE_HERO + 16;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))])
-                         &&
-                         ISDOT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))]))
-                {
-                    hero_dir = RIGHT;
-                    sprite_register[HERO] = SPRITE_HERO + 12;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))])
-                         &&
-                         (hero_dir != RIGHT))
-                {
-                    hero_dir = LEFT;
-                    sprite_register[HERO] = SPRITE_HERO + 4;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         (hero_dir != DOWN))
-                {
-                    hero_dir = UP;
-                    sprite_register[HERO] = SPRITE_HERO;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))])
-                         &&
-                         (hero_dir != LEFT))
-                {
-                    hero_dir = RIGHT;
-                    sprite_register[HERO] = SPRITE_HERO + 12;
-                }
-                else if (ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile])
-                         &&
-                         (hero_dir != UP))
-                {
-                    hero_dir = DOWN;
-                    sprite_register[HERO] = SPRITE_HERO + 16;
-                }
-            }
-        }
-        if (myman_demo_setup)
-        {
-            myman_demo_setup --;
-        }
-        if (! myman_demo_setup)
-        {
-            myman_demo ++;
-        }
-        maze_puts(rmsg, cmsg, MSG_COLOR, msg_GAMEOVER);
+        gamedemo();
         if ((myman_demo > (1 + (20UL * (maze_h * maze_w) * TWOSECS / (28 * 31)) / 2))
             ||
             (k != ERR))
@@ -8156,7 +6880,7 @@ gamecycle(void)
             myman_start = (k != ERR) ? (30 * ONESEC) : 0;
             if (myman_start)
             {
-                sfx |= sfx_credit;
+                myman_sfx |= myman_sfx_credit;
             }
             winning = 1;
             oldplayer = 0;
@@ -8215,160 +6939,12 @@ gamecycle(void)
             ||
             (k != ERR))
         {
-            level = 0;
-            maze_level = 0;
-            intermission = 0;
-            intermission_shown = 0;
-            maze_erase();
-            ghost_eaten_timer = 0;
-            winning = 1;
-            oldplayer = 0;
-            player = 1;
-            pellet_timer = 0;
-            pellet_time = PELLET_ADJUST(7 * ONESEC);
-            cycles = 0;
-            score = 0;
-            dots = 0;
-            dead = 0;
-            deadpan = 0;
-            dying = 0;
-            myman_start = 0;
+            gamestart();
         }
     }
     if (intermission_running && ! (paused || snapshot || snapshot_txt))
     {
-        if (intermission_running == (1 + INTERMISSION_TIME))
-        {
-            for (s = 0; s < SPRITE_REGISTERS; s ++)
-            {
-                sprite_register_used[s] = 0;
-                sprite_register_timer[s] = 0;
-                sprite_register_frame[s] = 0;
-            }
-            maze_erase();
-            sfx |= sfx_intermission;
-        }
-        intermission_running --;
-        if (intermission == 0)
-        {
-            if ((INTERMISSION_TIME - intermission_running) <= PIX_W)
-            {
-                sprite_register_used[HERO] = 1;
-                sprite_register_y[HERO] = (maze_h / 2 - 2) * gfx_h;
-                sprite_register_x[HERO] = PIX_W - gfx_w / 2 - (INTERMISSION_TIME - intermission_running);
-                sprite_register[HERO] = SPRITE_HERO + 4;
-                sprite_register_frame[HERO] = ((INTERMISSION_TIME - intermission_running) / (1 + (FIFTH / 2))) % 4;
-                if (GHOST1 < ghosts)
-                {
-                    int mean;
-                    int eyes;
-                    int blue;
-
-                    mean = MEANGHOST(GHOST1);
-                    eyes = GHOSTEYES(GHOST1);
-                    blue = BLUEGHOST(GHOST1);
-                    sprite_register_x[mean] =
-                        sprite_register_x[eyes] =
-                        sprite_register_x[blue] = 2 * sprite_register_x[HERO] + sgfx_w;
-                    sprite_register_y[mean] =
-                        sprite_register_y[eyes] =
-                        sprite_register_y[blue] = sprite_register_y[HERO];
-                    sprite_register[mean] = SPRITE_MEAN;
-                    sprite_register[eyes] = SPRITE_EYES;
-                    sprite_register[blue] = SPRITE_BLUE;
-                    sprite_register_frame[eyes] = LEFT - 1;
-                    sprite_register_frame[blue] =
-                        (sprite_register_frame[mean] = (((INTERMISSION_TIME - intermission_running) / FIFTH) & 1) ? 1 : 0);
-                    sprite_register_used[mean] = 1;
-                    sprite_register_used[eyes] = VISIBLE_EYES;
-                    sprite_register_used[blue] = 0;
-                }
-            }
-            else if ((intermission_running <= (2 * PIX_W)) && intermission_running)
-            {
-                /* TODO: need a giant hero here */
-                sprite_register_used[HERO] = 1;
-                sprite_register_used[BIGHERO_UL] = 0;
-                sprite_register_used[BIGHERO_UR] = 0;
-                sprite_register_used[BIGHERO_LL] = 0;
-                sprite_register_used[BIGHERO_LR] = 0;
-                if (sprite_used[SPRITE_BIGHERO_UL]
-                    &&
-                    sprite_used[SPRITE_BIGHERO_UR]
-                    &&
-                    sprite_used[SPRITE_BIGHERO_LL]
-                    &&
-                    sprite_used[SPRITE_BIGHERO_LR])
-                {
-                    sprite_register_used[HERO] = 0;
-                    sprite_register_used[BIGHERO_UL] = 1;
-                    sprite_register_used[BIGHERO_UR] = 1;
-                    sprite_register_used[BIGHERO_LL] = 1;
-                    sprite_register_used[BIGHERO_LR] = 1;
-                }
-                sprite_register_y[HERO] = (maze_h / 2 + 2) * gfx_h;
-                sprite_register_x[HERO] = PIX_W - gfx_w / 2 - intermission_running;
-                sprite_register_y[BIGHERO_UL] = sprite_register_y[HERO] - sgfx_h;
-                sprite_register_y[BIGHERO_UR] = sprite_register_y[HERO] - sgfx_h;
-                sprite_register_y[BIGHERO_LL] = sprite_register_y[HERO];
-                sprite_register_y[BIGHERO_LR] = sprite_register_y[HERO];
-                sprite_register_x[BIGHERO_UL] = sprite_register_x[HERO] - sgfx_w;
-                sprite_register_x[BIGHERO_UR] = sprite_register_x[HERO];
-                sprite_register_x[BIGHERO_LL] = sprite_register_x[HERO] - sgfx_w;
-                sprite_register_x[BIGHERO_LR] = sprite_register_x[HERO];
-                sprite_register[HERO] = SPRITE_HERO + 12;
-                sprite_register[BIGHERO_UL] = SPRITE_BIGHERO_UL;
-                sprite_register[BIGHERO_UR] = SPRITE_BIGHERO_UR;
-                sprite_register[BIGHERO_LL] = SPRITE_BIGHERO_LL;
-                sprite_register[BIGHERO_LR] = SPRITE_BIGHERO_LR;
-                sprite_register_frame[HERO] = ((INTERMISSION_TIME - intermission_running) / (1 + (FIFTH / 2))) % 4;
-                sprite_register_frame[BIGHERO_UL] = sprite_register_frame[HERO];
-                sprite_register_frame[BIGHERO_UR] = sprite_register_frame[HERO];
-                sprite_register_frame[BIGHERO_LL] = sprite_register_frame[HERO];
-                sprite_register_frame[BIGHERO_LR] = sprite_register_frame[HERO];
-                if (GHOST1 < ghosts)
-                {
-                    int mean;
-                    int eyes;
-                    int blue;
-
-                    mean = MEANGHOST(GHOST1);
-                    eyes = GHOSTEYES(GHOST1);
-                    blue = BLUEGHOST(GHOST1);
-                    sprite_register_x[mean] =
-                        sprite_register_x[eyes] =
-                        sprite_register_x[blue] = PIX_W - gfx_w / 2 - (PIX_W - gfx_w / 2 - sprite_register_x[HERO]) / 2 + sgfx_w;
-                    sprite_register_y[mean] =
-                        sprite_register_y[eyes] =
-                        sprite_register_y[blue] = sprite_register_y[HERO];
-                    sprite_register[mean] = SPRITE_MEAN;
-                    sprite_register[eyes] = SPRITE_EYES;
-                    sprite_register[blue] = SPRITE_BLUE;
-                    sprite_register_frame[eyes] = LEFT - 1;
-                    sprite_register_frame[blue] =
-                        (sprite_register_frame[mean] = (((INTERMISSION_TIME - intermission_running) / FIFTH) & 1) ? 1 : 0);
-                    sprite_register_used[mean] = 0;
-                    sprite_register_used[eyes] = 0;
-                    sprite_register_used[blue] = 1;
-                }
-            }
-            else
-            {
-                for (s = 0; s < SPRITE_REGISTERS; s ++)
-                {
-                    sprite_register_used[s] = 0;
-                    sprite_register_timer[s] = 0;
-                    sprite_register_frame[s] = 0;
-                }
-            }
-        }
-        else
-        {
-            maze_erase();
-            sprite_register_y[HERO] = gfx_h * (maze_h * intermission_running / (1 + INTERMISSION_TIME));
-            sprite_register_x[HERO] = gfx_w * maze_w / 2;
-            maze_puts(YTILE(sprite_register_y[HERO]), (maze_w - (int) strlen("COFFEE BREAK")) / 2, 1 + 0xE * intermission_running / (1 + INTERMISSION_TIME), "COFFEE BREAK");
-        }
+        gameintermission();
         if ((! intermission_running) || myman_demo || (k != ERR))
         {
             if (! myman_demo) k = ERR;
@@ -8382,1735 +6958,14 @@ gamecycle(void)
     }
     if (! (paused || snapshot || snapshot_txt || myman_intro || myman_start || intermission_running))
     {
-        if (ghost_eaten_timer && ! -- ghost_eaten_timer) {
-            sprite_register_used[GHOST_SCORE] = 0;
-            sprite_register_frame[GHOST_SCORE] ++;
-            if ((sprite_register[GHOST_SCORE] + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - sprite_register[GHOST_SCORE];
-            if (sprite_register_used[HERO])
-            {
-                memcpy((void *) (maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                       (void *) (blank_maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                       MIN(msglen, maze_w - cmsg));
-                memcpy((void *) (maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                       (void *) (blank_maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                       MIN(msglen, maze_w - cmsg));
-                {
-                    int dirty_i;
-                    for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-                    {
-                        DIRTY_CELL(cmsg + dirty_i, rmsg);
-                    }
-                }
-                sfx |= sfx_siren0_up;
-            }
-            else
-            {
-                sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-                sprite_register_used[munched] = (NET_LIVES || (munched != HERO)) ? 1 : 0;
-            }
-        }
-        if (winning || dying || need_reset) {
-            int reset = 0;
-            static int init = 0;
-
-            if (! need_reset)
-            {
-                if (dying && ! -- dying) {
-                    reset = 1;
-                    if (! myman_demo) ++ lives_used;
-                } else if ((! ghost_eaten_timer) && winning && ! -- winning) {
-                    need_reset = 1;
-                    if (INTERMISSION(level)
-                        &&
-                        (intermission < INTERMISSION_N))
-                    {
-                        intermission_running = (1 + INTERMISSION_TIME);
-                        key_buffer = ERR;
-                        return 1;
-                    }
-                }
-            }
-            if (need_reset)
-            {
-                sfx |= sfx_start;
-                need_reset = 0;
-                reset = 1;
-                memcpy((void *)maze,
-                       (void *)blank_maze,
-                       (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-                memcpy((void *)maze_color,
-                       (void *)blank_maze_color,
-                       (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-                DIRTY_ALL();
-                ignore_delay = 1;
-                frameskip = 0;
-                dots = 0;
-                pellet_timer = 0;
-                pellet_time -= PELLET_ADJUST(7 * ONESEC);
-                if (level && (FLIP_ALWAYS ||
-                              INTERMISSION(level)))
-                {
-                    ++ maze_level;
-                    maze_level %= maze_n;
-                    if (! maze_level)
-                    {
-                        maze_level = flip_to % maze_n;
-                    }
-                    if (FLIP_LOCK && ! maze_level)
-                    {
-                        maze_level = maze_n - 1;
-                    }
-                }
-                if (INTERMISSION(level) &&
-                    (intermission < INTERMISSION_N))
-                {
-                    ++ intermission_shown;
-                    if (intermission_shown >= INTERMISSION_REPEAT(intermission))
-                    {
-                        ++ intermission;
-                        intermission_shown = 0;
-                    }
-                }
-                ++ level;
-                sprite_register_frame[FRUIT] =
-                    sprite_register_frame[FRUIT_SCORE] = BONUS(level);
-                pellet_time += PELLET_ADJUST(7 * ONESEC);
-                if (pellet_time > PELLET_ADJUST(ONESEC))
-                    pellet_time -= PELLET_ADJUST(ONESEC);
-                else
-                    pellet_time = 0;
-                if (! myman_demo)
-                {
-                    if ((delay > SPEEDUP)
-                        &&
-                        (delay >= (mindelay + SPEEDUP)))
-                    {
-                        delay -= SPEEDUP;
-                    }
-                }
-            }
-            if ((! init) && (winning || reset)) {
-                init = 1;
-                if (sprite_register_used[FRUIT])
-                {
-                    DIRTY_ALL();
-                    ignore_delay = 1;
-                    frameskip = 0;
-                }
-                sprite_register_used[FRUIT] =
-                    sprite_register_used[FRUIT_SCORE] =
-                    sprite_register_used[GHOST_SCORE] = 0;
-                for (i = 0; i < ghosts; i++) {
-                    int eyes, mean, blue;
-
-                    eyes = GHOSTEYES(i);
-                    mean = MEANGHOST(i);
-                    blue = BLUEGHOST(i);
-                    sprite_register_used[eyes] =
-                        sprite_register_used[mean] =
-                        sprite_register_used[blue] = 0;
-                }
-                sprite_register_frame[HERO] = 0;
-            }
-            if (reset) {
-                memset((void *)home_dir, 0, sizeof(home_dir));
-                for (i = 0; i < ghosts; i++) {
-                    int eyes, mean, blue;
-
-                    eyes = GHOSTEYES(i);
-                    mean = MEANGHOST(i);
-                    blue = BLUEGHOST(i);
-                    sprite_register_used[eyes] =
-                        sprite_register_used[mean] =
-                        sprite_register_used[blue] = 0;
-                    sprite_register_frame[eyes] = (ghost_dir[i] = DIRWRAP(i + 1)) - 1;
-                    ghost_mem[i] = 0;
-                    ghost_timer[i] = TWOSECS;
-                    ghost_man[i] = 0;
-                    sprite_register_x[mean] =
-                        (sprite_register_x[eyes] = (int) (XGHOST + COGHOST * gfx_w *
-                                                          ((i == GHOST3) - (i == GHOST0))));
-                    sprite_register_y[mean] =
-                        (sprite_register_y[eyes] = (int) (YGHOST - ROGHOST * gfx_h *
-                                                          (i == GHOST1)));
-                }
-                key_buffer = ERR;
-                init = 0;
-                cycles = 0;
-                sprite_register_used[HERO] = 0;
-                sprite_register_frame[HERO] = 0;
-                sprite_register_x[HERO] = (int) XHERO;
-                sprite_register_y[HERO] = (int) YHERO;
-                dead =
-                    deadpan = (int) (YHERO - YGHOST);
-                if (dead < 0)
-                    dead = -dead;
-                if (dead < 2)
-                    dead = 2;
-                maze_putsn_nonblank(rmsg, cmsg, MSG_COLOR, (NET_LIVES && ! myman_demo) ? msg_READY : msg_GAMEOVER, msglen);
-                if (player != oldplayer)
-                {
-                    oldplayer = player;
-                    ghost_eaten_timer = myman_demo ? 0 : ONESEC;
-                    munched = HERO;
-                    if (! myman_demo)
-                    {
-                        maze_putsn_nonblank(rmsg2, cmsg2, MSG2_COLOR, PLAYER(player), msglen);
-                    }
-                }
-            }
-            if (dying)
-                sprite_register_frame[HERO] = ((DEATHDELAY - dying) >> DEATHSHIFT) % 4;
-        } else if (dead && ! ghost_eaten_timer) {
-            if (deadpan)
-                deadpan += (YHERO < YGHOST) - (YHERO > YGHOST);
-            if (! -- dead) {
-                for (i = 0; i < ghosts; i ++) {
-                    int eyes, mean, blue;
-
-                    eyes = GHOSTEYES(i);
-                    mean = MEANGHOST(i);
-                    blue = BLUEGHOST(i);
-                    sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
-                    sprite_register_used[mean] = NET_LIVES ? 1 : 0;
-                }
-                sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-                ghost_eaten_timer = ONESEC;
-                munched = HERO;
-                if (! myman_demo)
-                {
-                    memcpy((void *) (maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                           (void *) (blank_maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                           MIN(msglen, maze_w - cmsg2));
-                    memcpy((void *) (maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                           (void *) (blank_maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                           MIN(msglen, maze_w - cmsg2));
-                    {
-                        int dirty_i;
-                        for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-                        {
-                            DIRTY_CELL(cmsg2 + dirty_i, rmsg2);
-                        }
-                    }
-                }
-                hero_dir = dirhero;
-                sprite_register[HERO] = SPRITE_HERO + ((hero_dir == LEFT) ? 4 : (hero_dir == RIGHT) ? 12 : (hero_dir == DOWN) ? 16 : 0);
-#if USE_COLOR
-                if (! use_color)
-#endif
-                    if (use_underline)
-                    {
-                        my_clear();
-                        clearok(curscr, TRUE);
-                        DIRTY_ALL();
-                        ignore_delay = 1;
-                        frameskip = 0;
-                        visible_frame = 1;
-                    }
-            }
-        }
-        else
+        if (gamelogic())
         {
-            if ((BONUSHERO && (score >= BONUSHERO) && ! earned) ||
-                ((score >= BONUSHERO2) && (earned == (BONUSHERO ? 1 : 0)))) {
-                if (! myman_demo)
-                {
-                    earned ++;
-                }
-            }
-            if (ISPELLET((c = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))
-                || ISDOT(c)) {
-                maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile] = ' ';
-                sprite_register_frame[HERO] = 0;
-                if (! myman_demo) score += 10 + 40 * ISPELLET(c);
-                if (ISPELLET(c)) {
-                    sfx |= sfx_pellet;
-                    points = 200;
-                    sprite_register_frame[GHOST_SCORE] = 0;
-                    pellet_timer = pellet_time + 1;
-                    for (s = 0; s < ghosts; s++) {
-                        int eyes, mean, blue;
-
-                        eyes = GHOSTEYES(s);
-                        blue = BLUEGHOST(s);
-                        mean = MEANGHOST(s);
-                        sprite_register_frame[blue] = 0;
-                        if (sprite_register_used[mean] || sprite_register_used[blue]) {
-                            if (sprite_register_used[mean]) {
-                                sprite_register_x[blue] = sprite_register_x[eyes];
-                                sprite_register_y[blue] = sprite_register_y[eyes];
-                            }
-                            sprite_register_used[eyes] = 0;
-                            sprite_register_used[mean] = 0;
-                            sprite_register_used[blue] = 1;
-                            sprite_register[blue] = SPRITE_BLUE;
-                            ghost_dir[s] = DIRWRAP(ghost_dir[s] + 2);
-                        }
-                    }
-                }
-                else
-                {
-                    sfx |= sfx_dot;
-                }
-#ifndef DOTS_FRUIT1
-#define DOTS_FRUIT1 (70 * total_dots[maze_level] / 244)
-#endif
-#ifndef DOTS_FRUIT2
-#define DOTS_FRUIT2 (170 * total_dots[maze_level] / 244)
-#endif
-                if ((++ dots == DOTS_FRUIT1) || (dots == DOTS_FRUIT2))
-                {
-                    sprite_register_x[FRUIT] =
-                        sprite_register_x[FRUIT_SCORE] = (int) XFRUIT;
-                    sprite_register_y[FRUIT] =
-                        sprite_register_y[FRUIT_SCORE] = (int) YFRUIT;
-                    sprite_register_used[FRUIT] = 1;
-                    sprite_register_timer[FRUIT] = FRUITLIFE;
-                    sfx |= sfx_bonus;
-                } else if (dots == total_dots[maze_level]) {
-                    munched = HERO;
-                    winning = 2 * TWOSECS;
-                    sfx |= sfx_level;
-                }
-            } else if (sprite_register_used[FRUIT] &&
-                       collide(HERO, FRUIT))
-            {
-                DIRTY_ALL();
-                ignore_delay = 1;
-                frameskip = 0;
-                sprite_register_used[FRUIT] = 0;
-                sprite_register_used[FRUIT_SCORE] = 1;
-                sprite_register_timer[FRUIT_SCORE] = TWOSECS;
-                if (! myman_demo) score += bonus_score[sprite_register_frame[FRUIT]];
-                sprite_register_frame[HERO] = 0;
-                sfx |= sfx_fruit;
-            }
-            if (! ghost_eaten_timer) {
-                if (XDIR(hero_dir))
-                    sprite_register_y[HERO] = (1 + 2 * ytile) * gfx_h / 2;
-                else if (hero_dir)
-                    sprite_register_x[HERO] = (1 + 2 * xtile) * gfx_w / 2;
-                if (ISZAPLEFT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                    &&
-                    (! YDIR(hero_dir))
-                    &&
-                    (hero_dir == LEFT)) {
-                    int ii;
-
-                    for (ii = 1; ii < maze_w; ii ++)
-                    {
-                        if (ISZAPRIGHT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - ii)]))
-                        {
-                            break;
-                        }
-                    }
-                    sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile - ii)) * gfx_w / 2;
-                }
-                else if (ISZAPRIGHT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                         &&
-                         (! YDIR(hero_dir))
-                         &&
-                         (hero_dir == RIGHT)) {
-                    int ii;
-
-                    for (ii = 1; ii < maze_w; ii ++)
-                    {
-                        if (ISZAPLEFT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + ii)]))
-                        {
-                            break;
-                        }
-                    }
-                    sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile + ii)) * gfx_w / 2;
-                }
-                else if (ISZAPUP((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                         &&
-                         (! XDIR(hero_dir))
-                         &&
-                         (hero_dir == UP)) {
-                    int ii;
-
-                    for (ii = 1; ii < maze_h; ii ++)
-                    {
-                        if (ISZAPDOWN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - ii)) * (maze_w + 1)+xtile]))
-                        {
-                            break;
-                        }
-                    }
-                    sprite_register_y[HERO] = (1 + 2 * YWRAP(ytile - ii)) * gfx_h / 2;
-                }
-                else if (ISZAPDOWN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                         &&
-                         (! XDIR(hero_dir))
-                         &&
-                         (hero_dir == DOWN)) {
-                    int ii;
-
-                    for (ii = 1; ii < maze_h; ii ++)
-                    {
-                        if (ISZAPUP((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + ii)) * (maze_w + 1)+xtile]))
-                        {
-                            break;
-                        }
-                    }
-                    sprite_register_y[HERO] = (1 + 2 * YWRAP(ytile + ii)) * gfx_h / 2;
-                }
-                else if (ISOPEN((unsigned char)
-                                maze[(maze_level*maze_h+YWRAP(ytile + YLEAVING(hero_dir, y_off + YDIR(hero_dir)))) * (maze_w + 1)+XWRAP(xtile + XLEAVING(hero_dir, x_off + XDIR(hero_dir)))])) {
-                    sprite_register_x[HERO] = XPIXWRAP(sprite_register_x[HERO] + XDIR(hero_dir) * ((SQUARE || gfx_reflect) ? (cycles & 1) : 1));
-                    sprite_register_y[HERO] = YPIXWRAP(sprite_register_y[HERO] + YDIR(hero_dir) * ((gfx_reflect && ! SQUARE) ? 1 : (cycles & 1)));
-                    sprite_register_frame[HERO] = (cycles / (1 + (FIFTH / 2))) % 4;
-                }
-            }
-            for (s = 0; s < ghosts; s ++) {
-                int eyes, blue, mean;
-
-                eyes = GHOSTEYES(s);
-                blue = BLUEGHOST(s);
-                mean = MEANGHOST(s);
-                if ((! ghost_eaten_timer) || ((munched != eyes) && (munched != HERO)))
-                    sprite_register_frame[blue] =
-                        (sprite_register_frame[mean] = ((cycles / FIFTH) & 1) ? 1 : 0);
-#define IF_COLLISION_HANDLE_COLLISION \
-                        if (sprite_register_used[mean] && collide(mean, HERO) && ! ghost_eaten_timer) { \
-                            sfx |= sfx_dying; \
-                            dying = DEATHDELAY; \
-                            sprite_register[HERO] = SPRITE_HERO + 8; \
-                            sprite_register_frame[HERO] = 0; \
-                            ghost_eaten_timer = ONESEC; \
-                            munched = HERO; \
-                            s = -1; \
-                            continue; \
-                        } else if (sprite_register_used[blue] && collide(blue, HERO) && ! ghost_eaten_timer) { \
-                            sfx |= sfx_ghost; \
-                            if (! myman_demo) score += points; \
-                            points *= 2; \
-                            if (points > 1600) points = 1600; \
-                            ghost_eaten_timer = ONESEC; \
-                            sprite_register_used[HERO] = 0; \
-                            munched = eyes; \
-                            sprite_register_used[GHOST_SCORE] = 1; \
-                            sprite_register_x[GHOST_SCORE] = sprite_register_x[blue]; \
-                            sprite_register_y[GHOST_SCORE] = sprite_register_y[blue]; \
-                            sprite_register_x[eyes] = sprite_register_x[blue]; \
-                            sprite_register_y[eyes] = sprite_register_y[blue]; \
-                            sprite_register_used[blue] = 0; \
-                        }
-                if (dying || winning) {
-                    sprite_register_used[eyes] =
-                        (sprite_register_used[blue] =
-                         (sprite_register_used[mean] = 0));
-                } else IF_COLLISION_HANDLE_COLLISION
-                           else
-                           {
-                               int dir0, dir1, dir2, o0, o1, o2, x, y, i1, j1, i2, j2;
-
-                               dir1 = DIRWRAP(ghost_dir[s]);
-                               dir0 = DIRWRAP(dir1 + (s != GHOST2) - (s == GHOST2));
-                               dir2 = DIRWRAP(dir1 - (s != GHOST2) + (s == GHOST2));
-                               if (sprite_register_used[blue] && ! ghost_eaten_timer)
-                               {
-                                   /* runnin' scared */
-                                   if (cycles & 1) {
-                                       x = sprite_register_x[blue];
-                                       y = sprite_register_y[blue];
-                                       i1 = XTILE(x);
-                                       j1 = YTILE(y);
-                                       i2 = XTILE(sprite_register_x[HERO]);
-                                       j2 = YTILE(sprite_register_y[HERO]);
-                                       if ((i1 == i2) && (j1 <= j2)) {
-                                           for (j = j1; j <= j2; j ++)
-                                               if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1]))
-                                                   break;
-                                           if (j > j2) {
-                                               ghost_mem[s] = hero_dir;
-                                               ghost_timer[s] = (int) MEMDELAY(s);
-                                           }
-                                       } else if ((i1 == i2) && (j1 >= j2)) {
-                                           for (j = j2; j <= j1; j ++)
-                                               if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1]))
-                                                   break;
-                                           if (j > j1) {
-                                               ghost_mem[s] = hero_dir;
-                                               ghost_timer[s] = (int) MEMDELAY(s);
-                                           }
-                                       } else if ((j1 == j2) && (i1 <= i2)) {
-                                           for (i = i1; i <= i2; i ++)
-                                               if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i]))
-                                                   break;
-                                           if (i > i2) {
-                                               ghost_mem[s] = hero_dir;
-                                               ghost_timer[s] = (int) MEMDELAY(s);
-                                           }
-                                       } else if ((j1 == j2) && (i1 >= i2)) {
-                                           for (i = i2; i <= i1; i ++)
-                                               if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i]))
-                                                   break;
-                                           if (i > i1) {
-                                               ghost_mem[s] = hero_dir;
-                                               ghost_timer[s] = (int) MEMDELAY(s);
-                                           }
-                                       }
-                                       o0 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))]);
-                                       o1 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))]);
-                                       o2 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))]);
-                                       if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
-                                           || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
-                                           if (o0 || o2) {
-                                               if (! ghost_mem[s]) {
-                                                   if (o2)
-                                                       dir1 = dir2;
-                                                   else if (! o1)
-                                                       dir1 = dir0;
-                                               }
-                                               else
-                                               {
-                                                   if (o0 && (dir0 != ghost_mem[s]))
-                                                       dir1 = dir0;
-                                                   else if (o2 && (dir2 != ghost_mem[s]))
-                                                       dir1 = dir2;
-                                                   else if (o1 && (dir1 != ghost_mem[s]))
-                                                       ;
-                                                   else if (o0)
-                                                       dir1 = dir0;
-                                                   else
-                                                       dir1 = dir2;
-                                               }
-                                           } else if (! o1)
-                                               dir1 = DIRWRAP(dir1 + 2);
-                                       }
-                                       if (XDIR(dir1))
-                                           y = (1 + 2 * j1) * gfx_h / 2;
-                                       else if (dir1)
-                                           x = (1 + 2 * i1) * gfx_w / 2;
-                                       if ((SQUARE || gfx_reflect) ? (cycles & 2) : 1)
-                                           sprite_register_x[blue] = XPIXWRAP(x + XDIR(dir1));
-                                       if ((gfx_reflect && ! SQUARE) ? 1 : (cycles & 2))
-                                           sprite_register_y[blue] = YPIXWRAP(y + YDIR(dir1));
-                                       if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])])
-                                           home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])] =
-                                               DIRWRAP(dir1 + 2);
-                                   }
-                               }
-                               else if (sprite_register_used[mean] && ! ghost_eaten_timer)
-                               {
-                                   /* out huntin' */
-                                   int d0, d1, d2;
-
-                                   x = sprite_register_x[mean];
-                                   y = sprite_register_y[mean];
-                                   i1 = XTILE(x);
-                                   j1 = YTILE(y);
-                                   i2 = XTILE(sprite_register_x[HERO]);
-                                   j2 = YTILE(sprite_register_y[HERO]);
-                                   if ((i1 == i2) && (j1 <= j2)) {
-                                       for (j = j1; j <= j2; j ++)
-                                           if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1]))
-                                               break;
-                                       if (j > j2) {
-                                           ghost_mem[s] = hero_dir;
-                                           ghost_timer[s] = (int) MEMDELAY(s);
-                                       }
-                                   } else if ((i1 == i2) && (j1 >= j2)) {
-                                       for (j = j2; j <= j1; j ++)
-                                           if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1]))
-                                               break;
-                                       if (j > j1) {
-                                           ghost_mem[s] = hero_dir;
-                                           ghost_timer[s] = (int) MEMDELAY(s);
-                                       }
-                                   } else if ((j1 == j2) && (i1 <= i2)) {
-                                       for (i = i1; i <= i2; i ++)
-                                           if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i]))
-                                               break;
-                                       if (i > i2) {
-                                           ghost_mem[s] = hero_dir;
-                                           ghost_timer[s] = (int) MEMDELAY(s);
-                                       }
-                                   } else if ((j1 == j2) && (i1 >= i2)) {
-                                       for (i = i2; i <= i1; i ++)
-                                           if (! ISOPEN((unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i]))
-                                               break;
-                                       if (i > i1) {
-                                           ghost_mem[s] = hero_dir;
-                                           ghost_timer[s] = (int) MEMDELAY(s);
-                                       }
-                                   }
-                                   o0 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))]);
-                                   o1 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))]);
-                                   o2 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))]);
-                                   d0 = d2 = 0;
-                                   d1 = ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))]);
-                                   if (! ISDOOR((unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i1]))
-                                   {
-                                       d0 = ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))]);
-                                       d2 = ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))]);
-                                   }
-                                   d0 = d0 && (dir0 !=
-                                               HOME_DIR(s,
-                                                        YWRAP(j1 + YDIR(dir0)),
-                                                        XWRAP(i1 + XDIR(dir0))))
-                                       && dir0 != DOWN
-                                       && dir0 != LEFT;
-                                   d2 = d2 && (dir2 !=
-                                               HOME_DIR(s,
-                                                        YWRAP(j1 + YDIR(dir2)),
-                                                        XWRAP(i1 + XDIR(dir2))))
-                                       && dir2 != DOWN
-                                       && dir2 != LEFT;
-                                   d1 = d1 && (dir1 !=
-                                               HOME_DIR(s,
-                                                        YWRAP(j1 + YDIR(dir1)),
-                                                        XWRAP(i1 + XDIR(dir1))))
-                                       && dir1 != DOWN
-                                       && dir1 != LEFT;
-                                   if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
-                                       || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
-                                       if (d2 || (o2 && (dir2 == ghost_mem[s])))
-                                           dir1 = dir2;
-                                       else if (d1 || (o1 && (dir1 == ghost_mem[s])))
-                                           ;
-                                       else if (d0 || (o0 && (dir0 == ghost_mem[s])))
-                                           dir1 = dir0;
-                                       else if (o1)
-                                           ;
-                                       else if (o2)
-                                           dir1 = dir2;
-                                       else if (o0)
-                                           dir1 = dir0;
-                                       else
-                                           dir1 = DIRWRAP(dir1 + 2);
-                                   }
-                                   if (XDIR(dir1))
-                                       y = (1 + 2 * j1) * gfx_h / 2;
-                                   else if (dir1)
-                                       x = (1 + 2 * i1) * gfx_w / 2;
-                                   if ((SQUARE || gfx_reflect) ? (cycles & 1) : 1)
-                                       sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
-                                   if ((gfx_reflect && ! SQUARE) ? 1 : (cycles & 1))
-                                       sprite_register_y[mean] = (sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1)));
-                                   if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])])
-                                       home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])] =
-                                           DIRWRAP(dir1 + 2);
-                               } else if (sprite_register_used[eyes]
-                                          &&
-                                          ((munched != eyes) || (! ghost_eaten_timer))
-                                          &&
-                                          ((! ghost_eaten_timer) || ! sprite_register_used[MEANGHOST(s)])) {
-                                   int dx, dy;
-                                   unsigned char d, d1;
-
-                                   /* goin' home */
-                                   ghost_timer[s] = (int) MEMDELAY(s);
-                                   x = sprite_register_x[eyes];
-                                   y = sprite_register_y[eyes];
-                                   i1 = XTILE(x);
-                                   j1 = YTILE(y);
-                                   dx = (int) ((XGHOST - x) / gfx_w);
-                                   dy = (int) (((dx ? YTOP : YGHOST) - y) / gfx_h);
-                                   if ((d = HOME_DIR(s, j1, i1)) &&
-                                       (! ((d1 = DIRWRAP(HOME_DIR(s, YWRAP(j1 + YDIR(d)), XWRAP(i1 + XDIR(d))) + 2)) &&
-                                           (d1 == d))))
-                                       ghost_mem[s] = d;
-                                   else {
-                                       if (dx * dx > dy * dy) {
-                                           if (dx > 0)
-                                               ghost_mem[s] = RIGHT;
-                                           else
-                                               ghost_mem[s] = LEFT;
-                                       }
-                                       else
-                                       {
-                                           if (dy < 0)
-                                               ghost_mem[s] = UP;
-                                           else
-                                               ghost_mem[s] = DOWN;
-                                       }
-                                   }
-                                   if (! (dx || dy)) {
-                                       sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
-                                       sprite_register_used[mean] = 1;
-                                       sprite_register_x[mean] = x;
-                                       sprite_register_y[mean] = y;
-                                       sprite_register_frame[eyes] = (ghost_dir[s] = DIRWRAP(s + 1)) - 1;
-                                       ghost_mem[s] = 0;
-                                       continue;
-                                   }
-                                   o0 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))])
-                                       || ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))]);
-                                   o1 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))])
-                                       || ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))]);
-                                   o2 = ISOPEN((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))])
-                                       || ISDOOR((unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))]);
-                                   if (o2 && (dir2 == ghost_mem[s]))
-                                       dir1 = dir2;
-                                   else if (o1 && (dir1 == ghost_mem[s]))
-                                       ;
-                                   else if (o0 && (dir0 == ghost_mem[s]))
-                                       dir1 = dir0;
-                                   else if (o1)
-                                       ;
-                                   else if (o2)
-                                       dir1 = dir2;
-                                   else if (o0)
-                                       dir1 = dir0;
-                                   else
-                                       dir1 = DIRWRAP(dir1 + 2);
-                                   sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
-                                   sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1));
-                                   sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1));
-                                   if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])])
-                                       home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])] =
-                                           DIRWRAP(dir1 + 2);
-                               }
-                               if ((! ghost_eaten_timer) && ghost_timer[s] && ! -- ghost_timer[s]) {
-                                   ghost_timer[s] = (int) MEMDELAY(s);
-                                   if (ghost_mem[s]) {
-                                       ghost_mem[s] = 0;
-                                   }
-                                   else
-                                       dir1 = DIRWRAP(ghost_dir[s] + 2);
-                               }
-                               ghost_dir[s] = (sprite_register_frame[eyes] = dir1 - 1) + 1;
-                               IF_COLLISION_HANDLE_COLLISION
-                                   }
-            }
-            if (! ghost_eaten_timer)
-                for (s = 0; s < SPRITE_REGISTERS; s ++) {
-                    if (sprite_register_used[s] && sprite_register_timer[s])
-                        if (! -- sprite_register_timer[s])
-                        {
-                            sprite_register_used[s] = 0;
-                            if (s == FRUIT)
-                            {
-                                DIRTY_ALL();
-                                ignore_delay = 1;
-                                frameskip = 0;
-                            }
-                        }
-                }
+            return 1;
         }
     }
     if (visible_frame && ! (xoff_received || myman_demo_setup))
     {
-        {
-            int s;
-            for (s = 0; s < SPRITE_REGISTERS; s ++)
-            {
-                if (sprite_register_used[s])
-                {
-                    DIRTY_SPRITE_REGISTER(s);
-                }
-            }
-        }
-        if (snapshot || snapshot_txt || all_dirty)
-        {
-            my_erase();
-            DIRTY_ALL();
-            ignore_delay = 1;
-            frameskip = 0;
-        }
-#define VLINES (reflect ? MY_COLS : LINES)
-#define VCOLS (reflect ? LINES : MY_COLS)
-#define vmove(y, x) (reflect ? my_move((x), (y) * (use_fullwidth ? 2 : 1)) :  my_move((y), (x) * (use_fullwidth ? 2 : 1)))
-        x1 = sprite_register_x[HERO] - VCOLS / 2;
-        y1 = sprite_register_y[HERO] - VLINES / 2 - deadpan;
-        if (x1 + VCOLS - (reflect ? 1 : 0) > maze_w * gfx_w)
-            x1 = maze_w * gfx_w - (VCOLS - (reflect ? 1 : 0));
-        if (y1 + VLINES - (reflect ? 0 : 1) > maze_h * gfx_h)
-            y1 = maze_h * gfx_h - (VLINES - (reflect ? 0 : 1));
-        if (x1 < 0)
-            x1 = 0;
-        if (y1 < 0)
-            y1 = 0;
-        r_off = 0;
-        c_off = 0;
-        if (((gfx_h * maze_h + (reflect ? 0 : (3 * tile_h + sprite_h)))) <= VLINES)
-            r_off = (VLINES - (reflect ? 0 : (3 * tile_h + sprite_h)) - gfx_h * maze_h + 1) / 2 + (reflect ? 0 : (3 * tile_h));
-        else if (((gfx_h * maze_h + (reflect ? 0 : (2 * tile_h + sprite_h)))) <= VLINES)
-            r_off = (VLINES - (reflect ? 0 : (2 * tile_h + sprite_h)) - gfx_h * maze_h + 1) / 2 + (reflect ? 0 : (2 * tile_h));
-        else if (gfx_h * maze_h <= VLINES)
-            r_off = (VLINES - gfx_h * maze_h + 1) / 2;
-        if (r_off < 0) r_off = 0;
-        if ((gfx_w * maze_w + (reflect ? (3 * tile_h + sprite_h) : 0)) <= VCOLS)
-            c_off = (VCOLS - (reflect ? (3 * tile_h + sprite_h) : 0) - gfx_w * maze_w + 1) / 2 + (reflect ? (3 * tile_h) : 0);
-        else if ((gfx_w * maze_w + (reflect ? (2 * tile_h + sprite_h) : 0)) <= VCOLS)
-            c_off = (VCOLS - (reflect ? (2 * tile_h + sprite_h) : 0) - gfx_w * maze_w + 1) / 2 + (reflect ? (2 * tile_h) : 0);
-        else if (gfx_w * maze_w <= VCOLS)
-            c_off = (VCOLS - gfx_w * maze_w + 1) / 2;
-        if (c_off < 0) c_off = 0;
-        attrset(0);
-        for (vline = -(3 * tile_h); (vline < LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
-        {
-            if ((vline + (reflect ? c_off : r_off)) < 0) continue;
-            if ((vline + (reflect ? c_off : r_off)) >= LINES) continue;
-            if ((vline < 0) || (vline >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))
-            {
-                for (vcol = 0; (vcol < MY_COLS) && (vcol < (reflect ? (gfx_h * maze_h) : (gfx_w * maze_w))); vcol++)
-                {
-                    int filler_tile = 0;
-                    int a = 0;
-
-                    if (snapshot || snapshot_txt || all_dirty)
-                    {
-                        filler_tile = ' ';
-                    }
-
-                    if ((reflect ? c_off : r_off) >= (2 * tile_h))
-                    {
-                        int player_anchor;
-
-                        player_anchor = (reflect ? r_off : c_off) + 7 * tile_w - 1;
-                        if (player_anchor >= MY_COLS) player_anchor = MY_COLS - 1;
-                        line = vline + (((reflect ? c_off : r_off) >= (3 * tile_h)) ? (3 * tile_h) : (2 * tile_h));
-                        if ((line >= 0) && (line < tile_h))
-                        {
-                            col = (vcol + (reflect ? r_off : c_off));
-                            if ((col >= 0) && (col < MY_COLS))
-                            {
-                                if (col <= player_anchor)
-                                {
-                                    int player_col;
-                                    int player_tile_x;
-                                    unsigned char player_tile;
-                                    int tmp, tmp2;
-
-                                    player_tile = 0;
-                                    player_col = (player_anchor - col) / tile_w;
-                                    player_tile_x = tile_w - 1 - (player_anchor - col) % tile_w;
-                                    {
-                                        player_tile = (player_col > 3) ? 0 : '0';
-                                        if (player_col < 3)
-                                        {
-                                            player_tile = "UP "[2 - player_col];
-                                        }
-                                        else
-                                        {
-                                            tmp = player * 1000;
-                                            tmp2 = player * 1000;
-                                            while (player_col)
-                                            {
-                                                player_col --;
-                                                tmp /= 10;
-                                                tmp2 /= 10;
-                                            }
-                                            if (tmp)
-                                            {
-                                                player_tile = '0' + (tmp % 10);
-                                            }
-                                            else if (tmp2)
-                                            {
-                                                player_tile = ' ';
-                                            }
-                                        }
-                                    }
-                                    if (player_tile
-                                        &&
-                                        ! ((! intermission_running)
-                                           &&
-                                           ((((cycles * 2) % TWOSECS) <= ONESEC)
-                                            ||
-                                            myman_demo
-                                            ||
-                                            myman_start
-                                            ||
-                                            myman_intro)
-                                           &&
-                                           (0 < (NET_LIVES - ((munched == HERO) && dying && sprite_register_used[HERO])))))
-                                    {
-                                        player_tile = ' ';
-                                    }
-                                    if (player_tile && tile_used[player_tile])
-                                    {
-                                        filler_tile = player_tile;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if ((reflect ? c_off : r_off) >= tile_h)
-                    {
-                        int score_anchor;
-
-                        score_anchor = (reflect ? r_off : c_off) + 7 * tile_w - 1;
-                        if (score_anchor >= MY_COLS) score_anchor = MY_COLS - 1;
-                        line = vline + (((reflect ? c_off : r_off) >= (3 * tile_h)) ? (2 * tile_h) : tile_h);
-                        if ((line >= 0) && (line < tile_h))
-                        {
-                            col = (vcol + (reflect ? r_off : c_off));
-                            if ((col >= 0) && (col < MY_COLS))
-                            {
-                                if ((col <= score_anchor)
-                                    &&
-                                    ! intermission_running)
-                                {
-                                    int score_col;
-                                    int score_tile_x;
-                                    unsigned char score_tile;
-                                    int tmp;
-
-                                    score_col = (score_anchor - col) / tile_w;
-                                    score_tile_x = tile_w - 1 - (score_anchor - col) % tile_w;
-                                    score_tile = (score_col > 1) ? ' ' : '0';
-                                    tmp = score;
-                                    while (score_col)
-                                    {
-                                        score_col --;
-                                        tmp /= 10;
-                                    }
-                                    if (tmp)
-                                    {
-                                        score_tile = '0' + (tmp % 10);
-                                    }
-                                    if (tile_used[score_tile] && (score_tile != ' '))
-                                    {
-                                        filler_tile = score_tile;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if (filler_tile && tile_used[filler_tile])
-                    {
-#if USE_COLOR
-                        if (use_color) {
-                            a = tile_color[filler_tile];
-                            if (! a) a = TEXT_COLOR;
-                            a = pen[a];
-                        }
-#endif
-                        my_move(vline + (reflect ? c_off : r_off), (vcol + (reflect ? r_off : c_off)) * (use_fullwidth ? 2 : 1));
-                        my_addch((unsigned long) (unsigned char) tile[(filler_tile * tile_h + ((vline + (3 * tile_h)) % tile_h)) * tile_w + (vcol % tile_w)], a);
-                    }
-                }
-                continue;
-            }
-            if (((reflect ? c_off : r_off) < tile_h)
-                &&
-                ((reflect ? r_off : c_off) >= (5 * tile_w))
-                &&
-                (vline < tile_h)
-                &&
-                (! intermission_running))
-            {
-                int hud_score_anchor;
-
-                hud_score_anchor = (reflect ? r_off : c_off) - 1;
-                for (col = 0; col <= hud_score_anchor; col ++)
-                {
-                    int score_x;
-                    int score_col;
-                    int tmp;
-
-                    score_x = hud_score_anchor - col;
-                    score_col = 0;
-                    tmp = score;
-                    while (score_col < score_x / tile_w)
-                    {
-                        score_col ++;
-                        tmp /= 10;
-                    }
-                    if (tmp
-                        ||
-                        (score_col < 2))
-                    {
-                        unsigned char score_tile;
-
-                        score_tile = (tmp % 10) + '0';
-                        if (tile_used[score_tile])
-                        {
-                            int a;
-
-                            a = 0;
-#if USE_COLOR
-                            if (use_color) {
-                                a = tile_color[score_tile];
-                                if (! a) a = TEXT_COLOR;
-                                a = pen[a];
-                            }
-#endif
-                            my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
-                            my_addch((unsigned long) (unsigned char) tile[(score_tile * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
-
-                        }
-                    }
-                }
-            }
-            else if (((reflect ? r_off : c_off) >= sprite_w)
-                     &&
-                     (! intermission_running)
-                     &&
-                     (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
-                     &&
-                     (LINES >= (tile_h + sprite_h))
-                     &&
-                     (((vline + sprite_h) >= LINES)
-                      ||
-                      ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
-            {
-                int hud_line;
-                int hud_life_anchor;
-
-                hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
-                hud_life_anchor = showlives * sprite_w;
-                for (col = 0; col < hud_life_anchor; col ++)
-                {
-                    int life_sprite;
-
-                    life_sprite = SPRITE_LIFE;
-                    if (! sprite_used[life_sprite])
-                    {
-                        life_sprite = SPRITE_HERO + 4 + 2;
-                    }
-                    if (sprite_used[life_sprite])
-                    {
-                        int a;
-
-                        c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + hud_line) * sprite_w + (col % sprite_w)];
-                        if (c)
-                        {
-                            a = 0;
-#if USE_COLOR
-                            if (use_color) {
-                                if (! (a = sprite_color[life_sprite]))
-                                {
-                                    a = sprite_register_color[HERO];
-                                }
-                                a = pen[a];
-                            }
-                            else
-#endif
-                            {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                a |= use_dim_and_bright ? MY_A_BOLD : 0;
-#endif
-#endif
-                            }
-                            if ((col + (reflect ? r_off : c_off) - hud_life_anchor) >= 0)
-                            {
-                                my_move(vline + (reflect ? c_off : r_off),
-                                        (col + (reflect ? r_off : c_off) - hud_life_anchor) * (use_fullwidth ? 2 : 1));
-                                my_addch((unsigned long) (unsigned char) c, a);
-                            }
-                            continue;
-                        }
-                    }
-                }
-            }
-            for (vcol = 0; (vcol < MY_COLS) && (vcol < (reflect ? (gfx_h * maze_h) : (gfx_w * maze_w))); vcol++) {
-                int s;
-                int a = 0;
-                int is_wall = 0;
-
-                if (reflect)
-                {
-                    line = vcol;
-                    col = vline;
-                }
-                else
-                {
-                    line = vline;
-                    col = vcol;
-                }
-                a = 0;
-                c = 0;
-                xtile = XTILE((i = col + x1));
-                ytile = YTILE((j = line + y1));
-                if (! (line || col))
-                {
-                    int nscrolling;
-
-                    nscrolling = (i != scroll_offset_x0) ? 2 : (j != scroll_offset_y0) ? 1 : 0;
-                    scroll_offset_x0 = i;
-                    scroll_offset_y0 = j;
-                    if ((scrolling != nscrolling))
-                    {
-                        if (! nscrolling)
-                        {
-                            frameskip1 = frameskip;
-                            frameskip = (frameskip > frameskip0) ? frameskip0 : frameskip;
-                            ignore_delay = 1;
-                        }
-                        else
-                        {
-                            frameskip0 = frameskip;
-                            frameskip = (frameskip1 > frameskip) ? frameskip1 : frameskip;
-                            ignore_delay = 1;
-                        }
-                        scrolling = nscrolling;
-                    }
-                    if (scrolling)
-                    {
-                        DIRTY_ALL();
-                    }
-                }
-                if ((paused && ! (snapshot || snapshot_txt))
-                    &&
-                    ((vcol + (reflect ? r_off : c_off)) >= (MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2)
-                    &&
-                    ((vcol + (reflect ? r_off : c_off)) < ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2 + tile_w * (int) strlen(PAUSE)))
-                    &&
-                    (MY_COLS >= tile_w * (int) strlen(PAUSE))
-                    &&
-                    ((reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) >= tile_w * (int) strlen(PAUSE))
-                    &&
-                    ((vline + (reflect ? c_off : r_off)) >= (LINES - tile_h + 1) / 2)
-                    &&
-                    ((vline + (reflect ? c_off : r_off)) < ((LINES - tile_h + 1) / 2 + tile_h))
-                    &&
-                    ((reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) >= tile_h))
-                {
-                    int pause_x;
-                    int pause_y;
-                    unsigned char pause_tile;
-
-                    pause_shown = 1;
-                    pause_x = vcol + (reflect ? r_off : c_off) - ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2);
-                    pause_y = vline + (reflect ? c_off : r_off) - ((LINES - tile_h + 1) / 2);
-                    pause_tile = (unsigned long) (unsigned char) PAUSE[pause_x / tile_w];
-                    if (tile_used[pause_tile])
-                    {
-                        c = (unsigned long) (unsigned char) tile[(PAUSE[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
-                        if (! c)
-                        {
-                            c = ' ';
-                        }
-#if USE_COLOR
-                        if (use_color)
-                        {
-                            a = pen[PAUSE_COLOR];
-                        }
-                        else
-#endif
-                        {
-                            a = 0;
-#if USE_ATTR
-#ifdef MY_A_REVERSE
-                            a |= MY_A_REVERSE;
-#endif
-#endif
-                        }
-                    }
-                }
-                if (IS_CELL_DIRTY(xtile, ytile)
-                    ||
-                    ISPELLET((unsigned char) (char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                    ||
-                    winning)
-                {
-                    if (! c)
-                    {
-                        for (s = 0; s < SPRITE_REGISTERS; s ++) {
-                            int t, x, y, iseyes;
-
-                            t = sprite_register[s] + ((sprite_register_frame[s] < 0) ? (-sprite_register_frame[s]) : sprite_register_frame[s]);
-                            iseyes = ((s == GHOSTEYES(UNGHOSTEYES(s)))
-                                      &&
-                                      (UNGHOSTEYES(s) >= 0)
-                                      &&
-                                      (UNGHOSTEYES(s) < ghosts));
-                            if (debug
-                                && sprite_register_used[s]
-                                && ((x = sprite_register_x[s]) == i)
-                                && ((y = sprite_register_y[s]) == j))
-                            {
-                                if (iseyes)
-                                {
-                                    c = (".^<v>")[ghost_mem[UNGHOSTEYES(s)]];
-                                }
-                                else
-                                {
-                                    c = '.';
-                                }
-#if USE_COLOR
-                                if (use_color) {
-                                    if (! (a = sprite_color[t]))
-                                        a = sprite_register_color[s];
-                                    a = pen[a];
-                                }
-                                else
-#endif
-                                {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                    if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
-                                    {
-                                        a |= use_dim_and_bright ? MY_A_BOLD : 0;
-                                        break;
-                                    }
-#endif
-#ifdef MY_A_UNDERLINE
-                                    if (sprite_register[s] == SPRITE_BLUE)
-                                    {
-                                        a |= use_underline ? MY_A_UNDERLINE : 0;
-                                        break;
-                                    }
-#endif
-#endif
-                                }
-                                break;
-                            } else if (sprite_register_used[s]
-                                       && sprite_used[t]
-                                       && ((x = sprite_register_x[s] - sgfx_w / 2) <= i)
-                                       && ((x_off = i - x) < sgfx_w)
-                                       && ((y = sprite_register_y[s] - sgfx_h / 2) <= j)
-                                       && ((y_off = j - y) < sgfx_h)
-                                       && (c = sgfx(t, y_off, x_off))) {
-#if USE_COLOR
-                                if (use_color) {
-                                    if (! (a = sprite_color[t]))
-                                        a = sprite_register_color[s];
-                                    a = pen[a];
-                                }
-                                else
-#endif
-                                {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                    if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
-                                    {
-                                        a |= use_dim_and_bright ? MY_A_BOLD : 0;
-                                        break;
-                                    }
-#endif
-#ifdef MY_A_UNDERLINE
-                                    if (sprite_register[s] == SPRITE_BLUE)
-                                    {
-                                        a |= use_underline ? MY_A_UNDERLINE : 0;
-                                        break;
-                                    }
-#endif
-#endif
-                                }
-                                break;
-                            } else if (sprite_register_used[s]
-                                       && (! sprite_used[t])
-                                       && cp437_sprite[t]
-                                       && tile_used[cp437_sprite[t]]
-                                       && ((x = sprite_register_x[s] - gfx_w / 2) <= i)
-                                       && ((x_off = i - x) < gfx_w)
-                                       && ((y = sprite_register_y[s] - gfx_h / 2) <= j)
-                                       && ((y_off = j - y) < gfx_h)
-                                       && (c = gfx((unsigned long) (unsigned char) cp437_sprite[t], y_off, x_off)))
-                            {
-#if USE_COLOR
-                                if (use_color)
-                                {
-                                    if (! (a = tile_color[t]))
-                                        a = sprite_register_color[s];
-                                    a = pen[a];
-                                }
-                                else
-#endif
-                                {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                    if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
-                                    {
-                                        a |= use_dim_and_bright ? MY_A_BOLD : 0;
-                                        break;
-                                    }
-#endif
-#ifdef MY_A_UNDERLINE
-                                    if (sprite_register[s] == SPRITE_BLUE)
-                                    {
-                                        a |= use_underline ? MY_A_UNDERLINE : 0;
-                                        break;
-                                    }
-#endif
-#endif
-                                }
-                                break;
-                            }
-                        }
-                    }
-                    if ((! c) && (ytile < maze_h) && (xtile < maze_w)) {
-                        c = maze_visual(maze_level, ytile, xtile);
-                        {
-                            int c_mapped;
-
-                            c_mapped = c;
-                            if (c_mapped == ':')
-                            {
-                                c_mapped = ' ';
-                            }
-                            else if (c_mapped == 'l')
-                            {
-                                c_mapped = 179;
-                            }
-                            else if (c_mapped == '~')
-                            {
-                                c_mapped = 196;
-                            }
-                            else if ((c_mapped == 'o') && (! tile_used[c_mapped]))
-                            {
-                                c_mapped = 254;
-                            }
-                            while ((! tile_used[c_mapped])
-                                   &&
-                                   (fallback_cp437[c_mapped] != c)
-                                   &&
-                                   (fallback_cp437[c_mapped] != c_mapped))
-                            {
-                                c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
-                            }
-                            if (tile_used[c_mapped]) {
-                                if ((ISWALL(c) && ! ISDOOR(c)) || (c == ' '))
-                                {
-                                    is_wall = 1;
-                                }
-#if USE_COLOR
-                                if (use_color)
-                                {
-                                    a = (int) (unsigned char) maze_color[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
-                                    if (! a)
-                                    {
-                                        a = tile_color[c_mapped];
-                                    }
-                                    if (! a)
-                                    {
-                                        if (ISPELLET(c))
-                                        {
-                                            a = PELLET_COLOR ? PELLET_COLOR : DOT_COLOR;
-                                        }
-                                        else if (ISDOT(c))
-                                        {
-                                            a = DOT_COLOR;
-                                        }
-                                        else if (is_wall)
-                                        {
-                                            a = EFFECTIVE_MORTAR_COLOR;
-                                        }
-                                        else if (ISTEXT(c))
-                                        {
-                                            a = TEXT_COLOR;
-                                        }
-                                    }
-                                    a = pen[a];
-                                }
-                                else
-#endif
-                                {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                    if (ISPELLET(c))
-                                        a |= use_dim_and_bright ? MY_A_BOLD : 0;
-#endif
-#ifdef MY_A_UNDERLINE
-                                    if (use_underline)
-                                        if (ISWALL(c) && (! ISDOOR(c)))
-                                            a |= MY_A_UNDERLINE;
-#endif
-#endif
-                                }
-                                if (debug) {
-                                    int s = WHOSE_HOME_DIR(ytile, xtile);
-                                    unsigned char d;
-                                            
-                                    d = home_dir[(s % ghosts*maze_h+ytile)*(maze_w+1)+xtile];
-                                    c = (d == UP) ? '^'
-                                        : (d == DOWN) ? 'v'
-                                        : (d == LEFT) ? '<'
-                                        : (d == RIGHT) ? '>'
-                                        : ISDOT(c) ? ','
-                                        : ISPELLET(c) ? ';'
-                                        : ISOPEN(c) ? ' '
-                                        : ISDOOR(c) ? 'X'
-                                        : '@';
-#if USE_COLOR
-                                    if (use_color && d) {
-                                        a = sprite_color[sprite_register[MEANGHOST(s)] + sprite_register_frame[MEANGHOST(s)]];
-                                        if (! a)
-                                            a = sprite_register_color[MEANGHOST(s)];
-                                        a = pen[a];
-                                    }
-#endif
-                                }
-                                else
-                                {
-                                    if ((ISPELLET(c) && ((cycles / FIFTH) & 4) && (! dead) &&
-                                         ! (sprite_register_used[HERO] && ghost_eaten_timer)) ||
-                                        ((winning < ONESEC) && winning && (! myman_intro) && (! intermission_running) && (! myman_start) &&
-                                         (ISDOT(c) || ISPELLET(c) || (((winning / FIFTH) & 4) && ISDOOR(c)))))
-                                    {
-                                        is_wall = 0;
-                                        c_mapped = ' ';
-                                    }
-                                    else if ((winning < (2 * TWOSECS)) && ((winning / FIFTH) & 4) && ! ghost_eaten_timer)
-                                    {
-                                        is_wall = 0;
-#if USE_COLOR
-                                        if (use_color)
-                                            a = pen[0xF];
-                                        else
-#endif
-                                            c_mapped = ' ';
-                                    }
-                                    c = gfx(c_mapped, j, i);
-                                    if ((SOLID_WALLS || SOLID_WALLS_BGCOLOR)
-                                        &&
-                                        TRANSLATED_WALL_COLOR
-                                        &&
-                                        is_wall
-                                        &&
-                                        (! (myman_intro || myman_start || intermission_running))
-                                        &&
-                                        (! IS_FULLY_NON_INVERTED(xtile, ytile)))
-                                    {
-                                        if (SOLID_WALLS
-                                            &&
-                                            (((c == ' ') && (IS_FULLY_INVERTED(xtile, ytile) || (! IS_INVERTED(xtile, ytile))))
-                                             ||
-                                             ((c == '\0') && (IS_FULLY_INVERTED(xtile, ytile) || IS_INVERTED(xtile, ytile)))))
-                                        {
-                                            if (! SOLID_WALLS_BGCOLOR)
-                                            {
-                                                c = '\xdb';
-                                            }
-                                            else
-                                            {
-                                                c = ' ';
-                                            }
-#if USE_COLOR
-                                            if (use_color)
-                                            {
-                                                if (TRANSLATED_WALL_COLOR)
-                                                {
-                                                    a = pen[(((unsigned long) (unsigned char) TRANSLATED_WALL_COLOR) * (SOLID_WALLS_BGCOLOR ? 16 : 1)) % 256];
-                                                }
-                                            }
-                                            else
-#endif
-                                            {
-#if USE_ATTR
-#ifdef MY_A_REVERSE
-                                                if (SOLID_WALLS_BGCOLOR)
-                                                {
-                                                    a |= MY_A_REVERSE;
-                                                }
-#endif
-#ifdef MY_A_UNDERLINE
-                                                if (use_underline)
-                                                    a |= MY_A_UNDERLINE;
-#endif
-#endif
-                                            }
-                                        }
-                                        else if ((c_mapped != ' ')
-                                                 &&
-                                                 (! ISNONINVERTABLE(c_mapped))
-                                                 &&
-                                                 SOLID_WALLS_BGCOLOR
-                                                 &&
-                                                 (((c != '\0') && (IS_FULLY_INVERTED(xtile, ytile) || (! IS_INVERTED(xtile, ytile))))
-                                                  ||
-                                                  ((c != ' ') && (IS_FULLY_INVERTED(xtile, ytile) || IS_INVERTED(xtile, ytile)))))
-                                        {
-#if USE_COLOR
-                                            if (use_color)
-                                            {
-                                                if (TRANSLATED_WALL_COLOR)
-                                                {
-                                                    a = pen[(((unsigned long) (unsigned char) EFFECTIVE_MORTAR_COLOR) | (((unsigned long) (unsigned char) TRANSLATED_WALL_COLOR) * 16)) % 256];
-                                                }
-                                            }
-                                            else
-#endif
-                                            {
-#if USE_ATTR
-#ifdef MY_A_REVERSE
-                                                if (SOLID_WALLS_BGCOLOR)
-                                                {
-                                                    a |= MY_A_REVERSE;
-                                                }
-#endif
-#ifdef MY_A_UNDERLINE
-                                                if (use_underline)
-                                                    a |= MY_A_UNDERLINE;
-#endif
-#endif
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                                c = ' ';
-                        }
-                    }
-                    if (! c)
-                        c = ' ';
-                }
-                if (c)
-                {
-                    vmove(line + r_off, c_off + col);
-#if USE_ATTR
-#ifdef MY_A_UNDERLINE
-#if USE_COLOR
-                    if (! use_color)
-#endif
-                        if (use_underline
-                            &&
-                            (a & MY_A_UNDERLINE)
-                            &&
-#ifdef MY_A_REVERSE
-                            (! (a & MY_A_REVERSE))
-                            &&
-#endif
-                            (c == ' '))
-                        {
-                            a &= ~MY_A_UNDERLINE;
-                        }
-#endif
-#endif
-                    my_addch((unsigned long) (unsigned char) c, a);
-                }
-            }
-            if (((MY_COLS - (reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w))) >= sprite_w)
-                &&
-                (LINES >= (tile_h + sprite_h))
-                &&
-                (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
-                &&
-                (((vline + sprite_h) >= LINES)
-                 ||
-                 ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
-            {
-                int hud_line;
-                int hud_level_anchor;
-                int hud_level_anchor2;
-
-                hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
-                hud_level_anchor = reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w);
-                hud_level_anchor2 = hud_level_anchor + sprite_w * ((level > 7) ? 7 : level) - 1;
-                if (hud_level_anchor2 >= MY_COLS)
-                {
-                    hud_level_anchor2 = MY_COLS - 1;
-                }
-                for (col = hud_level_anchor; col <= hud_level_anchor2; col ++)
-                {
-                    int level_sprite;
-                    int level_x;
-
-                    level_x = col - hud_level_anchor;
-                    level_sprite = SPRITE_FRUIT + BONUS(level - (level_x / sprite_w));
-                    if (sprite_used[level_sprite] && ! myman_demo)
-                    {
-                        int a;
-
-                        c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + hud_line) * sprite_w + (level_x % sprite_w)];
-                        if (c)
-                        {
-                            a = 0;
-#if USE_COLOR
-                            if (use_color) {
-                                if (! (a = sprite_color[level_sprite]))
-                                {
-                                    a = sprite_register_color[FRUIT];
-                                }
-                                a = pen[a];
-                            }
-#endif
-                            my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
-                            my_addch((unsigned long) (unsigned char) c, a);
-                            continue;
-                        }
-                    }
-                }
-            }
-        }
-        if (LINES >= ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
-        {
-            int life_anchor;
-            int level_anchor;
-            int level_anchor2;
-
-            life_anchor = showlives * sprite_w + (reflect ? r_off : c_off) + 2 * tile_w - 1;
-            level_anchor2 = (reflect ? r_off : c_off) + ((reflect ? r_off : c_off) ? (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) : MY_COLS) - 2 * tile_w - 1;
-            level_anchor = level_anchor2 + 1 - ((level > 7) ? 7 : level) * sprite_w;
-            while ((level_anchor <= life_anchor)
-                   &&
-                   ((level_anchor + 2 * sprite_w - 1) <= level_anchor2))
-            {
-                level_anchor += sprite_w;
-            }
-            while ((life_anchor >= level_anchor)
-                   &&
-                   ((life_anchor + 1 - (reflect ? r_off : c_off) - 2 * sprite_w) >= 2 * tile_w))
-            {
-                life_anchor -= sprite_w;
-            }
-            for (line = 0; line < sprite_h; line ++)
-            {
-                for (col = 0; col < MY_COLS; col ++)
-                {
-                    if ((col - (reflect ? r_off : c_off) >= (2 * tile_w))
-                        &&
-                        (col <= life_anchor)
-                        &&
-                        (! intermission_running))
-                    {
-                        int life_sprite;
-
-                        my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
-                        life_sprite = SPRITE_LIFE;
-                        if (! sprite_used[life_sprite])
-                        {
-                            life_sprite = SPRITE_HERO + 4 + 2;
-                        }
-                        if (sprite_used[life_sprite])
-                        {
-                            int a;
-
-                            c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + line) * sprite_w + ((col - (reflect ? r_off : c_off) - 2 * tile_w) % sprite_w)];
-                            if (c)
-                            {
-                                a = 0;
-#if USE_COLOR
-                                if (use_color) {
-                                    if (! (a = sprite_color[life_sprite]))
-                                    {
-                                        a = sprite_register_color[HERO];
-                                    }
-                                    a = pen[a];
-                                }
-                                else
-#endif
-                                {
-#if USE_ATTR
-#ifdef MY_A_BOLD
-                                    a |= use_dim_and_bright ? MY_A_BOLD : 0;
-#endif
-#endif
-                                }
-                                my_addch((unsigned long) (unsigned char) c, a);
-                                continue;
-                            }
-                        }
-                    } else if ((col <= level_anchor2)
-                               &&
-                               (col >= level_anchor))
-                    {
-                        int level_sprite;
-                        int level_x;
-
-                        my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
-                        level_x = col - level_anchor;
-                        level_sprite = SPRITE_FRUIT + BONUS(level - (level_x / sprite_w));
-                        if (sprite_used[level_sprite] && ! myman_demo)
-                        {
-                            int a;
-
-                            c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + line) * sprite_w + (level_x % sprite_w)];
-                            if (c)
-                            {
-                                a = 0;
-#if USE_COLOR
-                                if (use_color) {
-                                    if (! (a = sprite_color[level_sprite]))
-                                    {
-                                        a = sprite_register_color[FRUIT];
-                                    }
-                                    a = pen[a];
-                                }
-#endif
-                                my_addch((unsigned long) (unsigned char) c, a);
-                                continue;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        my_attrset(0);
-        if (debug)
-        {
-            my_move(0, 0);
-            for (i = 0; i < MAXFRAMESKIP; i ++)
-            {
-                if (i <= frameskip)
-                {
-                    my_addstr("\xdb", 0);
-                }
-                else
-                {
-                    my_addstr(" ", 0);
-                }
-            }
-        }
-        if (sprite_register_used[FRUIT] && (LINES > 6) && ! use_sound) {
-            static char msg[8][12] = {" <  <N>  > ",
-                                      "<  <ONU>  >",
-                                      "  <BONUS>  ",
-                                      " < BONUS > ",
-                                      "<  BONUS  >",
-                                      " > BONUS < ",
-                                      "  >BONUS<  ",
-                                      ">  >ONU<  <"};
-
-            my_move(LINES - 1, 1 * (use_fullwidth ? 2 : 1));
-            my_addstr(msg[(cycles / FIFTH) & 7], 0);
-        }
-        if ((! myman_demo)
-            &&
-            (! myman_intro)
-            &&
-            (! myman_start)
-            &&
-            ((LINES > 6) && (MY_COLS > 46))
-            &&
-            (((reflect ? c_off : r_off) < tile_h)
-             ||
-             ((LINES - ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))) < sprite_h))
-            &&
-            ((LINES < (tile_h + sprite_h))
-             ||
-             ((reflect ? r_off : c_off) < (5 * tile_w))
-             ||
-             ((reflect ? r_off : c_off) < sprite_w)
-             ||
-             ((MY_COLS - (reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w))) < sprite_w)))
-        {
-            static char buf[128];
-
-            sprintf(buf,
-                    " Level: %-10u Lives: %d Score: %-10u ",
-                    level, NET_LIVES, score);
-            my_move(LINES - 1, (MY_COLS - 46) * (use_fullwidth ? 2 : 1));
-            my_addstr(buf, 0);
-        }
-        if (paused && ! (snapshot || snapshot_txt || pause_shown))
-        {
-            standout();
-            mvprintw(LINES / 2, ((COLS - (int) strlen(PAUSE)) & ~(use_fullwidth ? 1 : 0)) / 2, PAUSE);
-            standend();
-        }
-        {
-            int was_inverted;
-
-            was_inverted = snapshot || snapshot_txt;
-            my_refresh();
-            if (was_inverted)
-            {
-                DIRTY_ALL();
-                ignore_delay = 1;
-                frameskip = 0;
-            }
-            else
-            {
-                CLEAN_ALL();
-            }
-        }
-        {
-            int s;
-            for (s = 0; s < SPRITE_REGISTERS; s ++)
-            {
-                if (sprite_register_used[s])
-                {
-                    DIRTY_SPRITE_REGISTER(s);
-                }
-            }
-        }
+        gamerender();
     }
     if (! (paused || snapshot || snapshot_txt))
     {
@@ -10161,19 +7016,11 @@ main(int argc, char *argv[]
     int option_index;
     const char *defvariant = MYMANVARIANT;
     const char *defsize = MYMANSIZE;
-    static struct option long_options[] =
-        {
-            {"version", 0, 0, 'V'},
-            {"help", 0, 0, 'h'},
-            {"keys", 0, 0, 'k'},
-            {"legal", 0, 0, 'L'},
-            {"variant", 1, 0, 'v'},
-            {"size", 1, 0, 'z'},
-            {0, 0, 0, 0}
-        };
 
     progname = (argc > 0) ? argv[0] : "";
-#if defined(MACCURSES)
+    pager_notice = MYMANLEGALNOTICE;
+#ifdef MACCURSES
+#ifdef __CARBON__
     /* when launched as a CFM application under Mac OS X, there is no
      * argv[0], so we jump through a few hoops to figure out what it
      * should have been. */
@@ -10213,7 +7060,8 @@ main(int argc, char *argv[]
     {
         argc = 1;
     }
-#endif
+#endif /* defined(__CARBON__) */
+#endif /* defined(MACCURSES) */
     progname = (progname && *progname) ? progname : MYMAN;
     if (getenv("MYMAN_DEBUG") && *(getenv("MYMAN_DEBUG")) && strcmp(getenv("MYMAN_DEBUG"), "0"))
     {
@@ -10237,7 +7085,7 @@ main(int argc, char *argv[]
         sprite_color[i] = 0x7;
 #endif
     }
-    while ((i = getopt_long(argc, argv, "Vv:z:bcd:g:l:Lhkm:noprqs:t:uUMRSTf:F:aAeEBNiI12xX",
+    while ((i = getopt_long(argc, argv, short_options,
                             long_options, &option_index))
            != -1)
         switch (i) {
@@ -10304,8 +7152,8 @@ main(int argc, char *argv[]
                         progname);
                 fflush(stderr), exit(1);
             }
-            delay = uli;
-            mindelay = delay / 2;
+            mymandelay = uli;
+            mindelay = mymandelay / 2;
             break;
         }
         case 'g':
@@ -10404,30 +7252,30 @@ main(int argc, char *argv[]
                    use_underline ? " -u" : " -U",
                    use_fullwidth ? " -2" : " -1",
                    reflect ? " -x" : " -X",
-                   delay ? delay : 0,
+                   mymandelay ? mymandelay : 0,
                    lives,
                    ghosts);
             if (mazefile)
-                escape(mazefile, strlen(mazefile));
+                mymanescape(mazefile, strlen(mazefile));
             else {
                 printf("(");
-                escape(builtin_mazefile, strlen(builtin_mazefile));
+                mymanescape(builtin_mazefile, strlen(builtin_mazefile));
                 printf(")");
             }
             printf("\" -s \"");
             if (spritefile)
-                escape(spritefile, strlen(spritefile));
+                mymanescape(spritefile, strlen(spritefile));
             else {
                 printf("(");
-                escape(builtin_spritefile, strlen(builtin_spritefile));
+                mymanescape(builtin_spritefile, strlen(builtin_spritefile));
                 printf(")");
             }
             printf("\" -t \"");
             if (tilefile)
-                escape(tilefile, strlen(tilefile));
+                mymanescape(tilefile, strlen(tilefile));
             else {
                 printf("(");
-                escape(builtin_tilefile, strlen(builtin_tilefile));
+                mymanescape(builtin_tilefile, strlen(builtin_tilefile));
                 printf(")");
             }
             printf("\"\n");
@@ -10599,16 +7447,18 @@ main(int argc, char *argv[]
     {
         const char *argp = tile_args;
 
-        while ((c = *argp))
+        while (1)
         {
             const char *endp;
 
+            c = *argp;
+            if (! c) break;
             if (isspace(c))
             {
                 argp ++;
                 continue;
             }
-            else if ((endp = strchr(argp, '=')))
+            else if ((endp = strchr(argp, '=')) != 0)
             {
                 if (! strncmp(argp, "ABOUT", endp - argp))
                 {
@@ -10670,16 +7520,18 @@ main(int argc, char *argv[]
     {
         const char *argp = sprite_args;
 
-        while ((c = *argp))
+        while (1)
         {
             const char *endp;
 
+            c = *argp;
+            if (! c) break;
             if (isspace(c))
             {
                 argp ++;
                 continue;
             }
-            else if ((endp = strchr(argp, '=')))
+            else if ((endp = strchr(argp, '=')) != 0)
             {
                 if (! strncmp(argp, "ABOUT", endp - argp))
                 {
@@ -10740,7 +7592,7 @@ main(int argc, char *argv[]
     gfx_reflect = reflect && ! REFLECT_LARGE;
 
 #if ! MYMANDELAY
-    if (delay)
+    if (mymandelay)
     {
         fprintf(stderr,
                 "%s: compile with -DMYMANDELAY=1 to enable the -d option.\n",
@@ -10748,8 +7600,8 @@ main(int argc, char *argv[]
         fflush(stderr), exit(1);
     }
 #else
-    delay = delay / FIFTH;
-    mindelay = delay / 2;
+    mymandelay = mymandelay / MYMANFIFTH;
+    mindelay = mymandelay / 2;
 #endif
 
 #ifdef BUILTIN_MAZE
@@ -10783,16 +7635,18 @@ main(int argc, char *argv[]
     {
         const char *argp = maze_args;
 
-        while ((c = *argp))
+        while (1)
         {
             const char *endp;
 
+            c = *argp;
+            if (! c) break;
             if (isspace(c))
             {
                 argp ++;
                 continue;
             }
-            else if ((endp = strchr(argp, '=')))
+            else if ((endp = strchr(argp, '=')) != 0)
             {
                 if (! strncmp(argp, "FLIP_TO", endp - argp))
                 {
@@ -11743,7 +8597,7 @@ main(int argc, char *argv[]
         if (maze_args)
         {
             printf("\"");
-            escape(maze_args, strlen(maze_args));
+            mymanescape(maze_args, strlen(maze_args));
             printf("\"");
         }
         else
@@ -11752,7 +8606,7 @@ main(int argc, char *argv[]
         }
         printf(";\n");
         printf("static const char builtin_mazefile_str[] = \"");
-        escape(mazefile ? mazefile : builtin_mazefile,
+        mymanescape(mazefile ? mazefile : builtin_mazefile,
                strlen(mazefile ? mazefile : builtin_mazefile));
         printf("\";\n");
         printf("const char *builtin_mazefile = builtin_mazefile_str;\n");
@@ -11762,7 +8616,7 @@ main(int argc, char *argv[]
             printf("/* 0x%X */\n", n);
             for (i = 0; i < maze_h; i ++) {
                 printf("  \"");
-                escape(maze + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
+                mymanescape(maze + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
                 printf("\"\n");
             }
         }
@@ -11773,7 +8627,7 @@ main(int argc, char *argv[]
             printf("/* 0x%X */\n", n);
             for (i = 0; i < maze_h; i ++) {
                 printf("  \"");
-                escape(maze_color + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
+                mymanescape(maze_color + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
                 printf("\"\n");
             }
         }
@@ -11808,6 +8662,7 @@ main(int argc, char *argv[]
     if (nogame)
         fflush(stdout), fflush(stderr), exit(0);
 
+#ifdef LC_CTYPE
     if (! setlocale(LC_CTYPE, ""))
     {
         fprintf(
@@ -11815,6 +8670,7 @@ main(int argc, char *argv[]
             "warning: setlocale(LC_CTYPE, \"\") failed\n");
         fflush(stderr);
     }
+#endif /* defined(LC_CTYPE) */
 
     if (use_fullwidth)
     {
@@ -11841,6 +8697,12 @@ main(int argc, char *argv[]
 #endif
         if (! lines) lines = (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + (3 * tile_h + sprite_h);
         if (! columns) columns = (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) * (use_fullwidth ? 2 : 1);
+#ifdef GTKCURSES
+        if (((! getenv("GTKCURSES_ICON")) || ! *(getenv("GTKCURSES_ICON"))) && MYMANICONPNG && *MYMANICONPNG)
+        {
+            setenv("GTKCURSES_ICON", MYMANICONPNG, 1);
+        }
+#endif
 #ifdef INITSCR_WITH_HINTS
         initscrWithHints(lines,
                          columns,
