@@ -2253,6 +2253,30 @@ endif
 endif
 endif
 
+ifneq ($(host),$(build))
+
+# The bootstrap executable is built with CP-437 rawcurses (like --with-raw-cp437) when cross-compiling
+
+#BUILDCURSESLIBS =
+#BUILDICONVLIBS =
+BUILDCURSOPTS = -DRAWCURSES=1
+#EXTRABUILDCURSOPTS =
+#BUILDICONVOPTS =
+#BUILDCURSESINCLUDE =
+#EXTRABUILDICONVOPTS =
+
+else
+
+BUILDCURSESLIBS = $(CURSESLIBS)
+BUILDICONVLIBS = $(ICONVLIBS)
+BUILDCURSOPTS = $(CURSOPTS)
+EXTRABUILDCURSOPTS = $(EXTRACURSOPTS)
+BUILDICONVOPTS = $(ICONVOPTS)
+BUILDCURSESINCLUDE = $(CURSESINCLUDE)
+EXTRABUILDICONVOPTS = $(EXTRAICONVOPTS)
+
+endif
+
 ifeq (yes,$(with_sdl_mixer))
 SDLCFLAGS += -DUSE_SDL_MIXER=1
 SDLLIBS += -lSDL_mixer
@@ -4535,21 +4559,11 @@ $(MYMAN).dvi: $(MYMAN)$(man6ext)
 $(MYMAN)$(htm): $(MYMAN)$(man6ext)
 	@-$(MANTOHTML)
 
-$(obj)$(GAME)$O: $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
-
-$(obj)$(GAME)$O: $(call mw,$(src))src/myman.c $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
-	@$(MKPARENTDIR)
-	$(COMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(CURSESINCLUDE) $(EXTRAICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
-
-ifneq ($(obj)$(GAME)$O,$(obj)$(hostprefix)$(GAME)$o)
-
 $(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS)
 
 $(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
 	$(HOSTCOMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(EXTRAICONVOPTS) $(CURSESINCLUDE) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
-
-endif
 
 $(GAME)$X: $(call mw,$(obj)mygetopt$O) $(call mw,$(obj)utils$O)
 
@@ -4569,11 +4583,11 @@ $(obj)s2s%$o: $(call mw,$(obj)s2s)%.c
 
 $(BOOTSTRAP)$X: $(call mw,$(BOOTSTRAP)$O) $(call mw,$(obj)mygetopt$O) $(call mw,$(obj)utils$O)
 	@$(MKPARENTDIR)
-	$(LINK) $(CURSESLIBS) $(ICONVLIBS) $(call q,$(obj)mygetopt$O) $(call mw,$(obj)utils$O) $(LIBS)
+	$(LINK) $(BUILDCURSESLIBS) $(BUILDICONVLIBS) $(call q,$(obj)mygetopt$O) $(call mw,$(obj)utils$O) $(LIBS)
 
 $(BOOTSTRAP)$O: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
-	$(COMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(CURSESINCLUDE) $(EXTRAICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS)
+	$(COMPILE) $(BUILDCURSOPTS) $(EXTRABUILDCURSOPTS) $(BUILDICONVOPTS) $(BUILDCURSESINCLUDE) $(EXTRABUILDICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS)
 
 define variant_template
 $$(call mymanvariant_data,$1).c: $$(call mw,$$(BOOTSTRAP)$$X) $$(call mw,$$(call tilefile,$$(MYMANSIZE))) $$(call mw,$$(call spritefile,$$(MYMANSIZE))) $$(call mw,$$(call mazefile,$1))
