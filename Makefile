@@ -3585,6 +3585,7 @@ push-cvsdist: cvsdump cvsdist
 	@$(ECHOLINE) $(call q,Now create a new file release called myman-cvs-$(isodate) here:)
 	@$(ECHOLINE) $(call q,    $(UPLOADSWEBSITE))
 	@$(ECHOLINE) $(call q,And add the files $(CVSDUMP)-$(isodate)$(tgz) and $(CVSDIST)-$(isodate)$(tgz) to it.)
+	@$(ECHOLINE) $(call q,Set the type of each file to platform-independent source .gz)
 
 .PHONY: cvsdist
 
