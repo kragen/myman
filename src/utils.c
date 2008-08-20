@@ -145,6 +145,30 @@ const char *MYMANKEYS =
 "equivalent to ESC" "\n"
 "\0";
 
+const char *maze_ABOUT_prefix = "\n" "Maze: ";
+
+const char *maze_FIXME_prefix = "\n" "FIXME (Maze): ";
+
+const char *maze_NOTE_prefix = "\n" "NOTE (Maze): ";
+
+const char *tile_ABOUT_prefix = "\n" "Tiles: ";
+
+const char *tile_FIXME_prefix = "\n" "FIXME (Tiles): ";
+
+const char *tile_NOTE_prefix = "\n" "NOTE (Tiles): ";
+
+const char *sprite_ABOUT_prefix = "\n" "Sprites: ";
+
+const char *sprite_FIXME_prefix = "\n" "FIXME (Sprites): ";
+
+const char *sprite_NOTE_prefix = "\n" "NOTE (Sprites): ";
+
+const char *MYMANKEYS_prefix = "Keyboard Map" "\n" "\n";
+
+const char *MOREMESSAGE = "[Space: more, Q: quit]";
+
+const char *DONEMESSAGE = "[Space: OK, Q: quit]";
+
 const char *short_options = "Vv:z:bcd:g:l:Lhkm:noprqs:t:uUMRSTf:F:aAeEBNiI12xX";
 static struct option long_options_static[] =
 {

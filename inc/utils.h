@@ -1,5 +1,4 @@
-/*BINFMTC:-lcurses
- * utils.h - UTF-8 and (modified) CP-437 utilities for the MyMan video game
+/* utils.h - various utilities for the MyMan video game
  * Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
@@ -26,916 +25,985 @@
 #ifndef UTILS_H_INC
 #define UTILS_H_INC 1
 
-/* if the utf-8 stream starts with U+FEFF (BOM), read it off and
- * ignore it. returns 1 if BOM was stripped, 0 otherwise. while a BOM
- * is not recommended in utf-8 text, it is automatically inserted by
- * some tools (notepad, for instance.) */
-static int
-ignore_bom_utf8(FILE *stream)
-{
-    int c;
+#ifndef WIN32
+#ifdef _WIN32
 
-    c = fgetc(stream);
-    if (c == 0xef)
-    {
-        int c1;
+/* some Win32 C compilers do not define WIN32 */
+#define WIN32 1
 
-        c1 = fgetc(stream);
-        if (c1 == 0xbb)
-        {
-            int c2;
+#else /* ! defined(_WIN32) */
+#if defined(DOS) || defined(_MSDOS) || defined(__DOS__) || defined(__TURBOC__)
 
-            c2 = fgetc(stream);
-            if (c2 == 0xbf)
-            {
-                return 1;
-            }
-            if (c2 != EOF)
-            {
-                ungetc(c2, stream);
-            }
-        }
-        if (c1 != EOF)
-        {
-            ungetc(c1, stream);
-        }
-    }
-    if (c != EOF)
-    {
-        ungetc(c, stream);
-    }
-    return 0;
-}
+/* some DOS C compilers do not define __MSDOS__ */
+#ifndef __MSDOS__
+#define __MSDOS__ 1
+#endif
+
+#endif /* defined(DOS) || defined(_MSDOS) || defined(__DOS__) || defined(__TURBOC__) */
+#endif /* ! defined(_WIN32) */
+#endif /* ! defined(WIN32) */
+
+#undef DATADIR /* FIXME: conflicts with Win32 header files */
+
+/* subdirectory for graphics datafiles */
+#ifndef GFXDIR
+#define GFXDIR "gfx"
+#endif
+
+/* PNG icon filename (only used by GTK+-2.0 driver so far) */
+#ifndef MYMANICONPNG
+#define MYMANICONPNG GFXDIR "/myman48.png"
+#endif
+
+/* notice to display on the intro screen */
+#ifndef MYMANNOTICE
+#define MYMANNOTICE "DEDICATED TO TORU"
+#endif
+
+/* used for HTML screenshots */
+#ifndef HTM_SUFFIX
+#define HTM_SUFFIX ".html"
+#endif
+
+/* used for text screenshots */
+#ifndef TXT_SUFFIX
+#define TXT_SUFFIX ".txt"
+#endif 
+
+extern const char *maze_ABOUT_prefix;
+
+extern const char *maze_FIXME_prefix;
+
+extern const char *maze_NOTE_prefix;
+
+extern const char *tile_ABOUT_prefix;
+
+extern const char *tile_FIXME_prefix;
+
+extern const char *tile_NOTE_prefix;
+
+extern const char *sprite_ABOUT_prefix;
+
+extern const char *sprite_FIXME_prefix;
+
+extern const char *sprite_NOTE_prefix;
+
+extern const char *MYMANKEYS_prefix;
+
+extern const char *MOREMESSAGE;
+
+extern const char *DONEMESSAGE;
+
+#define ISTEXT(c) (((c) == '!') || (((c) >= '0') && ((c) <= '9')) || ((c) == '@') || (((c) >= 'A') && ((c) <= 'Z')))
+#define ISDOT(c) (((c) == 249) || ((c) == '.'))
+#define ISPELLET(c) (((c) == 254) || ((c) == 'o'))
+#define ISZAPLEFT(c) (((c) == '<') || (c == 174))
+#define ISZAPRIGHT(c) (((c) == '>') || (c == 175))
+#define ISZAPUP(c) ((c) == '^')
+#define ISZAPDOWN(c) ((c) == 'v')
+#define ISOPEN(c) (((c) == ' ') || ISDOT(c) || ISPELLET(c) || ((c) == '!') || (((c) >= 'A') && ((c) <= 'Z')) || ((c) == 'l') || ((c) == '~') || ISZAPRIGHT(c) || ISZAPLEFT(c) || ISZAPUP(c) || ISZAPDOWN(c))
+#define ISDOOR(c) (((c) == '=') || (c == ':') || ((c) == 240) || (c == 255))
+
+#define ISWALLCENTER(c) ((((unsigned char) (char) (c)) == 0x07) || (((unsigned char) (char) (c)) == 0x12) || (((unsigned char) (char) (c)) == 0x1d) || (((unsigned char) (char) (c)) == 0x3c) || (((unsigned char) (char) (c)) == 0x3e) || (((unsigned char) (char) (c)) == 0x5e) || (((unsigned char) (char) (c)) == 0x76) || (((unsigned char) (char) (c)) == 0xae) || (((unsigned char) (char) (c)) == 0xaf))
+#define ISWALLUP(c) (udlr[(unsigned int) (unsigned char) (c)] & 0xc0)
+#define ISWALLDOWN(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x30)
+#define ISWALLLEFT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x0c)
+#define ISWALLRIGHT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x03)
+#define ISWALL(c) (ISWALLUP(c) || ISWALLDOWN(c) || ISWALLLEFT(c) || ISWALLRIGHT(c) || ISWALLCENTER(c))
+#define ISNONINVERTABLE(c) (ISPELLET(c) || ISDOT(c) || ISZAPLEFT(c) || ISZAPRIGHT(c) || ISZAPUP(c) || ISZAPDOWN(c) || ISDOOR(c))
+
+#define NPENS 256
+
+/* base name for package (without version number or suffix) */
+#ifndef MYMAN
+#define MYMAN "myman"
+#endif
+
+/* copyright information for the program as a whole */
+#ifndef MYMANCOPYRIGHT
+#define MYMANCOPYRIGHT "Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>"
+#endif
+
+/* package version number */
+#ifndef MYMANVERSION
+#define MYMANVERSION "devel"
+#endif
+
+/* legal notice to display before starting */
+extern const char *MYMANLEGALNOTICE;
+
+extern const char *MYMANKEYS;
+
+extern const char *short_options;
+extern struct option *long_options;
 
 /* UCS/Unicode mapping for CP437 (used in HTML snapshots) */
 
-static const unsigned long
-uni_cp437_halfwidth[256] =
-{
-/* 0x00 */
-    0x2008, 0x263A, 0x263B, 0x2665, 0x2666, 0x2663, 0x2660, 0x2022,
-    0x25D8, 0x25CB, 0x25D9, 0x2642, 0x2640, 0x266A, 0x266B, 0x263C,
-/* 0x10 */
-    0x25BA, 0x25C4, 0x2195, 0x203C, 0x00B6, 0x00A7, 0x25AC, 0x21A8,
-    0x2191, 0x2193, 0x2192, 0x2190, 0x221F, 0x2194, 0x25B2, 0x25BC,
-/* 0x20 */
-    0x0020, 0x0021, 0x0022, 0x0023, 0x0024, 0x0025, 0x0026, 0x0027,
-    0x0028, 0x0029, 0x002A, 0x002B, 0x002C, 0x002D, 0x002E, 0x002F,
-/* 0x30 */
-    0x0030, 0x0031, 0x0032, 0x0033, 0x0034, 0x0035, 0x0036, 0x0037,
-    0x0038, 0x0039, 0x003A, 0x003B, 0x003C, 0x003D, 0x003E, 0x003F,
-/* 0x40 */
-    0x0040, 0x0041, 0x0042, 0x0043, 0x0044, 0x0045, 0x0046, 0x0047,
-    0x0048, 0x0049, 0x004A, 0x004B, 0x004C, 0x004D, 0x004E, 0x004F,
-/* 0x50 */
-    0x0050, 0x0051, 0x0052, 0x0053, 0x0054, 0x0055, 0x0056, 0x0057,
-    0x0058, 0x0059, 0x005A, 0x005B, 0x005C, 0x005D, 0x005E, 0x005F,
-/* 0x60 */
-    0x0060, 0x0061, 0x0062, 0x0063, 0x0064, 0x0065, 0x0066, 0x0067,
-    0x0068, 0x0069, 0x006A, 0x006B, 0x006C, 0x006D, 0x006E, 0x006F,
-/* 0x70 */
-    0x0070, 0x0071, 0x0072, 0x0073, 0x0074, 0x0075, 0x0076, 0x0077,
-    0x0078, 0x0079, 0x007A, 0x007B, 0x007C, 0x007D, 0x007E, 0x2302,
-/* 0x80 */
-    0x00C7, 0x00FC, 0x00E9, 0x00E2, 0x00E4, 0x00E0, 0x00E5, 0x00E7,
-    0x00EA, 0x00EB, 0x00E8, 0x00EF, 0x00EE, 0x00EC, 0x00C4, 0x00C5,
-/* 0x90 */
-    0x00C9, 0x00E6, 0x00C6, 0x00F4, 0x00F6, 0x00F2, 0x00FB, 0x00F9,
-    0x00FF, 0x00D6, 0x00DC, 0x00A2, 0x00A3, 0x00A5, 0x20A7, 0x0192,
-/* 0xA0 */
-    0x00E1, 0x00ED, 0x00F3, 0x00FA, 0x00F1, 0x00D1, 0x00AA, 0x00BA,
-    0x00BF, 0x2310, 0x00AC, 0x00BD, 0x00BC, 0x00A1, 0x00AB, 0x00BB,
-/* 0xB0 */
-    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2561, 0x2562, 0x2556,
-    0x2555, 0x2563, 0x2551, 0x2557, 0x255D, 0x255C, 0x255B, 0x2510,
-/* 0xC0 */
-    0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x255E, 0x255F,
-    0x255A, 0x2554, 0x2569, 0x2566, 0x2560, 0x2550, 0x256C, 0x2567,
-/* 0xD0 */
-    0x2568, 0x2564, 0x2565, 0x2559, 0x2558, 0x2552, 0x2553, 0x256B,
-    0x256A, 0x2518, 0x250C, 0x2588, 0x2584, 0x258C, 0x2590, 0x2580,
-/* 0xE0 */
-    0x03B1, 0x00DF, 0x0393, 0x03C0, 0x03A3, 0x03C3, 0x00B5, 0x03C4,
-    0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6, 0x03B5, 0x2229,
-/* 0xF0 */
-    0x2261, 0x00B1, 0x2265, 0x2264, 0x2320, 0x2321, 0x00F7, 0x2248,
-    0x00B0, 0x00B7, 0x2022, 0x221A, 0x207F, 0x00B2, 0x25A0, 0x00A0
-};
+extern const unsigned long uni_cp437_halfwidth[256];
 
 /* alternate UCS/Unicode mapping used in CJK fullwidth mode */
 
-static const unsigned long
-uni_cp437_fullwidth[256] =
-{
-/* 0x00 */
-    0x3000, 0x25CB, 0x25CF, 0x25CF, 0x25CF, 0x25A0, 0x25A0, 0x25CF,
-    0x25A0, 0x25CB, 0x25A0, 0x2642, 0x2640, 0xFF03, 0xFF03, 0x2606,
-/* 0x10 */
-    0x2605, 0x2605, 0xFF29, 0xFF01, 0xFF30, 0x00A7, 0x25A0, 0xFF2C,
-    0x2191, 0x2193, 0x2192, 0x2190, 0xFF2C, 0x2500, 0x25B2, 0x25BC,
-/* 0x20 */
-    0x3000, 0xFF01, 0x201D, 0xFF03, 0xFF04, 0xFF05, 0xFF06, 0x2019,
-    0xFF08, 0xFF09, 0xFF0A, 0xFF0B, 0xFF0C, 0x2500, 0xFF0E, 0xFF0F,
-/* 0x30 */
-    0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15, 0xFF16, 0xFF17,
-    0xFF18, 0xFF19, 0xFF1A, 0xFF1B, 0xFF1C, 0xFF1D, 0xFF1E, 0xFF1F,
-/* 0x40 */
-    0xFF20, 0xFF21, 0xFF22, 0xFF23, 0xFF24, 0xFF25, 0xFF26, 0xFF27,
-    0xFF28, 0xFF29, 0xFF2A, 0xFF2B, 0xFF2C, 0xFF2D, 0xFF2E, 0xFF2F,
-/* 0x50 */
-    0xFF30, 0xFF31, 0xFF32, 0xFF33, 0xFF34, 0xFF35, 0xFF36, 0xFF37,
-    0xFF38, 0xFF39, 0xFF3A, 0xFF3B, 0xFF3C, 0xFF3D, 0xFF3E, 0xFF3F,
-/* 0x60 */
-    0x2018, 0xFF41, 0xFF42, 0xFF43, 0xFF44, 0xFF45, 0xFF46, 0xFF47,
-    0xFF48, 0xFF49, 0xFF4A, 0xFF4B, 0xFF4C, 0xFF4D, 0xFF4E, 0xFF4F,
-/* 0x70 */
-    0xFF50, 0xFF51, 0xFF52, 0xFF53, 0xFF54, 0xFF55, 0xFF56, 0xFF57,
-    0xFF58, 0xFF59, 0xFF5A, 0xFF5B, 0xFF5C, 0xFF5D, 0x301C, 0x0394,
-/* 0x80 */
-    0xFF23, 0xFF55, 0xFF45, 0xFF41, 0xFF41, 0xFF41, 0xFF41, 0xFF43,
-    0xFF45, 0xFF45, 0xFF45, 0xFF49, 0xFF49, 0xFF49, 0xFF21, 0xFF21,
-/* 0x90 */
-    0xFF25, 0xFF45, 0xFF25, 0xFF4F, 0xFF4F, 0xFF4F, 0xFF55, 0xFF55,
-    0xFF59, 0xFF2F, 0xFF35, 0xFFE0, 0xFFE1, 0xFFE5, 0xFF50, 0xFF46,
-/* 0xA0 */
-    0xFF41, 0xFF49, 0xFF4F, 0xFF55, 0xFF4E, 0xFF2E, 0xFF41, 0xFF4F,
-    0xFF1F, 0x250C, 0xFFE2, 0x00BD, 0x00BC, 0xFF01, 0x300A, 0x300B,
-/* 0xB0 */
-    0x2591, 0x2592, 0x2593, 0x2502, 0x2524, 0x2524, 0x2524, 0x2524,
-    0x252C, 0x2524, 0x2502, 0x2510, 0x2518, 0x2524, 0x2534, 0x2510,
-/* 0xC0 */
-    0x2514, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x251C, 0x251C,
-    0x2514, 0x250C, 0x2534, 0x252C, 0x251C, 0x2500, 0x253C, 0x2534,
-/* 0xD0 */
-    0x2534, 0x252C, 0x252C, 0x251C, 0x2534, 0x252C, 0x251C, 0x253C,
-    0x253C, 0x2518, 0x250C, 0x25A0, 0x25A0, 0x25A0, 0x25A0, 0x25A0,
-/* 0xE0 */
-    0x03B1, 0x03B2, 0x0393, 0x03C0, 0x03A3, 0x03C3, 0x03BC, 0x03C4,
-    0x03A6, 0x0398, 0x03A9, 0x03B4, 0x221E, 0x03C6, 0x03B5, 0x2229,
-/* 0xF0 */
-    0x2261, 0x00B1, 0xFF1E, 0xFF1C, 0x222B, 0x222B, 0x00F7, 0xFF1D,
-    0x00B0, 0x30FB, 0x30FB, 0x221A, 0xFF4E, 0xFF12, 0x25CF, 0x3000
-};
+extern const unsigned long uni_cp437_fullwidth[256];
 
-static const unsigned char cp437_fullwidth_rhs[256] =
-{
-/*00*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*10*/
-    0x20, 0xcd, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*20*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x2D, 0x20, 0x20,
-/*30*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x3D, 0x20, 0x20,
-/*40*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*50*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*60*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*70*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*80*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*90*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*A0*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*B0*/
-    0xb0, 0xb1, 0xb2, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20, 0x20, 0x20, 0x20, 0x20, 0xc4, 0x20,
-/*C0*/
-    0xc4, 0xc4, 0xc4, 0xc4, 0xc4, 0xc4, 0xcd, 0xc4, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd, 0xcd,
-/*D0*/
-    0xc4, 0xcd, 0xc4, 0xc4, 0xcd, 0xcd, 0xc4, 0xc4, 0xcd, 0x20, 0xc4, 0xdb, 0xdc, 0x20, 0xde, 0xdf,
-/*E0*/
-    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20,
-/*F0*/
-    0xf0, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
-};
+/* right-hand-size mapping used when approximating fullwidth with
+ * halfwidth */
 
-static const unsigned long *uni_cp437 = uni_cp437_halfwidth;
+extern const unsigned char cp437_fullwidth_rhs[256];
+
+/* mapping used to reflect sprites */
+
+extern unsigned char reflect_sprite[256];
+
+/* fallback mapping to map missing sprites to tiles */
+
+extern unsigned char cp437_sprite[256];
+
+/* box drawing Up-Down-Left-Right data for CP437 */
+
+extern const unsigned char udlr[256];
+
+/* fallback mapping for missing tiles */
+
+extern unsigned char fallback_cp437[256];
+
+/* mapping used to reflect tiles */
+
+extern unsigned char reflect_cp437[256];
+
+extern short mille_to_scale(short n, short scale);
+
+extern const unsigned long *uni_cp437;
 
 /* read a utf-8 sequence from stream, convert it to cp437, and return
  * it. unmappable sequences are silently converted to spaces. this
  * theoretically works with U+0000 .. U+D7FF and U+E000 .. U+10FFFF */
 
 #if 0
-static int fputc_utf8(unsigned long u, FILE *stream);
+extern int fputc_utf8(unsigned long u, FILE *stream);
 #endif
 
-static int
-fgetc_cp437_utf8(FILE *stream)
-{
-    int c;
-
-    c = fgetc(stream);
-    if (c >= 0x80)
-    {
-        unsigned long u;
-        int i;
-
-        u = 0x20;
-        if ((c >= 0xc2) && (c <= 0xdf))
-        {
-            int c1;
-
-            c1 = fgetc(stream);
-            if ((c1 >= 0x80) && (c1 <= 0xbf))
-            {
-                u = ((c & 0x1f) << 6) | (c1 & 0x3f);
-            }
-            else if (c1 != EOF)
-            {
-                ungetc(c1, stream);
-            }
-        }
-        else if ((c >= 0xe0) && (c <= 0xef))
-        {
-            int c1;
-
-            c1 = fgetc(stream);
-            if ((c1 >= ((c == 0xe0) ? 0xa0 : 0x80)) && (c1 <= ((c == 0xed) ? 0x9f : 0xbf)))
-            {
-                int c2;
-
-                c2 = fgetc(stream);
-                if ((c2 >= 0x80) && (c2 <= 0xbf))
-                {
-                    u = ((c & 0x0f) << 12) | ((c1 & 0x3f) << 6) | (c2 & 0x3f);
-                }
-                else if (c2 != EOF)
-                {
-                    ungetc(c2, stream);
-                }
-            }
-            else if (c1 != EOF)
-            {
-                ungetc(c1, stream);
-            }
-        }
-        else if ((c >= 0xf0) && (c <= 0xf4))
-        {
-            int c1;
-
-            c1 = fgetc(stream);
-            if ((c1 >= ((c == 0xf0) ? 0x90 : 0x80)) && (c1 <= ((c == 0xf4) ? 0x8f : 0xbf)))
-            {
-                int c2;
-
-                c2 = fgetc(stream);
-                if ((c2 >= 0x80) && (c2 <= 0xbf))
-                {
-                    int c3;
-
-                    c3 = fgetc(stream);
-                    if ((c3 >= 0x80) && (c3 <= 0xbf))
-                    {
-                        u = ((c & 0x07) << 18) | ((c1 & 0x3f) << 12) | ((c2 & 0x3f) << 6) | (c3 & 0x3f);
-                    }
-                    else if (c3 != EOF)
-                    {
-                        ungetc(c3, stream);
-                    }
-                }
-                else if (c2 != EOF)
-                {
-                    ungetc(c2, stream);
-                }
-            }
-            else if (c1 != EOF)
-            {
-                ungetc(c1, stream);
-            }
-        }
-        c = ' ';
-        for (i = 0; i <= 0xff; i ++)
-        {
-            if (uni_cp437_halfwidth[i] == u)
-            {
-                c = i;
-                break;
-            }
-        }
-        if (i > 0xff)
-        {
-            for (i = 0x20; i <= 0x11f; i ++)
-            {
-                if (uni_cp437_fullwidth[i & 0xff] == u)
-                {
-                    c = i & 0xff;
-                    break;
-                }
-            }
-        }
-        if (i > 0x11f)
-        {
-            if ((u >= 0xff01) && (u <= 0xff5f))
-            {
-                /* FULLWIDTH ASCII -> ASCII */
-                c = (int) (u + 0x20 - 0xff00);
-            }
-            else if ((u == 0x85) ||
-                     (u == 0x2028) ||
-                     (u == 0x2029))
-            {
-                /* NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR -> LINE
-                 * FEED */
-                c = '\n';
-            }
-        }
-    }
-#if 0
-    fputc_utf8(((c == '\v') || (c == '\f') || (c == '\n') || (c == '\r')) ? c : uni_cp437[(unsigned int) (unsigned char) c], stderr);
-#endif
-    return c;
-}
+extern int
+fgetc_cp437_utf8(FILE *stream);
 
 /* like fputc, but converts unicode to a utf-8 sequence. this
  * theoretically works with U+0000 .. U+D7FF and U+E000 .. U+10FFFF;
  * note that the return value is a bit different -- EOF for failure, 0
  * for success */
 
-static int fputc_utf8(unsigned long u, FILE *stream)
-{
-    if (u <= 0x7f)
-    {
-        if (fputc(u, stream) == EOF)
-        {
-            return EOF;
-        }
-    }
-    else if (u <= 0x7ff)
-    {
-        if (fputc(0xc0 | (u >> 6), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-    }
-    else if (u <= 0xffff)
-    {
-        if (fputc(0xe0 | (u >> 12), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | ((u >> 6) & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-    }
-    else if (u <= 0x10ffff)
-    {
-        if (fputc(0xf0 | (u >> 18), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | ((u >> 12) & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | ((u >> 6) & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (fputc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-    }
-    else
-    {
-        return EOF;
-    }
-    return 0;
-}
+extern int fputc_utf8(unsigned long u, FILE *stream);
 
 /* like fputc, but converts cp437 to a utf-8 sequence. this
  * theoretically works with U+0000 .. U+D7FF and U+E000 .. U+10FFFF;
  * adding 0x100 ignores CJK mode */
 
-#ifdef NEED_FPUTC_UTF8_CP437
-static int fputc_utf8_cp437(int c, FILE *stream)
-{
-    unsigned long u;
-
-    u = 0;
-    if ((c < 0) || (c > 0x1ff))
-    {
-        return EOF;
-    }
-    u = (c & 0x100) ? uni_cp437_halfwidth[((unsigned char) c) & 0xff] : uni_cp437[c];
-    if (fputc_utf8(u, stream) == EOF)
-    {
-        return EOF;
-    }
-    return c;
-}
-#endif
+extern int fputc_utf8_cp437(int c, FILE *stream);
 
 /* like ungetc, but converts cp437 to a utf-8 sequence and puts that
  * back one byte at a time. this theoretically works with U+0000
  * .. U+D7FF and U+E000 .. U+10FFFF */
 
-static int ungetc_cp437_utf8(int c, FILE *stream)
-{
-    unsigned long u;
+extern int ungetc_cp437_utf8(int c, FILE *stream);
 
-    u = 0;
-    if ((c < 0) || (c > 0xff))
-    {
-        return EOF;
-    }
-    u = uni_cp437[c];
-    if (u <= 0x7f)
-    {
-        if (ungetc(u, stream) == EOF)
-        {
-            return EOF;
-        }
-    }
-    else if (u <= 0x7ff)
-    {
-        if (ungetc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (ungetc(0xc0 | (u >> 6), stream) == EOF)
-        {
-            fgetc(stream);
-            return EOF;
-        }
-    }
-    else if (u <= 0xffff)
-    {
-        if (ungetc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (ungetc(0x80 | ((u >> 6) & 0x3f), stream) == EOF)
-        {
-            fgetc(stream);
-            return EOF;
-        }
-        else if (ungetc(0xe0 | (u >> 12), stream) == EOF)
-        {
-            fgetc(stream);
-            fgetc(stream);
-            return EOF;
-        }
-    }
-    else if (u <= 0x10ffff)
-    {
-        if (ungetc(0x80 | (u & 0x3f), stream) == EOF)
-        {
-            return EOF;
-        }
-        else if (ungetc(0x80 | ((u >> 6) & 0x3f), stream) == EOF)
-        {
-            fgetc(stream);
-            return EOF;
-        }
-        else if (ungetc(0x80 | ((u >> 12) & 0x3f), stream) == EOF)
-        {
-            fgetc(stream);
-            fgetc(stream);
-            return EOF;
-        }
-        else if (ungetc(0xf0 | (u >> 18), stream) == EOF)
-        {
-            fgetc(stream);
-            fgetc(stream);
-            fgetc(stream);
-            return EOF;
-        }
-    }
-    else
-    {
-        return EOF;
-    }
-    return c;
-}
+extern char *strword(const char *from, const char **endp, size_t *lenp);
 
-static char *
-strword(const char *from, const char **endp, size_t *lenp)
-{
-    char *word = NULL;
-    size_t wordlen = 0;
-    int quotes = 0;
-    int escape = 0;
-    unsigned long numeric = 0;
-    int numeric_len = 0;
-    char c;
+extern long *strtollist(const char *from, const char **endp, size_t *lenp);
 
-    word = strdup("");
-    if (! word) return word;
-    while ((c = *from))
-    {
-        char *newword;
+extern double *strtodlist(const char *from, const char **endp, size_t *lenp);
 
-        from ++;
-        if ((escape == 0)
-            &&
-            (c == quotes))
-        {
-            quotes = 0;
-            continue;
-        }
-        if ((escape == 0)
-            &&
-            (quotes == 0))
-        {
-            if ((c == '\t') || (c == ' ') || (c == '\n') || (c == '\t') || (c == '\v') || (c == '\f') || (c == '\r'))
-            {
-                from --;
-                break;
-            }
-            if ((c == '\'') || (c == '\"'))
-            {
-                quotes = c;
-                continue;
-            }
-        }
-        if (escape == 0)
-        {
-            if (c == '\\')
-            {
-                escape = c;
-                continue;
-            }
-        }
-        if (escape == '\\')
-        {
-            switch(c)
-            {
-            case 'a':
-                escape = 0;
-                c = '\a';
-                break;
-            case 'b':
-                escape = 0;
-                c = '\b';
-                break;
-            case 't':
-                escape = 0;
-                c = '\t';
-                break;
-            case 'v':
-                escape = 0;
-                c = '\v';
-                break;
-            case 'f':
-                escape = 0;
-                c = '\f';
-                break;
-            case 'n':
-                escape = 0;
-                c = '\n';
-                break;
-            case 'r':
-                escape = 0;
-                c = '\r';
-                break;
-            case 'e':
-                /* GNU extension */
-                escape = 0;
-                c = '\x1b';
-                break;
-            case 'u':
-                escape = 'u';
-                numeric = 0;
-                numeric_len = 0;
-                continue;
-            case 'U':
-                escape = 'U';
-                numeric = 0;
-                numeric_len = 0;
-                continue;
-            case 'x':
-            case 'X':
-                escape = 'x';
-                numeric = 0;
-                numeric_len = 0;
-                continue;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-                escape = '0';
-                numeric = c - '0';
-                numeric_len = 1;
-                continue;
-            case '\\':
-            case '\"':
-            case '\'':
-            case '\?':
-            default:
-                escape = 0;
-                break;
-            }
-        }
-        if ((escape == 'u') || (escape == 'U'))
-        {
-            numeric *= 16;
-            numeric_len ++;
-            if ((c >= '0') && (c <= '9'))
-            {
-                numeric += c - '0';
-            }
-            else if ((c >= 'A') && (c <= 'F'))
-            {
-                numeric += c - 'A' + 10;
-            }
-            else if ((c >= 'a') && (c <= 'f'))
-            {
-                numeric += c - 'a' + 10;
-            }
-            else
-            {
-                break;
-            }
-            if (numeric_len == ((escape == 'U') ? 8 : 4))
-            {
-                int i;
+extern void mymanescape(const char *s, int len);
 
-                escape = 0;
-                c = ' ';
-                for (i = 0; i <= 0xff; i ++)
-                {
-                    if (uni_cp437_halfwidth[i] == numeric)
-                    {
-                        c = i;
-                        break;
-                    }
-                }
-                if (i > 0xff)
-                {
-                    for (i = 0x20; i <= 0x11f; i ++)
-                    {
-                        if (uni_cp437_fullwidth[i & 0xff] == numeric)
-                        {
-                            c = i & 0xff;
-                            break;
-                        }
-                    }
-                }
-                if (i > 0x11f)
-                {
-                    if ((numeric >= 0xff01UL) && (numeric <= 0xff5fUL))
-                    {
-                        /* FULLWIDTH ASCII -> ASCII */
-                        c = (int) (numeric + 0x20 - 0xff00UL);
-                    }
-                    else if ((numeric == 0x85) ||
-                             (numeric == 0x2028UL) ||
-                             (numeric == 0x2029UL))
-                    {
-                        /* NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR -> LINE
-                         * FEED */
-                        c = '\n';
-                    }
-                }
-            }
-        }
-        if (escape == 'x')
-        {
-            if ((c >= '0') && (c <= '9'))
-            {
-                numeric *= 16;
-                numeric_len ++;
-                numeric += c - '0';
-            }
-            else if ((c >= 'A') && (c <= 'F'))
-            {
-                numeric *= 16;
-                numeric_len ++;
-                numeric += c - 'A' + 10;
-            }
-            else if ((c >= 'a') && (c <= 'f'))
-            {
-                numeric *= 16;
-                numeric_len ++;
-                numeric += c - 'a' + 10;
-            }
-            else if (! numeric_len)
-            {
-                break;
-            }
-            else
-            {
-                from --;
-                c = numeric;
-                escape = 0;
-            }
-            if ((numeric_len == 2) && (escape == 'x'))
-            {
-                escape = 0;
-                c = numeric;
-            }
-        }
-        if (escape == '0')
-        {
-            if ((c >= '0') && (c <= '7'))
-            {
-                numeric *= 8;
-                numeric_len ++;
-                numeric += c - '0';
-            }
-            else if (! numeric_len)
-            {
-                break;
-            }
-            else
-            {
-                from --;
-                c = numeric;
-                escape = 0;
-            }
-            if ((numeric_len == 3) && (escape == '0'))
-            {
-                escape = 0;
-                c = numeric;
-            }
-        }
-        if (! escape)
-        {
-            newword = (char *) realloc((void *) word, wordlen + 2);
-            if (! newword)
-            {
-                free((void *) word);
-                word = NULL;
-                break;
-            }
-            word = newword;
-            word[wordlen] = c;
-            wordlen ++;
-            word[wordlen] = '\0';
-        }
-    }
-    if (quotes || escape || (word && (wordlen != strlen(word)) && ! lenp))
-    {
-        errno = EINVAL;
-        if (word)
-        {
-            free((void *) word);
-            word = NULL;
-        }
-    }
-    if (word && endp) *endp = from;
-    if (word && lenp) *lenp = wordlen;
-    return word;
-}
+extern int readfont(const char *fontfile,
+                    int *w,
+                    int *h,
+                    const char **font,
+                    int *used,
+                    int *flags,
+                    int *color,
+                    const char **args);
 
-static long *strtollist(const char *from, const char **endp, size_t *lenp)
-{
-    long *list = NULL;
-    size_t listlen = 0;
+extern void writefont(const char *file,
+                      const char *prefix,
+                      int w, int h,
+                      const char *font,
+                      int *used,
+                      int flags,
+                      int *color,
+                      const char *args);
 
-    list = (long *) malloc(sizeof(long));
-    if (! list)
-    {
-        return list;
-    }
-    list[listlen] = 0;
-    while (*from)
-    {
-        long tmp;
-        char *endp_tmp;
-        int errno_tmp;
-        int errno_strtol;
+extern const char *progname;
 
-        errno_tmp = errno;
-        errno = 0;
-        tmp = strtol(from, &endp_tmp, 0);
-        errno_strtol = errno;
-        if (! errno) errno = errno_tmp;
-        if (((tmp == LONG_MAX) || (tmp == LONG_MIN)) && (errno_strtol == ERANGE))
-        {
-            if (list) free((void *) list);
-            list = NULL;
-            break;
-        }
-        else if (endp_tmp == from)
-        {
-            break;
-        }
-        else
-        {
-            long *list_tmp;
+extern int readmaze(const char *mazefile,
+                    int *levels,
+                    int *w,
+                    int *h,
+                    char **maze,
+                    int *flags,
+                    char **color,
+                    const char **args);
 
-            from = endp_tmp;
-            list_tmp = (long *) realloc((void *) list, (listlen + 2) * sizeof(long));
-            if (! list_tmp)
-            {
-                free((void *) list);
-                list = NULL;
-                break;
-            }
-            list = list_tmp;
-            list[listlen] = tmp;
-            listlen = listlen + 1;
-            list[listlen] = 0;
-            if (*from != ',')
-            {
-                break;
-            }
-            else
-            {
-                from ++;
-            }
-        }
-    }
-    if (list && *from && ! isspace(*from))
-    {
-        errno = EINVAL;
-        if (list) free((void *) list);
-        list = NULL;
-        listlen = 0;
-    }
-    if (list && endp) *endp = from;
-    if (list) *lenp = listlen;
-    return list;
-}
+extern char *mystrdup(const char *s);
 
-static double *strtodlist(const char *from, const char **endp, size_t *lenp)
-{
-    double *list = NULL;
-    size_t listlen = 0;
+#undef strdup
+#define strdup(s) mystrdup(s)
 
-    list = (double *) malloc(sizeof(double));
-    if (! list)
-    {
-        return list;
-    }
-    list[listlen] = 0;
-    while (*from)
-    {
-        double tmp;
-        char *endp_tmp;
-        int errno_tmp;
-        int errno_strtod;
+#ifndef MIN
+#define MIN(x,y) (((x) < (y)) ? (x) : (y))
+#endif
 
-        errno_tmp = errno;
-        errno = 0;
-        tmp = strtod(from, &endp_tmp);
-        errno_strtod = errno;
-        if (! errno) errno = errno_tmp;
-        if (((tmp == HUGE_VAL) || (tmp == -HUGE_VAL)) && (errno_strtod == ERANGE))
-        {
-            if (list) free(list);
-            list = NULL;
-            break;
-        }
-        else if (endp_tmp == from)
-        {
-            break;
-        }
-        else
-        {
-            double *list_tmp;
+#ifndef MAX
+#define MAX(x,y) (((y) <= (x)) ? (x) : (y))
+#endif
 
-            from = endp_tmp;
-            list_tmp = (double *) realloc((void *) list, (listlen + 2) * sizeof(double));
-            if (! list_tmp)
-            {
-                free((void *) list);
-                list = NULL;
-                break;
-            }
-            list = list_tmp;
-            list[listlen] = tmp;
-            listlen = listlen + 1;
-            list[listlen] = 0;
-            if (*from != ',')
-            {
-                break;
-            }
-            else
-            {
-                from ++;
-            }
-        }
-    }
-    if (list && *from && ! isspace(*from))
-    {
-        errno = EINVAL;
-        if (list) free((void *) list);
-        list = NULL;
-        listlen = 0;
-    }
-    if (list && endp) *endp = from;
-    if (list) *lenp = listlen;
-    return list;
-}
+/* which level to show intermissions after */
+#ifndef INTERMISSION
+#define INTERMISSION(level) \
+    (((level) == 2) || \
+     (((level) >= 5) && (! (((level) - 1) % 4))))
+#endif
+
+/* intermission length */
+#ifndef INTERMISSION_TIME
+#define INTERMISSION_TIME (PIX_W * 3 + TWOSECS)
+#endif
+
+/* how many times to show a given intermission */
+#ifndef INTERMISSION_REPEAT
+#define INTERMISSION_REPEAT(intermission) \
+    (((intermission) == 2) ? 3 : 1)
+#endif
+
+/* how many intermissions are there? */
+#ifndef INTERMISSION_N
+#define INTERMISSION_N 3
+#endif
+
+extern char *maze;
+extern char *maze_color;
+extern char *blank_maze;
+extern char *blank_maze_color;
+extern unsigned char *dirty_cell;
+extern int all_dirty;
+
+extern int maze_n;
+extern int maze_w;
+extern int maze_h;
+extern int maze_flags;
+extern int maze_level;
+extern const char *maze_args;
+
+extern int tile_w;
+extern int tile_h;
+extern int tile_flags;
+extern const char *tile_args;
+extern const char *tile;
+extern int tile_used[256];
+extern int tile_color[256];
+
+extern int sprite_w;
+extern int sprite_h;
+extern int sprite_flags;
+extern const char *sprite_args;
+extern const char *sprite;
+extern int sprite_used[256];
+extern int sprite_color[256];
+
+#ifndef VISIBLE_EYES
+#define VISIBLE_EYES (! ((sprite_flags) & 1))
+#endif
+
+#ifndef SOLID_WALLS
+#define SOLID_WALLS ((tile_flags) & 2)
+#endif
+
+#ifndef SOLID_WALLS_BGCOLOR
+#define SOLID_WALLS_BGCOLOR ((tile_flags) & 4)
+#endif
+
+/* whether to always switch maze levels, rather than only during intermissions */
+#ifndef FLIP_ALWAYS
+#define FLIP_ALWAYS (! ((maze_flags) & 1))
+#endif
+
+/* whether to repeat the flip_to maze after showing the last one */
+#ifndef FLIP_LOCK
+#define FLIP_LOCK ((maze_flags) & 2)
+#endif
+
+/* if set, base the WALL_COLOR vs. MORTAR_COLOR choice on wall thickness rather than wall edge vs. wall fill*/
+#ifndef BICOLOR_WALLS
+#define BICOLOR_WALLS ((maze_flags) & 4)
+#endif
+
+#define XWRAP(x) (((x) + maze_w + 1) % (maze_w + 1))
+#define YWRAP(y) (((y) + maze_h) % maze_h)
+
+#define XWRAP2(x) (XWRAP(x) % maze_w)
+
+#define CLEAN_ALL() do { memset((void *)dirty_cell, 0, sizeof(dirty_cell)); all_dirty = 0; } while (0)
+#define DIRTY_ALL() do { all_dirty = 1; } while (0)
+#define IS_CELL_DIRTY(x,y) (all_dirty || ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h) && (dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]&(1<<((x)&7)))))
+
+extern void maze_erase(void);
+
+extern void mark_cell(int x, int y);
+
+extern void maze_puts(int y, int x, int color, const char *s);
+
+extern void maze_putsn_nonblank(int y, int x, int color, const char *s, int n);
+
+#ifndef LIVES
+#define LIVES 3
+#endif
+
+#ifndef GHOSTS
+#define GHOSTS 4
+#endif
+
+#ifndef MAXGHOSTS
+#if GHOSTS > 16
+#define MAXGHOSTS GHOSTS
+#else
+#define MAXGHOSTS 16
+#endif
+#endif
+
+extern int ghost_dir[MAXGHOSTS], ghost_mem[MAXGHOSTS], ghost_man[MAXGHOSTS], ghost_timer[MAXGHOSTS];
+extern unsigned char *home_dir;
+
+/* sprite register numbers */
+#define GHOSTEYES(ghost) ((ghost) * 2)
+#define UNGHOSTEYES(sprite_register) ((sprite_register) / 2)
+#define MEANGHOST(ghost) (GHOSTEYES(ghost) + 1)
+#define HERO MEANGHOST(MAXGHOSTS)
+#define BLUEGHOST(ghost) ((ghost) + HERO + 1)
+#define FRUIT BLUEGHOST(MAXGHOSTS)
+#define GHOST_SCORE (FRUIT + 1)
+#define FRUIT_SCORE (GHOST_SCORE + 1)
+/* large hero sprite register, split into four quadrants */
+#define BIGHERO_UL (FRUIT_SCORE + 1)
+#define BIGHERO_UR (BIGHERO_UL + 1)
+#define BIGHERO_LL (BIGHERO_UR + 1)
+#define BIGHERO_LR (BIGHERO_LL + 1)
+/* total sprite register count */
+#define SPRITE_REGISTERS (BIGHERO_LR + 1)
+
+extern unsigned char sprite_register[SPRITE_REGISTERS];
+extern int sprite_register_frame[SPRITE_REGISTERS];
+extern int sprite_register_x[SPRITE_REGISTERS], sprite_register_y[SPRITE_REGISTERS];
+extern int sprite_register_used[SPRITE_REGISTERS];
+extern int sprite_register_timer[SPRITE_REGISTERS];
+extern int sprite_register_color[SPRITE_REGISTERS];
+
+extern void
+mark_sprite_register(int s);
+
+#define SPRITE_FRUIT 0x00
+#define SPRITE_MEAN 0x08
+#define SPRITE_EYES 0x0a
+#define SPRITE_BLUE 0x0e
+#define SPRITE_HERO 0x10
+#define SPRITE_FRUIT_SCORE 0x29
+#define SPRITE_200 0x31
+#define SPRITE_400 0x32
+#define SPRITE_800 0x33
+#define SPRITE_1600 0x34
+#define SPRITE_WHITE 0x35
+#define SPRITE_LIFE 0x37
+/* rightward-facing large hero sprite, split into four quadrants with four frames each */
+#define SPRITE_BIGHERO_UL 0x38
+#define SPRITE_BIGHERO_UR 0x3C
+#define SPRITE_BIGHERO_LL 0x40
+#define SPRITE_BIGHERO_LR 0x44
+
+#define UP 1
+#define LEFT 2
+#define DOWN 3
+#define RIGHT 4
+
+#ifndef DIRHERO
+#define DIRHERO LEFT
+#endif
+
+#define DIRWRAP(dir) (((dir) + 3) % 4 + 1)
+
+#define XDIR(dir) ((((dir) == RIGHT) ? 1 : 0) - (((dir) == LEFT) ? 1 : 0))
+#define YDIR(dir) ((((dir) == DOWN) ? 1 : 0) - (((dir) == UP) ? 1 : 0))
+
+#define YLEAVING(dir, y) ( -((((dir) == UP) && ! NOTTOP(y)) ? 1 : 0) + \
+((((dir) == DOWN) && ! NOTBOTTOM(y)) ? 1 : 0))
+#define XLEAVING(dir, x) ( -((((dir) == LEFT) && ! NOTLEFT(x)) ? 1 : 0) + \
+((((dir) == RIGHT) && ! NOTRIGHT(x)) ? 1 : 0))
+
+extern unsigned char gfx2(unsigned char c);
+
+extern size_t gfx1(unsigned char c, int y, int x, int w, int h);
+
+extern unsigned char gfx0(unsigned char c, unsigned char *m);
+
+#define gfx_w (gfx_reflect ? tile_h : tile_w)
+#define gfx_h (gfx_reflect ? tile_w : tile_h)
+#define gfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) tile[gfx1((unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_cp437)), (y) % gfx_h, (x) % gfx_w, tile_w, tile_h)]))
+
+#define sgfx_w (gfx_reflect ? sprite_h : sprite_w)
+#define sgfx_h (gfx_reflect ? sprite_w : sprite_h)
+#define sgfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) sprite[gfx1((unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_sprite)), (y) % sgfx_h, (x) % sgfx_w, sprite_w, sprite_h)]))
+
+extern int reflect;
+extern int gfx_reflect;
+#define REFLECT_LARGE (reflect && (tile_w == tile_h) && (sprite_w == sprite_h))
+
+#define XTILE(x) ((x) / gfx_w)
+#define YTILE(y) ((y) / gfx_h)
+
+#define collide(s1, s2) ((XTILE(sprite_register_x[s1] - sgfx_w / 2) == XTILE(sprite_register_x[s2] - sgfx_w / 2)) \
+&& (YTILE(sprite_register_y[s1] - sgfx_h / 2) == YTILE(sprite_register_y[s2] - sgfx_h / 2)))
+
+#define PIX_W ((maze_w + 1) * gfx_w)
+#define PIX_H (maze_h * gfx_h)
+
+#define XPIXWRAP(x) (((x) + PIX_W) % PIX_W)
+#define YPIXWRAP(y) (((y) + PIX_H) % PIX_H)
+
+#define NOTTOP(y) (y >= (gfx_h / 2))
+#define NOTBOTTOM(y) (y <= (gfx_h / 2))
+#define NOTLEFT(x) (x >= (gfx_w / 2))
+#define NOTRIGHT(x) (x <= (gfx_w / 2))
+
+#define XHERO (CHERO * gfx_w)
+#define YHERO (RHERO * gfx_h)
+#define XFRUIT (CFRUIT * gfx_w)
+#define YFRUIT (RFRUIT * gfx_h)
+#define YGHOST (RGHOST * gfx_h)
+#define XGHOST (CGHOST * gfx_w)
+#define YTOP (RTOP * gfx_h)
+
+extern void gameintro(void);
+extern void gamedemo(void);
+extern void gamestart(void);
+extern void gameintermission(void);
+extern int gamelogic(void);
+
+extern long myman_intro;
+extern unsigned long myman_start;
+extern unsigned long myman_demo;
+extern int munched;
+extern int old_lines, old_cols, old_score, old_showlives, old_level;
+extern int ignore_delay;
+extern long frameskip, frameskip0, frameskip1;
+extern long scrolling;
+extern long frames;
+extern long winning;
+extern unsigned long mymandelay;
+extern unsigned long mindelay;
+extern int ghost_eaten_timer;
+extern int paused;
+extern long intermission_running;
+extern unsigned long myman_demo_setup;
+extern int need_reset;
+extern int level,
+    intermission,
+    intermission_shown,
+    cycles,
+    score,
+    dots,
+    points,
+    lives,
+    lives_used,
+    earned,
+    dying,
+    dead,
+    deadpan,
+    lines,
+    columns,
+    oldplayer,
+    player;
+extern int key_buffer;
+extern int key_buffer_ERR;
+extern long pellet_timer,
+    pellet_time;
+extern int ghosts;
+
+#define GHOST0 ((ghosts > 2) ? 0 : 2)
+#define GHOST1 1
+#define GHOST2 ((ghosts > 2) ? 2 : 0)
+#define GHOST3 3
+
+#ifndef NAME_HEADER
+#define NAME_HEADER "CHARACTER /"
+#endif
+
+#ifndef NICK_HEADER
+#define NICK_HEADER " NICKNAME"
+#endif
+
+#ifndef GHOST_NAMES
+#define GHOST_NAMES GHOST_NAMES_XLT
+#endif
+
+#define GHOST_NAMES_JA 0
+
+#define GHOST_NAMES_ALT 1
+
+#define GHOST_NAMES_EN 2
+
+#define GHOST_NAMES_XLT 3
+
+#if GHOST_NAMES == GHOST_NAMES_JA
+
+#ifndef GHOST0_NAME
+#define GHOST0_NAME " KIMAGURE--"
+#endif
+
+#ifndef GHOST0_NICK
+#define GHOST0_NICK "\"AOSUKE\""
+#endif
+
+#ifndef GHOST2_NAME
+#define GHOST2_NAME " MACHIBUSE-"
+#endif
+
+#ifndef GHOST2_NICK
+#define GHOST2_NICK "-\"PINKY\""
+#endif
+
+#ifndef GHOST1_NAME
+#define GHOST1_NAME " OIKAKE----"
+#endif
+
+#ifndef GHOST1_NICK
+#define GHOST1_NICK "\"AKABEI\""
+#endif
+
+#ifndef GHOST3_NAME
+#define GHOST3_NAME " OTOBOKE---"
+#endif
+
+#ifndef GHOST3_NICK
+#define GHOST3_NICK "\"GUZUTA\""
+#endif
+
+#endif
+
+#if GHOST_NAMES == GHOST_NAMES_ALT
+
+#ifndef GHOST0_NAME
+#define GHOST0_NAME " STYLIST"
+#endif
+
+#ifndef GHOST0_NICK
+#define GHOST0_NICK "\"MUCKY\""
+#endif
+
+#ifndef GHOST2_NAME
+#define GHOST2_NAME " ROMP"
+#endif
+
+#ifndef GHOST2_NICK
+#define GHOST2_NICK "\"MICKY\""
+#endif
+
+#ifndef GHOST1_NAME
+#define GHOST1_NAME " URCHIN"
+#endif
+
+#ifndef GHOST1_NICK
+#define GHOST1_NICK "\"MACKY\""
+#endif
+
+#ifndef GHOST3_NAME
+#define GHOST3_NAME " CRYBABY"
+#endif
+
+#ifndef GHOST3_NICK
+#define GHOST3_NICK "\"MOCKY\""
+#endif
+
+#endif
+
+#if GHOST_NAMES == GHOST_NAMES_EN
+
+#ifndef GHOST0_NAME
+#define GHOST0_NAME "-BASHFUL"
+#endif
+
+#ifndef GHOST0_NICK
+#define GHOST0_NICK "\"INKY\""
+#endif
+
+#ifndef GHOST2_NAME
+#define GHOST2_NAME "-SPEEDY"
+#endif
+
+#ifndef GHOST2_NICK
+#define GHOST2_NICK "\"PINKY\""
+#endif
+
+#ifndef GHOST1_NAME
+#define GHOST1_NAME "-SHADOW"
+#endif
+
+#ifndef GHOST1_NICK
+#define GHOST1_NICK "\"BLINKY\""
+#endif
+
+#ifndef GHOST3_NAME
+#define GHOST3_NAME "-POKEY"
+#endif
+
+#ifndef GHOST3_NICK
+#define GHOST3_NICK "\"CLYDE\""
+#endif
+
+#endif
+
+#if GHOST_NAMES == GHOST_NAMES_XLT
+
+#ifndef GHOST0_NAME
+#define GHOST0_NAME " WHIMSICAL-"
+#endif
+
+#ifndef GHOST0_NICK
+#define GHOST0_NICK "---\"CYAN\""
+#endif
+
+#ifndef GHOST2_NAME
+#define GHOST2_NAME " AMBUSHER--"
+#endif
+
+#ifndef GHOST2_NICK
+#define GHOST2_NICK "--\"MAUVE\""
+#endif
+
+#ifndef GHOST1_NAME
+#define GHOST1_NAME " CHASER----"
+#endif
+
+#ifndef GHOST1_NICK
+#define GHOST1_NICK "\"SCARLET\""
+#endif
+
+#ifndef GHOST3_NAME
+#define GHOST3_NAME " CLOWN-----"
+#endif
+
+#ifndef GHOST3_NICK
+#define GHOST3_NICK "--\"SLOTH\""
+#endif
+
+#endif
+
+#define WHOSE_HOME_DIR(r,c) (home_dir[(GHOST2 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST2 \
+: home_dir[(GHOST0 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST0 \
+: home_dir[(GHOST3 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST3 \
+: GHOST1)
+
+#define rmsg (RMSG % maze_h)
+#define cmsg (CMSG % maze_w)
+#define rmsg2 (RMSG2 % maze_h)
+#define cmsg2 (CMSG2 % maze_w)
+
+#define COMPLEXITY_ADJUST(x) ((x) * (maze_h + maze_w) / (28 + 31))
+
+#define TWOSECS    (10 * MYMANFIFTH)
+#define ONESEC     (TWOSECS / 2)
+#define FRUITLIFE  COMPLEXITY_ADJUST(TWOSECS * 15 / 4)
+#define DEATHSHIFT 3
+#define DEATHDELAY (1 << (DEATHSHIFT + 2))
+#define MEMDELAY(ghost) (COMPLEXITY_ADJUST((3 + ((ghost) > 3) * (1.0 * ((ghost) - 3) / (ghosts - 3))) * TWOSECS))
+
+#ifndef MAXFRAMESKIP
+#define MAXFRAMESKIP (1 + tile_w)
+#endif
+
+#define MYMANSQUARE ((tile_h + tile_h) > tile_w)
+
+#define MYMANFIFTH     (tile_w * (MYMANSQUARE ? 2 : 1))
+
+#define PELLET_ADJUST(x) (COMPLEXITY_ADJUST(x * 4) / (pellets[maze_level] ? pellets[maze_level] : 4))
+
+#ifndef MYMANDELAY
+#define MYMANDELAY 166667
+#endif
+
+#ifndef SPEEDUP
+#define SPEEDUP 1000
+#endif
+
+#define CJK_MODE (uni_cp437[0x20] == uni_cp437_fullwidth[0x20])
+
+#ifndef CHERO
+#define CHERO (maze_CHERO_len ? maze_CHERO[maze_level % maze_CHERO_len] : (maze_w * 0.5))
+#endif
+
+#ifndef RHERO
+#define RHERO (maze_RHERO_len ? maze_RHERO[maze_level % maze_RHERO_len] : 23.5)
+#endif
+
+#ifndef CFRUIT
+#define CFRUIT (maze_CFRUIT_len ? maze_CFRUIT[maze_level % maze_CFRUIT_len] : CHERO)
+#endif
+
+#ifndef RFRUIT
+#define RFRUIT (maze_RFRUIT_len ? maze_RFRUIT[maze_level % maze_RFRUIT_len] : 17.5)
+#endif
+
+#ifndef RGHOST
+#define RGHOST (maze_RGHOST_len ? maze_RGHOST[maze_level % maze_RGHOST_len] : (RFRUIT - 3.0))
+#endif
+
+#ifndef CGHOST
+#define CGHOST (maze_CGHOST_len ? maze_CGHOST[maze_level % maze_CGHOST_len] : CHERO)
+#endif
+
+#ifndef COGHOST
+#define COGHOST (maze_COGHOST_len ? maze_COGHOST[maze_level % maze_COGHOST_len] : 2)
+#endif
+
+#ifndef ROGHOST
+#define ROGHOST (maze_ROGHOST_len ? maze_ROGHOST[maze_level % maze_ROGHOST_len] : 3)
+#endif
+
+#ifndef RTOP
+#define RTOP (maze_RTOP_len ? maze_RTOP[maze_level % maze_RTOP_len] : (RFRUIT - 5.0))
+#endif
+
+#ifndef CMSG
+#define CMSG (maze_CMSG_len ? maze_CMSG[maze_level % maze_CMSG_len] : 9)
+#endif
+
+#ifndef RMSG
+#define RMSG (maze_RMSG_len ? maze_RMSG[maze_level % maze_RMSG_len] : 17)
+#endif
+
+#ifndef CMSG2
+#define CMSG2 (maze_CMSG2_len ? maze_CMSG2[maze_level % maze_CMSG2_len] : 9)
+#endif
+
+#ifndef RMSG2
+#define RMSG2 (maze_RMSG2_len ? maze_RMSG2[maze_level % maze_RMSG2_len] : 11)
+#endif
+
+#ifndef PLAYER1
+#define PLAYER1  "PLAYER ONE"
+#endif
+
+#ifndef PLAYER2
+#define PLAYER2  "PLAYER TWO"
+#endif
+
+#ifndef MAXPLAYERS
+#define MAXPLAYERS 2
+#endif
+
+#define PLAYER(n) \
+(((n) == 1) \
+? msg_PLAYER1 \
+: msg_PLAYER2)
+
+#ifndef START
+#define START "PUSH START BUTTON"
+#endif
+
+#ifndef CREDIT1
+#define CREDIT1 "1 PLAYER ONLY"
+#endif
+
+#ifndef CREDIT2
+#define CREDIT2 "1 OR 2 PLAYERS"
+#endif
+
+#define CREDIT(n) (((n) > 1) ? CREDIT1 : CREDIT1)
+
+#ifndef READY
+#define READY    "  READY!  "
+#endif
+
+#ifndef GAMEOVER
+#define GAMEOVER "GAME  OVER"
+#endif
+
+#ifndef PAUSE
+#define PAUSE " - PAUSED - "
+#endif
+
+#define BONUS(n) \
+(((n) < 4) \
+? ((n) - 1) \
+: (((n) < 15) \
+? ((n) + 1) / 2 \
+: 7))
+
+extern char *tmp_notice;
+extern const char * maze_ABOUT;
+extern const char * maze_FIXME;
+extern const char * maze_NOTE;
+extern const char * tile_ABOUT;
+extern const char * tile_FIXME;
+extern const char * tile_NOTE;
+extern const char * sprite_ABOUT;
+extern const char * sprite_FIXME;
+extern const char * sprite_NOTE;
+extern const char *msg_READY;
+extern const char *msg_GAMEOVER;
+extern const char *msg_PLAYER1;
+extern const char *msg_PLAYER2;
+extern const char *maze_WALL_COLORS;
+extern size_t maze_WALL_COLORS_len;
+extern const char *maze_DOT_COLORS;
+extern size_t maze_DOT_COLORS_len;
+extern const char *maze_PELLET_COLORS;
+extern size_t maze_PELLET_COLORS_len;
+extern const char *maze_MORTAR_COLORS;
+extern size_t maze_MORTAR_COLORS_len;
+extern double *maze_RGHOST;
+extern size_t maze_RGHOST_len;
+extern double *maze_CGHOST;
+extern size_t maze_CGHOST_len;
+extern double *maze_ROGHOST;
+extern size_t maze_ROGHOST_len;
+extern double *maze_COGHOST;
+extern size_t maze_COGHOST_len;
+extern double *maze_RFRUIT;
+extern size_t maze_RFRUIT_len;
+extern double *maze_CFRUIT;
+extern size_t maze_CFRUIT_len;
+extern double *maze_RTOP;
+extern size_t maze_RTOP_len;
+extern double *maze_RHERO;
+extern size_t maze_RHERO_len;
+extern double *maze_CHERO;
+extern size_t maze_CHERO_len;
+extern long *maze_RMSG;
+extern size_t maze_RMSG_len;
+extern long *maze_CMSG;
+extern size_t maze_CMSG_len;
+extern long *maze_RMSG2;
+extern size_t maze_RMSG2_len;
+extern long *maze_CMSG2;
+extern size_t maze_CMSG2_len;
+extern int dirhero;
+extern long scroll_offset_x0;
+extern long scroll_offset_y0;
+extern int msglen;
+extern int hero_dir;
+extern int *total_dots;
+extern int *pellets;
+extern long flip_to;
+extern int debug;
+extern int ghosts_p;
+extern unsigned long myman_sfx;
+extern int showlives;
+extern int visible_frame;
+
+#define myman_sfx_credit 0x1UL
+#define myman_sfx_dot 0x2UL
+#define myman_sfx_dying 0x4UL
+#define myman_sfx_ghost 0x8UL
+#define myman_sfx_intermission 0x10UL
+#define myman_sfx_pellet 0x20UL
+#define myman_sfx_siren0_down 0x40UL
+#define myman_sfx_siren0_up 0x80UL
+#define myman_sfx_siren1_down 0x100UL
+#define myman_sfx_siren1_up 0x200UL
+#define myman_sfx_siren2_down 0x400UL
+#define myman_sfx_siren2_up 0x800UL
+#define myman_sfx_start 0x1000UL
+#define myman_sfx_fruit 0x2000UL
+#define myman_sfx_life 0x4000UL
+#define myman_sfx_level 0x8000UL
+#define myman_sfx_bonus 0x10000UL
+#define myman_sfx_nobeep_mask (myman_sfx_siren0_up|myman_sfx_siren0_down|myman_sfx_siren1_up|myman_sfx_siren1_down|myman_sfx_siren2_up|myman_sfx_siren2_down|myman_sfx_dot)
+
+#ifndef WALL_COLORS
+#define WALL_COLORS "\x00"
+#endif
+
+#ifndef DOT_COLORS
+#define DOT_COLORS "\x07"
+#endif
+
+#ifndef PELLET_COLORS
+#define PELLET_COLORS "\x00"
+#endif
+
+#ifndef MORTAR_COLORS
+#define MORTAR_COLORS "\x09"
+#endif
+
+#ifndef WALL_COLOR
+#define WALL_COLOR maze_WALL_COLORS[maze_level % maze_WALL_COLORS_len]
+#endif
+
+#ifndef DOT_COLOR
+#define DOT_COLOR maze_DOT_COLORS[maze_level % maze_DOT_COLORS_len]
+#endif
+
+#ifndef PELLET_COLOR
+#define PELLET_COLOR maze_PELLET_COLORS[maze_level % maze_PELLET_COLORS_len]
+#endif
+
+#ifndef MORTAR_COLOR
+#define MORTAR_COLOR maze_MORTAR_COLORS[maze_level % maze_MORTAR_COLORS_len]
+#endif
+
+#define TRANSLATED_MORTAR_COLOR (((BICOLOR_WALLS) && (udlr[(unsigned char) (char) maze[(maze_level*maze_h+ytile)*(maze_w+1)+xtile]] & 0xAA)) ? (WALL_COLOR) : (MORTAR_COLOR))
+
+#define TRANSLATED_WALL_COLOR ((BICOLOR_WALLS) ? TRANSLATED_MORTAR_COLOR : (WALL_COLOR))
+
+#define EFFECTIVE_MORTAR_COLOR (((TRANSLATED_WALL_COLOR) && ! (SOLID_WALLS || SOLID_WALLS_BGCOLOR)) ? (TRANSLATED_WALL_COLOR) : (TRANSLATED_MORTAR_COLOR))
+
+#define NET_LIVES ((int) lives + (int) earned - (int) lives_used + (myman_demo ? 1 : 0))
+
+#ifndef MSG_COLOR
+#define MSG_COLOR ((NET_LIVES && ! myman_demo) ? 0xE : 0xC)
+#endif
+
+#ifndef MSG2_COLOR
+#define MSG2_COLOR 0xB
+#endif
+
+#ifndef TEXT_COLOR
+#define TEXT_COLOR 0xF
+#endif
+
+#ifndef PAUSE_COLOR
+#define PAUSE_COLOR 0xF0
+#endif
+
+#ifndef EXTRA_GHOST_COLORS
+#define EXTRA_GHOST_COLORS "\x0A\x05\x04\x03"
+#endif
+
+extern int my_clear(void);
+extern void my_clearok(int ok);
+
+#ifndef BONUSHERO
+#define BONUSHERO 10000
+#endif
+
+#ifndef BONUSHERO2
+#define BONUSHERO2 50000
+#endif
+
+#ifndef BONUSHEROTEXT
+#if BONUSHERO
+#define BONUSHEROTEXT "BONUS MYMAN FOR 10000 \x9es"
+#else
+#define BONUSHEROTEXT "BONUS MYMAN FOR 50000 \x9es"
+#endif
+#endif
+
+extern int use_underline;
+extern int bonus_score[8];
+
+#define COLLISION_TYPE_HERO 1
+#define COLLISION_TYPE_GHOST 2
+
+extern int check_collision(int eyes, int mean, int blue);
+
+extern int find_home_dir(int s, int r, int c);
+
+/* heuristic for rewriting maze tiles */
+extern long maze_visual(int n, int i, int j);
 
 #endif /* ! defined(UTILS_H_INC) */
