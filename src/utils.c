@@ -2134,10 +2134,10 @@ char *mystrdup(const char *s)
     char *ret = 0;
 
     len = strlen(s);
-    ret = malloc(len + 1);
+    ret = (char *) malloc(len + 1);
     if (ret)
     {
-        memcpy(ret, s, len + 1);
+        memcpy((void *) ret, (const void *) s, len + 1);
     }
     return ret;
 }

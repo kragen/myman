@@ -5641,7 +5641,7 @@ static int rawcurses_getch(void)
                     kcode = (unsigned long) Crawcin();
                     if (kcode & 0xffU)
                     {
-                        ret = (kcode & 0xffU);
+                        ret = (int) (kcode & 0xffU);
                     }
                     else
                     {
@@ -5749,7 +5749,7 @@ static int rawcurses_getch(void)
                     rawcurses_ungetch_buffer = ret;
                     rawcurses_stdio_utf8_state = 0UL;
                     rawcurses_stdio_utf8_remaining = 0;
-                    ret = 0xfffdU;
+                    ret = 0xfffd;
                 }
             }
             else if ((ret >= 0xc2) && (ret <= 0xf4))
@@ -5768,7 +5768,7 @@ static int rawcurses_getch(void)
                 if (rawcurses_stdio_utf8_remaining)
                 {
                     rawcurses_stdio_utf8_state = ret;
-                    ret = 0xfffdU;
+                    ret = 0xfffd;
                 }
                 else
                 {
@@ -5787,13 +5787,13 @@ static int rawcurses_getch(void)
                 {
                     ret = rawcurses_stdio_utf8_state;
                     rawcurses_stdio_utf8_state = 0;
-                    if (((ret & 0xfffeU) == 0xfffeU)
+                    if (((ret & 0xfffeL) == 0xfffeL)
                         ||
-                        (ret > 0x10fffdU)
+                        (ret > 0x10fffdL)
                         ||
-                        ((ret >= 0xd800U) && (ret <= 0xdfffU)))
+                        ((ret >= 0xd800) && (ret <= 0xdfff)))
                     {
-                        ret = 0xfffdU;
+                        ret = 0xfffd;
                     }
                 }
             }
@@ -5801,7 +5801,7 @@ static int rawcurses_getch(void)
             {
                 rawcurses_stdio_utf8_state = 0UL;
                 rawcurses_stdio_utf8_remaining = 0UL;
-                ret = 0xfffdU;
+                ret = 0xfffd;
             }
             if (ret == ERR)
             {
@@ -5814,7 +5814,7 @@ static int rawcurses_getch(void)
                  ||
                  (rawcurses_input_state == RAWCURSES_INPUT_STATE_OSC_ESC))
                 &&
-                (ret == 0xfffdU))
+                (ret == 0xfffd))
             {
                 ret = 0x9c;
             }
@@ -5831,11 +5831,11 @@ static int rawcurses_getch(void)
                 rawcurses_debug_utf8_y %= LINES;
                 move(rawcurses_debug_utf8_y, 0);
                 rawcurses_debug_utf8_y ++;
-                if (ret < 0x100000U) addch(' ');
-                if (ret < 0x10000U) addch(' ');
+                if (ret < 0x100000L) addch(' ');
+                if (ret < 0x10000L) addch(' ');
                 addstr("U+");
-                if (ret >= 0x100000U) addch(hex[(ret >> 20) & 0xf]);
-                if (ret >= 0x10000U) addch(hex[(ret >> 16) & 0xf]);
+                if (ret >= 0x100000L) addch(hex[(ret >> 20) & 0xf]);
+                if (ret >= 0x10000L) addch(hex[(ret >> 16) & 0xf]);
                 addch(hex[(ret >> 12) & 0xf]);
                 addch(hex[(ret >> 8) & 0xf]);
                 addch(hex[(ret >> 4) & 0xf]);
@@ -5843,7 +5843,7 @@ static int rawcurses_getch(void)
                 addch(' ');
                 if (((ret >= 0x20) && (ret <= 0x7e))
                     ||
-                    ((ret >= 0xa0) && (ret <= 0x10fffd)))
+                    ((ret >= 0xa0) && (ret <= 0x10fffdL)))
                 {
                     addch(ret);
                 }
