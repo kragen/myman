@@ -119,9 +119,9 @@
 #if ! HAVE_GETTIMEOFDAY
 
 #undef gettimeofday
-#define gettimeofday rawcurses_gettimeofday
+#define gettimeofday gtkcurses_gettimeofday
 
-static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
+static int gtkcurses_gettimeofday(struct timeval *tv, void *tz)
 {
 
 #if defined(WIN32)
@@ -182,10 +182,10 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 #else /* ! defined(WIN32) */
 
 #undef usleep
-#define usleep rawcurses_usleep
+#define usleep gtkcurses_usleep
 
 static int
-rawcurses_usleep(unsigned long usecs)
+gtkcurses_usleep(unsigned long usecs)
 {
     while (usecs)
     {
