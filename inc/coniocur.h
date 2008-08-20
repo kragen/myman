@@ -23,21 +23,6 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef USE_CONIO
-#if defined(__DJGPP__) || defined(__TURBOC__)
-#define USE_CONIO 1
-#else
-#define USE_CONIO 0
-#endif
-#endif
-
-#if ! USE_CONIO
-
-/* fall back to raw TTY when not actually using Borland-style CONIO */
-#include "rawcurs.h"
-
-#else /* USE_CONIO */
-
 /* work-arounds for Borland-style CONIO */
 #ifdef CONIOCURSES_CONIO_H
 #include CONIOCURSES_CONIO_H
@@ -987,5 +972,3 @@ static int mvprintw(int y, int x, const char *s)
     move(y, x);
     return addstr(s);
 }
-
-#endif /* USE_CONIO */

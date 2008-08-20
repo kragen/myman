@@ -23,13 +23,6 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef __DMC__
-
-/* fall back to raw TTY when not compiled by Digital Mars */
-#include "rawcurs.h"
-
-#else
-
 /* work-arounds for <disp.h> (Digital Mars/Symantec/Zortech C/C++) */
 #include <conio.h>
 #include <disp.h>
@@ -722,5 +715,3 @@ static int mvprintw(int y, int x, const char *s)
     move(y, x);
     return addstr(s);
 }
-
-#endif /* defined(__DMC__) */
