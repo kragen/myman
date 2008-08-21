@@ -824,7 +824,7 @@ endif
 ## Conventional filename suffices (build)
 
 # Option 1: GNU, BSD, Unix, MiNT, etc.
-ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(build)-))))))))),-$(build)-)
+ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32msvc-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(build)-)))))))))),-$(build)-)
 ifeq ($(subst default,undefined,$(origin BUILD_OBJ_SUFFIX)),undefined)
 BUILD_OBJ_SUFFIX = .o
 endif
@@ -932,7 +932,7 @@ endif
 ## Conventional filename suffices (host)
 
 # Option 1: GNU, BSD, Unix, MiNT, etc.
-ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(host)-))))))))),-$(host)-)
+ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32msvc-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(host)-)))))))))),-$(host)-)
 ifeq ($(subst default,undefined,$(origin OBJ_SUFFIX)),undefined)
 OBJ_SUFFIX = .o
 endif
@@ -2323,7 +2323,7 @@ endif
 endif
 
 ifeq ($(subst default,undefined,$(origin with_win_icon)),undefined)
-ifeq ($(subst -msys-,--,$(subst -mingw32-,--,$(subst -mingw-,--,$(subst -cygwin32-,--,$(subst -cygwin-,--,-$(host)-))))),-$(host)-)
+ifeq ($(subst -msys-,--,$(subst -mingw32msvc-,--,$(subst -mingw32-,--,$(subst -mingw-,--,$(subst -cygwin32-,--,$(subst -cygwin-,--,-$(host)-)))))),-$(host)-)
 with_win_icon =
 else
 with_win_icon = yes
@@ -2331,7 +2331,7 @@ endif
 endif
 
 ifeq ($(subst default,undefined,$(origin with_zip)),undefined)
-ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(host)-))))))))),-$(host)-)
+ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32msvc-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-$(host)-)))))))))),-$(host)-)
 with_zip =
 else
 with_zip = yes
