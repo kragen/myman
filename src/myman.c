@@ -7004,7 +7004,6 @@ main(int argc, char *argv[]
 {
     int n, i, j;
     long c = 0;
-    int nogame = 0;
     int
         dump_maze = 0,
         dump_sprite = 0,
@@ -8092,7 +8091,7 @@ main(int argc, char *argv[]
                 phase_done = 1;
                 for (i = 0; i < maze_h; i ++)
                 {
-                    if (isatty(fileno(stderr)))
+                    if ((! nogame) && isatty(fileno(stderr)))
                     {
                         tvt2.tv_sec = 0;
                         tvt2.tv_usec = 0;
@@ -8103,9 +8102,9 @@ main(int argc, char *argv[]
                             tvt.tv_usec = tvt2.tv_usec;
                             tvt_used = 1;
                             fprintf(stderr, "%3d%%\r",
-                                    (int) (((((double) n) * 5.0 + (double) phase) * maze_h + (double) i) * 100.0
+                                    (int) (((((float) n) * 5.0 + (float) phase) * maze_h + (float) i) * 100.0
                                            /
-                                           (((double) maze_n) * 5.0 * ((double) maze_h))
+                                           (((float) maze_n) * 5.0 * ((float) maze_h))
                                            +
                                            0.5));
                         }
