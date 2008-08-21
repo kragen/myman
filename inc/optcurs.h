@@ -63,11 +63,20 @@ OPTCURSES_GLOBAL(const char *optcurses_bitmap_braille, = NULL);
  */
 OPTCURSES_GLOBAL(optcurses_cell_t *optcurses_backing, = NULL);
 
-#define OPTCURSES_IS_ROW_DIRTY(y) (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] != 0xFF)
+static int OPTCURSES_IS_ROW_DIRTY(int y)
+{
+    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] != 0xFF);
+}
 
-#define OPTCURSES_DIRTY_ROW(y) (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0)
+static int OPTCURSES_DIRTY_ROW(int y)
+{
+    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0);
+}
 
-#define OPTCURSES_CLEAN_ROW(y) (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0xFF)
+static int OPTCURSES_CLEAN_ROW(int y)
+{
+    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0xFF);
+}
 
 #define OPTCURSES__LINES (LINES * ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))
 
@@ -557,7 +566,7 @@ static int optcurses__combine_bitmap_attr_ok(attr_t fgattr, attr_t bgattr)
 #ifdef PAIR_NUMBER
         if (has_colors())
         {
-            short fg, bg, dontcare;
+            short fg = 0, bg = 0, dontcare;
             int fgpair, bgpair;
             attr_t revmask, rev;
 
@@ -733,7 +742,7 @@ static attr_t optcurses__combine_bitmap_attr(attr_t fgattr, attr_t bgattr)
 #ifdef PAIR_NUMBER
     if (has_colors())
     {
-        short fg, bg, dontcare;
+        short fg = 0, bg = 0, dontcare;
         int fgpair, bgpair;
         attr_t revmask, rev;
         attr_t boldbit = 0;
@@ -908,7 +917,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
         pn = PAIR_NUMBER(attr);
         if ((pn > 0) && (pn < COLOR_PAIRS)
             &&
-            (pair_content(pn, &fg, &bg) != ((chtype) ERR))
+            (pair_content(pn, &fg, &bg) != ERR)
             &&
             (fg >= 0)
             &&
@@ -949,7 +958,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
             }
             if ((can_change_color()
                  &&
-                 (color_content(bg, &r, &g, &b) != ((chtype) ERR)))
+                 (color_content(bg, &r, &g, &b) != ERR))
                 ?
                 (r || g || b)
                 :
@@ -961,7 +970,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
                 {
                     short fg2, bg2;
 
-                    if ((pair_content(i, &fg2, &bg2) != ((chtype) ERR))
+                    if ((pair_content(i, &fg2, &bg2) != ERR)
                         &&
                         (fg2 == bg)
                         &&
@@ -971,7 +980,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
                         &&
                         ((can_change_color()
                           &&
-                          (color_content(bg2, &r, &g, &b) != ((chtype) ERR)))
+                          (color_content(bg2, &r, &g, &b) != ERR))
                          ?
                          ((! r) && (! g) && (! b))
                          :
@@ -989,7 +998,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
         pn = PAIR_NUMBER(attr1);
         if ((pn > 0) && (pn < COLOR_PAIRS)
             &&
-            (pair_content(pn, &fg, &bg) != ((chtype) ERR))
+            (pair_content(pn, &fg, &bg) != ERR)
             &&
             (fg >= 0)
             &&
@@ -1030,7 +1039,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
             }
             if ((can_change_color()
                  &&
-                 (color_content(bg, &r, &g, &b) != ((chtype) ERR)))
+                 (color_content(bg, &r, &g, &b) != ERR))
                 ?
                 (r || g || b)
                 :
@@ -1042,7 +1051,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
                 {
                     short fg2, bg2;
 
-                    if ((pair_content(i, &fg2, &bg2) != ((chtype) ERR))
+                    if ((pair_content(i, &fg2, &bg2) != ERR)
                         &&
                         (fg2 == bg)
                         &&
@@ -1052,7 +1061,7 @@ static void optcurses__combine_bitmap(chtype *chout, attr_t *attrout, chtype ch,
                         &&
                         ((can_change_color()
                           &&
-                          (color_content(bg2, &r, &g, &b) != ((chtype) ERR)))
+                          (color_content(bg2, &r, &g, &b) != ERR))
                          ?
                          ((! r) && (! g) && (! b))
                          :
@@ -1399,8 +1408,12 @@ static int optcurses_refresh(void)
                                     int wcwprev;
 
                                     chprev = ERR;
-                                    for (i = 1; ((chprev = optcurses_backing[(optcurses_h + y) * optcurses_w + x - i].ch) == ERR) && ((x - i) > 0); i ++);
-                                    if (chprev != ERR)
+                                    for (i = 1;
+                                         ((chprev = optcurses_backing[(optcurses_h + y) * optcurses_w + x - i].ch) == (chtype) ERR) && ((x - i) > 0);
+                                         i ++)
+                                    {
+                                    }
+                                    if (chprev != (chtype) ERR)
                                     {
                                         attrprev = optcurses_backing[(optcurses_h + y) * optcurses_w + x - i].attr;
                                         if (optcurses_bitmap && *optcurses_bitmap)
@@ -1409,7 +1422,7 @@ static int optcurses_refresh(void)
                                             chtype chprev1;
 
                                             attrprev1 = attrprev;
-                                            chprev1 = ERR;
+                                            chprev1 = ((chtype) ERR);
                                             if ((y + 1) < OPTCURSES__LINES)
                                             {
                                                 attrprev1 = optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x].attr;
