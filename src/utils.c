@@ -2149,6 +2149,8 @@ char *blank_maze_color = NULL;
 unsigned char *dirty_cell = NULL;
 int all_dirty;
 
+int nogame = 0;
+
 int maze_n;
 int maze_w;
 int maze_h;

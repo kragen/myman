@@ -284,6 +284,8 @@ extern char *blank_maze_color;
 extern unsigned char *dirty_cell;
 extern int all_dirty;
 
+extern int nogame;
+
 extern int maze_n;
 extern int maze_w;
 extern int maze_h;
