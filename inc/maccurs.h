@@ -59,6 +59,7 @@ warnings.
 #include <TextEncodingConverter.h>
 #include <TextUtils.h>
 #include <Timer.h>
+#include <ioctl.h>
 
 #endif /* ! defined(TARGET_API_MAC_CARBON) */
 
@@ -126,23 +127,6 @@ int fake_isatty(int fd)
 
 #endif
 
-#ifndef usleep
-
-#define usleep(us) fake_usleep(us)
-
-int fake_usleep(unsigned long us)
-{
-    EventRecord er;
-
-    if (WaitNextEvent(0, &er, us / 60000, NULL))
-    {
-        return -1;
-    }
-    return 0;
-}
-
-#endif
-
 #ifndef access
 
 #define access(fn,type) fake_access(fn)
@@ -200,24 +184,44 @@ static int fake_gettimeofday(struct timeval *tp, struct timezone *tzp)
 
 #endif
 
-#ifndef strdup
+#ifndef usleep
 
-#define strdup(s) fake_strdup(s)
+#define usleep(us) fake_usleep(us)
 
-static char *fake_strdup(const char *s)
+static int fake_usleep(unsigned long us)
 {
-    size_t len = 0;
-    char *ret = 0;
+    EventRecord er;
+    struct timeval tv, tv2;
 
-    len = strlen(s);
-    ret = malloc(len + 1);
-    if (ret)
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    gettimeofday(&tv, NULL);
+    tv2.tv_sec = tv.tv_sec + ((tv.tv_usec + us) / 1000000L);
+    tv2.tv_usec = tv.tv_usec + ((tv.tv_usec + us) % 1000000L);
+    while (1)
     {
-        memcpy(ret, s, len + 1);
+        SpinCursor(32);
+        if (WaitNextEvent(highLevelEventMask, &er, us / 60000, NULL))
+        {
+            if (er.what == kHighLevelEvent)
+            {
+                AEProcessAppleEvent(&er);
+            }
+            return -1;
+        }
+        gettimeofday(&tv, NULL);
+        if ((tv.tv_sec != tv2.tv_sec)
+            ||
+            (tv.tv_usec >= tv2.tv_usec))
+        {
+            break;
+        }
+        break;
     }
-    return ret;
+    return 0;
 }
-#endif /* strdup */
+
+#endif
 
 #endif /* macintosh */
 
@@ -243,19 +247,19 @@ typedef maccurses_chtype maccurses_attr_t;
 #define KEY_RIGHT 0x100005L
 
 #undef A_REVERSE
-#define A_REVERSE 0x80000000L
+#define A_REVERSE 0x00800000L
 
 #undef A_UNDERLINE
-#define A_UNDERLINE 0x40000000L
+#define A_UNDERLINE 0x00400000L
 
 #undef A_BOLD
-#define A_BOLD 0x20000000L
+#define A_BOLD 0x00200000L
 
 #undef A_STANDOUT
 #define A_STANDOUT A_REVERSE
 
 #undef _MACCURSES_A_COLOR
-#define _MACCURSES_A_COLOR 0x1fe00000L
+#define _MACCURSES_A_COLOR 0xff000000L
 
 /* note that this is not a bitflag -- instead, it's a prefix for the
  * non-Unicode "plane 31" which is a copy of the BMP (plane 0) in "ACS
@@ -269,7 +273,7 @@ typedef maccurses_chtype maccurses_attr_t;
 #undef _MACCURSES_A_ATTR
 #define _MACCURSES_A_ATTR (~_MACCURSES_A_CHARTEXT)
 
-#define _PAIR_SHIFT 21
+#define _PAIR_SHIFT 24
 
 #define COLORS 16
 
@@ -488,6 +492,7 @@ static unsigned short maccurses_cp437[] = {
 #endif /* defined(UNICODE) */
 
 static int maccurses_valid = FALSE;
+static int maccurses_gotQuitEvent = FALSE;
 
 static WindowRef maccurses_hwnd;
 static Point maccurses_size;
@@ -788,6 +793,14 @@ static void maccurses_updateFontMenu(void)
 #endif /* defined(__CARBON__) */
 }
 
+static pascal OSErr maccurses_onQuitEvent(const AppleEvent *ev, AppleEvent *reply, long handlerRefcon)
+{
+    maccurses_gotQuitEvent = TRUE;
+    return noErr;
+}
+
+static MenuBarHandle maccurses_oldMainMenu;
+
 static void maccurses_initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
     char *font;
@@ -883,7 +896,8 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         InitCursor();
     }
 
-    if (firsttime)
+    maccurses_oldMainMenu = GetMenuBar();
+
     {
         int i;
         const char *filemenu_title = "File";
@@ -1024,7 +1038,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     if (firsttime)
     {
         maccurses_hwnd = NewCWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
-        SetEventMask(keyDownMask | autoKeyMask | activMask | mDownMask | osMask);
+        SetEventMask(keyDownMask | autoKeyMask | activMask | mDownMask | osMask | highLevelEventMask);
         maccurses_port = GetWindowPort(maccurses_hwnd);
         SetPort((GrafPtr) maccurses_port);
     }
@@ -1425,11 +1439,13 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
                maccurses_size.h,
                maccurses_size.v,
                true);
+#ifdef __CARBON__
     ConstrainWindowToScreen(maccurses_hwnd,
                             kWindowStructureRgn,
                             kWindowConstrainMayResize,
                             NULL,
                             NULL);
+#endif
     GetWindowBounds(maccurses_hwnd,
                     kWindowContentRgn,
                     &coords);
@@ -1474,12 +1490,16 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     maccurses_palette[COLORS + COLORS * COLORS].green = maccurses_mix(0xffffU, 0);
     maccurses_palette[COLORS + COLORS * COLORS].blue = maccurses_mix(0xffffU, 0);
     SetWTitle(maccurses_hwnd, maccurses_title);
+    AEInstallEventHandler(kCoreEventClass, kAEQuitApplication,
+                          NewAEEventHandlerUPP(maccurses_onQuitEvent), 0, false);
     maccurses_updateFontMenu();
     maccurses_erase();
 }
 
 static int maccurses_endwin(void)
 {
+    SetMenuBar(maccurses_oldMainMenu);
+    DisposeHandle(maccurses_oldMainMenu);
     return OK;
 }
 
@@ -1640,6 +1660,11 @@ static int maccurses_getch(void)
     EventRecord er;
     int ret = ERR;
 
+    if (maccurses_gotQuitEvent == TRUE)
+    {
+        maccurses_gotQuitEvent = FALSE;
+        return 'q';
+    }
     if (maccurses_resize_pending
         &&
         (! (-- maccurses_resize_pending)))
@@ -1658,11 +1683,21 @@ static int maccurses_getch(void)
         maccurses_new_h = maccurses_h;
         maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
     }
-    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | mDownMask | mUpMask | osMask,
+    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | mDownMask | mUpMask | osMask | highLevelEventMask,
                          &er, IsWindowCollapsed(maccurses_hwnd) ? 30 : 0, NULL)
            ||
            IsWindowCollapsed(maccurses_hwnd))
     {
+        if (er.what == kHighLevelEvent)
+        {
+            AEProcessAppleEvent(&er);
+            if (maccurses_gotQuitEvent == TRUE)
+            {
+                maccurses_gotQuitEvent = FALSE;
+                return 'q';
+            }
+            continue;
+        }
         if (IsWindowCollapsed(maccurses_hwnd)
             &&
             er.what == nullEvent)
@@ -1675,7 +1710,17 @@ static int maccurses_getch(void)
         {
             while (1)
             {
-                WaitNextEvent(osMask | activMask | mDownMask, &er, 60, NULL);
+                WaitNextEvent(osMask | activMask | mDownMask | highLevelEventMask, &er, 60, NULL);
+                if (er.what == kHighLevelEvent)
+                {
+                    AEProcessAppleEvent(&er);
+                    if (maccurses_gotQuitEvent == TRUE)
+                    {
+                        maccurses_gotQuitEvent = FALSE;
+                        return 'q';
+                    }
+                    continue;
+                }
                 if (((er.what == osEvt)
                      &&
                      (er.message & resumeFlag))

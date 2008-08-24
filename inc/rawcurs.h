@@ -156,6 +156,18 @@
 #define USE_WINCONSOLE 0
 #endif
 
+#ifdef macintosh
+#ifdef TARGET_API_MAC_CARBON
+#include <Carbon.h>
+#else
+#include <Errors.h>
+#include <Files.h>
+#include <MacTypes.h>
+#include <Timer.h>
+#endif
+#include <ioctl.h>
+#endif
+
 #ifdef WIN32
 
 #include <windows.h>
@@ -194,12 +206,14 @@
 #include <sys.h>
 #else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
 #include <fcntl.h>
+#ifndef macintosh
 #include <sys/types.h>
+#endif /* ! defined(macintosh) */
 #endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
 
-#if ! (defined(__MSDOS__) || defined(CPM))
+#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh))
 #include <sys/socket.h>
-#endif /* ! (defined(__MSDOS__) || defined(CPM)) */
+#endif /* ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh)) */
 
 #if defined(__MSDOS__) || defined(CPM)
 
@@ -327,13 +341,21 @@
 #endif /* defined(__MSDOS__) || defined(__atarist__) */
 
 #ifndef USE_TERMIOS
+#ifdef macintosh
+#define USE_TERMIOS 0
+#else
 #define USE_TERMIOS 1
+#endif
 #endif
 
 #endif /* ! defined(WIN32) */
 
 #ifndef HAVE_STRUCT_TIMEVAL
+#ifdef macintosh
+#define HAVE_STRUCT_TIMEVAL 0
+#else
 #define HAVE_STRUCT_TIMEVAL 1
+#endif
 #endif
 
 #if ! HAVE_STRUCT_TIMEVAL
@@ -351,8 +373,12 @@ struct timeval
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
+#ifdef macintosh
+#define HAVE_GETTIMEOFDAY 0
+#else /* ! defined(macintosh) */
 #define HAVE_GETTIMEOFDAY 1
-#endif
+#endif /* ! defined(macintosh) */
+#endif /* ! defined(HAVE_GETTIMEOFDAY) */
 
 #if ! HAVE_GETTIMEOFDAY
 
@@ -362,16 +388,18 @@ struct timeval
 static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 {
 
+    if (tv)
+    {
 #if defined(WIN32)
 
 /* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
-    union {
-        long long ns100;
-        FILETIME ft;
-    } now;
-    GetSystemTimeAsFileTime(&now.ft);
-    tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
-    tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+        union {
+            long long ns100;
+            FILETIME ft;
+        } now;
+        GetSystemTimeAsFileTime(&now.ft);
+        tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
+        tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
 
 #else /* ! defined(WIN32) */
 
@@ -381,34 +409,100 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 /* originally from http://www.lightner.net/lightner/bruce/photopc/msdos/patch/usleep.c */
 
-    static unsigned long
+        static unsigned long
 #ifndef __BCC__
-        far
+            far
 #endif
-        *p;
-    unsigned long ticks;
+            *p;
+        unsigned long ticks;
 
-    if (!p) p = MK_FP(0, 0x46c);
-    ticks = *p;
-    tv->tv_usec = ((ticks & 0xff) * 55000L) % 1000000L;
-    tv->tv_sec = (ticks & 0xff) * 55L / 1000L;
+        if (!p) p = MK_FP(0, 0x46c);
+        ticks = *p;
+        tv->tv_usec = ((ticks & 0xff) * 55000L) % 1000000L;
+        tv->tv_sec = (ticks & 0xff) * 55L / 1000L;
 
 #else /* ! defined(__MSDOS__) */
 
+#ifdef macintosh
+
+        UnsignedWide microTickCount;
+        double usecs;
+
+        Microseconds(&microTickCount);
+        usecs = (4294967296.0 * microTickCount.hi + microTickCount.lo);
+        tv->tv_sec = (long) (usecs / 1e6);
+        tv->tv_usec = (long) (usecs - (1e6 * tv->tv_sec));
+
+#else /* ! defined(macintosh) */
+
 #error no gettimeofday(2) implementation for your platform, sorry
-    return 1;
+        return 1;
+
+#endif /* ! defined(macintosh) */
 
 #endif /* ! defined(__MSDOS__) */
 
 #endif /* ! defined(WIN32) */
 
+    }
     return 0;
 }
 
 #endif /* ! HAVE_GETTIMEOFDAY */
 
+#ifndef HAVE_ISATTY
+#ifdef macintosh
+#define HAVE_ISATTY 0
+#else
+#define HAVE_ISATTY 1
+#endif
+#endif
+
+#if ! HAVE_ISATTY
+
+#undef isatty
+#define isatty(fd) rawcurses_isatty(fd)
+
+int rawcurses_isatty(int fd)
+{
+
+#ifdef macintosh
+
+    char namebuf[512];
+
+    memset((void *) namebuf, 0, sizeof(namebuf));
+#ifdef FIOFNAME
+    if (ioctl(fd, FIOFNAME, (long *) (void *) namebuf) == -1)
+    {
+        return 0;
+    }
+#endif
+    if ((! strcmp(namebuf, "dev:console"))
+        ||
+        (! strncmp(namebuf, "dev:tty", strlen("dev:tty")))
+        ||
+        (! strncmp(namebuf, "dev:pty", strlen("dev:pty"))))
+    {
+        return 1;
+    }
+
+#else /* ! defined(macintosh) */
+
+#error no isatty(3) implementation for your platform, sorry
+
+#endif /* ! defined(macintosh) */
+
+    return 0;
+}
+
+#endif
+
 #ifndef HAVE_USLEEP
+#ifdef macintosh
+#define HAVE_USLEEP 0
+#else
 #define HAVE_USLEEP 1
+#endif
 #endif
 
 #if ! HAVE_USLEEP
@@ -429,6 +523,36 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 static int
 rawcurses_usleep(unsigned long usecs)
 {
+#ifdef macintosh
+    EventRecord er;
+    struct timeval tv, tv2;
+
+    tv.tv_sec = 0;
+    tv.tv_usec = 0;
+    gettimeofday(&tv, NULL);
+    tv2.tv_sec = tv.tv_sec + ((tv.tv_usec + usecs) / 1000000L);
+    tv2.tv_usec = tv.tv_usec + ((tv.tv_usec + usecs) % 1000000L);
+    while (1)
+    {
+        SpinCursor(32);
+        if (WaitNextEvent(highLevelEventMask, &er, usecs / 60000, NULL))
+        {
+            if (er.what == kHighLevelEvent)
+            {
+                AEProcessAppleEvent(&er);
+            }
+            return -1;
+        }
+        gettimeofday(&tv, NULL);
+        if ((tv.tv_sec != tv2.tv_sec)
+            ||
+            (tv.tv_usec >= tv2.tv_usec))
+        {
+            break;
+        }
+        break;
+    }
+#else
     while (usecs)
     {
         struct timeval tv0, tv1;
@@ -466,6 +590,7 @@ rawcurses_usleep(unsigned long usecs)
         usecs -= (tv1.tv_sec - tv0.tv_sec) * 1000000L;
         usecs -= tv1.tv_usec - tv0.tv_usec;
     }
+#endif
     return 0;
 }
 
@@ -545,7 +670,7 @@ rawcurses_usleep(unsigned long usecs)
 
 #endif /* USE_TOSCONSOLE */
 
-#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
 #ifdef __atarist__
 #if ((! defined(__GNUC__)) || (__GNUC__ > 2))
 #include <stdint.h>
@@ -553,7 +678,7 @@ rawcurses_usleep(unsigned long usecs)
 #else /* ! defined(__atarist__) */
 #include <wchar.h>
 #endif /* ! defined(__atarist__) */
-#endif /* ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
+#endif /* ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
 
 #if defined(LSI_C) || defined(__TURBOC__)
 #ifndef wchar_t
@@ -633,17 +758,17 @@ typedef int rawcur_wchar_t;
 #endif
 
 #if USE_IOCTL
-#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#if defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)
 #include <ioctl.h>
-#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C)) */
+#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)) */
 #ifdef __TURBOC__
 #include <io.h>
 #else /* ! defined(__TURBOC__) */
 #if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
 #include <sys/ioctl.h>
-#endif
+#endif /* ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__)) */
 #endif /* ! defined(__TURBOC__) */
-#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C)) */
+#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)) */
 #endif /* USE_IOCTL */
 
 #undef chtype

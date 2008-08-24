@@ -300,7 +300,7 @@
 #endif
 
 #if USE_IOCTL
-#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#if defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)
 #include <ioctl.h>
 #else
 #ifndef __TURBOC__
