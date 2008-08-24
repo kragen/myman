@@ -2902,6 +2902,7 @@ gfx/monster.gif \
 gfx/monster.xcf \
 gfx/monsterleft.gif \
 gfx/myman.png \
+gfx/myman.svg \
 gfx/myman32.png \
 gfx/myman48.png \
 gfx/myman64.png \
