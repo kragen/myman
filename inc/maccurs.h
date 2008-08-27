@@ -891,6 +891,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         InitFonts();
         InitWindows();
         InitMenus();
+        TEInit();
 #endif /* ! defined(__CARBON__) */
 
         InitCursor();
@@ -1227,16 +1228,10 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             encoding_name_pascal[0] = i + 1;
             encoding_name_pascal[i + 1] = encoding_name[i];
         }
-#if defined(__CARBON__)
-        /* We can only rely on TextEncodingConverter where
-         * Carbon is also present. We have a few hardwired
-         * conversion tables to help us in the non-Carbon
-         * case. */
         if (noErr == TECGetTextEncodingFromInternetName(&encoding, encoding_name_pascal))
         {
         }
         else
-#endif /* defined(__CARBON__) */
         {
             if ((! strcasecmp(encoding_name, "MacRoman"))
                 ||
@@ -1294,7 +1289,6 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         maccurses_cvtt = 0;
     }
 
-#if defined(__CARBON__)
     /* We can only rely on TextEncodingConverter where
      * Carbon is also present. We have a few hardwired
      * conversion tables to help us in the non-Carbon
@@ -1368,7 +1362,6 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             }
         }
     }
-#endif /* defined(__CARBON__) */
 #endif /* ! defined(UNICODE) */
     TextFont(maccurses_fontfamily);
     /*TextMode(transparent);*/
@@ -1435,6 +1428,23 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     }
     maccurses_size.h = w * maccurses_widMax;
     maccurses_size.v = h * (maccurses_fontinfo.ascent + maccurses_fontinfo.descent);
+#ifndef __CARBON__
+    if (1)
+    {
+        Rect chrome;
+
+        GetWindowStructureWidths(maccurses_hwnd, &chrome);
+        GetRegionBounds(GetGrayRgn(), &coords);
+        if (maccurses_size.h > (coords.right - coords.left - chrome.left - chrome.right))
+        {
+            maccurses_size.h = coords.right - coords.left - chrome.left - chrome.right;
+        }
+        if (maccurses_size.v > (coords.bottom - coords.top - chrome.top - chrome.bottom))
+        {
+            maccurses_size.v = coords.bottom - coords.top - chrome.bottom - chrome.bottom;
+        }
+    }
+#endif /* ! defined(__CARBON__) */
     SizeWindow(maccurses_hwnd,
                maccurses_size.h,
                maccurses_size.v,
@@ -1445,7 +1455,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
                             kWindowConstrainMayResize,
                             NULL,
                             NULL);
-#endif
+#endif /* ! defined(__CARBON__) */
     GetWindowBounds(maccurses_hwnd,
                     kWindowContentRgn,
                     &coords);
@@ -1594,7 +1604,6 @@ static int maccurses_doMenuItem(long msr)
         /* CTRL('C') */
         HiliteMenu(0);
         return 0x03;
-#ifdef __CARBON__
     case 't':
     case 'T':
         maccurses_custom_fontfamily = kInvalidFontFamily;
@@ -1603,7 +1612,6 @@ static int maccurses_doMenuItem(long msr)
         maccurses_new_h = maccurses_h;
         maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
         break;
-#endif /* defined(__CARBON__) */
     case 'z':
     case 'Z':
     case '\r':
@@ -2018,10 +2026,9 @@ static int maccurses_addch(maccurses_chtype ch)
         Boolean substituted = false;
         Boolean usefake = false;
         maccurses_attr_t attr, attr_extra;
-        Pattern black, gray;
+        Pattern black;
 
         GetQDGlobalsBlack(&black);
-        GetQDGlobalsGray(&gray);
         attr = maccurses_attr | (ch & _MACCURSES_A_ATTR);
         ch &= _MACCURSES_A_CHARTEXT;
         attr_extra = 0;
@@ -2471,10 +2478,7 @@ static int maccurses_addch(maccurses_chtype ch)
                         RGBForeColor(maccurses_palette + COLORS + COLORS * COLORS);
                         RGBBackColor(maccurses_palette + COLORS + COLORS * COLORS);
                     }
-                    else
-                    {
-                        PenPat(&gray);
-                    }
+                    EraseRect(&cell);
                 }
                 if (chacs == _MACCURSES_ACS_THALF)
                 {
@@ -2500,10 +2504,7 @@ static int maccurses_addch(maccurses_chtype ch)
                         RGBForeColor(maccurses_palette + COLORS + COLORS * COLORS);
                         RGBBackColor(maccurses_palette + COLORS + COLORS * COLORS);
                     }
-                    else
-                    {
-                        PenPat(&gray);
-                    }
+                    EraseRect(&cell);
                 }
                 if (chacs == _MACCURSES_ACS_LHALF)
                 {
