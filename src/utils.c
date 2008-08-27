@@ -35,6 +35,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef macintosh
+#if TARGET_API_MAC_CARBON
+/* Case 1: flat Carbon headers */
+#include <Carbon.h>
+#else /* ! defined(TARGET_API_MAC_CARBON) */
+/* Case 2: Toolbox */
+#include <MacTypes.h>
+#include <Files.h>
+#endif /* ! defined(TARGET_API_MAC_CARBON) */
+#endif /* ! defined(macintosh) */
+
 #include "utils.h"
 
 /* command-line argument parser */
