@@ -212,7 +212,9 @@
 #endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
 
 #if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh))
+#if ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2))
 #include <sys/socket.h>
+#endif /* ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2)) */
 #endif /* ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh)) */
 
 #if defined(__MSDOS__) || defined(CPM)
@@ -313,7 +315,6 @@
 
 #endif /* defined(__MSDOS__) || defined(CPM) */
 
-/* really old Atari GCC 2.5.8 does not define __atarist__ */
 #ifdef __atarist__
 
 #ifndef USE_TOSCONSOLE
