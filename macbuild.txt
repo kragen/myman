@@ -161,20 +161,20 @@ for variant in {{variants}}
     # PowerPC libraries for the non-Carbon builds
     set PPCLIBS ""
     for lib in CarbonAccessors.o
-        set PPCLIBS "{{LIBS}} {{PPCLibraries}}{{lib}}"
+        set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
     end
 
     # Shared libraries for the non-Carbon builds
     set LIBS ""
     for lib in FontManager TextCommon WindowsLib AppearanceLib ATSUnicodeLib
-        set LIBS "{{LIBS}} {{SharedLibraries}}{{lib}}"
+        set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
     end
 
 #    # Classic 68k toolbox QuickDraw Text MPW tool (compiler runs out of memory, so disabled; probably other problems, too)
 #    delete -i myman.NJ myman.c.o myman.c.x &&
 #    delete -i utils.NJ utils.c.o utils.c.x &&
 #    delete -i a{{variant}} a{{variant}}.make a{{variant}}.makeout &&
-#    createmake a{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {{LIBS}} -68k -tool -COptions "{{CFLAGS}} -opt space" &&
+#    createmake a{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {LIBS} -68k -tool -COptions "{{CFLAGS}} -opt space" &&
 #    make -e -f a{{variant}}.make > a{{variant}}.makeout &&
 #    a{{variant}}.makeout &&
 
@@ -182,7 +182,7 @@ for variant in {{variants}}
      delete -i myman.NJ myman.c.o myman.c.x &&
      delete -i utils.NJ utils.c.o utils.c.x &&
      delete -i t{{variant}} t{{variant}}.make t{{variant}}.makeout &&
-     createmake t{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {{PPCLIBS}} {{LIBS}} -powerpc -tool -ppcCOptions "{{CFLAGS}}" &&
+     createmake t{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}}" &&
      make -e -f t{{variant}}.make > t{{variant}}.makeout &&
      t{{variant}}.makeout &&
 
@@ -190,7 +190,7 @@ for variant in {{variants}}
 #      delete -i myman.NJ myman.c.o myman.c.x &&
 #      delete -i utils.NJ utils.c.o utils.c.x &&
 #      delete -i tu{{variant}} tu{{variant}}.make tu{{variant}}.makeout &&
-#      createmake tu{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {{PPCLIBS}} {{LIBS}} -powerpc -tool -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
+#      createmake tu{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
 #      make -e -f tu{{variant}}.make > tu{{variant}}.makeout &&
 #      tu{{variant}}.makeout &&
 
@@ -198,7 +198,7 @@ for variant in {{variants}}
 #      delete -i myman.NJ myman.c.o myman.c.x &&
 #      delete -i utils.NJ utils.c.o utils.c.x &&
 #      delete -i o{{variant}} o{{variant}}.make o{{variant}}.makeout &&
-#      createmake o{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {{PPCLIBS}} {{LIBS}} -powerpc -ppcCOptions "{{CFLAGS}}" &&
+#      createmake o{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}}" &&
 #      make -e -f o{{variant}}.make > o{{variant}}.makeout &&
 #      o{{variant}}.makeout &&
 
@@ -206,7 +206,7 @@ for variant in {{variants}}
 #      delete -i myman.NJ myman.c.o myman.c.x &&
 #      delete -i utils.NJ utils.c.o utils.c.x &&
 #      delete -i ou{{variant}} ou{{variant}}.make ou{{variant}}.makeout &&
-#      createmake ou{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {{PPCLIBS}} {{LIBS}} -powerpc -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
+#      createmake ou{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
 #      make -e -f ou{{variant}}.make > ou{{variant}}.makeout &&
 #      ou{{variant}}.makeout &&
 
