@@ -3604,9 +3604,9 @@ cvsdump: compressed-tarball-xq-$(call mwxq,$(CVSDUMP))
 	$(INSTALL_DATA) $(call q,$(CVSDUMP))$(tgz) $(call q,$(CVSDUMP))-$(isodate)$(tgz)
 	-$(REMOVE) $(call q,$(CVSDUMP))$(tgz)
 
-.PHONY: fill-dir-xq-$(DIST)
+.PHONY: fill-dir-xq-$(call mwxq,$(DIST))
 
-fill-dir-xq-$(DIST):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(src)),$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(src)$(file)))
+fill-dir-xq-$(call xq,$(DIST)):: $(call mw,$(MAKEFILE)) $(addprefix $(call mw,$(src)),$(dist_files)) empty-dir-xq-$(call mwxq,$(DIST)) $(foreach file,$(dist_data_files) $(dist_program_files),$(call mw,$(src)$(file)))
 	@$(MAKE) $(MAKELOOP) \
             $(foreach dir,$(dist_dirs),install-dir-xq-$(call qxq,$(DIST)/$(dir)))
 	$(POST_UNPACK)
