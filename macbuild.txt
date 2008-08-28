@@ -67,35 +67,46 @@
 #close macbuild.txt
 #close macbuild
 #
-# 6) Build MyMan:
+# 6) Build MyMan MPW Tool and Carbon application:
 #
 #macbuild smallman
 #
 # 7) Run MyMan MPW Tool (PowerPC only, for now):
 #
-#tsmallman
+#smallman
+#
+# 8) Launch MyMan Carbon application (PowerPC only and either Mac OS X
+#    or Mac OS 8.6 or greater with CarbonLib 1.6):
+#
+#carbon-smallman
 
 set Exit 1
 export Exit
 set TraceFailures 1
 export TraceFailures
 
-set variants "bigman hugeman smallman squareman"
+set all_sizes "bigman hugeman smallman squareman"
+set sizes "{{all_sizes}}"
+
+set all_hosts "68k-mpw ppc-mpw ppc-mpw-uni ppc ppc-uni carbon carbon-uni"
+set hosts "ppc-mpw carbon"
+
+set specs "{{sizes}}"
 
 if {#} <> 0
-    set variants ""
+    set specs ""
     loop
         if {#} == 0
             break
         end
-        set variants "{{variants}} {{1}}"
+        set specs "{{specs}} {{1}}"
         shift
     end
 end
 
 # make sure this is the source directory
 if not "``exists -f :src:myman.c``"
-    echo "#Error: can't find MyMan sources in directory {{directory}}"
+    echo "#could not find MyMan sources in directory {{directory}}" > dev:stderr
     exit 2
 end
 
@@ -113,6 +124,10 @@ u2m.makeout
 setfile -t TEXT VERSION COPYRIGHT
 set MYMANVERSION "``catenate VERSION | :u2m``"
 set MYMANCOPYRIGHT "``catenate COPYRIGHT | :u2m``"
+
+# delete our line ending conversion tool after use
+delete -i u2m.c u2m.c.x u2m.c.o u2m.c.NJ
+delete -i u2m u2m.make u2m.makeout
 
 # for sending string literals to the C compiler and including the solidus in them (which MyMan autoconverts to colon when needed)
 set char_quotation_mark "'"'"'"'"
@@ -150,87 +165,126 @@ set squaresprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPR
 set square "-D MYMANSIZE={{char_quotation_mark}}square{{char_quotation_mark}} {{squaretiles}} {{squaresprites}}"
 set squareman "{{square}} {{myman}}"
 
-for variant in {{variants}}
-    echo 'set DEFS "{{'"{{variant}}"'}}"' > {{variant}}.makeout
-    execute {{variant}}.makeout
-    if ":{{DEFS}}" == ":"
-        echo "#variant {{variant}} not defined" > dev:stderr
+for spec in {specs}
+    set matched 0
+    for host in {all_hosts}
+        if :"{{spec}}" == :"{{host}}"
+            set matched 1
+            break
+        end
+        for size in {all_sizes}
+            if :"{{spec}}" == :"{{host}}-{{size}}" or :"{{spec}}" == :"{{size}}"
+                set matched 1
+                break
+            end
+        end
+        if {{matched}} != 0
+            break
+        end
+    end
+    if {{matched}} == 0
+        echo "#build specifier {{spec}} not recognized" > dev:stderr
+        echo '#usage: '"{{0}}"' [ {host}[-{size}] | {size} ]' > dev:stderr
+        echo "#where hosts is one of: {{all_hosts}}" > dev:stderr
+        echo "#and size is one of: {{all_sizes}}" > dev:stderr
         exit 2
     end
-    setfile -t TEXT :inc:maccurs.h :inc:utils.h :src:myman.c :src:utils.c :mygetopt:getopt.h :mygetopt:mygetopt.c :mygetopt:mygetopt.h :inc:optcurs.h &&
-    set CFLAGS "-noMapCR -includes unix -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``quote "{{MYMANVERSION}}"``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``quote "{{MYMANCOPYRIGHT}}"``{{char_quotation_mark}} {{DEFS}}" &&
+end
 
-    # PowerPC libraries for the non-Carbon builds
-    set PPCLIBS ""
-    for lib in CarbonAccessors.o
-        set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
+for size in {all_sizes}
+    set sizematched ""
+    for size1 in {sizes}
+        if :"{{size}}" == :"{{size1}}"
+            set sizematched "{{size}}"
+            break
+        end
     end
+    for host in {all_hosts}
+        set hostmatched ""
+        for host1 in {hosts}
+            if :"{{host}}" == :"{{host1}}"
+                set hostmatched "{{host}}"
+                break
+            end
+        end
+        set matched 0
+        for spec in {specs}
+            if :"{{spec}}-{{sizematched}}" == :"{{host}}-{{size}}" or :"{{spec}}" == :"{{host}}-{{size}}" or :"{{hostmatched}}-{{spec}}" == :"{{host}}-{{size}}"
+                set matched 1
+                break
+            end
+        end
+        if {{matched}} != 0
+            set hostsize "{{size}}"
+            set host1 "{{host}}"
+            for host2 in {hosts}
+                set host1 "{{host2}}"
+                break
+            end
+            if :"{{spec}}" != :"{{size}}" or :"{{host}}" != :"{{host1}}"
+                set hostsize "{{host}}-{{size}}"
+            end
+            delete -i "{{hostsize}}".makeout
+            echo 'set DEFS "{{'"{{size}}"'}}"' > "{{hostsize}}".makeout
+            execute "{{hostsize}}".makeout
+            delete -i "{{hostsize}}".makeout
+            if ":{{DEFS}}" == ":"
+                echo "#size {{size}} not defined" > dev:stderr
+                exit 2
+            end
+            setfile -t TEXT :inc:maccurs.h :inc:utils.h :src:myman.c :src:utils.c :mygetopt:getopt.h :mygetopt:mygetopt.c :mygetopt:mygetopt.h :inc:optcurs.h &&
+            set CFLAGS "-noMapCR -includes unix -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``quote "{{MYMANVERSION}}"``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``quote "{{MYMANCOPYRIGHT}}"``{{char_quotation_mark}} {{DEFS}}" &&
 
-    # Shared libraries for the non-Carbon builds
-    set LIBS ""
-    for lib in FontManager TextCommon WindowsLib AppearanceLib ATSUnicodeLib TextEncodingConverter
-        set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
+            # Ppc libraries for the non-Carbon builds
+            set PPCLIBS ""
+            for lib in CarbonAccessors.o
+                set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
+            end
+
+            # Shared libraries for the non-Carbon builds
+            set LIBS ""
+            for lib in FontManager TextCommon WindowsLib AppearanceLib ATSUnicodeLib TextEncodingConverter
+                set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
+            end
+
+            delete -i myman.NJ myman.c.o myman.c.x &&
+            delete -i utils.NJ utils.c.o utils.c.x &&
+            delete -i mygetopt.c.o mygetopt.c.x mygetopt.NJ &&
+            delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
+            if ":{{host}}" == ":68k-mpw"
+                # Classic 68k toolbox QuickDraw Text MPW tool (compiler runs out of memory; probably other problems, too)
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {LIBS} -68k -tool -COptions "{{CFLAGS}} -opt space"
+            else if ":{{host}}" == ":ppc-mpw"
+                # Classic Ppc toolbox QuickDraw Text MPW tool
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}}"
+            else if ":{{host}}" == ":ppc-mpw-uni"
+                # Classic Ppc toolbox ATSUI MPW tool
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}} -D UNICODE=1"
+            else if ":{{host}}" == ":ppc"
+                # Classic Ppc toolbox QuickDraw Text application
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}}"
+            else if ":{{host}}" == ":ppc-uni"
+                # Classic Ppc toolbox ATSUI application
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}} -D UNICODE=1"
+            else if ":{{host}}" == ":carbon"
+                # Carbon QuickDraw Text application
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}}"
+            else if ":{{host}}" == ":carbon-uni"
+                # Carbon ATSUI application
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}} -D UNICODE=1"
+            else
+                echo "#host {{host}} not defined" > dev:stderr
+                exit 2
+            end &&
+            make -e -f "{{hostsize}}".make > "{{hostsize}}".makeout &&
+            "{{hostsize}}".makeout &&
+            echo "{{hostsize}} #MyMan {{MYMANVERSION}} host {{host}} size {{size}}" &&
+            delete -i myman.NJ myman.c.o myman.c.x &&
+            delete -i utils.NJ utils.c.o utils.c.x &&
+            delete -i mygetopt.c.o mygetopt.c.x mygetopt.NJ &&
+            delete -i "{{hostsize}}".make "{{hostsize}}".makeout
+        end
     end
-
-#    # Classic 68k toolbox QuickDraw Text MPW tool (compiler runs out of memory, so disabled; probably other problems, too)
-#    delete -i myman.NJ myman.c.o myman.c.x &&
-#    delete -i utils.NJ utils.c.o utils.c.x &&
-#    delete -i a{{variant}} a{{variant}}.make a{{variant}}.makeout &&
-#    createmake a{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {LIBS} -68k -tool -COptions "{{CFLAGS}} -opt space" &&
-#    make -e -f a{{variant}}.make > a{{variant}}.makeout &&
-#    a{{variant}}.makeout &&
-
-     # Classic PowerPC toolbox QuickDraw Text MPW tool
-     delete -i myman.NJ myman.c.o myman.c.x &&
-     delete -i utils.NJ utils.c.o utils.c.x &&
-     delete -i t{{variant}} t{{variant}}.make t{{variant}}.makeout &&
-     createmake t{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}}" &&
-     make -e -f t{{variant}}.make > t{{variant}}.makeout &&
-     t{{variant}}.makeout &&
-
-#      # Classic PowerPC toolbox ATSUI MPW tool
-#      delete -i myman.NJ myman.c.o myman.c.x &&
-#      delete -i utils.NJ utils.c.o utils.c.x &&
-#      delete -i tu{{variant}} tu{{variant}}.make tu{{variant}}.makeout &&
-#      createmake tu{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
-#      make -e -f tu{{variant}}.make > tu{{variant}}.makeout &&
-#      tu{{variant}}.makeout &&
-
-#      # Classic PowerPC toolbox QuickDraw Text application
-#      delete -i myman.NJ myman.c.o myman.c.x &&
-#      delete -i utils.NJ utils.c.o utils.c.x &&
-#      delete -i o{{variant}} o{{variant}}.make o{{variant}}.makeout &&
-#      createmake o{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}}" &&
-#      make -e -f o{{variant}}.make > o{{variant}}.makeout &&
-#      o{{variant}}.makeout &&
-
-#      # Classic PowerPC toolbox ATSUI application
-#      delete -i myman.NJ myman.c.o myman.c.x &&
-#      delete -i utils.NJ utils.c.o utils.c.x &&
-#      delete -i ou{{variant}} ou{{variant}}.make ou{{variant}}.makeout &&
-#      createmake ou{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
-#      make -e -f ou{{variant}}.make > ou{{variant}}.makeout &&
-#      ou{{variant}}.makeout &&
-
-#      # Carbon QuickDraw Text application
-#      delete -i myman.NJ myman.c.o myman.c.x &&
-#      delete -i utils.NJ utils.c.o utils.c.x &&
-#      delete -i m{{variant}} m{{variant}}.make m{{variant}}.makeout &&
-#      delete -i mygetopt.c.o mygetopt.c.x mygetopt.NJ &&
-#      createmake m{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}}" &&
-#      make -e -f m{{variant}}.make > m{{variant}}.makeout &&
-#      m{{variant}}.makeout &&
-
-#      # Carbon ATSUI application
-#      delete -i myman.NJ myman.c.o myman.c.x &&
-#      delete -i utils.NJ utils.c.o utils.c.x &&
-#      delete -i u{{variant}} u{{variant}}.make u{{variant}}.makeout &&
-#      createmake u{{variant}} -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c -powerpc -carbon -ppcCOptions "{{CFLAGS}} -D UNICODE=1" &&
-#      make -e -f u{{variant}}.make > u{{variant}}.makeout &&
-#      u{{variant}}.makeout &&
-
-     echo "variant {{variant}} built (myman-{{MYMANVERSION}})"
-
 end
 
 # vim:fencs=macroman

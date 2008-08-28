@@ -27,7 +27,12 @@
 This code is mostly written in the interoperable common subset of
 Carbon and Toolbox. Because it uses Quickdraw, compiling it against
 recent Mac OS X-oriented SDKs produces lots of (harmless) deprecation
-warnings.
+warnings. It compiles into a PowerPC MPW Tool, a PowerPC Toolbox
+application, and an x86 or PowerPC Carbon application. When built
+under MPW, the resulting PowerPC Carbon application runs under Mac OS
+X or under Mac OS 8.6 or above with CarbonLib 1.6. When built under
+Mac OS X with gcc, the resulting "fat" 32-bit PowerPC and x86 Carbon
+application runs under Mac OS X.
 
  */
 
