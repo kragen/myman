@@ -111,7 +111,7 @@ if not "``exists -f :src:myman.c``"
 end
 
 # create our line ending conversion tool
-delete -i u2m.c u2m.c.x u2m.c.o u2m.c.NJ
+delete -i u2m.c u2m.c.x u2m.c.o u2m.NJ
 echo '#include <stdio.h>' > u2m.c
 echo 'int main(void){int i,j;while(1){i=getchar();if(i==-1) break;' >> u2m.c
 echo 'if(i==0x0d){j=getchar();if(j==0x0a)i=0x0a;else if(j!=-1)ungetc(j,stdin);}' >> u2m.c
@@ -126,7 +126,7 @@ set MYMANVERSION "``catenate VERSION | :u2m``"
 set MYMANCOPYRIGHT "``catenate COPYRIGHT | :u2m``"
 
 # delete our line ending conversion tool after use
-delete -i u2m.c u2m.c.x u2m.c.o u2m.c.NJ
+delete -i u2m.c u2m.c.x u2m.c.o u2m.NJ
 delete -i u2m u2m.make u2m.makeout
 
 # for sending string literals to the C compiler and including the solidus in them (which MyMan autoconverts to colon when needed)
