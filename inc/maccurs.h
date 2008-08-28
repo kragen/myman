@@ -80,13 +80,25 @@ application runs under Mac OS X.
 #include <stdlib.h>
 #include <string.h>
 
+/* when USE_OLD_TOOLBOX is set we directly access Toolbox internals
+ * which were deprecated or removed in Carbon, and avoid routines
+ * which are available only in Carbon or CFM(-68K) runtime
+ * environments */
+#ifndef USE_OLD_TOOLBOX
+#if defined(__CARBON__) || (defined(TARGET_RT_MAC_CFM) && TARGET_RT_MAC_CFM)
+#define USE_OLD_TOOLBOX 0
+#else
+#define USE_OLD_TOOLBOX 1
+#endif
+#endif /* ! defined(_USE_OLD_TOOLBOX) */
+
 #ifdef macintosh
 
 #ifndef strcasecmp
 
-#define strcasecmp(s1,s2) fake_strcasecmp(s1,s2)
+#define strcasecmp(s1,s2) maccurses_strcasecmp(s1,s2)
 
-int fake_strcasecmp(const char *s1, const char *s2)
+int maccurses_strcasecmp(const char *s1, const char *s2)
 {
     int i;
     int a, b;
@@ -106,9 +118,9 @@ int fake_strcasecmp(const char *s1, const char *s2)
 
 #ifndef isatty
 
-#define isatty(fd) fake_isatty(fd)
+#define isatty(fd) maccurses_isatty(fd)
 
-int fake_isatty(int fd)
+int maccurses_isatty(int fd)
 {
     char namebuf[512];
 
@@ -134,9 +146,9 @@ int fake_isatty(int fd)
 
 #ifndef access
 
-#define access(fn,type) fake_access(fn)
+#define access(fn,type) maccurses_access(fn)
 
-static int fake_access(const char *fn)
+static int maccurses_access(const char *fn)
 {
     FILE *fp;
 
@@ -153,7 +165,7 @@ static int fake_access(const char *fn)
 
 #ifndef gettimeofday
 
-#define gettimeofday(tp,tzp) fake_gettimeofday(tp,tzp)
+#define gettimeofday(tp,tzp) maccurses_gettimeofday(tp,tzp)
 
 struct timeval
 {
@@ -167,7 +179,7 @@ struct timezone
     int tz_dsttime;
 };
 
-static int fake_gettimeofday(struct timeval *tp, struct timezone *tzp)
+static int maccurses_gettimeofday(struct timeval *tp, struct timezone *tzp)
 {
     UnsignedWide microTickCount;
     double usecs;
@@ -191,9 +203,9 @@ static int fake_gettimeofday(struct timeval *tp, struct timezone *tzp)
 
 #ifndef usleep
 
-#define usleep(us) fake_usleep(us)
+#define usleep(us) maccurses_usleep(us)
 
-static int fake_usleep(unsigned long us)
+static int maccurses_usleep(unsigned long us)
 {
     EventRecord er;
     struct timeval tv, tv2;
@@ -229,6 +241,84 @@ static int fake_usleep(unsigned long us)
 #endif
 
 #endif /* macintosh */
+
+#ifndef __CARBON__
+
+/* we must provide storage for the global qd */
+QDGlobals qd;
+
+#endif
+
+#if USE_OLD_TOOLBOX
+
+#undef GetWindowBounds
+#define GetWindowBounds maccurses_GetWindowBounds
+
+static OSStatus
+GetWindowBounds(WindowRef window,
+                WindowRegionCode regionCode,
+                Rect *globalBounds)
+{
+    RgnHandle rgn;
+    OSStatus ret = noErr;
+
+    rgn = NewRgn();
+    switch (regionCode)
+    {
+    case kWindowStructureRgn:
+        GetWindowStructureRgn(window, rgn);
+        break;
+    case kWindowContentRgn:
+        GetWindowContentRgn(window, rgn);
+        break;
+    case kWindowUpdateRgn:
+        GetWindowUpdateRgn(window, rgn);
+        break;
+    default:
+        ret = errInvalidWindowProperty;
+    }
+    if (ret == noErr)
+    {
+        GetRegionBounds(rgn, globalBounds);
+    }
+    DisposeRgn(rgn);                      
+    return noErr;
+}
+
+#undef ResizeWindow
+#define ResizeWindow maccurses_ResizeWindow
+
+static Boolean
+ResizeWindow(WindowRef window,
+             Point startPoint,
+             const Rect *sizeConstraints,
+             Rect *newContentRect)
+{
+    long newsize;
+
+    newsize = GrowWindow(window, startPoint, sizeConstraints);
+    if (newsize)
+    {
+        SizeWindow(window, LoWord(newsize), HiWord(newsize), TRUE);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+#undef GetQDGlobalsBlack
+#define GetQDGlobalsBlack maccurses_GetQDGlobalsBlack
+
+static Pattern *
+GetQDGlobalsBlack(Pattern *black)
+{
+    if (black)
+    {
+        memcpy((void *) &black, (void*) &(qd.black), sizeof(Pattern));
+    }
+    return black;
+}
+
+#endif /* USE_OLD_TOOLBOX */
 
 #define ERR -1
 #define OK 0
@@ -892,7 +982,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             SetFrontProcess(&psn);
         }
 #ifndef __CARBON__
-        InitGraf((void *) &maccurses_port);
+        InitGraf((void *) &(qd.thePort));
         InitFonts();
         InitWindows();
         InitMenus();

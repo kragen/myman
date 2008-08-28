@@ -88,7 +88,7 @@ export TraceFailures
 set all_sizes "bigman hugeman smallman squareman"
 set sizes "{{all_sizes}}"
 
-set all_hosts "68k-mpw ppc-mpw ppc-mpw-uni ppc ppc-uni carbon carbon-uni"
+set all_hosts "68k-mpw ppc-mpw ppc-mpw-uni 68k ppc ppc-uni carbon carbon-uni"
 set hosts "ppc-mpw carbon"
 
 set specs "{{sizes}}"
@@ -235,13 +235,25 @@ for size in {all_sizes}
             setfile -t TEXT :inc:maccurs.h :inc:utils.h :src:myman.c :src:utils.c :mygetopt:getopt.h :mygetopt:mygetopt.c :mygetopt:mygetopt.h :inc:optcurs.h &&
             set CFLAGS "-noMapCR -includes unix -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``quote "{{MYMANVERSION}}"``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``quote "{{MYMANCOPYRIGHT}}"``{{char_quotation_mark}} {{DEFS}}" &&
 
-            # Ppc libraries for the non-Carbon builds
+            # PowerPC libraries for the non-Carbon builds
             set PPCLIBS ""
             for lib in CarbonAccessors.o
                 set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
             end
 
-            # Shared libraries for the non-Carbon builds
+            # 68k libraries for the non-Carbon builds
+            set 68KLIBS ""
+            #for lib in
+            #    set 68KLIBS "{{LIBS}} `quote "{{Libraries}}{{lib}}"`"
+            #end
+
+            # CFM-68k libraries for the non-Carbon builds
+            set CFM68KLIBS ""
+            #for lib in
+            #    set CFM68KLIBS "{{LIBS}} `quote "{{Libraries}}{{lib}}"`"
+            #end
+
+            # shared libraries for the non-Carbon builds
             set LIBS ""
             for lib in FontManager TextCommon WindowsLib AppearanceLib ATSUnicodeLib TextEncodingConverter
                 set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
@@ -253,18 +265,21 @@ for size in {all_sizes}
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if ":{{host}}" == ":68k-mpw"
                 # Classic 68k toolbox QuickDraw Text MPW tool (compiler runs out of memory; probably other problems, too)
-                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {LIBS} -68k -tool -COptions "{{CFLAGS}} -opt space"
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {68KLIBS} {LIBS} -68k -model far -tool -COptions "{{CFLAGS}} -opt space"
             else if ":{{host}}" == ":ppc-mpw"
-                # Classic Ppc toolbox QuickDraw Text MPW tool
+                # Classic PowerPC toolbox QuickDraw Text MPW tool
                 createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}}"
             else if ":{{host}}" == ":ppc-mpw-uni"
-                # Classic Ppc toolbox ATSUI MPW tool
+                # Classic PowerPC toolbox ATSUI MPW tool
                 createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -tool -ppcCOptions "{{CFLAGS}} -D UNICODE=1"
             else if ":{{host}}" == ":ppc"
-                # Classic Ppc toolbox QuickDraw Text application
+                # Classic PowerPC toolbox QuickDraw Text application
                 createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}}"
+            else if ":{{host}}" == ":68k"
+                # Classic 68k toolbox QuickDraw Text application
+                createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {68KLIBS} {LIBS} -68k -model far -COptions "{{CFLAGS}} -opt space"
             else if ":{{host}}" == ":ppc-uni"
-                # Classic Ppc toolbox ATSUI application
+                # Classic PowerPC toolbox ATSUI application
                 createmake "{{hostsize}}" -I :inc: -I :mygetopt: :src:myman.c :src:utils.c :mygetopt:mygetopt.c {PPCLIBS} {LIBS} -powerpc -ppcCOptions "{{CFLAGS}} -D UNICODE=1"
             else if ":{{host}}" == ":carbon"
                 # Carbon QuickDraw Text application
