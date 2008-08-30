@@ -49,21 +49,25 @@ application runs under Mac OS X.
 #else /* ! defined(TARGET_API_MAC_CARBON) */
 
 /* Case 2: Toolbox */
+#ifdef UNICODE
+#include <ATSUnicode.h>
+#endif
+#include <CursorCtl.h>
 #include <Errors.h>
 #include <Files.h>
 #include <Fonts.h>
 #include <MacTypes.h>
 #include <MacWindows.h>
+#include <Patches.h>
 #include <Quickdraw.h>
 #include <QuickdrawText.h>
-#ifdef UNICODE
-#include <ATSUnicode.h>
-#endif
 #include <Script.h>
 #include <Sound.h>
 #include <TextEncodingConverter.h>
 #include <TextUtils.h>
 #include <Timer.h>
+#include <ToolUtils.h>
+#include <Traps.h>
 #include <ioctl.h>
 
 #endif /* ! defined(TARGET_API_MAC_CARBON) */
@@ -80,17 +84,29 @@ application runs under Mac OS X.
 #include <stdlib.h>
 #include <string.h>
 
-/* when USE_OLD_TOOLBOX is set we directly access Toolbox internals
- * which were deprecated or removed in Carbon, and avoid routines
- * which are available only in Carbon or CFM(-68K) runtime
- * environments */
+/* when USE_OLD_TOOLBOX is non-zero we directly access Toolbox
+ * internals which were deprecated or removed in Carbon, and avoid
+ * routines which are available only in Carbon and MacOS PowerPC
+ * runtime environments */
 #ifndef USE_OLD_TOOLBOX
-#if defined(__CARBON__) || (defined(TARGET_RT_MAC_CFM) && TARGET_RT_MAC_CFM)
+#if defined(__CARBON__) || (defined(TARGET_CPU_PPC) && TARGET_CPU_PPC && defined(TARGET_OS_MAC) && TARGET_OS_MAC)
 #define USE_OLD_TOOLBOX 0
 #else
 #define USE_OLD_TOOLBOX 1
 #endif
 #endif /* ! defined(_USE_OLD_TOOLBOX) */
+
+/* when USE_FONT_MANAGER_9 is zero we avoid use of Font Manager 9
+ * routines */
+#ifndef USE_FONT_MANAGER_9
+#define USE_FONT_MANAGER_9 (! USE_OLD_TOOLBOX)
+#endif
+
+/* when USE_TEXT_ENCODING_CONVERSION_MANAGER is zero we avoid use
+ * of Text Encoding Conversion Manager routines */
+#ifndef USE_TEXT_ENCODING_CONVERSION_MANAGER
+#define USE_TEXT_ENCODING_CONVERSION_MANAGER (! USE_OLD_TOOLBOX)
+#endif
 
 #ifdef macintosh
 
@@ -118,6 +134,12 @@ int maccurses_strcasecmp(const char *s1, const char *s2)
 
 #ifndef isatty
 
+#ifndef FIOFNAME
+
+#define isatty(fd) 0
+
+#else /* defined(FIOFNAME) */
+
 #define isatty(fd) maccurses_isatty(fd)
 
 int maccurses_isatty(int fd)
@@ -125,12 +147,10 @@ int maccurses_isatty(int fd)
     char namebuf[512];
 
     memset((void *) namebuf, 0, sizeof(namebuf));
-#ifdef FIOFNAME
     if (ioctl(fd, FIOFNAME, (long *) (void *) namebuf) == -1)
     {
         return 0;
     }
-#endif
     if ((! strcmp(namebuf, "dev:console"))
         ||
         (! strncmp(namebuf, "dev:tty", strlen("dev:tty")))
@@ -141,6 +161,8 @@ int maccurses_isatty(int fd)
     }
     return 0;
 }
+
+#endif /* defined(FIOFNAME) */
 
 #endif
 
@@ -249,7 +271,88 @@ QDGlobals qd;
 
 #endif
 
+/* when built for old Toolbox access, we simulate some newer functions
+ * using the old Toolbox structures */
 #if USE_OLD_TOOLBOX
+
+/* Look up traps by A-Trap constant */
+static UniversalProcPtr maccurses_getTrapAddress(UInt16 aTrapNum)
+{
+    if (aTrapNum >= 0xa800L)
+    {
+        return NGetTrapAddress(aTrapNum & 0x3ff, kToolboxTrapType);
+    }
+    return NGetTrapAddress(aTrapNum & 0xff, kOSTrapType);
+}
+
+static UniversalProcPtr maccurses_trapUnimplemented, maccurses_trapAppearanceDispatch;
+
+static Boolean maccurses_IsWindowCollapsed(WindowRef window)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapAppearanceDispatch)
+    {
+        maccurses_trapAppearanceDispatch = maccurses_getTrapAddress(_AppearanceDispatch);
+    }
+    if (maccurses_trapAppearanceDispatch == maccurses_trapUnimplemented)
+    {
+        return FALSE;
+    }
+    return IsWindowCollapsed(window);
+}
+#undef IsWindowCollapsed
+#define IsWindowCollapsed maccurses_IsWindowCollapsed
+        
+
+#undef IsPortColor
+#define IsPortColor maccurses_IsPortColor
+
+static Boolean
+IsPortColor(CGrafPtr port)
+{
+    /* see About Color QuickDraw in Inside Macintosh */
+    return (port->portVersion & 0xc000) ? TRUE : FALSE;
+}
+
+#undef GetRegionBounds
+#define GetRegionBounds maccurses_GetRegionBounds
+
+static Rect *
+GetRegionBounds(RgnHandle region, Rect *bounds)
+{
+    if (bounds)
+    {
+        memcpy((void *) bounds, (void *) &((*region)->rgnBBox), sizeof(*bounds));
+    }
+    return bounds;
+}
+
+#undef SetWindowBounds
+#define SetWindowBounds maccurses_SetWindowBounds
+
+static OSStatus
+SetWindowBounds(WindowRef window,
+                WindowRegionCode regionCode,
+                const Rect *globalBounds)
+{
+    OSStatus ret = noErr;
+
+    switch (regionCode)
+    {
+    case kWindowStructureRgn:
+        RectRgn(((WindowPeek)window)->strucRgn, globalBounds);
+        break;
+    case kWindowContentRgn:
+        RectRgn(((WindowPeek)window)->contRgn, globalBounds);
+        break;
+    default:
+        ret = errInvalidWindowProperty;
+    }
+    return ret;
+}
 
 #undef GetWindowBounds
 #define GetWindowBounds maccurses_GetWindowBounds
@@ -282,7 +385,31 @@ GetWindowBounds(WindowRef window,
         GetRegionBounds(rgn, globalBounds);
     }
     DisposeRgn(rgn);                      
-    return noErr;
+    return ret;
+}
+
+#undef GetWindowStructureWidths
+#define GetWindowStructureWidths maccurses_GetWindowStructureWidths
+
+static OSStatus
+GetWindowStructureWidths(WindowRef window, Rect *rect)
+{
+    OSStatus ret;
+    Rect strucRect, contRect;
+
+    ret = GetWindowBounds(window, kWindowStructureRgn, &strucRect);
+    if (ret == noErr)
+    {
+        ret = GetWindowBounds(window, kWindowContentRgn, &contRect);
+        if (ret == noErr)
+        {
+            rect->left = contRect.left - strucRect.left;
+            rect->top = contRect.top - strucRect.top;
+            rect->right = strucRect.right - contRect.right;
+            rect->bottom = strucRect.bottom - contRect.bottom;
+        }
+    }
+    return ret;
 }
 
 #undef ResizeWindow
@@ -300,6 +427,7 @@ ResizeWindow(WindowRef window,
     if (newsize)
     {
         SizeWindow(window, LoWord(newsize), HiWord(newsize), TRUE);
+        GetWindowBounds(window, kWindowContentRgn, newContentRect);
         return TRUE;
     }
     return FALSE;
@@ -319,6 +447,48 @@ GetQDGlobalsBlack(Pattern *black)
 }
 
 #endif /* USE_OLD_TOOLBOX */
+
+/* When built without Font Manager 9, we use macros to replace some
+ * calls */
+#if ! USE_FONT_MANAGER_9
+
+#undef FMGetFontFamilyFromName
+#define FMGetFontFamilyFromName(family) kInvalidFontFamily
+
+#undef FMGetFontFamilyName
+#define FMGetFontFamilyName(family, familyname) kFMInvalidFontFamilyErr
+
+#undef FMGetFontFamilyTextEncoding
+#define FMGetFontFamilyTextEncoding(family, encoding) kFMInvalidFontFamilyErr
+
+#endif /* ! USE_FONT_MANAGER_9 */
+
+/* When built without Text Encoding Conversion Manager, we use macros
+ * to replace some calls */
+#if ! USE_TEXT_ENCODING_CONVERSION_MANAGER
+
+#undef TECGetTextEncodingFromInternetName
+#define TECGetTextEncodingFromInternetName(encoding, encodingname) kTextUnsupportedEncodingErr
+
+#undef UpgradeScriptInfoToTextEncoding
+#define UpgradeScriptInfoToTextEncoding(script, lang, region, fontname, encoding) kTextUnsupportedEncodingErr
+
+#undef CreateTextEncoding
+#define CreateTextEncoding(base, variant, format) base
+
+#undef TECCreateConverter
+#define TECCreateConverter(converter, iencoding, oencoding) kTextUnsupportedEncodingErr
+
+#undef TECConvertText
+#define TECConvertText(converter, ibuf, ibuflen, nread, obuf, obuflen, nwritten) kTextUnsupportedEncodingErr
+
+#undef TECFlushText
+#define TECFlushText(converter, obuf, obuflen, nwritten) kTextUnsupportedEncodingErr
+
+#undef TECDisposeConverter
+#define TECDisposeConverter(converter) kTextUnsupportedEncodingErr
+
+#endif /* ! USE_TEXT_ENCODING_CONVERSION_MANAGER */
 
 #define ERR -1
 #define OK 0
@@ -890,6 +1060,10 @@ static void maccurses_updateFontMenu(void)
 
 static pascal OSErr maccurses_onQuitEvent(const AppleEvent *ev, AppleEvent *reply, long handlerRefcon)
 {
+    if ((! ev) || (! reply) || handlerRefcon)
+    {
+        /* we should care... */
+    }
     maccurses_gotQuitEvent = TRUE;
     return noErr;
 }
@@ -909,6 +1083,10 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     int j;
     int firsttime;
 
+    if (shortname)
+    {
+        /* we should care... */
+    }
     if (maccurses_valid == FALSE)
     {
         maccurses_valid = TRUE;
@@ -1089,6 +1267,9 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     }
 
     maccurses_fontsize = (GetDefFontSize() >= 11) ? 12 : 9;
+#ifdef MACCURSES_FONTSIZE
+    if (MACCURSES_FONTSIZE) maccurses_fontsize = MACCURSES_FONTSIZE;
+#endif
     if (getenv("MACCURSES_FONTSIZE")
         &&
         *getenv("MACCURSES_FONTSIZE")
@@ -1139,9 +1320,16 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         SetPort((GrafPtr) maccurses_port);
     }
     encoding_name = getenv("MACCURSES_FONTENCODING");
+#ifdef MACCURSES_FONTENCODING
+    if (! encoding_name) encoding_name = MACCURSES_FONTENCODING;
+#endif
     maccurses_fontfamily = maccurses_custom_fontfamily;
     font_pascal[0] = 0;
+    font = 0;
     font = getenv("MACCURSES_FONT");
+#ifdef MACCURSES_FONT
+    if (! font) font = MACCURSES_FONT;
+#endif
     if (maccurses_custom_fontfamily != kInvalidFontFamily)
     {
         if (noErr != FMGetFontFamilyName(maccurses_custom_fontfamily, font_pascal))
@@ -1400,6 +1588,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             OSStatus ret;
             static unsigned short cvtd[256 * 2];
 
+            cvt = NULL;
             encoding_determined = true;
             cp437 = CreateTextEncoding(kTextEncodingDOSLatinUS, kTextEncodingDefaultVariant, kTextEncodingDefaultFormat);
             ret = TECCreateConverter(&cvt, cp437, encoding);
@@ -1444,7 +1633,11 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
                         }
                     }
                 }
-                TECDisposeConverter(cvt);
+                if (noErr != TECDisposeConverter(cvt))
+                {
+                    /* there's not much to be done about a failure to
+                     * dispose of the converter... */
+                }
                 if (cvtu || maccurses_cvtt)
                 {
                     cvtd[cvtu * 2] = 0;
@@ -2069,7 +2262,6 @@ static int maccurses_pair_content(short pair, short *fp, short *bp)
 static int maccurses_addch(maccurses_chtype ch)
 {
     Rect cell;
-    int j;
     Str255 si;
     short fg, bg;
     int wcw;
@@ -2193,6 +2385,8 @@ static int maccurses_addch(maccurses_chtype ch)
             &&
             maccurses_cvtt)
         {
+            int j;
+
             if (! maccurses_cvtt[0])
             {
                 substituted = false;
@@ -2721,6 +2915,10 @@ static int maccurses_attrset(maccurses_attr_t a)
 
 static int maccurses_insch(maccurses_chtype ch)
 {
+    if (ch)
+    {
+        /* we should care... */
+    }
     return ERR;
 }
 
