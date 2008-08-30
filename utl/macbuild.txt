@@ -208,7 +208,6 @@ end
 #
 # FIXME: MacRoman != UTF-8
 set srcdir_posix "``echo "{{srcdir}}" | streamedit -e '1 && /'"{{char_bullet}}"'['"{{char_not_sign}}"':]/ ins char_solidus -n; ins ":Volumes:" -n; 1 rep /'"{{char_bullet}}"':/ ".:"; /::/ rep /::/ ":..:" -c '"{{char_infinity}}"'; rep /::/ ":..:" -c '"{{char_infinity}}"'; 1 && /'"{{char_bullet}}"':/ rep /:/ "" -c 1' | translate ':/' '/:'``"
-echo set srcdir_posix "``quote "{{srcdir_posix}}"``"
 
 # make sure the object directory exists
 if not "``exists -d "{{objdir}}"``"
