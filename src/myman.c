@@ -7016,6 +7016,12 @@ main(int argc, char *argv[]
     const char *defvariant = MYMANVARIANT;
     const char *defsize = MYMANSIZE;
 
+#ifndef MAIN_NO_ENVP
+    if (envp)
+    {
+        /* we should care */
+    }
+#endif
     progname = (argc > 0) ? argv[0] : "";
     pager_notice = MYMANLEGALNOTICE;
 #ifdef MACCURSES
