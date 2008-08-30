@@ -54,7 +54,7 @@ set char_infinity '°'
 #
 ## 4) Build MyMan MPW Tool and Carbon application:
 #
-#macbuild.txt smallman
+#:utl:macbuild.txt smallman
 #
 ## 5) Run MyMan MPW Tool:
 #
@@ -70,10 +70,9 @@ set char_infinity '°'
 #
 #carbon-smallman -wait
 #
-## 8) Remove the copy of the build script and delete everything, since we're done:
+## 8) Delete everything, since we're done:
 #
-#macbuild.txt -clean
-#delete -i macbuild
+#:utl:macbuild.txt -clean
 
 set Exit 1
 export Exit
@@ -84,7 +83,7 @@ set objdir ":obj:"
 set srcdir ":"
 set testfile "src:myman.c"
 
-for srcdir1 in "``echo "{{0}}" | streamedit -e '$ rep /['"{{char_not_sign}}"':]*'"{{char_infinity}}"'/ ""'``" "{{srcdir}}" ":" "::"
+for srcdir1 in "``echo "{{0}}" | streamedit -e '$ rep /['"{{char_not_sign}}"':]*'"{{char_infinity}}"'/ ""'``:" "{{srcdir}}" ":" "::"
     if "``exists -f "{{srcdir1}}{{testfile}}"``"
         set srcdir "{{srcdir1}}"
         break
