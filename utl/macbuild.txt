@@ -232,7 +232,7 @@ if {{buildMode}} != 0
     u2m.makeout
 
     # use our line ending conversion tool
-    setfile -t TEXT VERSION COPYRIGHT
+    setfile -t TEXT "{{srcdir}}"VERSION "{{srcdir}}"COPYRIGHT
     set MYMANVERSION "``catenate "{{srcdir}}"VERSION | :u2m``"
     set MYMANCOPYRIGHT "``catenate "{{srcdir}}"COPYRIGHT | :u2m``"
 end
