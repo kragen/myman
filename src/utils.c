@@ -1429,49 +1429,15 @@ static FILE *fopen_datafile(const char *path, const char *mode)
      * hack that really only works for completely ASCII filenames. */
     if (strrchr(path, '/') && (! ret))
     {
+        int i;
+
+        i = 0;
         if ((! strncmp(path, "/Volumes/", strlen("/Volumes/")))
             &&
             strchr(path + strlen("/Volumes/"), '/'))
         {
             /* /Volumes/volName/foo -> volName:foo */
             buf = strdup(path + strlen("/Volumes/"));
-            if (buf)
-            {
-                int i;
-
-                /* '//' -> '/' */
-                while (strstr(buf, "//"))
-                {
-                    char *slashslash;
-
-                    slashslash = strstr(buf, "//");
-                    memmove(slashslash + strlen("/"), slashslash + strlen("//"), strlen(slashslash + strlen("//") + 1));
-                }
-                /* '/../' -> '::' */
-                while (strstr(buf, "/../"))
-                {
-                    char *dotdot;
-
-                    dotdot = strstr(buf, "/../");
-                    sprintf(dotdot, "::");
-                    memmove(dotdot + strlen("::"), dotdot + strlen("/../"), strlen(dotdot + strlen("/../") + 1));
-                }
-                /* swap '/' and ':' */
-                for (i = 0; buf[i]; i ++)
-                {
-                    if (buf[i] == '/')
-                    {
-                        buf[i] = ':';
-                    }
-                    else if (buf[i] == ':')
-                    {
-                        buf[i] = '/';
-                    }
-                }
-                ret = fopen(buf, mode);
-                free((void *) buf);
-                buf = NULL;
-            }
         }
         else if (*path == '/')
         {
@@ -1484,43 +1450,10 @@ static FILE *fopen_datafile(const char *path, const char *mode)
                 buf = (char *) malloc(volName[0] + strlen(path) + 1);
                 if (buf)
                 {
-                    int i;
-
+                    i = volName[0];
                     /* /foo -> volName:foo */
-                    memcpy((void *) buf, (void *) (volName + 1), volName[0]);
-                    memcpy((void *) (buf + volName[0]), (void *) path, strlen(path) + 1);
-                    /* '//' -> '/' */
-                    while (strstr(buf, "//"))
-                    {
-                        char *slashslash;
-
-                        slashslash = strstr(buf, "//");
-                        memmove(slashslash + strlen("/"), slashslash + strlen("//"), strlen(slashslash + strlen("//") + 1));
-                    }
-                    /* '/../' -> '::' */
-                    while (strstr(buf + volName[0], "/../"))
-                    {
-                        char *dotdot;
-
-                        dotdot = strstr(buf + volName[0], "/../");
-                        sprintf(dotdot, "::");
-                        memmove(dotdot + strlen("::"), dotdot + strlen("/../"), strlen(dotdot + strlen("/../") + 1));
-                    }
-                    /* swap '/' and ':' */
-                    for (i = volName[0]; buf[i]; i ++)
-                    {
-                        if (buf[i] == '/')
-                        {
-                            buf[i] = ':';
-                        }
-                        else if (buf[i] == ':')
-                        {
-                            buf[i] = '/';
-                        }
-                    }
-                    ret = fopen(buf, mode);
-                    free((void *) buf);
-                    buf = NULL;
+                    memcpy((void *) buf, (void *) (volName + 1), i);
+                    memcpy((void *) (buf + i), (void *) path, strlen(path) + 1);
                 }
             }
         }
@@ -1537,46 +1470,59 @@ static FILE *fopen_datafile(const char *path, const char *mode)
                 buf2 = (char *) realloc((void *) buf, strlen(buf) + 2);
                 if (buf2)
                 {
-                    int i;
-
                     buf = buf2;
                     memmove((void *) (buf + 1), (void *) buf, strlen(buf) + 1);
                     *buf = '/';
-                    /* '//' -> '/' */
-                    while (strstr(buf, "//"))
-                    {
-                        char *slashslash;
-
-                        slashslash = strstr(buf, "//");
-                        memmove(slashslash + strlen("/"), slashslash + strlen("//"), strlen(slashslash + strlen("//") + 1));
-                    }
-                    /* '/../' -> '::' */
-                    while (strstr(buf, "/../"))
-                    {
-                        char *dotdot;
-
-                        dotdot = strstr(buf, "/../");
-                        sprintf(dotdot, "::");
-                        memmove(dotdot + strlen("::"), dotdot + strlen("/../"), strlen(dotdot + strlen("/../") + 1));
-                    }
-                    /* swap '/' and ':' */
-                    for (i = 0; buf[i]; i ++)
-                    {
-                        if (buf[i] == '/')
-                        {
-                            buf[i] = ':';
-                        }
-                        else if (buf[i] == ':')
-                        {
-                            buf[i] = '/';
-                        }
-                    }
-                    *(strrchr(buf, '/')) = ':';
-                    ret = fopen(buf, mode);
                 }
-                free((void *) buf);
-                buf = NULL;
+                else
+                {
+                    free((void *) buf);
+                    buf = NULL;
+                }
             }
+        }
+        if (buf)
+        {
+            /* '//' -> '/' */
+            while (strstr(buf + i, "//"))
+            {
+                char *slashslash;
+
+                slashslash = strstr(buf + i, "//");
+                memmove(slashslash + strlen("/"), slashslash + strlen("//"), strlen(slashslash + strlen("//")) + 1);
+            }
+            /* '/./' -> '/' */
+            while (strstr(buf + i, "/./"))
+            {
+                char *slashdotslash;
+
+                slashdotslash = strstr(buf + i, "/./");
+                memmove(slashdotslash + strlen("/"), slashdotslash + strlen("/./"), strlen(slashdotslash + strlen("/./")) + 1);
+            }
+            /* '/../' -> '//' */
+            while (strstr(buf + i, "/../"))
+            {
+                char *dotdot;
+
+                dotdot = strstr(buf + i, "/../");
+                sprintf(dotdot, "//");
+                memmove(dotdot + strlen("//"), dotdot + strlen("/../"), strlen(dotdot + strlen("/../")) + 1);
+            }
+            /* swap '/' and ':' */
+            for (; buf[i]; i ++)
+            {
+                if (buf[i] == '/')
+                {
+                    buf[i] = ':';
+                }
+                else if (buf[i] == ':')
+                {
+                    buf[i] = '/';
+                }
+            }
+            ret = fopen(buf, mode);
+            free((void *) buf);
+            buf = NULL;
         }
     }
 #endif
