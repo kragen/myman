@@ -61,7 +61,11 @@ end
 #directory volName:path:to:myman
 #
 ## 4) Build MyMan MPW Tool and Carbon application:
+##
+## NOTE: The type code must be set to TEXT explicitly for older System
+## versions
 #
+#setfile -t TEXT :utl:macbuild.txt
 #:utl:macbuild.txt smallman
 #
 ## 5) Run MyMan MPW Tool:
