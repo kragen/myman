@@ -233,17 +233,17 @@ alias q '(quote -n "``catenate``")'
 # qcq: composition of q and cq
 alias qcq 'cq | q'
 
-# make sure the object directory exists
-if not "``exists -d "{{obj}}"``"
-    newfolder "{{obj}}"
-end
-if not "``exists -d "{{obj}}"``"
-    echo "#could not create directory {{obj}}" > dev:stderr
-    exit 2
-end
-set obj "``exists -q -d "{{obj}}"``"
-
 if {{buildMode}} != 0
+    # make sure the object directory exists
+    if not "``exists -d "{{obj}}"``"
+        newfolder "{{obj}}"
+    end
+    if not "``exists -d "{{obj}}"``"
+        echo "#could not create directory {{obj}}" > dev:stderr
+        exit 2
+    end
+    set obj "``exists -q -d "{{obj}}"``"
+
     # create our line ending conversion tool
     delete -i u2m.c "{{obj}}"u2m.c.x "{{obj}}"u2m.c.o u2m.NJ u2m.SYM u2m.xcoff
     echo '#include <stdio.h>' > u2m.c
@@ -387,22 +387,6 @@ for size in {all_sizes}
                 exit 2
             end
             setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h &&
-            set CFLAGS "-noMapCR -includes unix -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
-
-            # Extra flags for the PowerPC C compiler
-            set PPCCFLAGS "" &&
-
-            # PowerPC libraries for the non-Carbon builds
-            set PPCLIBS "" &&
-            for lib in CarbonAccessors.o
-                set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
-            end &&
-
-            # shared libraries for the non-Carbon builds
-            set LIBS "" &&
-            for lib in FontManager TextCommon WindowsLib ATSUnicodeLib UnicodeConverter TextEncodingConverter AppearanceLib
-                set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
-            end &&
 
             delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
             delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
@@ -410,6 +394,23 @@ for size in {all_sizes}
             delete -i "{{hostsize}}".NJ "{{hostsize}}".SYM "{{hostsize}}".xcoff "{{hostsize}}".68k.NJ "{{hostsize}}".68k.SYM "{{hostsize}}".ppc.xcoff "{{hostsize}}".68k "{{hostsize}}".ppc &&
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if {{buildMode}} != 0
+                # C compiler flags, all architectures
+                set CFLAGS "-noMapCR -includes unix -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
+
+                # Extra flags for the PowerPC C compiler
+                set PPCCFLAGS "" &&
+
+                # PowerPC libraries for the non-Carbon builds
+                set PPCLIBS "" &&
+                for lib in CarbonAccessors.o
+                    set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
+                end &&
+
+                # shared libraries for the non-Carbon builds
+                set LIBS "" &&
+                for lib in FontManager TextCommon WindowsLib ATSUnicodeLib UnicodeConverter TextEncodingConverter AppearanceLib
+                    set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
+                end &&
                 if ":{{host}}" == ":mpw"
                     # Classic 68K + PowerPC "fat" toolbox QuickDraw Text MPW tool
                     set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -fat -model far -tool"
