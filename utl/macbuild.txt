@@ -453,7 +453,6 @@ for size in {all_sizes}
                 else if ":{{host}}" == ":carbon"
                     # Carbon + 68k "fat" QuickDraw Text application
                     set HOSTFLAGS "-fat -carbon -model far"
-                    #set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -fat -model far"
                 else
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
