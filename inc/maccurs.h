@@ -56,6 +56,7 @@ application runs under Mac OS X.
 #include <Errors.h>
 #include <Files.h>
 #include <Fonts.h>
+#include <Gestalt.h>
 #include <MacTypes.h>
 #include <MacWindows.h>
 #include <Patches.h>
@@ -285,7 +286,7 @@ static UniversalProcPtr maccurses_getTrapAddress(UInt16 aTrapNum)
     return NGetTrapAddress(aTrapNum & 0xff, kOSTrapType);
 }
 
-static UniversalProcPtr maccurses_trapUnimplemented, maccurses_trapAppearanceDispatch;
+static UniversalProcPtr maccurses_trapUnimplemented, maccurses_trapAppearanceDispatch, maccurses_trapGestalt;
 
 static Boolean maccurses_IsWindowCollapsed(WindowRef window)
 {
@@ -305,7 +306,25 @@ static Boolean maccurses_IsWindowCollapsed(WindowRef window)
 }
 #undef IsWindowCollapsed
 #define IsWindowCollapsed maccurses_IsWindowCollapsed
-        
+
+static OSErr maccurses_Gestalt(OSType selector, long *response)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapGestalt)
+    {
+        maccurses_trapGestalt = maccurses_getTrapAddress(_Gestalt);
+    }
+    if (maccurses_trapGestalt == maccurses_trapUnimplemented)
+    {
+        return gestaltUnknownErr;
+    }
+    return Gestalt(selector, response);
+}
+#undef Gestalt
+#define Gestalt maccurses_Gestalt
 
 #undef IsPortColor
 #define IsPortColor maccurses_IsPortColor
@@ -1314,7 +1333,20 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     }
     if (firsttime)
     {
-        maccurses_hwnd = NewCWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
+        long qdversion = gestaltOriginalQD;
+
+        if (noErr == Gestalt(gestaltQuickdrawVersion, &qdversion))
+        {
+        }
+        maccurses_hwnd = 0;
+        if (qdversion != gestaltOriginalQD)
+        {
+            maccurses_hwnd = NewCWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
+        }
+        if (! maccurses_hwnd)
+        {
+            maccurses_hwnd = NewWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
+        }
         SetEventMask(keyDownMask | autoKeyMask | activMask | mDownMask | osMask | highLevelEventMask);
         maccurses_port = GetWindowPort(maccurses_hwnd);
         SetPort((GrafPtr) maccurses_port);
