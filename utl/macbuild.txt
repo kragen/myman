@@ -45,9 +45,21 @@ end
 #
 ## 1) Install the Macintosh Programmer's Workshop (MPW),
 ##    including the "Updated Components".
-#
-#    http://developer.apple.com/tools/mpw-tools/
-#
+##
+##   http://developer.apple.com/tools/mpw-tools/
+##
+##    You may also install the old Universal Interfaces 2.1.5, which
+##    allows building 68k apps that run on System 6 (and possibly
+##    earlier.)
+##
+##    If you do, install them in a separate directory hierarchy, e.g.
+##    ":Interfaces-Libraries:" and let macbuild.txt know about it
+##    using e.g. -sdkroot-68k ":Interfaces-Libraries:" when building for
+##    the older systems; this old SDK does not support Carbon or
+##    ATSUI, however.
+##
+##   ftp://ftp.apple.com/developer/Tool_Chest/Interfaces-Libraries/
+##
 ## 2) Launch MPW Shell and raise MPW Memory Limits:
 ##
 ## HINT: Use Enter or Cmd-Return to run commands in MPW Shell;
@@ -60,7 +72,8 @@ end
 #
 #directory volName:path:to:myman
 #
-## 4) Build MyMan MPW Tool and Carbon application:
+## 4) Build for the default hosts (Carbon, Carbon with ATSUI, "fat"
+##    application, MPW Tool)
 ##
 ## NOTE: The type code must be set to TEXT explicitly for older System
 ## versions
@@ -105,7 +118,7 @@ end
 set all_sizes "bigman hugeman smallman squareman bitman"
 set all_hosts "mpw mpw-68k mpw-ppc mpw-atsu fat 68k ppc cfm cfm-68k atsu carbon carbon-ppc carbon-atsu"
 
-set defhosts "mpw fat cfm carbon carbon-atsu"
+set defhosts "mpw fat carbon carbon-atsu"
 set defhost "{{host}}"
 for host2 in {defhosts} {all_hosts}
     set defhost "{{host2}}"
@@ -114,13 +127,16 @@ end
 
 set defsizes "{{all_sizes}}"
 
+set allMode 0
 set buildMode 0
 set cleanMode 0
-set allMode 0
+set debugMode 0
 
 set hosts ""
 set sizes ""
 set specs ""
+set sdkroot ""
+set sdkroot-68k ""
 
 if {#} <> 0
     loop
@@ -131,15 +147,21 @@ if {#} <> 0
             set buildMode 1
         else if :"{{1}}" == :"-clean"
             set cleanMode 1
+        else if :"{{1}}" == :"-debug"
+            set debugMode 1
         else if :"{{1}}" == :"-help" or :"{{1}}" == :"-h"
             echo '#usage: '"{{0}}"' [ OPTION ... ] [ HOST[-SIZE] | SIZE ] ...'
             echo "#options to select an action:"
             echo "#-h or -help     show this message and exit"
             echo "#-build          build specified eecutables; this is the default action if no other is specified"
             echo "#-clean          remove build products; without -build this removes executables too"
+            echo "#-debug          include debugging symbols; disables optimization"
             echo "#options to control directory use:"
             echo "#-objdir DIR     place object files in directory DIR (default: {{obj}})"
             echo "#-srcdir DIR     sources are in directory DIR (default: {{src}})"
+            echo "#-sdkroot DIR    use the MPW SDK (Interfaces&Libraries) in directory DIR"
+            echo "#-sdkroot-68k DIR"
+            echo "#                use the MPW 68k SDK (Interfaces&Libraries) in directory DIR"
             echo "#host and size selecion:"
             echo "#-all            build and/or clean all possible hosts and sizes"
             echo "#-host HOST      select the given host; multiple hosts can be selected by repeating this option"
@@ -164,6 +186,12 @@ if {#} <> 0
         else if :"{{1}}" == :"-srcdir"
             shift
             set src "{{1}}"
+        else if :"{{1}}" == :"-sdkroot"
+            shift
+            set sdkroot "{{1}}"
+        else if :"{{1}}" == :"-sdkroot-68k"
+            shift
+            set sdkroot-68k "{{1}}"
         else if :"{{1}}" == :"-all"
             set allMode 1
         else if :"{{1}}" == :"-host"
@@ -216,6 +244,55 @@ if not "``exists -f "{{src}}{{testfile}}"``"
     exit 2
 end
 
+if :"{{sdkroot}}" != :""
+    # make sure the SDK directory exists
+    if not "``exists -d "{{sdkroot}}"``"
+        echo "#SDK directory {{sdkroot}} does not exist" > dev:stderr
+        exit 2
+    end
+    set sdkroot "``exists -q -d "{{sdkroot}}"``"
+    set -e AIncludes "{{sdkroot}}Interfaces:AIncludes:"
+    set -e CFM68KLibraries "{{sdkroot}}Libraries:CFM68KLibraries:"
+    set -e CIncludes "{{sdkroot}}Interfaces:CIncludes:"
+    set -e CLibraries "{{sdkroot}}Libraries:CLibraries:"
+    set -e Libraries "{{sdkroot}}Libraries:Libraries:"
+    set -e PInterfaces "{{sdkroot}}Interfaces:PInterfaces:"
+    set -e PLibraries "{{sdkroot}}Libraries:PLibraries:"
+    set -e PPCCIncludes "{{sdkroot}}Interfaces:CIncludes:"
+    set -e PPCLibraries "{{sdkroot}}Libraries:PPCLibraries:"
+    set -e RIncludes "{{sdkroot}}Interfaces:RIncludes:"
+    set -e SCIncludes "{{sdkroot}}Interfaces:CIncludes:"
+    set -e SharedLibraries "{{sdkroot}}Libraries:SharedLibraries:"
+    for sdksubdir in "{{CFM68KLibraries}}" "{{CIncludes}}" "{{CLibraries}}" "{{PPCCIncludes}}" "{{PPCLibraries}}" "{{SCIncludes}}" "{{SharedLibraries}}"
+        if not "``exists -d "{{sdksubdir}}"``"
+            echo "#SDK subdirectory {{sdksubdir}} does not exist" > dev:stderr
+            exit 2
+        end
+    end
+end
+
+if :"{{sdkroot-68k}}" != :""
+    # make sure the 68k SDK directory exists
+    if not "``exists -d "{{sdkroot-68k}}"``"
+        echo "#68k SDK directory {{sdkroot-68k}} does not exist" > dev:stderr
+        exit 2
+    end
+    set sdkroot-68k "``exists -q -d "{{sdkroot-68k}}"``"
+    set -e AIncludes "{{sdkroot-68k}}Interfaces:AIncludes:"
+    set -e CFM68KLibraries "{{sdkroot-68k}}Libraries:CFM68KLibraries:"
+    set -e CLibraries "{{sdkroot-68k}}Libraries:CLibraries:"
+    set -e Libraries "{{sdkroot-68k}}Libraries:Libraries:"
+    set -e PInterfaces "{{sdkroot-68k}}Interfaces:PInterfaces:"
+    set -e PLibraries "{{sdkroot-68k}}Libraries:PLibraries:"
+    set -e SCIncludes "{{sdkroot-68k}}Interfaces:CIncludes:"
+    for sdksubdir in "{{CFM68KLibraries}}" "{{CLibraries}}" "{{SCIncludes}}"
+        if not "``exists -d "{{sdksubdir}}"``"
+            echo "#68k SDK subdirectory {{sdksubdir}} does not exist" > dev:stderr
+            exit 2
+        end
+    end
+end
+
 # generate the POSIX equivalent since this may end up running under
 # Mac OS X in the Carbon case; note that names with non-ASCII
 # characters may still fail horribly due to encoding differences and
@@ -232,6 +309,14 @@ set cq2 '/[?]/ rep /[?]/ "'"{{char_partial_differential}}"'\r" -c '"{{char_infin
 alias q '(quote -n "``catenate``")'
 # qcq: composition of q and cq
 alias qcq 'cq | q'
+
+# By default, we try to build a small executable
+set CREATEMAKEFLAGS "-opt size"
+
+if {{debugMode}} != 0
+    # But in debug mode, we instead build a symbol files
+    set CREATEMAKEFLAGS "-sym"
+end &&
 
 if {{buildMode}} != 0
     # make sure the object directory exists
@@ -251,65 +336,69 @@ if {{buildMode}} != 0
     echo 'if(i==0x0d){j=getchar();if(j==0x0a)i=0x0a;else if(j!=-1)ungetc(j,stdin);}' >> u2m.c
     echo 'if(i==0x0a)i=0x0d;putchar(i);}return 0;}' >> u2m.c
     delete -i u2m u2m.make u2m.makeout &&
-    createmake u2m u2m.c -tool -fat -sym -objdir "{{obj}}" &&
+    createmake u2m u2m.c -tool -fat {CREATEMAKEFLAGS} -objdir "{{obj}}" &&
     make -e -f u2m.make > u2m.makeout &&
     u2m.makeout &&
 
     # use our line ending conversion tool
     setfile -t TEXT "{{src}}"VERSION "{{src}}"COPYRIGHT &&
     set MYMANVERSION "``catenate "{{src}}"VERSION | :u2m``" &&
-    set MYMANCOPYRIGHT "``catenate "{{src}}"COPYRIGHT | :u2m``"
-end
+    set MYMANCOPYRIGHT "``catenate "{{src}}"COPYRIGHT | :u2m``" &&
+
+    # convert source and include file type codes to 'TEXT'
+    setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h
+
+end &&
 
 if {{cleanMode}} != 0
     # delete our line ending conversion tool
     delete -i u2m.c "{{obj}}"u2m.c.x "{{obj}}"u2m.c.o u2m.NJ u2m.SYM u2m.xcoff &&
     delete -i u2m u2m.make u2m.makeout
-end
+end &&
 
 # for sending string literals to the C compiler and including the solidus in them (which MyMan autoconverts to colon when needed)
-set char_quotation_mark "'"'"'"'"
-set char_solidus "{{char_quotation_mark}}CHAR_SOLIDUS{{char_quotation_mark}}"
+set char_quotation_mark "'"'"'"'" &&
+set char_solidus "{{char_quotation_mark}}CHAR_SOLIDUS{{char_quotation_mark}}" &&
 
 # "myman" is the default maze; see Makefile for more
-set MAZEFILE_myman "maze.txt"
-set mymanmaze "-D MAZEFILE={{char_quotation_mark}}lvl{{char_solidus}}{{MAZEFILE_myman}}{{char_quotation_mark}}"
-set myman "-D MYMANVARIANT={{char_quotation_mark}}myman{{char_quotation_mark}} {{mymanmaze}}"
+set MAZEFILE_myman "maze.txt" &&
+set mymanmaze "-D MAZEFILE={{char_quotation_mark}}lvl{{char_solidus}}{{MAZEFILE_myman}}{{char_quotation_mark}}" &&
+set myman "-D MYMANVARIANT={{char_quotation_mark}}myman{{char_quotation_mark}} {{mymanmaze}}" &&
 
 # "big" is the default size (large ASCII-art pictures)
-set bigman "{{big}} {{myman}}"
+set bigman "{{big}} {{myman}}" &&
 
 # "huge" is the largest size (huge ASCII-art pictures)
-set TILEFILE_huge "chr5x3.txt"
-set hugetiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_huge}}{{char_quotation_mark}}"
-set SPRITEFILE_huge "spr10x6.txt"
-set hugesprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_huge}}{{char_quotation_mark}}"
-set huge "-D MYMANSIZE={{char_quotation_mark}}huge{{char_quotation_mark}} {{hugetiles}} {{hugesprites}}"
-set hugeman "{{huge}} {{myman}}"
+set TILEFILE_huge "chr5x3.txt" &&
+set hugetiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_huge}}{{char_quotation_mark}}" &&
+set SPRITEFILE_huge "spr10x6.txt" &&
+set hugesprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_huge}}{{char_quotation_mark}}" &&
+set huge "-D MYMANSIZE={{char_quotation_mark}}huge{{char_quotation_mark}} {{hugetiles}} {{hugesprites}}" &&
+set hugeman "{{huge}} {{myman}}" &&
 
 # "small" uses a pair of character-cells to represent each tile and sprite
-set TILEFILE_small "khr2h.txt"
-set smalltiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_small}}{{char_quotation_mark}}"
-set SPRITEFILE_small "spr2h.txt"
-set smallsprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_small}}{{char_quotation_mark}}"
-set small "-D MYMANSIZE={{char_quotation_mark}}small{{char_quotation_mark}} {{smalltiles}} {{smallsprites}}"
-set smallman "{{small}} {{myman}}"
+set TILEFILE_small "khr2h.txt" &&
+set smalltiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_small}}{{char_quotation_mark}}" &&
+set SPRITEFILE_small "spr2h.txt" &&
+set smallsprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_small}}{{char_quotation_mark}}" &&
+set small "-D MYMANSIZE={{char_quotation_mark}}small{{char_quotation_mark}} {{smalltiles}} {{smallsprites}}" &&
+set smallman "{{small}} {{myman}}" &&
 
 # "square" uses one character-cell to represent each tile and sprite
-set TILEFILE_square "khr1.txt"
-set squaretiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_square}}{{char_quotation_mark}}"
-set SPRITEFILE_square "spr1.txt"
-set squaresprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_square}}{{char_quotation_mark}}"
-set square "-D MYMANSIZE={{char_quotation_mark}}square{{char_quotation_mark}} {{squaretiles}} {{squaresprites}}"
-set squareman "{{square}} {{myman}}"
+set TILEFILE_square "khr1.txt" &&
+set squaretiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_square}}{{char_quotation_mark}}" &&
+set SPRITEFILE_square "spr1.txt" &&
+set squaresprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_square}}{{char_quotation_mark}}" &&
+set square "-D MYMANSIZE={{char_quotation_mark}}square{{char_quotation_mark}} {{squaretiles}} {{squaresprites}}" &&
+set squareman "{{square}} {{myman}}" &&
 
 # "bitmap" uses pseudo-bitmap tiles and overrides the fontsize to match
-set TILEFILE_bitmap "khr8.txt"
-set bitmaptiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_bitmap}}{{char_quotation_mark}}"
-set SPRITEFILE_bitmap "spr16.txt"
-set bitmapsprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_bitmap}}{{char_quotation_mark}}"
-set bitmap "-D MYMANSIZE={{char_quotation_mark}}bitmap{{char_quotation_mark}} {{bitmaptiles}} {{bitmapsprites}}"
-set bitman "-D MACCURSES_FONTSIZE=1 -D MACCURSES_FONT={{char_quotation_mark}}Monaco{{char_quotation_mark}} {{bitmap}} {{myman}}"
+set TILEFILE_bitmap "khr8.txt" &&
+set bitmaptiles "-D TILEFILE={{char_quotation_mark}}chr{{char_solidus}}{{TILEFILE_bitmap}}{{char_quotation_mark}}" &&
+set SPRITEFILE_bitmap "spr16.txt" &&
+set bitmapsprites "-D SPRITEFILE={{char_quotation_mark}}spr{{char_solidus}}{{SPRITEFILE_bitmap}}{{char_quotation_mark}}" &&
+set bitmap "-D MYMANSIZE={{char_quotation_mark}}bitmap{{char_quotation_mark}} {{bitmaptiles}} {{bitmapsprites}}" &&
+set bitman "-D MACCURSES_FONTSIZE=1 -D MACCURSES_FONT={{char_quotation_mark}}Monaco{{char_quotation_mark}} {{bitmap}} {{myman}}" &&
 
 for host in {hosts}
     set matched 0
@@ -324,7 +413,7 @@ for host in {hosts}
         echo '#usage: '"{{0}}"' [ -help ] [ OPTION ... ] [ HOST[-SIZE] | SIZE ] ...'
         exit 2
     end
-end
+end &&
 
 for spec in {specs}
     set matched 0
@@ -342,13 +431,13 @@ for spec in {specs}
         if {{matched}} != 0
             break
         end
-    end
+    end &&
     if {{matched}} == 0
         echo "#build specifier {{spec}} not recognized" > dev:stderr
         echo '#usage: '"{{0}}"' [ -help ] [ OPTION ... ] [ HOST[-SIZE] | SIZE ] ...'
         exit 2
     end
-end
+end &&
 
 for size in {all_sizes}
     set sizematched ""
@@ -357,7 +446,7 @@ for size in {all_sizes}
             set sizematched "{{size}}"
             break
         end
-    end
+    end &&
     for host in {all_hosts}
         set hostmatched ""
         for host1 in {hosts}
@@ -365,14 +454,14 @@ for size in {all_sizes}
                 set hostmatched "{{host}}"
                 break
             end
-        end
+        end &&
         set matched {{allMode}}
         for spec in {specs}
             if :"{{spec}}-{{sizematched}}" == :"{{host}}-{{size}}" or :"{{spec}}" == :"{{host}}-{{size}}" or :"{{hostmatched}}-{{spec}}" == :"{{host}}-{{size}}"
                 set matched 1
                 break
             end
-        end
+        end &&
         if {{matched}} != 0
             set hostsize "{{size}}"
             if :"{{host}}" != :"{{defhost}}"
@@ -386,7 +475,6 @@ for size in {all_sizes}
                 echo "#size {{size}} not defined" > dev:stderr
                 exit 2
             end
-            setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h &&
 
             delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
             delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
@@ -395,10 +483,30 @@ for size in {all_sizes}
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if {{buildMode}} != 0
                 # C compiler flags, all architectures
-                set CFLAGS "-noMapCR -includes unix -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
+                set CFLAGS "-x -noMapCR -includes unix -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
+
+                # Extra flags for the 68k C compiler
+                set 68KCFLAGS "" &&
+                if {{debugMode}} != 0
+                    set 68KCFLAGS "-frames"
+                end &&
 
                 # Extra flags for the PowerPC C compiler
                 set PPCCFLAGS "" &&
+
+                # shared libraries for the non-Carbon builds
+                set LIBS "" &&
+                for lib in FontManager TextCommon WindowsLib ATSUnicodeLib UnicodeConverter TextEncodingConverter AppearanceLib
+                    set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
+                end &&
+                if {{debugMode}} != 0
+                    for lib in ::DebuggingLibraries:SharedLibraries:StdCLibDbg
+                        set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
+                    end &&
+                    for lib in ::DebuggingLibraries:CLibraries:StdCLibDbg.far.o
+                        set LIBS "{{LIBS}} `quote "{{CLibraries}}{{lib}}"`"
+                    end
+                end &&
 
                 # PowerPC libraries for the non-Carbon builds
                 set PPCLIBS "" &&
@@ -406,61 +514,63 @@ for size in {all_sizes}
                     set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
                 end &&
 
-                # shared libraries for the non-Carbon builds
-                set LIBS "" &&
-                for lib in FontManager TextCommon WindowsLib ATSUnicodeLib UnicodeConverter TextEncodingConverter AppearanceLib
-                    set LIBS "{{LIBS}} `quote "{{SharedLibraries}}{{lib}}"`"
-                end &&
+                set HOSTFLAGS "{{CREATEMAKEFLAGS}}" &&
                 if ":{{host}}" == ":mpw"
                     # Classic 68K + PowerPC "fat" toolbox QuickDraw Text MPW tool
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -fat -model far -tool"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -fat -model far -tool"
                 else if ":{{host}}" == ":mpw-68k"
                     # Classic 68k toolbox QuickDraw Text MPW tool (seems to work in Mac OS 9.0 but bombs with an "unimplemented trap" in System 7.5.5)
-                    set HOSTFLAGS "``quote {LIBS}`` -68k -model far -tool"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {LIBS}`` -68k -model far -tool"
                 else if ":{{host}}" == ":mpw-ppc"
                     # Classic PowerPC toolbox QuickDraw Text MPW tool
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -powerpc -tool"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc -tool"
                 else if ":{{host}}" == ":mpw-atsu"
                     # Classic PowerPC toolbox ATSUI MPW tool
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -powerpc -tool"
-                    set PPCCFLAGS "-D UNICODE=1"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc -tool"
+                    set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":ppc"
                     # Classic PowerPC toolbox QuickDraw Text application
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -powerpc"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc"
                 else if ":{{host}}" == ":68k"
                     # Classic 68k toolbox QuickDraw Text application
-                    set HOSTFLAGS "``quote {LIBS}`` -68k -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {LIBS}`` -68k -model far"
                 else if ":{{host}}" == ":fat"
                     # Classic 68k + PowerPC "fat" toolbox QuickDraw Text application
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -fat -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -fat -model far"
                 else if ":{{host}}" == ":cfm-68k"
                     # Classic CFM-68K toolbox QuickDraw Text application (BROKEN: DOES NOT RUN)
-                    set HOSTFLAGS "``quote {LIBS}`` -68k -model cfm68k"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {LIBS}`` -68k -model cfm68k"
+                    # HACK: optimizing for space breaks the CFM-68K build, so we disable that
+                    set HOSTFLAGS "``echo "{{HOSTFLAGS}}" | streamedit -e '/-opt size/ rep /-opt size/ ""'``"
                 else if ":{{host}}" == ":cfm"
                     # Classic CFM-68K + PowerPC "fat" toolbox QuickDraw Text application (BROKEN: DOES NOT RUN)
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -fat -model cfm68k"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -fat -model cfm68k"
+                    # HACK: optimizing for space breaks the CFM-68K build, so we disable that
+                    set HOSTFLAGS "``echo "{{HOSTFLAGS}}" | streamedit -e '/-opt size/ rep /-opt size/ ""'``"
                 else if ":{{host}}" == ":atsu"
                     # Classic PowerPC toolbox ATSUI application
-                    set HOSTFLAGS "``quote {PPCLIBS} {LIBS}`` -powerpc"
-                    set PPCCFLAGS "-D UNICODE=1"
+                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc"
+                    set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon-ppc"
                     # Carbon QuickDraw Text application
-                    set HOSTFLAGS "-powerpc -carbon"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon"
                 else if ":{{host}}" == ":carbon-atsu"
                     # Carbon ATSUI application
-                    set HOSTFLAGS "-powerpc -carbon"
-                    set PPCCFLAGS "-D UNICODE=1"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon"
+                    set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon"
                     # Carbon + 68k "fat" QuickDraw Text application
-                    set HOSTFLAGS "-fat -carbon -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -fat -carbon -model far"
                 else
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
                 end &&
-                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:mygetopt.c {HOSTFLAGS} -COptions "{{CFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -sym -objdir "{{obj}}" &&
+                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:mygetopt.c {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
 
                 # HACK: tweak CFM-68K builds to use the pure 32-bit model
-                streamedit -e '/-model cfmseg/ rep /-model cfmseg/ "-model cfmflat"' -o "{{hostsize}}".make "{{hostsize}}".make &&
+                if ":{{host}}" == ":cfm" or ":{{host}}" == ":cfm-68k"
+                    streamedit -e '/-model cfmseg/ rep /-model cfmseg/ "-model cfmflat"' -o "{{hostsize}}".make "{{hostsize}}".make
+                end &&
                 make -e -f "{{hostsize}}".make > "{{hostsize}}".makeout &&
                 "{{hostsize}}".makeout &&
                 #echo "{{hostsize}} #MyMan {{MYMANVERSION}} host={{host}} size={{size}}"

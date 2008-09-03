@@ -22,18 +22,40 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-/*
-
-This code is mostly written in the interoperable common subset of
-Carbon and Toolbox. Because it uses Quickdraw, compiling it against
-recent Mac OS X-oriented SDKs produces lots of (harmless) deprecation
-warnings. It compiles into a PowerPC MPW Tool, a PowerPC Toolbox
-application, and an x86 or PowerPC Carbon application. When built
-under MPW, the resulting PowerPC Carbon application runs under Mac OS
-X or under Mac OS 8.6 or above with CarbonLib 1.6. When built under
-Mac OS X with gcc, the resulting "fat" 32-bit PowerPC and x86 Carbon
-application runs under Mac OS X.
-
+/* About the Carbon/Toolbox curses emulator
+ * ========================================
+ *
+ * This code is mostly written in an interoperable common subset of
+ * Carbon and Toolbox.
+ *
+ * Because it uses Quickdraw, compiling it against recent Mac OS
+ * X-oriented SDKs produces lots of (expected) deprecation warnings.
+ *
+ * When built under Mac OS X with gcc, the resulting "fat" 32-bit PowerPC
+ * and x86 Carbon application runs under Mac OS X.
+ *
+ * When built under "Classic" Mac OS with MPW, it compiles into a PowerPC
+ * and/or 68k MPW Tool, a PowerPC and/or 68k Toolbox application, or an
+ * x86 and/or PowerPC Carbon application optionally also including a 68k
+ * Toolbox application.
+ *
+ * When built under MPW as a PowerPC Carbon + 68k Toolbox "fat"
+ * application, the resulting application runs under Mac OS X (native on
+ * PowerPC or through "Rosetta" binary translation on Intel) or under Mac
+ * OS 8.6 through 9.x with CarbonLib 1.6 on a PowerPC, or under System
+ * 7.0 or above on a 68k. If you're running the resulting application
+ * under Mac OS X and would like to see the stdout/stderr results on your
+ * terminal or use them in a script, use LaunchCFMApp (it's actually
+ * /System/Library/Frameworks/Carbon.framework/Versions/Current/Support/LaunchCFMApp
+ * on my machine) followed by the path to the executable.
+ *
+ * When built under MPW as a PowerPC + 68k Toolbox "fat" application, the
+ * resulting application theoretically runs under System 7 (or System 6
+ * and possibly earlier if using the old Universal Interfaces 2.1.5 SDK)
+ * through Mac OS 9.x on 68k or PowerPC processors.
+ *
+ * See macbuild.txt for more information on the MPW builds.
+ *
  */
 
 #ifndef MACCURS_H_INC
@@ -41,56 +63,49 @@ application runs under Mac OS X.
 
 #ifdef macintosh
 
-#if TARGET_API_MAC_CARBON
+#if defined(TARGET_API_MAC_CARBON) && TARGET_API_MAC_CARBON
 
 /* Case 1: flat Carbon headers */
 #include <Carbon.h>
 
-#else /* ! defined(TARGET_API_MAC_CARBON) */
+#else /* ! (defined(TARGET_API_MAC_CARBON) && TARGET_API_MAC_CARBON) */
 
 /* Case 2: Toolbox */
-#ifdef UNICODE
-#include <ATSUnicode.h>
+#include <ConditionalMacros.h>
+
+/* we work around some overly aggressive deprecation in newer
+ * <ConditionalMacros.h> so that we can also build with the older
+ * Universal Interfaces 2.1.5 */
+
+#ifdef __CARBON__
+#ifdef TARGET_CPU_PPC
+#undef GENERATINGPOWERPC
+#define GENERATINGPOWERPC TARGET_CPU_PPC
+#endif /* defined(TARGET_CPU_PPC) */
+#ifdef TARGET_CPU_68K
+#undef GENERATING68K
+#define GENERATING68K TARGET_CPU_68K
+#endif /* defined(TARGET_CPU_68K) */
+#ifdef TARGET_RT_MAC_68881
+#undef GENERATING68881
+#define GENERATING68881 TARGET_RT_MAC_68881
+#endif /* defined(TARGET_RT_MAC_68881) */
+#ifdef TARGET_RT_MAC_CFM
+#undef GENERATINGCFM
+#define GENERATINGCFM TARGET_RT_MAC_CFM
+#endif /* defined(TARGET_RT_MAC_CFM) */
+#ifdef TARGET_RT_MAC_CFM
+#undef CFMSYSTEMCALLS
+#define CFMSYSTEMCALLS TARGET_RT_MAC_CFM
+#endif /* defined(TARGET_RT_MAC_CFM) */
 #endif
-#include <CursorCtl.h>
-#include <Errors.h>
-#include <Files.h>
-#include <Fonts.h>
-#include <Gestalt.h>
-#include <MacTypes.h>
-#include <MacWindows.h>
-#include <Patches.h>
-#include <Quickdraw.h>
-#include <QuickdrawText.h>
-#include <Script.h>
-#include <Sound.h>
-#include <TextEncodingConverter.h>
-#include <TextUtils.h>
-#include <Timer.h>
-#include <ToolUtils.h>
-#include <Traps.h>
-#include <ioctl.h>
-
-#endif /* ! defined(TARGET_API_MAC_CARBON) */
-
-#else /* ! defined(macintosh) */
-
-/* Case 3: Carbon framework */
-#include <Carbon/Carbon.h>
-
-#endif /* ! defined(macintosh) */
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 
 /* when USE_OLD_TOOLBOX is non-zero we directly access Toolbox
  * internals which were deprecated or removed in Carbon, and avoid
  * routines which are available only in Carbon and MacOS PowerPC
  * runtime environments */
 #ifndef USE_OLD_TOOLBOX
-#if defined(__CARBON__) || (defined(TARGET_CPU_PPC) && TARGET_CPU_PPC && defined(TARGET_OS_MAC) && TARGET_OS_MAC)
+#if defined(__CARBON__) || (defined(GENERATINGPOWERPC) && GENERATINGPOWERPC)
 #define USE_OLD_TOOLBOX 0
 #else
 #define USE_OLD_TOOLBOX 1
@@ -108,6 +123,440 @@ application runs under Mac OS X.
 #ifndef USE_TEXT_ENCODING_CONVERSION_MANAGER
 #define USE_TEXT_ENCODING_CONVERSION_MANAGER (! USE_OLD_TOOLBOX)
 #endif
+
+#include <AppleEvents.h>
+#include <CursorCtl.h>
+#include <Errors.h>
+#include <Files.h>
+#include <Fonts.h>
+#include <Gestalt.h>
+#include <Menus.h>
+#include <Math64.h>
+#include <Quickdraw.h>
+#include <QuickdrawText.h>
+#include <Script.h>
+#include <Sound.h>
+#include <TextUtils.h>
+#include <Timer.h>
+#include <ToolUtils.h>
+#include <Traps.h>
+#include <ioctl.h>
+#include <time.h>
+
+#ifdef UNICODE
+#include <ATSUnicode.h>
+#endif
+
+#if defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)
+
+#include <MacTypes.h>
+#include <MacWindows.h>
+#include <Patches.h>
+
+#else /* ! (defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)) */
+
+#include <Types.h>
+#include <Windows.h>
+#include <OSUtils.h>
+
+#ifndef TRUE
+#define TRUE true
+#endif
+
+#ifndef FALSE
+#define FALSE false
+#endif
+
+#ifndef MacGetCurrentProcess
+#define MacGetCurrentProcess GetCurrentProcess
+#endif
+
+#ifndef CharParameter
+#define CharParameter short
+#endif
+
+#ifndef WindowRegionCode
+#define WindowRegionCode UInt16
+#endif
+
+#ifndef kWindowStructureRgn
+#define kWindowStructureRgn 32
+#endif
+
+#ifndef kWindowContentRgn
+#define kWindowContentRgn 33
+#endif
+
+#ifndef kWindowUpdateRgn
+#define kWindowUpdateRgn 34
+#endif
+
+#ifndef GetMenuRef
+#define GetMenuRef GetMenuHandle
+#endif
+
+#ifndef MenuBarHandle
+#define MenuBarHandle Handle
+#endif
+
+#ifndef MenuItemIndex
+#define MenuItemIndex UInt16
+#endif
+
+#ifndef WindowPartCode
+#define WindowPartCode SInt16
+#endif
+
+#ifndef inCollapseBox
+#define inCollapseBox 11
+#endif
+
+#ifndef inProxyIcon
+#define inProxyIcon 12
+#endif
+
+#ifndef kLeftArrowCharCode
+#define kLeftArrowCharCode 0x1c
+#endif
+
+#ifndef kRightArrowCharCode
+#define kRightArrowCharCode 0x1d
+#endif
+
+#ifndef kUpArrowCharCode
+#define kUpArrowCharCode 0x1e
+#endif
+
+#ifndef kDownArrowCharCode
+#define kDownArrowCharCode 0x1f
+#endif
+
+#ifndef kDeleteCharCode
+#define kDeleteCharCode 0x7f
+#endif
+
+#ifndef NewAEEventHandlerUPP
+#define NewAEEventHandlerUPP(proc) (AEEventHandlerUPP) NewRoutineDescriptor((ProcPtr) (proc), uppAEEventHandlerProcInfo, GetCurrentArchitecture())
+#endif
+
+#ifndef IsWindowCollapsed
+#define IsWindowCollapsed(win) FALSE
+#endif
+
+#ifndef MenuEvent
+#define MenuEvent(ev) MenuKey((ev)->message & charCodeMask)
+#endif
+
+#ifndef CollapseWindow
+#define CollapseWindow(win, bCollapse) unimpErr
+#endif
+
+#endif /* ! (defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)) */
+
+#if USE_TEXT_ENCODING_CONVERSION_MANAGER
+
+#include <TextEncodingConverter.h>
+
+#else /* ! USE_TEXT_ENCODING_CONVERSION_MANAGER */
+
+#ifndef TextEncoding
+#define TextEncoding UInt32
+#endif
+
+#ifndef kTextEncodingMacRoman
+#define kTextEncodingMacRoman smRoman
+#endif
+
+#ifndef kTextEncodingMacJapanese
+#define kTextEncodingMacJapanese smJapanese
+#endif
+
+#ifndef kTextEncodingMacVT100
+#define kTextEncodingMacVT100 0xfc
+#endif
+
+#ifndef kTextEncodingDOSLatinUS
+#define kTextEncodingDOSLatinUS 0x400
+#endif
+
+#ifndef kTextEncodingUS_ASCII
+#define kTextEncodingUS_ASCII 0x600
+#endif
+
+#endif /* ! USE_TEXT_ENCODING_CONVERSION_MANAGER */
+
+#if (! defined(UNIVERSAL_INTERFACES_VERSION)) || (UNIVERSAL_INTERFACES_VERSION < 0x0300)
+
+#ifndef _AppearanceDispatch
+#define _AppearanceDispatch 0xAA74
+#endif
+
+#endif /* (! defined(UNIVERSAL_INTERFACES_VERSION)) || (UNIVERSAL_INTERFACES_VERSION < 0x0300) */
+
+#endif /* ! (defined(TARGET_API_MAC_CARBON) && TARGET_API_MAC_CARBON) */
+
+#else /* ! defined(macintosh) */
+
+/* Case 3: Carbon framework */
+#include <Carbon/Carbon.h>
+
+#endif /* ! defined(macintosh) */
+
+#ifndef USE_FONT_MANAGER_9
+#define USE_FONT_MANAGER_9 1
+#endif
+
+#ifndef USE_TEXT_ENCODING_CONVERSION_MANAGER
+#define USE_TEXT_ENCODING_CONVERSION_MANAGER 1
+#endif
+
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#ifndef __CARBON__
+
+/* we must provide storage for the global qd */
+QDGlobals qd;
+
+#endif
+
+/* when built for old Toolbox access, we simulate some newer functions
+ * using the old Toolbox structures */
+#if USE_OLD_TOOLBOX
+
+/* Look up traps by A-Trap constant */
+static UniversalProcPtr maccurses_getTrapAddress(UInt16 aTrapNum)
+{
+    if (aTrapNum >= 0xa800L)
+    {
+        return NGetTrapAddress(aTrapNum & 0x3ff, ToolTrap);
+    }
+    return NGetTrapAddress(aTrapNum & 0xff, OSTrap);
+}
+
+static UniversalProcPtr maccurses_trapUnimplemented;
+
+#if ! (defined(TARGET_RT_MAC_CFM) && TARGET_RT_MAC_CFM || defined(__CFM68K__))
+
+static UniversalProcPtr maccurses_trapMicroseconds;
+
+static void maccurses_Microseconds(UnsignedWide *microTickCount)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapMicroseconds)
+    {
+        maccurses_trapMicroseconds = maccurses_getTrapAddress(_Microseconds);
+    }
+    if (maccurses_trapMicroseconds == maccurses_trapUnimplemented)
+    {
+#if defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)
+        *microTickCount = UInt64ToUnsignedWide(U64Divide(U64Multiply(U64SetU((UInt32) clock()),
+                                                                     U64SetU(1000000L)),
+                                                         U64Set(CLOCKS_PER_SEC),
+                                                         NULL));
+#else
+        double microTickCount_double;
+
+        microTickCount_double = (((double) clock()) * (1e6 / CLOCKS_PER_SEC));
+        microTickCount->lo = (UInt32) fmod(microTickCount_double, 2e32);
+        microTickCount->hi = (UInt32) ((microTickCount_double - (double) (microTickCount->lo)) / 2e32);
+#endif
+        return;
+    }
+    Microseconds(microTickCount);
+}
+#undef Microseconds
+#define Microseconds maccurses_Microseconds
+
+#endif /* ! (defined(TARGET_RT_MAC_CFM) && TARGET_RT_MAC_CFM || defined(__CFM68K__)) */
+
+static UniversalProcPtr maccurses_trapAppearanceDispatch;
+
+static Boolean maccurses_IsWindowCollapsed(WindowRef window)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapAppearanceDispatch)
+    {
+        maccurses_trapAppearanceDispatch = maccurses_getTrapAddress(_AppearanceDispatch);
+    }
+    if (maccurses_trapAppearanceDispatch == maccurses_trapUnimplemented)
+    {
+        return FALSE;
+    }
+    return IsWindowCollapsed(window);
+}
+#undef IsWindowCollapsed
+#define IsWindowCollapsed maccurses_IsWindowCollapsed
+
+static UniversalProcPtr maccurses_trapGestalt;
+
+static OSErr maccurses_Gestalt(OSType selector, long *response)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapGestalt)
+    {
+        maccurses_trapGestalt = maccurses_getTrapAddress(_Gestalt);
+    }
+    if (maccurses_trapGestalt == maccurses_trapUnimplemented)
+    {
+        return gestaltUnknownErr;
+    }
+    return Gestalt(selector, response);
+}
+#undef Gestalt
+#define Gestalt maccurses_Gestalt
+
+#undef IsPortColor
+#define IsPortColor maccurses_IsPortColor
+
+static Boolean
+IsPortColor(CGrafPtr port)
+{
+    /* see About Color QuickDraw in Inside Macintosh */
+    return (port->portVersion & 0xc000) ? TRUE : FALSE;
+}
+
+#undef GetRegionBounds
+#define GetRegionBounds maccurses_GetRegionBounds
+
+static Rect *
+GetRegionBounds(RgnHandle region, Rect *bounds)
+{
+    if (bounds)
+    {
+        memcpy((void *) bounds, (void *) &((*region)->rgnBBox), sizeof(*bounds));
+    }
+    return bounds;
+}
+
+#undef SetWindowBounds
+#define SetWindowBounds maccurses_SetWindowBounds
+
+static OSStatus
+SetWindowBounds(WindowRef window,
+                WindowRegionCode regionCode,
+                const Rect *globalBounds)
+{
+    OSStatus ret = noErr;
+
+    switch (regionCode)
+    {
+    case kWindowStructureRgn:
+        RectRgn(((WindowPeek)window)->strucRgn, globalBounds);
+        break;
+    case kWindowContentRgn:
+        RectRgn(((WindowPeek)window)->contRgn, globalBounds);
+        break;
+    default:
+        ret = unimpErr;
+    }
+    return ret;
+}
+
+#undef GetWindowBounds
+#define GetWindowBounds maccurses_GetWindowBounds
+
+static OSStatus
+GetWindowBounds(WindowRef window,
+                WindowRegionCode regionCode,
+                Rect *globalBounds)
+{
+    RgnHandle rgn;
+    OSStatus ret = noErr;
+
+    rgn = NewRgn();
+    switch (regionCode)
+    {
+    case kWindowStructureRgn:
+        GetWindowStructureRgn(window, rgn);
+        break;
+    case kWindowContentRgn:
+        GetWindowContentRgn(window, rgn);
+        break;
+    case kWindowUpdateRgn:
+        GetWindowUpdateRgn(window, rgn);
+        break;
+    default:
+        ret = unimpErr;
+    }
+    if (ret == noErr)
+    {
+        GetRegionBounds(rgn, globalBounds);
+    }
+    DisposeRgn(rgn);
+    return ret;
+}
+
+#undef GetWindowStructureWidths
+#define GetWindowStructureWidths maccurses_GetWindowStructureWidths
+
+static OSStatus
+GetWindowStructureWidths(WindowRef window, Rect *rect)
+{
+    OSStatus ret;
+    Rect strucRect, contRect;
+
+    ret = GetWindowBounds(window, kWindowStructureRgn, &strucRect);
+    if (ret == noErr)
+    {
+        ret = GetWindowBounds(window, kWindowContentRgn, &contRect);
+        if (ret == noErr)
+        {
+            rect->left = contRect.left - strucRect.left;
+            rect->top = contRect.top - strucRect.top;
+            rect->right = strucRect.right - contRect.right;
+            rect->bottom = strucRect.bottom - contRect.bottom;
+        }
+    }
+    return ret;
+}
+
+#undef ResizeWindow
+#define ResizeWindow maccurses_ResizeWindow
+
+static Boolean
+ResizeWindow(WindowRef window,
+             Point startPoint,
+             const Rect *sizeConstraints,
+             Rect *newContentRect)
+{
+    long newsize;
+
+    newsize = GrowWindow(window, startPoint, sizeConstraints);
+    if (newsize)
+    {
+        SizeWindow(window, LoWord(newsize), HiWord(newsize), TRUE);
+        GetWindowBounds(window, kWindowContentRgn, newContentRect);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+#undef GetQDGlobalsBlack
+#define GetQDGlobalsBlack maccurses_GetQDGlobalsBlack
+
+static Pattern *
+GetQDGlobalsBlack(Pattern *black)
+{
+    if (black)
+    {
+        memcpy((void *) &black, (void*) &(qd.black), sizeof(Pattern));
+    }
+    return black;
+}
+
+#endif /* USE_OLD_TOOLBOX */
 
 #ifdef macintosh
 
@@ -146,19 +595,25 @@ int maccurses_strcasecmp(const char *s1, const char *s2)
 int maccurses_isatty(int fd)
 {
     char namebuf[512];
+    long systemVersion = 0;
 
-    memset((void *) namebuf, 0, sizeof(namebuf));
-    if (ioctl(fd, FIOFNAME, (long *) (void *) namebuf) == -1)
+    if ((noErr == Gestalt(gestaltSystemVersion, &systemVersion))
+        &&
+        ((systemVersion & 0xffff) >= 0x0700))
     {
-        return 0;
-    }
-    if ((! strcmp(namebuf, "dev:console"))
-        ||
-        (! strncmp(namebuf, "dev:tty", strlen("dev:tty")))
-        ||
-        (! strncmp(namebuf, "dev:pty", strlen("dev:pty"))))
-    {
-        return 1;
+        memset((void *) namebuf, 0, sizeof(namebuf));
+        if (ioctl(fd, FIOFNAME, (long *) (void *) namebuf) == -1)
+        {
+            return 0;
+        }
+        if ((! strcmp(namebuf, "dev:console"))
+            ||
+            (! strncmp(namebuf, "dev:tty", strlen("dev:tty")))
+            ||
+            (! strncmp(namebuf, "dev:pty", strlen("dev:pty"))))
+        {
+            return 1;
+        }
     }
     return 0;
 }
@@ -265,211 +720,17 @@ static int maccurses_usleep(unsigned long us)
 
 #endif /* macintosh */
 
-#ifndef __CARBON__
-
-/* we must provide storage for the global qd */
-QDGlobals qd;
-
-#endif
-
-/* when built for old Toolbox access, we simulate some newer functions
- * using the old Toolbox structures */
-#if USE_OLD_TOOLBOX
-
-/* Look up traps by A-Trap constant */
-static UniversalProcPtr maccurses_getTrapAddress(UInt16 aTrapNum)
-{
-    if (aTrapNum >= 0xa800L)
-    {
-        return NGetTrapAddress(aTrapNum & 0x3ff, kToolboxTrapType);
-    }
-    return NGetTrapAddress(aTrapNum & 0xff, kOSTrapType);
-}
-
-static UniversalProcPtr maccurses_trapUnimplemented, maccurses_trapAppearanceDispatch, maccurses_trapGestalt;
-
-static Boolean maccurses_IsWindowCollapsed(WindowRef window)
-{
-    if (! maccurses_trapUnimplemented)
-    {
-        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
-    }
-    if (! maccurses_trapAppearanceDispatch)
-    {
-        maccurses_trapAppearanceDispatch = maccurses_getTrapAddress(_AppearanceDispatch);
-    }
-    if (maccurses_trapAppearanceDispatch == maccurses_trapUnimplemented)
-    {
-        return FALSE;
-    }
-    return IsWindowCollapsed(window);
-}
-#undef IsWindowCollapsed
-#define IsWindowCollapsed maccurses_IsWindowCollapsed
-
-static OSErr maccurses_Gestalt(OSType selector, long *response)
-{
-    if (! maccurses_trapUnimplemented)
-    {
-        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
-    }
-    if (! maccurses_trapGestalt)
-    {
-        maccurses_trapGestalt = maccurses_getTrapAddress(_Gestalt);
-    }
-    if (maccurses_trapGestalt == maccurses_trapUnimplemented)
-    {
-        return gestaltUnknownErr;
-    }
-    return Gestalt(selector, response);
-}
-#undef Gestalt
-#define Gestalt maccurses_Gestalt
-
-#undef IsPortColor
-#define IsPortColor maccurses_IsPortColor
-
-static Boolean
-IsPortColor(CGrafPtr port)
-{
-    /* see About Color QuickDraw in Inside Macintosh */
-    return (port->portVersion & 0xc000) ? TRUE : FALSE;
-}
-
-#undef GetRegionBounds
-#define GetRegionBounds maccurses_GetRegionBounds
-
-static Rect *
-GetRegionBounds(RgnHandle region, Rect *bounds)
-{
-    if (bounds)
-    {
-        memcpy((void *) bounds, (void *) &((*region)->rgnBBox), sizeof(*bounds));
-    }
-    return bounds;
-}
-
-#undef SetWindowBounds
-#define SetWindowBounds maccurses_SetWindowBounds
-
-static OSStatus
-SetWindowBounds(WindowRef window,
-                WindowRegionCode regionCode,
-                const Rect *globalBounds)
-{
-    OSStatus ret = noErr;
-
-    switch (regionCode)
-    {
-    case kWindowStructureRgn:
-        RectRgn(((WindowPeek)window)->strucRgn, globalBounds);
-        break;
-    case kWindowContentRgn:
-        RectRgn(((WindowPeek)window)->contRgn, globalBounds);
-        break;
-    default:
-        ret = errInvalidWindowProperty;
-    }
-    return ret;
-}
-
-#undef GetWindowBounds
-#define GetWindowBounds maccurses_GetWindowBounds
-
-static OSStatus
-GetWindowBounds(WindowRef window,
-                WindowRegionCode regionCode,
-                Rect *globalBounds)
-{
-    RgnHandle rgn;
-    OSStatus ret = noErr;
-
-    rgn = NewRgn();
-    switch (regionCode)
-    {
-    case kWindowStructureRgn:
-        GetWindowStructureRgn(window, rgn);
-        break;
-    case kWindowContentRgn:
-        GetWindowContentRgn(window, rgn);
-        break;
-    case kWindowUpdateRgn:
-        GetWindowUpdateRgn(window, rgn);
-        break;
-    default:
-        ret = errInvalidWindowProperty;
-    }
-    if (ret == noErr)
-    {
-        GetRegionBounds(rgn, globalBounds);
-    }
-    DisposeRgn(rgn);                      
-    return ret;
-}
-
-#undef GetWindowStructureWidths
-#define GetWindowStructureWidths maccurses_GetWindowStructureWidths
-
-static OSStatus
-GetWindowStructureWidths(WindowRef window, Rect *rect)
-{
-    OSStatus ret;
-    Rect strucRect, contRect;
-
-    ret = GetWindowBounds(window, kWindowStructureRgn, &strucRect);
-    if (ret == noErr)
-    {
-        ret = GetWindowBounds(window, kWindowContentRgn, &contRect);
-        if (ret == noErr)
-        {
-            rect->left = contRect.left - strucRect.left;
-            rect->top = contRect.top - strucRect.top;
-            rect->right = strucRect.right - contRect.right;
-            rect->bottom = strucRect.bottom - contRect.bottom;
-        }
-    }
-    return ret;
-}
-
-#undef ResizeWindow
-#define ResizeWindow maccurses_ResizeWindow
-
-static Boolean
-ResizeWindow(WindowRef window,
-             Point startPoint,
-             const Rect *sizeConstraints,
-             Rect *newContentRect)
-{
-    long newsize;
-
-    newsize = GrowWindow(window, startPoint, sizeConstraints);
-    if (newsize)
-    {
-        SizeWindow(window, LoWord(newsize), HiWord(newsize), TRUE);
-        GetWindowBounds(window, kWindowContentRgn, newContentRect);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-#undef GetQDGlobalsBlack
-#define GetQDGlobalsBlack maccurses_GetQDGlobalsBlack
-
-static Pattern *
-GetQDGlobalsBlack(Pattern *black)
-{
-    if (black)
-    {
-        memcpy((void *) &black, (void*) &(qd.black), sizeof(Pattern));
-    }
-    return black;
-}
-
-#endif /* USE_OLD_TOOLBOX */
-
 /* When built without Font Manager 9, we use macros to replace some
  * calls */
 #if ! USE_FONT_MANAGER_9
+
+#ifndef kInvalidFontFamily
+#define kInvalidFontFamily -1
+#endif
+
+#ifndef kFMInvalidFontFamilyErr
+#define kFMInvalidFontFamilyErr -981L
+#endif
 
 #undef FMGetFontFamilyFromName
 #define FMGetFontFamilyFromName(family) kInvalidFontFamily
@@ -480,34 +741,19 @@ GetQDGlobalsBlack(Pattern *black)
 #undef FMGetFontFamilyTextEncoding
 #define FMGetFontFamilyTextEncoding(family, encoding) kFMInvalidFontFamilyErr
 
+#ifndef FMFontFamily
+#define FMFontFamily SInt16
+#endif
+
+#ifndef FMFontStyle
+#define FMFontStyle SInt16
+#endif
+
+#ifndef FMFontSize
+#define FMFontSize SInt16
+#endif
+
 #endif /* ! USE_FONT_MANAGER_9 */
-
-/* When built without Text Encoding Conversion Manager, we use macros
- * to replace some calls */
-#if ! USE_TEXT_ENCODING_CONVERSION_MANAGER
-
-#undef TECGetTextEncodingFromInternetName
-#define TECGetTextEncodingFromInternetName(encoding, encodingname) kTextUnsupportedEncodingErr
-
-#undef UpgradeScriptInfoToTextEncoding
-#define UpgradeScriptInfoToTextEncoding(script, lang, region, fontname, encoding) kTextUnsupportedEncodingErr
-
-#undef CreateTextEncoding
-#define CreateTextEncoding(base, variant, format) base
-
-#undef TECCreateConverter
-#define TECCreateConverter(converter, iencoding, oencoding) kTextUnsupportedEncodingErr
-
-#undef TECConvertText
-#define TECConvertText(converter, ibuf, ibuflen, nread, obuf, obuflen, nwritten) kTextUnsupportedEncodingErr
-
-#undef TECFlushText
-#define TECFlushText(converter, obuf, obuflen, nwritten) kTextUnsupportedEncodingErr
-
-#undef TECDisposeConverter
-#define TECDisposeConverter(converter) kTextUnsupportedEncodingErr
-
-#endif /* ! USE_TEXT_ENCODING_CONVERSION_MANAGER */
 
 #define ERR -1
 #define OK 0
@@ -1169,9 +1415,14 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     if (firsttime)
     {
         ProcessSerialNumber psn;
+        long osAttrs = 0;
 
         atexit(maccurses_cleanup);
-        if (noErr == MacGetCurrentProcess(&psn))
+        if ((noErr == Gestalt(gestaltOSAttr, &osAttrs))
+            &&
+            (osAttrs & (1 << gestaltLaunchControl))
+            &&
+            (noErr == MacGetCurrentProcess(&psn)))
         {
 #ifndef macintosh
             TransformProcessType(&psn, kProcessTransformToForegroundApplication);
@@ -1183,7 +1434,9 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         InitFonts();
         InitWindows();
         InitMenus();
+#if USE_TEXT_ENCODING_CONVERSION_MANAGER
         TEInit();
+#endif /* USE_TEXT_ENCODING_CONVERSION_MANAGER */
 #endif /* ! defined(__CARBON__) */
 
         InitCursor();
@@ -1543,10 +1796,12 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             encoding_name_pascal[0] = i + 1;
             encoding_name_pascal[i + 1] = encoding_name[i];
         }
+#if USE_TEXT_ENCODING_CONVERSION_MANAGER
         if (noErr == TECGetTextEncodingFromInternetName(&encoding, encoding_name_pascal))
         {
         }
         else
+#endif /* USE_TEXT_ENCODING_CONVERSION_MANAGER */
         {
             if ((! strcasecmp(encoding_name, "MacRoman"))
                 ||
@@ -1604,84 +1859,80 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         maccurses_cvtt = 0;
     }
 
-    /* We can only rely on TextEncodingConverter where
-     * Carbon is also present. We have a few hardwired
-     * conversion tables to help us in the non-Carbon
-     * case. */
+#if USE_TEXT_ENCODING_CONVERSION_MANAGER
+    if ((encoding_determined == true)
+        ||
+        (noErr == FMGetFontFamilyTextEncoding(maccurses_fontfamily, &encoding))
+        ||
+        (noErr == UpgradeScriptInfoToTextEncoding(scriptID, kTextLanguageDontCare, kTextRegionDontCare, font_pascal, &encoding)))
     {
-        if ((encoding_determined == true)
-            ||
-            (noErr == FMGetFontFamilyTextEncoding(maccurses_fontfamily, &encoding))
-            ||
-            (noErr == UpgradeScriptInfoToTextEncoding(scriptID, kTextLanguageDontCare, kTextRegionDontCare, font_pascal, &encoding)))
+        TextEncoding cp437;
+        TECObjectRef cvt;
+        OSStatus ret;
+        static unsigned short cvtd[256 * 2];
+
+        cvt = NULL;
+        encoding_determined = true;
+        cp437 = CreateTextEncoding(kTextEncodingDOSLatinUS, kTextEncodingDefaultVariant, kTextEncodingDefaultFormat);
+        ret = TECCreateConverter(&cvt, cp437, encoding);
+        if (noErr == ret)
         {
-            TextEncoding cp437;
-            TECObjectRef cvt;
-            OSStatus ret;
-            static unsigned short cvtd[256 * 2];
+            UInt8 ibyte;
+            ByteCount nread = 0;
+            UInt8 obytes[32];
+            ByteCount nwritten = 0;
+            int cvtu = 0;
 
-            cvt = NULL;
-            encoding_determined = true;
-            cp437 = CreateTextEncoding(kTextEncodingDOSLatinUS, kTextEncodingDefaultVariant, kTextEncodingDefaultFormat);
-            ret = TECCreateConverter(&cvt, cp437, encoding);
-            if (noErr == ret)
+            for (i = 0x20; i <= 0xff; i ++)
             {
-                UInt8 ibyte;
-                ByteCount nread = 0;
-                UInt8 obytes[32];
-                ByteCount nwritten = 0;
-                int cvtu = 0;
-
-                for (i = 0x20; i <= 0xff; i ++)
+                if (i != 0x7f)
                 {
-                    if (i != 0x7f)
+                    ibyte = i;
+                    if (noErr == TECConvertText(cvt, &ibyte, 1, &nread, obytes, sizeof(obytes), &nwritten))
                     {
-                        ibyte = i;
-                        if (noErr == TECConvertText(cvt, &ibyte, 1, &nread, obytes, sizeof(obytes), &nwritten))
-                        {
-                            ByteCount moar = 0;
+                        ByteCount moar = 0;
 
-                            if (noErr == TECFlushText(cvt, obytes + nwritten, sizeof(obytes) - nwritten, &moar))
-                            {
-                                nwritten += moar;
-                            }
-                            obytes[nwritten] = 0;
-                            if ((nwritten == 1)
-                                &&
-                                (obytes[0] > 0x7f))
-                            {
-                                cvtd[2 * cvtu] = i;
-                                cvtd[2 * cvtu + 1] = obytes[0];
-                                cvtu ++;
-                            }
-                            else if ((nwritten == 2)
-                                     &&
-                                     (obytes[0] > 0x7f))
-                            {
-                                cvtd[2 * cvtu] = i;
-                                cvtd[2 * cvtu + 1] = (obytes[0] << 8) | obytes[1];
-                                cvtu ++;
-                            }
+                        if (noErr == TECFlushText(cvt, obytes + nwritten, sizeof(obytes) - nwritten, &moar))
+                        {
+                            nwritten += moar;
+                        }
+                        obytes[nwritten] = 0;
+                        if ((nwritten == 1)
+                            &&
+                            (obytes[0] > 0x7f))
+                        {
+                            cvtd[2 * cvtu] = i;
+                            cvtd[2 * cvtu + 1] = obytes[0];
+                            cvtu ++;
+                        }
+                        else if ((nwritten == 2)
+                                 &&
+                                 (obytes[0] > 0x7f))
+                        {
+                            cvtd[2 * cvtu] = i;
+                            cvtd[2 * cvtu + 1] = (obytes[0] << 8) | obytes[1];
+                            cvtu ++;
                         }
                     }
                 }
-                if (noErr != TECDisposeConverter(cvt))
-                {
-                    /* there's not much to be done about a failure to
-                     * dispose of the converter... */
-                }
-                if (cvtu || maccurses_cvtt)
-                {
-                    cvtd[cvtu * 2] = 0;
-                    cvtd[cvtu * 2 + 1] = 0;
-                    maccurses_cvtt = cvtd;
-                }
             }
-            else
+            if (noErr != TECDisposeConverter(cvt))
             {
+                /* there's not much to be done about a failure to
+                 * dispose of the converter... */
+            }
+            if (cvtu || maccurses_cvtt)
+            {
+                cvtd[cvtu * 2] = 0;
+                cvtd[cvtu * 2 + 1] = 0;
+                maccurses_cvtt = cvtd;
             }
         }
+        else
+        {
+        }
     }
+#endif /* USE_TEXT_ENCODING_CONVERSION_MANAGER */
 #endif /* ! defined(UNICODE) */
     TextFont(maccurses_fontfamily);
     /*TextMode(transparent);*/
@@ -1820,16 +2071,28 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     maccurses_palette[COLORS + COLORS * COLORS].green = maccurses_mix(0xffffU, 0);
     maccurses_palette[COLORS + COLORS * COLORS].blue = maccurses_mix(0xffffU, 0);
     SetWTitle(maccurses_hwnd, maccurses_title);
-    AEInstallEventHandler(kCoreEventClass, kAEQuitApplication,
-                          NewAEEventHandlerUPP(maccurses_onQuitEvent), 0, false);
+    {
+        long appleEventsAttrs = 0;
+
+        if ((noErr == Gestalt(gestaltAppleEventsAttr, &appleEventsAttrs))
+            &&
+            (appleEventsAttrs & (1 << gestaltAppleEventsPresent)))
+        {
+            AEInstallEventHandler(kCoreEventClass, kAEQuitApplication,
+                                  NewAEEventHandlerUPP(maccurses_onQuitEvent), 0, false);
+        }
+    }
     maccurses_updateFontMenu();
     maccurses_erase();
 }
 
 static int maccurses_endwin(void)
 {
-    SetMenuBar(maccurses_oldMainMenu);
-    DisposeHandle(maccurses_oldMainMenu);
+    if (maccurses_oldMainMenu != NULL)
+    {
+        SetMenuBar(maccurses_oldMainMenu);
+        DisposeHandle(maccurses_oldMainMenu);
+    }
     return OK;
 }
 
