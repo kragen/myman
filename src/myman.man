@@ -575,6 +575,9 @@ forget previously buffered horizontal movement
 .BR / " or " \\ :
 toggle diagonal maze reflection
 .TP
+.BR ! :
+display information about the maze, tileset and spriteset
+.TP
 .BR ? " or " Ctrl-H :
 display help screen
 .PP

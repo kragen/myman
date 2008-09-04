@@ -310,11 +310,15 @@ alias q '(quote -n "``catenate``")'
 # qcq: composition of q and cq
 alias qcq 'cq | q'
 
-# By default, we try to build a small executable
-set CREATEMAKEFLAGS "-opt size"
+set CREATEMAKEFLAGS ""
+
+## We used to try to optimize but it broke horribly. Not sure whether
+##that's our bug or theirs yet...
+#
+#set CREATEMAKEFLAGS "-opt size"
 
 if {{debugMode}} != 0
-    # But in debug mode, we instead build a symbol files
+    # In debug mode we build a symbol files
     set CREATEMAKEFLAGS "-sym"
 end &&
 

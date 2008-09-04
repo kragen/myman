@@ -152,6 +152,7 @@ const char *MYMANKEYS =
 ", (comma) or <: cancel pending vertical move" "\n"
 ". (full stop) or >: cancel pending horizontal move" "\n"
 "/ or \\: toggle diagonal maze reflection" "\n"
+"!: display information about the maze, tileset and spriteset" "\n"
 "\? or Ctrl-H: display help screen" "\n"
 "\n"
 "The pager recognizes the following special commands:" "\n"

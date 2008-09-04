@@ -126,6 +126,7 @@
 
 #include <AppleEvents.h>
 #include <CursorCtl.h>
+#include <Devices.h>
 #include <Errors.h>
 #include <Files.h>
 #include <Fonts.h>
@@ -169,6 +170,14 @@
 
 #ifndef MacGetCurrentProcess
 #define MacGetCurrentProcess GetCurrentProcess
+#endif
+
+#ifndef MacDrawMenuBar
+#define MacDrawMenuBar DrawMenuBar
+#endif
+
+#ifndef MacCheckMenuItem
+#define MacCheckMenuItem CheckItem
 #endif
 
 #ifndef CharParameter
@@ -240,7 +249,7 @@
 #endif
 
 #ifndef IsWindowCollapsed
-#define IsWindowCollapsed(win) FALSE
+#define IsWindowCollapsed(win) EmptyRgn(((WindowPeek) (win))->contRgn)
 #endif
 
 #ifndef MenuEvent
@@ -248,7 +257,7 @@
 #endif
 
 #ifndef CollapseWindow
-#define CollapseWindow(win, bCollapse) unimpErr
+#define CollapseWindow(win, bCollapse) ((bCollapse == IsWindowCollapsed(win)) ? noErr : unimpErr)
 #endif
 
 #endif /* ! (defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)) */
@@ -420,8 +429,7 @@ static OSErr maccurses_Gestalt(OSType selector, long *response)
 #undef IsPortColor
 #define IsPortColor maccurses_IsPortColor
 
-static Boolean
-IsPortColor(CGrafPtr port)
+static Boolean IsPortColor(CGrafPtr port)
 {
     /* see About Color QuickDraw in Inside Macintosh */
     return (port->portVersion & 0xc000) ? TRUE : FALSE;
@@ -443,10 +451,9 @@ GetRegionBounds(RgnHandle region, Rect *bounds)
 #undef SetWindowBounds
 #define SetWindowBounds maccurses_SetWindowBounds
 
-static OSStatus
-SetWindowBounds(WindowRef window,
-                WindowRegionCode regionCode,
-                const Rect *globalBounds)
+static OSStatus SetWindowBounds(WindowRef window,
+                                WindowRegionCode regionCode,
+                                const Rect *globalBounds)
 {
     OSStatus ret = noErr;
 
@@ -467,10 +474,9 @@ SetWindowBounds(WindowRef window,
 #undef GetWindowBounds
 #define GetWindowBounds maccurses_GetWindowBounds
 
-static OSStatus
-GetWindowBounds(WindowRef window,
-                WindowRegionCode regionCode,
-                Rect *globalBounds)
+static OSStatus GetWindowBounds(WindowRef window,
+                                WindowRegionCode regionCode,
+                                Rect *globalBounds)
 {
     RgnHandle rgn;
     OSStatus ret = noErr;
@@ -501,8 +507,7 @@ GetWindowBounds(WindowRef window,
 #undef GetWindowStructureWidths
 #define GetWindowStructureWidths maccurses_GetWindowStructureWidths
 
-static OSStatus
-GetWindowStructureWidths(WindowRef window, Rect *rect)
+static OSStatus GetWindowStructureWidths(WindowRef window, Rect *rect)
 {
     OSStatus ret;
     Rect strucRect, contRect;
@@ -525,11 +530,10 @@ GetWindowStructureWidths(WindowRef window, Rect *rect)
 #undef ResizeWindow
 #define ResizeWindow maccurses_ResizeWindow
 
-static Boolean
-ResizeWindow(WindowRef window,
-             Point startPoint,
-             const Rect *sizeConstraints,
-             Rect *newContentRect)
+static Boolean ResizeWindow(WindowRef window,
+                            Point startPoint,
+                            const Rect *sizeConstraints,
+                            Rect *newContentRect)
 {
     long newsize;
 
@@ -546,8 +550,7 @@ ResizeWindow(WindowRef window,
 #undef GetQDGlobalsBlack
 #define GetQDGlobalsBlack maccurses_GetQDGlobalsBlack
 
-static Pattern *
-GetQDGlobalsBlack(Pattern *black)
+static Pattern *GetQDGlobalsBlack(Pattern *black)
 {
     if (black)
     {
@@ -732,15 +735,6 @@ static int maccurses_usleep(unsigned long us)
 #define kFMInvalidFontFamilyErr -981L
 #endif
 
-#undef FMGetFontFamilyFromName
-#define FMGetFontFamilyFromName(family) kInvalidFontFamily
-
-#undef FMGetFontFamilyName
-#define FMGetFontFamilyName(family, familyname) kFMInvalidFontFamilyErr
-
-#undef FMGetFontFamilyTextEncoding
-#define FMGetFontFamilyTextEncoding(family, encoding) kFMInvalidFontFamilyErr
-
 #ifndef FMFontFamily
 #define FMFontFamily SInt16
 #endif
@@ -753,7 +747,47 @@ static int maccurses_usleep(unsigned long us)
 #define FMFontSize SInt16
 #endif
 
+#ifndef FMGetFontFamilyFromName
+#define FMGetFontFamilyFromName maccurses_FMGetFontFamilyFromName
+static FMFontFamily FMGetFontFamilyFromName(ConstStr255Param name)
+{
+    short familyID;
+
+    GetFNum(name, &familyID);
+    return (FMFontFamily) familyID;
+}
+#endif
+
+#ifndef FMGetFontFamilyName
+#define FMGetFontFamilyName maccurses_FMGetFontFamilyName
+static OSStatus FMGetFontFamilyName(FMFontFamily family, Str255 name)
+{
+    GetFontName(family, name);
+    return noErr;
+}
+#endif
+
+#undef FMGetFontFamilyTextEncoding
+#define FMGetFontFamilyTextEncoding(family, encoding) kFMInvalidFontFamilyErr
+
 #endif /* ! USE_FONT_MANAGER_9 */
+
+#ifndef __CARBON__
+
+#ifndef GetFontFamilyFromMenuSelection
+#define GetFontFamilyFromMenuSelection maccurses_GetFontFamilyFromMenuSelection
+static OSStatus GetFontFamilyFromMenuSelection(MenuRef menu, MenuItemIndex item, FMFontFamily *outFontFamily, FMFontStyle *outStyle)
+{
+    Str255 fontName;
+
+    GetMenuItemText(menu, item, fontName);
+    GetFNum(fontName, outFontFamily);
+    *outStyle = 0;
+    return noErr;
+}
+#endif
+
+#endif
 
 #define ERR -1
 #define OK 0
@@ -930,6 +964,7 @@ typedef maccurses_chtype maccurses_attr_t;
 #define MACCURSES_MAINWIN 0xda317d03LU
 
 /* somewhat arbitrary menu identifiers */
+#define MACCURSES_F8FFMENU 0x0080L
 #define MACCURSES_FILEMENU 0x0a01L
 #define MACCURSES_EDITMENU 0x0a02L
 #define MACCURSES_FONTMENU 0x0f00L /* this and all higher codes are used by the font (sub-)menus */
@@ -1280,7 +1315,7 @@ static void maccurses_updateFontCheckMarks(MenuRef mr)
     UInt16 count;
 
     count = CountMenuItems(mr);
-    for (i = 0;  i <= count; i ++)
+    for (i = 0; i <= count; i ++)
     {
         FMFontFamily fam;
         FMFontStyle sty;
@@ -1289,10 +1324,13 @@ static void maccurses_updateFontCheckMarks(MenuRef mr)
         GetItemMark(mr, i, &ch);
         if ((ch == noMark) || (ch == checkMark))
         {
+            fam = kInvalidFontFamily;
+            sty = 0;
             GetFontFamilyFromMenuSelection(mr, i, &fam, &sty);
             MacCheckMenuItem(mr, i,
                              ((fam == maccurses_fontfamily) && (sty == maccurses_custom_fontstyle)) ? true : false);
         }
+#ifdef __CARBON__
         else
         {
             MenuRef submr;
@@ -1301,26 +1339,22 @@ static void maccurses_updateFontCheckMarks(MenuRef mr)
             {
                 maccurses_updateFontCheckMarks(submr);
             }
-            else
-            {
-                maccurses_updateFontCheckMarks(GetMenuRef(ch));
-            }
         }
+#endif /* defined(__CARBON__) */
     }
 }
 
+static MenuRef maccurses_fontmenu = NULL;
+
 static void maccurses_updateFontMenu(void)
 {
-#ifdef __CARBON__
-    MenuRef fontmenu;
-
-    fontmenu = GetMenuRef(MACCURSES_FONTMENU);
-    if (fontmenu)
+    if (maccurses_fontmenu)
     {
-        UpdateStandardFontMenu(fontmenu, NULL);
-        maccurses_updateFontCheckMarks(fontmenu);
-    }
+#ifdef __CARBON__
+        UpdateStandardFontMenu(maccurses_fontmenu, NULL);
 #endif /* defined(__CARBON__) */
+        maccurses_updateFontCheckMarks(maccurses_fontmenu);
+    }
 }
 
 static pascal OSErr maccurses_onQuitEvent(const AppleEvent *ev, AppleEvent *reply, long handlerRefcon)
@@ -1348,10 +1382,6 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     int j;
     int firsttime;
 
-    if (shortname)
-    {
-        /* we should care... */
-    }
     if (maccurses_valid == FALSE)
     {
         maccurses_valid = TRUE;
@@ -1443,19 +1473,48 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     }
 
     maccurses_oldMainMenu = GetMenuBar();
-
     {
         int i;
+        /* 0x14, a.k.a. kMenuAppleLogoFilledGlyph */
+        const char *f8ffmenu_title = "\x14";
         const char *filemenu_title = "File";
         const char *editmenu_title = "Edit";
         const char *fontmenu_title = "Font";
+        Str255 f8ffmenu_title_pascal = { 0 };
         Str255 filemenu_title_pascal = { 0 };
         Str255 editmenu_title_pascal = { 0 };
         Str255 fontmenu_title_pascal = { 0 };
+        MenuRef f8ffmenu = NULL;
         MenuRef filemenu = NULL;
         MenuRef editmenu = NULL;
-        MenuRef fontmenu = NULL;
 
+        /* FIXME: we should figure out how to use shortname when running as an MPW tool */
+        if (shortname && 0)
+        {
+            f8ffmenu_title = (shortname && *shortname) ? shortname : "maccurses";
+        }
+        f8ffmenu_title_pascal[0] = 0;
+        for (i = 0; (i < 255) && f8ffmenu_title[i]; i ++)
+        {
+            f8ffmenu_title_pascal[i + 1] = f8ffmenu_title[i];
+            f8ffmenu_title_pascal[0] = i + 1;
+        }
+        f8ffmenu = NewMenu(MACCURSES_F8FFMENU, f8ffmenu_title_pascal);
+        if (f8ffmenu)
+        {
+            const char *f8ffmenu_items = "About/I;-";
+            Str255 f8ffmenu_items_pascal = { 0 };
+
+            f8ffmenu_items_pascal[0] = 0;
+            for (i = 0; (i < 255) && f8ffmenu_items[i]; i ++)
+            {
+                f8ffmenu_items_pascal[i + 1] = f8ffmenu_items[i];
+                f8ffmenu_items_pascal[0] = i + 1;
+            }
+            AppendMenu(f8ffmenu, f8ffmenu_items_pascal);
+            AppendResMenu(f8ffmenu, 'DRVR');
+            InsertMenu(f8ffmenu, 0);
+        }
         filemenu_title_pascal[0] = 0;
         for (i = 0; (i < 255) && filemenu_title[i]; i ++)
         {
@@ -1465,7 +1524,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         filemenu = NewMenu(MACCURSES_FILEMENU, filemenu_title_pascal);
         if (filemenu)
         {
-            const char *filemenu_items = "Help/?;-;Quit/Q";
+            const char *filemenu_items = "Help/?;Interrupt/.;-;Quit/Q";
             Str255 filemenu_items_pascal = { 0 };
 
             filemenu_items_pascal[0] = 0;
@@ -1504,8 +1563,8 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             fontmenu_title_pascal[i + 1] = fontmenu_title[i];
             fontmenu_title_pascal[0] = i + 1;
         }
-        fontmenu = NewMenu(MACCURSES_FONTMENU, fontmenu_title_pascal);
-        if (fontmenu)
+        maccurses_fontmenu = NewMenu(MACCURSES_FONTMENU, fontmenu_title_pascal);
+        if (maccurses_fontmenu)
         {
             const char *fontmenu_items = "Bigger Font/+;Smaller Font/-;Original Font Size/=";
             Str255 fontmenu_items_pascal = { 0 };
@@ -1516,8 +1575,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
                 fontmenu_items_pascal[i + 1] = fontmenu_items[i];
                 fontmenu_items_pascal[0] = i + 1;
             }
-            AppendMenu(fontmenu, fontmenu_items_pascal);
-#ifdef __CARBON__
+            AppendMenu(maccurses_fontmenu, fontmenu_items_pascal);
             {
                 fontmenu_items = "-;Original Font/T;-";
                 fontmenu_items_pascal[0] = 0;
@@ -1526,16 +1584,20 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
                     fontmenu_items_pascal[i + 1] = fontmenu_items[i];
                     fontmenu_items_pascal[0] = i + 1;
                 }
-                AppendMenu(fontmenu, fontmenu_items_pascal);
-                CreateStandardFontMenu(fontmenu,
-                                       CountMenuItems(fontmenu) + 1,
+                AppendMenu(maccurses_fontmenu, fontmenu_items_pascal);
+#ifdef __CARBON__
+                CreateStandardFontMenu(maccurses_fontmenu,
+                                       CountMenuItems(maccurses_fontmenu) + 1,
                                        MACCURSES_FONTMENU + 1,
                                        kHierarchicalFontMenuOption,
                                        NULL);
+#else /* ! defined(__CARBON__) */
+                AppendResMenu(maccurses_fontmenu, 'FONT');
+#endif /* ! defined(__CARBON__) */
             }
-#endif /* defined(__CARBON__) */
-            InsertMenu(fontmenu, 0);
+            InsertMenu(maccurses_fontmenu, 0);
         }
+        MacDrawMenuBar();
     }
 
     maccurses_fontsize = (GetDefFontSize() >= 11) ? 12 : 9;
@@ -1617,7 +1679,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
 #endif
     if (maccurses_custom_fontfamily != kInvalidFontFamily)
     {
-        if (noErr != FMGetFontFamilyName(maccurses_custom_fontfamily, font_pascal))
+        if (noErr == FMGetFontFamilyName(maccurses_custom_fontfamily, font_pascal))
         {
             GetFNum(font_pascal, &maccurses_fontfamily);
         }
@@ -2182,6 +2244,13 @@ static int maccurses_doMenuItem(long msr)
     case '?':
         HiliteMenu(0);
         return '?';
+    case '.':
+        HiliteMenu(0);
+        return 0x1b;
+    case 'i':
+    case 'I':
+        HiliteMenu(0);
+        return '!';
     case 'q':
     case 'Q':
         /* CTRL('C') */
@@ -2225,18 +2294,26 @@ static int maccurses_doMenuItem(long msr)
             break;
         }
     default:
-#ifdef __CARBON__
         if ((msr >> 16) >= MACCURSES_FONTMENU)
         {
-            maccurses_custom_fontfamily = kInvalidFontFamily;
-            maccurses_custom_fontstyle = 0;
-            GetFontFamilyFromMenuSelection(mr, item, &maccurses_custom_fontfamily, &maccurses_custom_fontstyle);
-            maccurses_new_w = maccurses_w;
-            maccurses_new_h = maccurses_h;
-            maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
+            if (noErr == GetFontFamilyFromMenuSelection(mr, item, &maccurses_custom_fontfamily, &maccurses_custom_fontstyle))
+            {
+                maccurses_new_w = maccurses_w;
+                maccurses_new_h = maccurses_h;
+                maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
+            }
         }
+#ifndef __CARBON__
+        else if ((msr >> 16) == MACCURSES_F8FFMENU)
+        {
+            Str255 itemName;
+
+            GetMenuItemText(mr, item, itemName);
+            OpenDeskAcc(itemName);
+            SetPort((GrafPtr) maccurses_port);
+        }
+#endif /* ! defined(__CARBON__) */
         else
-#endif /* defined(__CARBON__) */
         {
             maccurses_beep();
         }
@@ -2327,6 +2404,7 @@ static int maccurses_getch(void)
                     break;
                 }
             }
+            SetPort((GrafPtr) maccurses_port);
         }
         if (er.what == mouseDown)
         {
@@ -2388,9 +2466,7 @@ static int maccurses_getch(void)
                     {
                         Rect dragbounds;
 
-                        SetRect(&dragbounds,
-                                0, 0,
-                                4096, 2048);
+                        GetRegionBounds(GetGrayRgn(), &dragbounds);
                         DragWindow(win, er.where, &dragbounds);
                     }
                     break;
