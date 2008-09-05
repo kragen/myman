@@ -133,6 +133,7 @@
 #include <Gestalt.h>
 #include <Menus.h>
 #include <Math64.h>
+#include <QDOffscreen.h>
 #include <Quickdraw.h>
 #include <QuickdrawText.h>
 #include <Script.h>
@@ -178,6 +179,10 @@
 
 #ifndef MacCheckMenuItem
 #define MacCheckMenuItem CheckItem
+#endif
+
+#ifndef MacMoveWindow
+#define MacMoveWindow MoveWindow
 #endif
 
 #ifndef CharParameter
@@ -252,12 +257,23 @@
 #define IsWindowCollapsed(win) EmptyRgn(((WindowPeek) (win))->contRgn)
 #endif
 
-#ifndef MenuEvent
-#define MenuEvent(ev) MenuKey((ev)->message & charCodeMask)
-#endif
-
 #ifndef CollapseWindow
 #define CollapseWindow(win, bCollapse) ((bCollapse == IsWindowCollapsed(win)) ? noErr : unimpErr)
+#endif
+
+#ifndef GetWindowPortBounds
+#define GetWindowPortBounds maccurses_GetWindowPortBounds
+
+static Rect *GetWindowPortBounds(WindowRef window, Rect *bounds)
+{
+    if (! window) return NULL;
+    if (bounds)
+    {
+        *bounds = window->portRect;
+    }
+    return bounds;
+}
+
 #endif
 
 #endif /* ! (defined(UNIVERSAL_INTERFACES_VERSION) && (UNIVERSAL_INTERFACES_VERSION >= 0x0300)) */
@@ -554,9 +570,21 @@ static Pattern *GetQDGlobalsBlack(Pattern *black)
 {
     if (black)
     {
-        memcpy((void *) &black, (void*) &(qd.black), sizeof(Pattern));
+        memcpy((void *) black, (void*) &(qd.black), sizeof(Pattern));
     }
     return black;
+}
+
+#undef GetQDGlobalsScreenBits
+#define GetQDGlobalsScreenBits maccurses_GetQDGlobalsScreenBits
+
+static BitMap *GetQDGlobalsScreenBits(BitMap *screenBits)
+{
+    if (screenBits)
+    {
+        memcpy((void *) screenBits, (void*) &(qd.screenBits), sizeof(BitMap));
+    }
+    return screenBits;
 }
 
 #endif /* USE_OLD_TOOLBOX */
@@ -754,6 +782,20 @@ static FMFontFamily FMGetFontFamilyFromName(ConstStr255Param name)
     short familyID;
 
     GetFNum(name, &familyID);
+    if (! familyID)
+    {
+        Str255 nameCanon;
+        int i;
+
+        GetFontName(familyID, nameCanon);
+        for (i = 0; i <= nameCanon[0]; i ++)
+        {
+            if (tolower(name[i]) != tolower(nameCanon[i]))
+            {
+                return kInvalidFontFamily;
+            }
+        }
+    }
     return (FMFontFamily) familyID;
 }
 #endif
@@ -774,16 +816,29 @@ static OSStatus FMGetFontFamilyName(FMFontFamily family, Str255 name)
 
 #ifndef __CARBON__
 
+#undef GetPortBitMapForCopyBits
+#define GetPortBitMapForCopyBits maccurses_GetPortBitMapForCopyBits
+static const BitMap *GetPortBitMapForCopyBits(CGrafPtr port)
+{
+    return &(((struct GrafPort *) port)->portBits);
+}
+
 #ifndef GetFontFamilyFromMenuSelection
 #define GetFontFamilyFromMenuSelection maccurses_GetFontFamilyFromMenuSelection
 static OSStatus GetFontFamilyFromMenuSelection(MenuRef menu, MenuItemIndex item, FMFontFamily *outFontFamily, FMFontStyle *outStyle)
 {
     Str255 fontName;
+    FMFontFamily tmpff;
 
     GetMenuItemText(menu, item, fontName);
-    GetFNum(fontName, outFontFamily);
-    *outStyle = 0;
-    return noErr;
+    tmpff = FMGetFontFamilyFromName(fontName);
+    if (tmpff != kInvalidFontFamily)
+    {
+        *outFontFamily = tmpff;
+        *outStyle = 0;
+        return noErr;
+    }
+    return kFMInvalidFontFamilyErr;
 }
 #endif
 
@@ -1059,7 +1114,12 @@ static unsigned short maccurses_cp437[] = {
 static int maccurses_valid = FALSE;
 static int maccurses_gotQuitEvent = FALSE;
 
+static long maccurses_qdversion;
 static WindowRef maccurses_hwnd;
+static GDHandle maccurses_device;
+static GWorldPtr maccurses_world;
+static PixMapHandle maccurses_pixmap;
+
 static Point maccurses_size;
 static int maccurses_ideal_w = 0;
 static int maccurses_ideal_h = 0;
@@ -1328,7 +1388,9 @@ static void maccurses_updateFontCheckMarks(MenuRef mr)
             sty = 0;
             GetFontFamilyFromMenuSelection(mr, i, &fam, &sty);
             MacCheckMenuItem(mr, i,
-                             ((fam == maccurses_fontfamily) && (sty == maccurses_custom_fontstyle)) ? true : false);
+                             ((fam == maccurses_fontfamily)
+                              &&
+                              (sty == maccurses_custom_fontstyle)) ? true : false);
         }
 #ifdef __CARBON__
         else
@@ -1386,6 +1448,10 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     {
         maccurses_valid = TRUE;
         firsttime = 1;
+#ifndef __CARBON__
+        MaxApplZone();
+#endif
+        /* FIXME: we should add an atexit() handler to clean up... */
     }
     else
     {
@@ -1648,13 +1714,12 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     }
     if (firsttime)
     {
-        long qdversion = gestaltOriginalQD;
-
-        if (noErr == Gestalt(gestaltQuickdrawVersion, &qdversion))
+        if (noErr != Gestalt(gestaltQuickdrawVersion, &maccurses_qdversion))
         {
+            maccurses_qdversion = gestaltOriginalQD;
         }
         maccurses_hwnd = 0;
-        if (qdversion != gestaltOriginalQD)
+        if (maccurses_qdversion != gestaltOriginalQD)
         {
             maccurses_hwnd = NewCWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
         }
@@ -1662,7 +1727,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         {
             maccurses_hwnd = NewWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
         }
-        SetEventMask(keyDownMask | autoKeyMask | activMask | mDownMask | osMask | highLevelEventMask);
+        SetEventMask(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | osMask | highLevelEventMask);
         maccurses_port = GetWindowPort(maccurses_hwnd);
         SetPort((GrafPtr) maccurses_port);
     }
@@ -1681,10 +1746,10 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     {
         if (noErr == FMGetFontFamilyName(maccurses_custom_fontfamily, font_pascal))
         {
-            GetFNum(font_pascal, &maccurses_fontfamily);
+            maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
         }
     }
-    if (((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if ((maccurses_fontfamily == kInvalidFontFamily)
         &&
         font
         &&
@@ -1703,11 +1768,12 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             if (! maccurses_fontfamily)
             {
                 encoding_name = 0;
+                maccurses_fontfamily = kInvalidFontFamily;
             }
         }
     }
 #if UNICODE
-    if ((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if (maccurses_fontfamily == kInvalidFontFamily)
     {
         font = "DejaVu Sans Mono";
         font_pascal[0] = 0;
@@ -1717,12 +1783,8 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
-    if ((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if (maccurses_fontfamily == kInvalidFontFamily)
     {
         font = "Liberation Mono";
         font_pascal[0] = 0;
@@ -1732,13 +1794,9 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
 #endif
-    if (((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if ((maccurses_fontfamily == kInvalidFontFamily)
         &&
         ((maccurses_fontsize == 9)
          ||
@@ -1752,13 +1810,9 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
 #if 0
-    if ((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if (maccurses_fontfamily == kInvalidFontFamily)
     {
         /* Osaka Mono (Shift_JIS/MacJapanese) */
         font = "Osaka\201\174\223\231\225\235";
@@ -1769,13 +1823,9 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
 #endif
-    if ((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if (maccurses_fontfamily == kInvalidFontFamily)
     {
         font = "Monaco";
         font_pascal[0] = 0;
@@ -1785,12 +1835,8 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
-    if ((! maccurses_fontfamily) || (maccurses_fontfamily == kInvalidFontFamily))
+    if (maccurses_fontfamily == kInvalidFontFamily)
     {
         font = "Courier";
         font_pascal[0] = 0;
@@ -1800,10 +1846,6 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
             font_pascal[0] = i;
         }
         maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
-        if (maccurses_fontfamily == kInvalidFontFamily)
-        {
-            GetFNum(font_pascal, &maccurses_fontfamily);
-        }
     }
     maccurses_fontfamily = FMGetFontFamilyFromName(font_pascal);
     if (maccurses_fontfamily == kInvalidFontFamily)
@@ -1821,31 +1863,41 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         (noErr != RevertTextEncodingToScriptInfo(encoding, &scriptID, NULL, NULL)))
     {
         scriptID = FontToScript(maccurses_fontfamily);
-    }
-    if (font_pascal[0] < 255) font_pascal[font_pascal[0] + 1] = '\0';
-    if (scriptID == smJapanese)
-    {
-        encoding = kTextEncodingMacJapanese;
-    }
-    else if (scriptID == smRoman)
-    {
-        encoding = kTextEncodingMacRoman;
-        if ((scriptID == smRoman)
-            &&
-            (! memcmp((void *) (font_pascal + 1), (void *) "VT100", strlen("VT100"))))
+        if (scriptID == smJapanese)
+        {
+            encoding = kTextEncodingMacJapanese;
+            if (! encoding_name) encoding_name = "MacJapanese";
+        }
+        else if (scriptID == smRoman)
+        {
+            encoding = kTextEncodingMacRoman;
+            if ((scriptID == smRoman)
+                &&
+                (font_pascal[0] == strlen("VT100"))
+                &&
+                (! memcmp((void *) (font_pascal + 1), (void *) "VT100", strlen("VT100"))))
+            {
+                encoding = kTextEncodingMacVT100;
+                if (! encoding_name) encoding_name = "MacVT100";
+            }
+            else
+            {
+                if (! encoding_name) encoding_name = "MacRoman";
+            }
+        }
+        else if ((scriptID == smUninterp)
+                 &&
+                 (font_pascal[0] == strlen("VT100"))
+                 &&
+                 (! memcmp((void *) (font_pascal + 1), (void *) "VT100", strlen("VT100"))))
         {
             encoding = kTextEncodingMacVT100;
+            if (! encoding_name) encoding_name = "MacVT100";
         }
-    }
-    else if ((scriptID == smUninterp)
-             &&
-             (! memcmp((void *) (font_pascal + 1), (void *) "VT100", strlen("VT100"))))
-    {
-        encoding = kTextEncodingMacVT100;
-    }
-    else
-    {
-        encoding = kTextEncodingUS_ASCII;
+        else
+        {
+            encoding = kTextEncodingUS_ASCII;
+        }
     }
     if (encoding_name && *encoding_name)
     {
@@ -2065,17 +2117,54 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     if (1)
     {
         Rect chrome;
+        Rect gray;
+        Point windPos;
+        Rect screen;
+        BitMap screenBits;
 
         GetWindowStructureWidths(maccurses_hwnd, &chrome);
-        GetRegionBounds(GetGrayRgn(), &coords);
-        if (maccurses_size.h > (coords.right - coords.left - chrome.left - chrome.right))
+        if (GetRegionBounds(GetGrayRgn(), &gray))
         {
-            maccurses_size.h = coords.right - coords.left - chrome.left - chrome.right;
+            if (maccurses_size.h > (gray.right - gray.left - chrome.left - chrome.right))
+            {
+                maccurses_size.h = gray.right - gray.left - chrome.left - chrome.right;
+            }
+            if (maccurses_size.v > (gray.bottom - gray.top - chrome.top - chrome.bottom))
+            {
+                maccurses_size.v = gray.bottom - gray.top - chrome.bottom - chrome.bottom;
+            }
         }
-        if (maccurses_size.v > (coords.bottom - coords.top - chrome.top - chrome.bottom))
+        GetQDGlobalsScreenBits(&screenBits);
+        screen = screenBits.bounds;
+        screen.top += GetMBarHeight();
+        if (maccurses_size.h > (screen.right - screen.left - chrome.left - chrome.right))
         {
-            maccurses_size.v = coords.bottom - coords.top - chrome.bottom - chrome.bottom;
+            maccurses_size.h = screen.right - screen.left - chrome.left - chrome.right;
         }
+        if (maccurses_size.v > (screen.bottom - screen.top - chrome.top - chrome.bottom))
+        {
+            maccurses_size.v = screen.bottom - screen.top - chrome.top - chrome.bottom;
+        }
+        windPos.h = 0;
+        windPos.v = 0;
+        LocalToGlobal(&windPos);
+        if (windPos.h < (screen.left + chrome.left))
+        {
+            windPos.h = (screen.left + chrome.left);
+        }
+        if (windPos.v < (screen.top + chrome.top))
+        {
+            windPos.v = (screen.top + chrome.top);
+        }
+        if ((windPos.h + maccurses_size.h) > (screen.right - chrome.right))
+        {
+            windPos.h -= (windPos.h + maccurses_size.h) - (screen.right - chrome.right);
+        }
+        if ((windPos.v + maccurses_size.v) > (screen.bottom - chrome.bottom))
+        {
+            windPos.v -= (windPos.v + maccurses_size.v) - (screen.bottom - chrome.bottom);
+        }
+        MacMoveWindow(maccurses_hwnd, windPos.h, windPos.v, false);
     }
 #endif /* ! defined(__CARBON__) */
     SizeWindow(maccurses_hwnd,
@@ -2092,6 +2181,54 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
     GetWindowBounds(maccurses_hwnd,
                     kWindowContentRgn,
                     &coords);
+    maccurses_device = 0;
+    maccurses_world = 0;
+    maccurses_pixmap = 0;
+    if ((maccurses_qdversion != gestaltOriginalQD)
+        &&
+/* FIXME: enable this once we have incremental redraw from backing
+ * store working */
+        0)
+    {
+        Rect portBounds;
+
+        GetWindowPortBounds(maccurses_hwnd, &portBounds);
+        GetGWorld(&maccurses_port, &maccurses_device);
+        if (maccurses_port
+            &&
+            maccurses_device
+            &&
+            (noErr == NewGWorld(&maccurses_world, 0,
+                                &portBounds,
+                                NULL, NULL,
+                                0UL)))
+        {
+            SetGWorld(maccurses_world, NULL);
+            maccurses_pixmap = GetGWorldPixMap(maccurses_world);
+            if (maccurses_pixmap
+                &&
+                (! LockPixels(maccurses_pixmap)))
+            {
+                maccurses_pixmap = 0;
+            }
+            SetGWorld(maccurses_port, maccurses_device);
+            if (! maccurses_pixmap)
+            {
+                DisposeGWorld(maccurses_world);
+                maccurses_world = 0;
+            }
+        }
+    }
+    if (maccurses_pixmap)
+    {
+        SetGWorld(maccurses_world, NULL);
+        TextFont(maccurses_fontfamily);
+        /*TextMode(transparent);*/
+        TextMode(srcCopy);
+        TextFace(0);
+        TextSize(maccurses_fontsize);
+        SetGWorld(maccurses_port, maccurses_device);
+    }
     maccurses_size.v = coords.bottom - coords.top;
     maccurses_size.h = coords.right - coords.left;
     maccurses_w = maccurses_size.h / maccurses_widMax;
@@ -2150,6 +2287,16 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
 
 static int maccurses_endwin(void)
 {
+    if (maccurses_pixmap)
+    {
+        UnlockPixels(maccurses_pixmap);
+        maccurses_pixmap = 0;
+    }
+    if (maccurses_world)
+    {
+        DisposeGWorld(maccurses_world);
+        maccurses_world = 0;
+    }
     if (maccurses_oldMainMenu != NULL)
     {
         SetMenuBar(maccurses_oldMainMenu);
@@ -2197,6 +2344,25 @@ static int maccurses_getyx(int *y, int *x)
 
 static int maccurses_refresh(void)
 {
+    if (maccurses_valid && maccurses_world && maccurses_pixmap)
+    {
+        const BitMap *sourceBitMap, *destBitMap;
+        Rect sourceRect, destRect;
+
+        sourceRect.top = 0;
+        sourceRect.left = 0;
+        sourceRect.right = maccurses_size.h;
+        sourceRect.bottom = maccurses_size.v;
+        destRect = sourceRect;
+        sourceBitMap = GetPortBitMapForCopyBits((CGrafPtr) maccurses_world);
+        destBitMap = GetPortBitMapForCopyBits(maccurses_port);
+        CopyBits(sourceBitMap,
+                 destBitMap,
+                 &sourceRect,
+                 &destRect,
+                 srcCopy,
+                 NULL);
+    }
     return OK;
 }
 
@@ -2351,7 +2517,7 @@ static int maccurses_getch(void)
         maccurses_new_h = maccurses_h;
         maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
     }
-    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | mDownMask | mUpMask | osMask | highLevelEventMask,
+    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | mUpMask | osMask | highLevelEventMask,
                          &er, IsWindowCollapsed(maccurses_hwnd) ? 30 : 0, NULL)
            ||
            IsWindowCollapsed(maccurses_hwnd))
@@ -2366,6 +2532,13 @@ static int maccurses_getch(void)
             }
             continue;
         }
+        if (er.what == updateEvt)
+        {
+            BeginUpdate(maccurses_hwnd);
+            maccurses_refresh();
+            EndUpdate(maccurses_hwnd);
+            continue;
+        }
         if (IsWindowCollapsed(maccurses_hwnd)
             &&
             er.what == nullEvent)
@@ -2378,7 +2551,7 @@ static int maccurses_getch(void)
         {
             while (1)
             {
-                WaitNextEvent(osMask | activMask | mDownMask | highLevelEventMask, &er, 60, NULL);
+                WaitNextEvent(osMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | highLevelEventMask, &er, 60, NULL);
                 if (er.what == kHighLevelEvent)
                 {
                     AEProcessAppleEvent(&er);
@@ -2387,6 +2560,13 @@ static int maccurses_getch(void)
                         maccurses_gotQuitEvent = FALSE;
                         return 'q';
                     }
+                    continue;
+                }
+                if (er.what == updateEvt)
+                {
+                    BeginUpdate(maccurses_hwnd);
+                    maccurses_refresh();
+                    EndUpdate(maccurses_hwnd);
                     continue;
                 }
                 if (((er.what == osEvt)
@@ -2432,6 +2612,13 @@ static int maccurses_getch(void)
                     }
                     break;
                 }
+#ifndef __CARBON__
+                case inSysWindow:
+                {
+                    SystemClick(&er, win);
+                    break;
+                }
+#endif
                 }
             }
             else
@@ -2546,9 +2733,45 @@ static int maccurses_getch(void)
         {
             if (er.modifiers & cmdKey)
             {
-                long msr;
+                UInt32 msr;
 
+                /* The Carbon version of MenuEvent works correctly for
+                 * Shift-Command-<Key> combinations; the older
+                 * Appearance Manager version does not, and
+                 * furthermore does not exist on pre-Appearance
+                 * Manager versions of the system. */
+#ifdef __CARBON__
                 msr = MenuEvent(&er);
+#else /* ! defined(__CARBON__) */
+                UInt16 ch;
+
+                ch = er.message & charCodeMask;
+                /* Handle other modifiers by trying to re-map the
+                 * keypress without the Command key;we only use the
+                 * result if it's plain-ASCII. */
+                if (er.modifiers & ~cmdKey)
+                {
+                    void *keymap;
+
+                    keymap = (void *) GetScriptManagerVariable(smKCHRCache);
+                    if (keymap)
+                    {
+                        UInt32 keystate, nch;
+
+                        keystate = 0;
+                        nch = KeyTranslate(keymap,
+                                           ((er.message & keyCodeMask) >> 8) | (er.modifiers & ~(cmdKey | 0xff)),
+                                           &keystate);
+                        if ((nch > 0)
+                            &&
+                            (nch <= 0x7f))
+                        {
+                            ch = nch;
+                        }
+                    }
+                }
+                msr = MenuKey(ch);
+#endif /* ! defined(__CARBON__) */
                 if (msr >> 16)
                 {
                     ret = maccurses_doMenuItem(msr);
@@ -2685,7 +2908,16 @@ static int maccurses_addch(maccurses_chtype ch)
         Boolean usefake = false;
         maccurses_attr_t attr, attr_extra;
         Pattern black;
+        CGrafPtr oldPort;
+        GDHandle oldDevice;
 
+        oldPort = 0;
+        oldDevice = 0;
+        if (maccurses_world && maccurses_pixmap)
+        {
+            GetGWorld(&oldPort, &oldDevice);
+            SetGWorld(maccurses_world, NULL);
+        }
         GetQDGlobalsBlack(&black);
         attr = maccurses_attr | (ch & _MACCURSES_A_ATTR);
         ch &= _MACCURSES_A_CHARTEXT;
@@ -2929,8 +3161,7 @@ static int maccurses_addch(maccurses_chtype ch)
             }
             if (atsuok != false)
             {
-                maccurses_move(maccurses_y, maccurses_x + wcw);
-                return OK;
+                goto done;
             }
         }
 #endif /* defined(UNICODE) */
@@ -3204,6 +3435,11 @@ static int maccurses_addch(maccurses_chtype ch)
         {
             DrawString(si);
         }
+      done:
+        if (maccurses_world && maccurses_pixmap)
+        {
+            SetGWorld(oldPort, oldDevice);
+        }
     }
     maccurses_move(maccurses_y, maccurses_x + wcw);
     return OK;
@@ -3260,7 +3496,13 @@ static int maccurses_clrtobot(void)
 static int maccurses_erase(void)
 {
     Rect coords;
+    CGrafPtr oldPort;
+    GDHandle oldDevice;
 
+    if (! maccurses_valid)
+    {
+        return ERR;
+    }
     maccurses_clrtoeol();
     GetWindowBounds(maccurses_hwnd,
                     kWindowContentRgn,
@@ -3269,7 +3511,18 @@ static int maccurses_erase(void)
     coords.left -= coords.left;
     coords.bottom -= coords.top;
     coords.top -= coords.top;
+    oldPort = 0;
+    oldDevice = 0;
+    if (maccurses_world && maccurses_pixmap)
+    {
+        GetGWorld(&oldPort, &oldDevice);
+        SetGWorld(maccurses_world, NULL);
+    }
     EraseRect(&coords);
+    if (maccurses_world && maccurses_pixmap)
+    {
+        SetGWorld(oldPort, oldDevice);
+    }
     return OK;
 }
 
