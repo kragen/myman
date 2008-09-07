@@ -522,7 +522,7 @@ for size in {all_sizes}
                 # Memory partition sizes arrived at empirically:
                 #     ppc: 700k
                 set MEMSIZE 700 &&
-                #     carbon: 1400k
+                #     carbon: 1200k
                 for carbonhost in carbon-ppc carbon-atsu carbon
                     if ":{{carbonhost}}" == ":{{host}}"
                         set MEMSIZE 1400 &&
