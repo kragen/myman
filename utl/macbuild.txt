@@ -483,6 +483,7 @@ for size in {all_sizes}
             delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
             delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
             delete -i "{{obj}}"mygetopt.c.o "{{obj}}"mygetopt.c.x &&
+            delete -i "{{obj}}{{hostsize}}".r &&
             delete -i "{{hostsize}}".NJ "{{hostsize}}".SYM "{{hostsize}}".xcoff "{{hostsize}}".68k.NJ "{{hostsize}}".68k.SYM "{{hostsize}}".ppc.xcoff "{{hostsize}}".68k "{{hostsize}}".ppc &&
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if {{buildMode}} != 0
@@ -517,6 +518,29 @@ for size in {all_sizes}
                 for lib in CarbonAccessors.o
                     set PPCLIBS "{{LIBS}} ``quote "{{PPCLibraries}}{{lib}}"``"
                 end &&
+
+                # Memory partition sizes arrived at empirically:
+                #     ppc: 700k
+                set MEMSIZE 700 &&
+                #     carbon: 1400k
+                for carbonhost in carbon-ppc carbon-atsu carbon
+                    if ":{{carbonhost}}" == ":{{host}}"
+                        set MEMSIZE 1400 &&
+                        break
+                    end
+                end &&
+                #     68k: 600k
+                for 68khost in mpw-68k 68k
+                    if ":{{68khost}}" == ":{{host}}"
+                        set MEMSIZE 600 &&
+                        break
+                    end
+                end &&
+
+                # Let MultiFinder know our memory requirements and
+                # that we're 32-bit clean and event-aware
+                echo '#include "Types.r"' > "{{obj}}{{hostsize}}".r &&
+                echo "resource 'SIZE' (-1) "'{'"0,1,0,1,1,0,0,0,1,1,0,0,0,0,0,0,{{MEMSIZE}}*1024,{{MEMSIZE}}*1024"'}'";" >> "{{obj}}{{hostsize}}".r &&
 
                 set HOSTFLAGS "{{CREATEMAKEFLAGS}}" &&
                 if ":{{host}}" == ":mpw"
@@ -557,19 +581,19 @@ for size in {all_sizes}
                     set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon-ppc"
                     # Carbon QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon -noSizeRsrc"
                 else if ":{{host}}" == ":carbon-atsu"
                     # Carbon ATSUI application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon -noSizeRsrc"
                     set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon"
                     # Carbon + 68k "fat" QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -fat -carbon -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -fat -carbon -noSizeRsrc -model far"
                 else
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
                 end &&
-                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:mygetopt.c {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
+                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:mygetopt.c "{{obj}}{{hostsize}}".r {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
 
                 # HACK: tweak CFM-68K builds to use the pure 32-bit model
                 if ":{{host}}" == ":cfm" or ":{{host}}" == ":cfm-68k"
@@ -583,6 +607,7 @@ for size in {all_sizes}
                 delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
                 delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
                 delete -i "{{obj}}"mygetopt.c.o "{{obj}}"mygetopt.c.x &&
+                delete -i "{{obj}}{{hostsize}}".r &&
                 delete -i "{{hostsize}}".NJ "{{hostsize}}".SYM "{{hostsize}}".xcoff "{{hostsize}}".68k.NJ "{{hostsize}}".68k.SYM "{{hostsize}}".ppc.xcoff "{{hostsize}}".68k "{{hostsize}}".ppc &&
                 delete -i "{{hostsize}}".make "{{hostsize}}".makeout
             end
