@@ -354,8 +354,16 @@ QDGlobals qd;
 /* Look up traps by A-Trap constant */
 static UniversalProcPtr maccurses_getTrapAddress(UInt16 aTrapNum)
 {
-    if (aTrapNum >= 0xa800L)
+    if (aTrapNum & 0x0800)
     {
+        if ((aTrapNum & 0x0200)
+            &&
+            (NGetTrapAddress(_InitGraf & 0x3ff, ToolTrap)
+              ==
+             (NGetTrapAddress((_InitGraf ^ 0x0200) & 0x3ff, ToolTrap))))
+        {
+            aTrapNum = _Unimplemented;
+        }
         return NGetTrapAddress(aTrapNum & 0x3ff, ToolTrap);
     }
     return NGetTrapAddress(aTrapNum & 0xff, OSTrap);
@@ -399,6 +407,43 @@ static void maccurses_Microseconds(UnsignedWide *microTickCount)
 #define Microseconds maccurses_Microseconds
 
 #endif /* ! (defined(TARGET_RT_MAC_CFM) && TARGET_RT_MAC_CFM || defined(__CFM68K__)) */
+
+static UniversalProcPtr maccurses_trapWaitNextEvent;
+
+static Boolean maccurses_WaitNextEvent(EventMask eventMask,
+                                       EventRecord *theEvent,
+                                       UInt32 sleep,
+                                       RgnHandle mouseRgn)
+{
+    if (! maccurses_trapUnimplemented)
+    {
+        maccurses_trapUnimplemented = maccurses_getTrapAddress(_Unimplemented);
+    }
+    if (! maccurses_trapWaitNextEvent)
+    {
+        maccurses_trapWaitNextEvent = maccurses_getTrapAddress(_WaitNextEvent);
+    }
+    if (maccurses_trapWaitNextEvent == maccurses_trapUnimplemented)
+    {
+        while (1)
+        {
+            Boolean ret;
+
+            SystemTask();
+            ret = GetNextEvent(eventMask, theEvent);
+            if ((ret != FALSE) || (theEvent->what != nullEvent))
+            {
+                return ret;
+            }
+            if (! sleep) return FALSE;
+            Delay(1, NULL);
+            sleep --;
+        }
+    }
+    return WaitNextEvent(eventMask, theEvent, sleep, mouseRgn);
+}
+#undef WaitNextEvent
+#define WaitNextEvent maccurses_WaitNextEvent
 
 static UniversalProcPtr maccurses_trapAppearanceDispatch;
 
@@ -727,7 +772,7 @@ static int maccurses_usleep(unsigned long us)
     while (1)
     {
         SpinCursor(32);
-        if (WaitNextEvent(highLevelEventMask, &er, us / 60000, NULL))
+        if (WaitNextEvent(highLevelEventMask, &er, us / 16667, NULL))
         {
             if (er.what == kHighLevelEvent)
             {
