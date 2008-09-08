@@ -42,7 +42,7 @@ if `echo -n "{{char_not_sign}}{{char_bullet}}{{char_infinity}}{{char_partial_dif
 end
 
 ### Building MyMan for Carbon and Classic Mac OS in MPW Shell
-#
+##
 ## 1) Install the Macintosh Programmer's Workshop (MPW),
 ##    including the "Updated Components".
 ##
@@ -520,19 +520,12 @@ for size in {all_sizes}
                 end &&
 
                 # Memory partition sizes arrived at empirically:
-                #     ppc: 700k
+                #     ppc and 68k: 700k
                 set MEMSIZE 700 &&
                 #     carbon: 1200k
                 for carbonhost in carbon-ppc carbon-atsu carbon
                     if ":{{carbonhost}}" == ":{{host}}"
                         set MEMSIZE 1400 &&
-                        break
-                    end
-                end &&
-                #     68k: 600k
-                for 68khost in mpw-68k 68k
-                    if ":{{68khost}}" == ":{{host}}"
-                        set MEMSIZE 600 &&
                         break
                     end
                 end &&
