@@ -28,33 +28,28 @@
  * This code is mostly written in an interoperable common subset of
  * Carbon and Toolbox.
  *
- * Because it uses Quickdraw, compiling it against recent Mac OS
- * X-oriented SDKs produces lots of (expected) deprecation warnings.
+ * Use gcc to build a "Universal", Intel x86, or 32-bit PowerPC Mach-O
+ * Carbon application for Mac OS X. Since Quickdraw is deprecated
+ * these days you will see lots of warning messages.
  *
- * When built under Mac OS X with gcc, the resulting "fat" 32-bit PowerPC
- * and x86 Carbon application runs under Mac OS X.
+ * Use MPW to build a 32-bit PowerPC Carbon CFM application for Mac OS
+ * X, Mac OS 9.x, and Mac OS 8.6. Requires CarbonLib 1.6 runtime on
+ * Mac OS 8.6/9.x.
  *
- * When built under "Classic" Mac OS with MPW, it compiles into a PowerPC
- * and/or 68k MPW Tool, a PowerPC and/or 68k Toolbox application, or an
- * x86 and/or PowerPC Carbon application optionally also including a 68k
- * Toolbox application.
+ * Use MPW to build a "Fat", PowerPC, or 68k Toolbox application for
+ * Mac OS 9.x or earlier, although it is unlikely to work with System
+ * versions prior to System 7 (or prior to System version 4.1 if you
+ * use the Universal Interfaces 2.1.5 SDK for the 68k part.)
  *
- * When built under MPW as a PowerPC Carbon + 68k Toolbox "fat"
- * application, the resulting application runs under Mac OS X (native on
- * PowerPC or through "Rosetta" binary translation on Intel) or under Mac
- * OS 8.6 through 9.x with CarbonLib 1.6 on a PowerPC, or under System
- * 7.0 or above on a 68k. If you're running the resulting application
- * under Mac OS X and would like to see the stdout/stderr results on your
- * terminal or use them in a script, use LaunchCFMApp (it's actually
- * /System/Library/Frameworks/Carbon.framework/Versions/Current/Support/LaunchCFMApp
- * on my machine) followed by the path to the executable.
+ * Use MPW to build a "Fat" PowerPC Carbon CFM + 68k Toolbox
+ * application for Mac OS X on, Mac OS 9.x, and Mac OS 8.6 on PowerPC
+ * and for Mac OS 8.1 or earlier on 68k (see previous paragraph for
+ * minimum version guesses.)
  *
- * When built under MPW as a PowerPC + 68k Toolbox "fat" application, the
- * resulting application theoretically runs under System 7 (or System 6
- * and possibly earlier if using the old Universal Interfaces 2.1.5 SDK)
- * through Mac OS 9.x on 68k or PowerPC processors.
+ * Use MPW to build a "Fat", PowerPC, or 68k MPW Tool.
  *
- * See macbuild.txt for more information on the MPW builds.
+ * See utl/macbuild.txt for more information on installing and
+ * building with MPW.
  *
  */
 
