@@ -1767,7 +1767,7 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         {
             maccurses_hwnd = NewWindow(0, &coords, maccurses_title, true, zoomDocProc, (WindowRef)-1L, true, MACCURSES_MAINWIN);
         }
-        SetEventMask(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | osMask | highLevelEventMask);
+        SetEventMask(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mUpMask | mDownMask | osMask | highLevelEventMask);
         maccurses_port = GetWindowPort(maccurses_hwnd);
         SetPort((GrafPtr) maccurses_port);
     }
@@ -2557,7 +2557,7 @@ static int maccurses_getch(void)
         maccurses_new_h = maccurses_h;
         maccurses_resize_pending = _MACCURSES_RESIZE_TIMER;
     }
-    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | mUpMask | osMask | highLevelEventMask,
+    while (WaitNextEvent(keyDownMask | autoKeyMask | activMask | (maccurses_pixmap ? updateMask : 0) | mUpMask | mDownMask | osMask | highLevelEventMask,
                          &er, IsWindowCollapsed(maccurses_hwnd) ? 30 : 0, NULL)
            ||
            IsWindowCollapsed(maccurses_hwnd))
@@ -2591,7 +2591,7 @@ static int maccurses_getch(void)
         {
             while (1)
             {
-                WaitNextEvent(osMask | activMask | (maccurses_pixmap ? updateMask : 0) | mDownMask | highLevelEventMask, &er, 60, NULL);
+                WaitNextEvent(osMask | activMask | (maccurses_pixmap ? updateMask : 0) | mUpMask | mDownMask | highLevelEventMask, &er, 60, NULL);
                 if (er.what == kHighLevelEvent)
                 {
                     AEProcessAppleEvent(&er);
