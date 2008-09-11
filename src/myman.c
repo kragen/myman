@@ -8148,6 +8148,7 @@ main(int argc, char *argv[]
                                            (((float) maze_n) * 5.0 * ((float) maze_h))
                                            +
                                            0.5));
+                            fflush(stderr);
                         }
                     }
                     for (j = 0; j <= maze_w; j ++)
