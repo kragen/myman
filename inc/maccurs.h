@@ -39,12 +39,15 @@
  * Use MPW to build a "Fat", PowerPC, or 68k Toolbox application for
  * Mac OS 9.x or earlier, although it is unlikely to work with System
  * versions prior to System 7 (or prior to System version 4.1 if you
- * use the Universal Interfaces 2.1.5 SDK for the 68k part.)
+ * use the Universal Interfaces 2.1.5 SDK for the 68k compilation.)
+ * This also seems to work in the final freeware version of ARDI's
+ * "Executor" cleanroom reimplementation of Toolbox and Mac OS/System
+ * 7 for Intel Linux, Win32, etc.
  *
  * Use MPW to build a "Fat" PowerPC Carbon CFM + 68k Toolbox
- * application for Mac OS X on, Mac OS 9.x, and Mac OS 8.6 on PowerPC
- * and for Mac OS 8.1 or earlier on 68k (see previous paragraph for
- * minimum version guesses.)
+ * application for Mac OS X, Mac OS 9.x, and Mac OS 8.6 on PowerPC
+ * and for Mac OS 8.1 or earlier on 68k (see previous paragraphs for
+ * guesses about compatibility.)
  *
  * Use MPW to build a "Fat", PowerPC, or 68k MPW Tool.
  *
