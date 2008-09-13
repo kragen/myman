@@ -151,6 +151,12 @@ if {#} <> 0
             set debugMode 1
         else if :"{{1}}" == :"-c"
             set -e C C
+        else if :"{{1}}" == :"-ppcc"
+            set -e PPCC PPCC
+        else if :"{{1}}" == :"-gcc-68k"
+            set -e C gC
+        else if :"{{1}}" == :"-gcc-ppc"
+            set -e PPCC gC
         else if :"{{1}}" == :"-help" or :"{{1}}" == :"-h"
             echo '#usage: '"{{0}}"' [ OPTION ... ] [ HOST[-SIZE] | SIZE ] ...'
             echo "#options to select an action:"
@@ -164,7 +170,10 @@ if {#} <> 0
             echo "#-sdkroot DIR    use the MPW SDK (Interfaces&Libraries) in directory DIR"
             echo "#-sdkroot-68k DIR"
             echo "#                use the MPW 68k SDK (Interfaces&Libraries) in directory DIR"
-            echo "#-c              use the old MPW C compiler "'"C"'" for 68k code"
+            echo "#-c              use the C compiler "'"C"'" for 68k compilation"
+            echo "#-ppcc           use the C compiler "'"PPCC"'" for PowerPC compilation"
+            echo "#-gcc-68k        use "'"gC"'" (m68k-macos-gcc) for 68k compilation"
+            echo "#-gcc-ppc        use "'"gC"'" (powerpc-macos-gcc) for PowerPC compilation"
             echo "#host and size selecion:"
             echo "#-all            build and/or clean all possible hosts and sizes"
             echo "#-host HOST      select the given host; multiple hosts can be selected by repeating this option"
