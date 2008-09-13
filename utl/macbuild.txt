@@ -149,6 +149,8 @@ if {#} <> 0
             set cleanMode 1
         else if :"{{1}}" == :"-debug"
             set debugMode 1
+        else if :"{{1}}" == :"-c"
+            set -e C C
         else if :"{{1}}" == :"-help" or :"{{1}}" == :"-h"
             echo '#usage: '"{{0}}"' [ OPTION ... ] [ HOST[-SIZE] | SIZE ] ...'
             echo "#options to select an action:"
@@ -162,6 +164,7 @@ if {#} <> 0
             echo "#-sdkroot DIR    use the MPW SDK (Interfaces&Libraries) in directory DIR"
             echo "#-sdkroot-68k DIR"
             echo "#                use the MPW 68k SDK (Interfaces&Libraries) in directory DIR"
+            echo "#-c              use the old MPW C compiler "'"C"'" for 68k code"
             echo "#host and size selecion:"
             echo "#-all            build and/or clean all possible hosts and sizes"
             echo "#-host HOST      select the given host; multiple hosts can be selected by repeating this option"
@@ -488,7 +491,7 @@ for size in {all_sizes}
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if {{buildMode}} != 0
                 # C compiler flags, all architectures
-                set CFLAGS "-x -noMapCR -includes unix -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
+                set CFLAGS "-x -noMapCR -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
 
                 # Extra flags for the 68k C compiler
                 set 68KCFLAGS "" &&
