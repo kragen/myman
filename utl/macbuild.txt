@@ -563,37 +563,37 @@ for size in {all_sizes}
                     set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":ppc"
                     # Classic PowerPC toolbox QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {PPCLIBS} {LIBS}`` -powerpc"
                 else if ":{{host}}" == ":68k"
                     # Classic 68k toolbox QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {LIBS}`` -68k -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {LIBS}`` -68k -model far"
                 else if ":{{host}}" == ":fat"
                     # Classic 68k + PowerPC "fat" toolbox QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -fat -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {PPCLIBS} {LIBS}`` -fat -model far"
                 else if ":{{host}}" == ":cfm-68k"
                     # Classic CFM-68K toolbox QuickDraw Text application (BROKEN: DOES NOT RUN)
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {LIBS}`` -68k -model cfm68k"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {LIBS}`` -68k -model cfm68k"
                     # HACK: optimizing for space breaks the CFM-68K build, so we disable that
                     set HOSTFLAGS "``echo "{{HOSTFLAGS}}" | streamedit -e '/-opt size/ rep /-opt size/ ""'``"
                 else if ":{{host}}" == ":cfm"
                     # Classic CFM-68K + PowerPC "fat" toolbox QuickDraw Text application (BROKEN: DOES NOT RUN)
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -fat -model cfm68k"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {PPCLIBS} {LIBS}`` -fat -model cfm68k"
                     # HACK: optimizing for space breaks the CFM-68K build, so we disable that
                     set HOSTFLAGS "``echo "{{HOSTFLAGS}}" | streamedit -e '/-opt size/ rep /-opt size/ ""'``"
                 else if ":{{host}}" == ":atsu"
                     # Classic PowerPC toolbox ATSUI application
-                    set HOSTFLAGS "{{HOSTFLAGS}} ``quote {PPCLIBS} {LIBS}`` -powerpc"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa ``quote {PPCLIBS} {LIBS}`` -powerpc"
                     set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon-ppc"
                     # Carbon QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon -noSizeRsrc"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa -powerpc -carbon -noSizeRsrc"
                 else if ":{{host}}" == ":carbon-atsu"
                     # Carbon ATSUI application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -powerpc -carbon -noSizeRsrc"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa -powerpc -carbon -noSizeRsrc"
                     set PPCCFLAGS "{{PPCCFLAGS}} -D UNICODE=1"
                 else if ":{{host}}" == ":carbon"
                     # Carbon + 68k "fat" QuickDraw Text application
-                    set HOSTFLAGS "{{HOSTFLAGS}} -fat -carbon -noSizeRsrc -model far"
+                    set HOSTFLAGS "{{HOSTFLAGS}} -c MyMa -fat -carbon -noSizeRsrc -model far"
                 else
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
