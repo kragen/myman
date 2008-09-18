@@ -497,6 +497,16 @@ ifeq ($(subst default,undefined,$(origin MYMAN)),undefined)
 MYMAN = myman
 endif
 
+# CREATOR: four-character Macintosh cretor code
+ifeq ($(subst default,undefined,$(origin CREATOR)),undefined)
+CREATOR = MyMa
+endif
+
+# TYPE: four-character Macintosh type code
+ifeq ($(subst default,undefined,$(origin TYPE)),undefined)
+TYPE = APPL
+endif
+
 # base names for other executables
 ifeq ($(subst default,undefined,$(origin XMYMAN)),undefined)
 XMYMAN = x$(MYMAN)
@@ -3970,7 +3980,7 @@ endif
 
 ifeq (yes,$(with_mac))
 
-all:: $(MYMAN).app/Contents/Info.plist $(MYMAN).app/Contents/$(PLATFORM)/$(MYMAN)$x $(call mw,$(obj)$(MYMAN).plist)
+all:: $(MYMAN).app/Contents/Info.plist $(MYMAN).app/Contents/PkgInfo $(MYMAN).app/Contents/$(PLATFORM)/$(MYMAN)$x $(call mw,$(obj)$(MYMAN).plist)
 
 ifeq (yes,$(with_mac_icon))
 all:: $(MYMAN).app/Contents/Resources/$(MYMAN).icns
@@ -3980,7 +3990,9 @@ $(obj)$(MYMAN).plist: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@-$(REMOVE) $(call q,$@)
 	@$(ECHOLINEX) creating $(call q,$@) && \
 	(touch $(call q,$@) && \
-	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleExecutable -string $(call q,$(MYMAN_EXE)$x)) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleSignature -string $(call q,$(CREATOR))) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundlePackageType -string $(call q,$(TYPE)) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleExecutable -string $(call q,$(MYMAN_EXE)$x) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleVersion -string $(call q,$(MYMANVERSION)) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleShortVersionString -string $(call q,$(MYMANVERSION)) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) NSHumanReadableCopyright -string $(call q,$(MYMANCOPYRIGHT)) || \
@@ -3997,12 +4009,33 @@ ifeq (yes,$(with_mac_icon))
             )
 endif
 
+$(MYMAN).app/Contents/PkgInfo: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
+	@$(ECHOLINEX) creating $(call q,$@) && \
+	( \
+	echo_n= ; \
+	echo_c= ; \
+	 \
+	if test :"`echo -n \"_\"`" != :"_" ; \
+	then \
+	    echo_c='\c' ; \
+	else \
+	    echo_n='-n' ; \
+	fi ; \
+	 \
+	echo $${echo_n} $(call q,$(TYPE))$(call q,$(CREATOR))$${echo_c} > $(call q,$@)) || \
+            ( \
+                $(REMOVE) $(call q,$@) ; \
+                exit 1 \
+            )
+
 $(MYMAN).app/Contents/Info.plist: $(call mw,$(src))configure $(call mw,$(MAKEFILE))
 	@$(MKPARENTDIR)
 	@-$(REMOVE) $(call q,$@)
 	@$(ECHOLINEX) creating $(call q,$@) && \
 	(touch $(call q,$@) && \
-	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleExecutable -string $(call q,$(MYMAN)$x)) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleSignature -string $(call q,$(CREATOR))) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundlePackageType -string $(call q,$(TYPE)) && \
+	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleExecutable -string $(call q,$(MYMAN)$x) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleVersion -string $(call q,$(MYMANVERSION)) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) CFBundleShortVersionString -string $(call q,$(MYMANVERSION)) && \
 	defaults write $(call q,$(CURDIR)/$(call s,%$(call xq,.plist),%,$@)) NSHumanReadableCopyright -string $(call q,$(MYMANCOPYRIGHT)) || \
@@ -4029,7 +4062,7 @@ ifeq (yes,$(with_mac_icon))
 $(MYMAN).app/Contents/$(PLATFORM)/$(MYMAN)$x: $(call mw,$(MYMAN).app/Contents/Resources/$(MYMAN).icns)
 endif
 
-$(MYMAN).app/Contents/$(PLATFORM)/$(MYMAN)$x: $(MYMAN)$x $(call mw,$(MYMAN).app/Contents/Info.plist)
+$(MYMAN).app/Contents/$(PLATFORM)/$(MYMAN)$x: $(MYMAN)$x $(call mw,$(MYMAN).app/Contents/Info.plist) $(call mw,$(MYMAN).app/Contents/PkgInfo)
 	@$(MKPARENTDIR)
 	@$(MAKE) $(MAKELOOP) \
              install-dir-xq-$(call qxq,$(MYMAN).app/Contents/$(PLATFORM)) \
@@ -4087,7 +4120,7 @@ uninstall:: $(call mw,$(MAKEFILE))
             uninstalldirs
 
 ifeq (yes,$(with_mac))
-install-files:: $(call mw,$(obj)$(MYMAN).plist)
+install-files:: $(call mw,$(obj)$(MYMAN).plist) $(call mw,$(MYMAN).app/Contents/PkgInfo)
 endif
 
 ifeq (yes,$(with_mac_icon))
@@ -4120,6 +4153,9 @@ ifeq (yes,$(with_mac))
 	@$(MAKE) $(MAKELOOP) \
              install-data-xq-$(call qxq,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS)/Info.plist) \
              data_file=$(call qmq,$(obj)$(MYMAN).plist)
+	@$(MAKE) $(MAKELOOP) \
+             install-data-xq-$(call qxq,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS)/PkgInfo) \
+             data_file=$(call qmq,$(MYMAN).app/Contents/PkgInfo)
 	@$(MAKE) $(MAKELOOP) \
              install-program-xq-$(call qxq,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS_PLATFORM)/$(MYMAN_EXE)$x) \
              program_file=$(call qmq,$(MYMAN)$x) \
@@ -4366,6 +4402,7 @@ update-whatis:
 uninstall-files: $(call mw,$(MAKEFILE))
 ifeq (yes,$(with_mac))
 	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS)/Info.plist))
+	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS)/PkgInfo))
 	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS_PLATFORM)/$(MYMAN_EXE)$x))
 	@($(call uninstall_file,$(DESTDIR)$(appdir_MYMAN_APP_CONTENTS_RESOURCES)/$(MYMAN_ICNS)))
 endif
