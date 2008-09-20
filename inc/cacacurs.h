@@ -834,7 +834,7 @@ static int pair_content(int i, short *fg, short *bg) {
 
 /* older (pre-1.0) libcaca */
 
-#ifndef WIN32
+#if ! defined(WIN32)
 #include <wchar.h>
 #else
 #define wcwidth(ch) -1

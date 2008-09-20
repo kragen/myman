@@ -25,8 +25,8 @@
 #ifndef UTILS_H_INC
 #define UTILS_H_INC 1
 
-#ifndef WIN32
-#ifdef _WIN32
+#if ! defined(WIN32)
+#if defined(_WIN32)
 
 /* some Win32 C compilers do not define WIN32 */
 #define WIN32 1

@@ -88,7 +88,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
     return 0;
 }
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #undef usleep
 
@@ -411,7 +411,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     {
         if (strcmp(getenv("DISPCURSES_USEBIOS"), "0"))
         {
-#ifndef WIN32
+#if ! defined(WIN32)
             disp_usebios();
 #endif
         }

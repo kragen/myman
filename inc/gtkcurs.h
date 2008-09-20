@@ -94,7 +94,7 @@
 #define USE_ICONV 0
 #endif
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #include <windows.h>
 
@@ -171,7 +171,7 @@ static int gtkcurses_gettimeofday(struct timeval *tv, void *tz)
 
 #if ! HAVE_USLEEP
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #undef usleep
 
@@ -993,7 +993,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         gtkcurses_idleAdd(gtkcurses_onIdle, NULL);
 #if USE_PANGO
         gtkcurses_fontDescription = pango_font_description_from_string(font ? font :
-#ifdef WIN32
+#if defined(WIN32)
                                                                        "Courier"
 #else
                                                                        "fixed"

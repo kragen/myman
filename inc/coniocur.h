@@ -160,7 +160,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 #if ! HAVE_USLEEP
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #undef usleep
 
@@ -514,13 +514,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     {
         struct text_info screensize_info;
 
-#ifndef WIN32
+#if ! defined(WIN32)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#ifndef WIN32
+#if ! defined(WIN32)
         switch (screensize_info.currmode)
         {
         case BW40:
@@ -552,7 +552,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             coniocurses_h = screensize_info.screenheight;
         }
     }
-#ifndef WIN32
+#if ! defined(WIN32)
     if (1)
     {
         struct text_info color_info;
@@ -607,13 +607,13 @@ static int resizeterm(int y, int x)
     {
         struct text_info screensize_info;
 
-#ifndef WIN32
+#if ! defined(WIN32)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#ifndef WIN32
+#if ! defined(WIN32)
         switch (screensize_info.currmode)
         {
         case BW40:
@@ -657,13 +657,13 @@ static int coniocurses_getch(void) {
     {
         struct text_info screensize_info;
 
-#ifndef WIN32
+#if ! defined(WIN32)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#ifndef WIN32
+#if ! defined(WIN32)
         switch (screensize_info.currmode)
         {
         case BW40:

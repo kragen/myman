@@ -132,7 +132,7 @@
  *
  */
 
-#ifndef WIN32
+#if ! defined(WIN32)
 #if defined(DOS) || defined(__TURBOC__)
 
 /* some DOS C compilers do not define __MSDOS__ */
@@ -146,7 +146,7 @@
 #ifndef RAWCURS_H_INC
 #define RAWCURS_H_INC 1
 
-#ifdef WIN32
+#if defined(WIN32)
 #ifndef USE_WINCONSOLE
 #define USE_WINCONSOLE 1
 #endif
@@ -168,7 +168,7 @@
 #include <ioctl.h>
 #endif
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #include <windows.h>
 #if ! (defined(__DMC__) || defined(__TINYC__))
@@ -508,7 +508,7 @@ int rawcurses_isatty(int fd)
 
 #if ! HAVE_USLEEP
 
-#ifdef WIN32
+#if defined(WIN32)
 
 #undef usleep
 
@@ -4979,13 +4979,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
             rawcurses_stdio_conio = 1;
 #ifndef __TINYC__
-#ifndef WIN32
+#if ! defined(WIN32)
             screensize_info.currmode = -1;
 #endif
             screensize_info.screenwidth = 0;
             screensize_info.screenheight = 0;
             gettextinfo(&screensize_info);
-#ifndef WIN32
+#if ! defined(WIN32)
             switch (screensize_info.currmode)
             {
             case BW40:
@@ -5144,7 +5144,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         {
             rawcurses_color = rawcurses_stdio ? (! ((rawcurses_stdio_vt52 && ! rawcurses_stdio_st52) || rawcurses_stdio_adm3a)) : 1;
 #if USE_CONIO
-#ifndef WIN32
+#if ! defined(WIN32)
             if (rawcurses_stdio_conio)
             {
                 struct text_info color_info;
