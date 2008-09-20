@@ -1593,17 +1593,17 @@ endif
 
 # Complete preprocessing and compilation action for option 1 or 2
 ifeq ($(subst default,undefined,$(origin COMPILE)),undefined)
-ifneq (,$(findstring dmc,$(CC)))
-COMPILE = $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) -o$(call q,$@) -c $(call q,$<)
+ifneq (,$(findstring dmc,$(CC))$(findstring bcc32,$(CC)))
+COMPILE = compile() { $(ECHOLINE) $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) "$$@" -o$(call q,$@) -c $(call q,$<); $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) "$$@" -o$(call q,$@) -c $(call q,$<); }; compile
 else
-COMPILE = $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) -o $(call q,$@) -c $(call q,$<)
+COMPILE = compile() { $(ECHOLINE) $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) "$$@" -o $(call q,$@) -c $(call q,$<); $(CC) $(CFLAGS) $(CPPFLAGS) $(CINCLUDES) "$$@" -o $(call q,$@) -c $(call q,$<); }; compile
 endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCOMPILE)),undefined)
-ifneq (,$(findstring dmc,$(HOSTCC)))
-HOSTCOMPILE = $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) -o$(call q,$@) -c $(call q,$<)
+ifneq (,$(findstring dmc,$(HOSTCC))$(findstring bcc32,$(HOSTCC)))
+HOSTCOMPILE = hostcompile() { $(ECHOLINE) $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) "$$@" -o$(call q,$@) -c $(call q,$<); $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) "$$@" -o$(call q,$@) -c $(call q,$<); }; hostcompile
 else
-HOSTCOMPILE = $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) -o $(call q,$@) -c $(call q,$<)
+HOSTCOMPILE = hostcompile() { $(ECHOLINE) $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) "$$@" -o $(call q,$@) -c $(call q,$<); $(HOSTCC) $(HOSTCFLAGS) $(HOSTCPPFLAGS) $(HOSTCINCLUDES) "$$@" -o $(call q,$@) -c $(call q,$<); }; hostcompile
 endif
 endif
 
@@ -1619,14 +1619,14 @@ endif
 
 # Option 1: Link using C/C++ compiler (specified above)
 ifeq ($(subst default,undefined,$(origin LINK)),undefined)
-ifneq (,$(findstring dmc,$(CC)))
+ifneq (,$(findstring dmc,$(CC))$(findstring bcc32,$(CC)))
 LINK = $(CC) $(CFLAGS) $(EXTRACFLAGS) -o$(call q,$@) $(call q,$<)
 else
 LINK = $(CC) $(CFLAGS) $(EXTRACFLAGS) -o $(call q,$@) $(call q,$<)
 endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTLINK)),undefined)
-ifneq (,$(findstring dmc,$(HOSTCC)))
+ifneq (,$(findstring dmc,$(HOSTCC))$(findstring bcc32,$(HOSTCC)))
 HOSTLINK = $(HOSTCC) $(HOSTCFLAGS) $(EXTRAHOSTCFLAGS) -o$(call q,$@) $(call q,$<)
 else
 HOSTLINK = $(HOSTCC) $(HOSTCFLAGS) $(EXTRAHOSTCFLAGS) -o $(call q,$@) $(call q,$<)
@@ -4486,29 +4486,29 @@ $(char_newline)) | \
 
 $(obj)mygetopt$O: $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.c $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h config.h
 	@$(MKPARENTDIR)
-	$(COMPILE)
+	@$(COMPILE)
 
 ifneq ($(obj)mygetopt$O,$(obj)$(hostprefix)mygetopt$o)
 
 $(obj)$(hostprefix)mygetopt$o: $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.c $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h config.h
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE)
+	@$(HOSTCOMPILE)
 
 endif
 
 $(obj)$(MYMAN)$o: $(call mw,$(src))src/main.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(call mw,$(MAKEFILE)) config.h $(UTILS)
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE) $(WRAPPERDEFS) $(BUILTINDEFS)
+	@$(HOSTCOMPILE) $(WRAPPERDEFS) $(BUILTINDEFS)
 
 $(obj)utils$O: $(call mw,$(src))src/utils.c config.h $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(UTILS)
 	@$(MKPARENTDIR)
-	$(COMPILE) $(WRAPPERDEFS)
+	@$(COMPILE) $(WRAPPERDEFS)
 
 ifneq ($(obj)utils$O,$(obj)$(hostprefix)utils$o)
 
 $(obj)$(hostprefix)utils$o: $(call mw,$(src))src/utils.c config.h $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(UTILS)
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE) $(WRAPPERDEFS)
+	@$(HOSTCOMPILE) $(WRAPPERDEFS)
 
 endif
 
@@ -4613,7 +4613,7 @@ $(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw
 
 $(obj)$(hostprefix)$(GAME)$o: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(EXTRAICONVOPTS) $(CURSESINCLUDE) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
+	@$(HOSTCOMPILE) $(CURSOPTS) $(EXTRACURSOPTS) $(ICONVOPTS) $(EXTRAICONVOPTS) $(CURSESINCLUDE) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS) $(DATADEFS)
 
 $(GAME)$X: $(call mw,$(obj)mygetopt$O) $(call mw,$(obj)utils$O)
 
@@ -4625,11 +4625,11 @@ endif
 
 $(obj)s2v%$o: $(call mw,$(obj)s2v)%.c
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE) $(DATADEFS) $(call datafiledefs,$(word $(call s,$(call xq,$(obj)s2v)%$(call xq,$o),%,$@),$(all_variants)),$(MYMANSIZE))
+	@$(HOSTCOMPILE) $(DATADEFS) $(call datafiledefs,$(word $(call s,$(call xq,$(obj)s2v)%$(call xq,$o),%,$@),$(all_variants)),$(MYMANSIZE))
 
 $(obj)s2s%$o: $(call mw,$(obj)s2s)%.c
 	@$(MKPARENTDIR)
-	$(HOSTCOMPILE) $(DATADEFS) $(call datafiledefs,$(MYMANVARIANT),$(word $(call s,$(call xq,$(obj)s2s)%$(call xq,$o),%,$@),$(all_sizes)))
+	@$(HOSTCOMPILE) $(DATADEFS) $(call datafiledefs,$(MYMANVARIANT),$(word $(call s,$(call xq,$(obj)s2s)%$(call xq,$o),%,$@),$(all_sizes)))
 
 $(BOOTSTRAP)$X: $(call mw,$(BOOTSTRAP)$O) $(call mw,$(obj)mygetopt$O) $(call mw,$(obj)utils$O)
 	@$(MKPARENTDIR)
@@ -4637,7 +4637,7 @@ $(BOOTSTRAP)$X: $(call mw,$(BOOTSTRAP)$O) $(call mw,$(obj)mygetopt$O) $(call mw,
 
 $(BOOTSTRAP)$O: $(call mw,$(src))src/myman.c $(call mw,$(src))$(MYGETOPTDIR)/getopt.h $(call mw,$(src))$(MYGETOPTDIR)/mygetopt.h $(DRIVERS) $(UTILS) $(call mw,$(src))VERSION $(call mw,$(src))COPYRIGHT $(DRIVERS) $(UTILS) config.h
 	@$(MKPARENTDIR)
-	$(COMPILE) $(BUILDCURSOPTS) $(EXTRABUILDCURSOPTS) $(BUILDICONVOPTS) $(BUILDCURSESINCLUDE) $(EXTRABUILDICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS)
+	@$(COMPILE) $(BUILDCURSOPTS) $(EXTRABUILDCURSOPTS) $(BUILDICONVOPTS) $(BUILDCURSESINCLUDE) $(EXTRABUILDICONVOPTS) $(call gamedefs,$(MYMANVARIANT),$(MYMANSIZE)) $(WRAPPERDEFS)
 
 define variant_template
 $$(call mymanvariant_data,$1).c: $$(call mw,$$(BOOTSTRAP)$$X) $$(call mw,$$(call tilefile,$$(MYMANSIZE))) $$(call mw,$$(call spritefile,$$(MYMANSIZE))) $$(call mw,$$(call mazefile,$1))
