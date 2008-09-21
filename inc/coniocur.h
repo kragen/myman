@@ -117,12 +117,12 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 /* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
     union {
-        long long ns100;
+        __int64 ns100;
         FILETIME ft;
     } now;
     GetSystemTimeAsFileTime(&now.ft);
-    tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
-    tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+    tv->tv_usec = (long) ((now.ns100 / LIT64(10)) % LIT64(1000000));
+    tv->tv_sec = (long) ((now.ns100 - LIT64(116444736000000000)) / LIT64(10000000));
 
 #else /* ! defined(WIN32) */
 

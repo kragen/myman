@@ -1619,17 +1619,25 @@ endif
 
 # Option 1: Link using C/C++ compiler (specified above)
 ifeq ($(subst default,undefined,$(origin LINK)),undefined)
-ifneq (,$(findstring dmc,$(CC))$(findstring bcc32,$(CC)))
+ifneq (,$(findstring dmc,$(CC)))
 LINK = $(CC) $(CFLAGS) $(EXTRACFLAGS) -o$(call q,$@) $(call q,$<)
+else
+ifneq (,$(findstring bcc32,$(CC)))
+LINK = $(CC) $(CFLAGS) $(EXTRACFLAGS) -e$(call q,$@) $(call q,$<)
 else
 LINK = $(CC) $(CFLAGS) $(EXTRACFLAGS) -o $(call q,$@) $(call q,$<)
 endif
 endif
+endif
 ifeq ($(subst default,undefined,$(origin HOSTLINK)),undefined)
-ifneq (,$(findstring dmc,$(HOSTCC))$(findstring bcc32,$(HOSTCC)))
+ifneq (,$(findstring dmc,$(HOSTCC)))
 HOSTLINK = $(HOSTCC) $(HOSTCFLAGS) $(EXTRAHOSTCFLAGS) -o$(call q,$@) $(call q,$<)
 else
+ifneq (,$(findstring bcc32,$(HOSTCC)))
+HOSTLINK = $(HOSTCC) $(HOSTCFLAGS) $(EXTRAHOSTCFLAGS) -e$(call q,$@) $(call q,$<)
+else
 HOSTLINK = $(HOSTCC) $(HOSTCFLAGS) $(EXTRAHOSTCFLAGS) -o $(call q,$@) $(call q,$<)
+endif
 endif
 endif
 

@@ -33,6 +33,17 @@
 #define CHAR_SOLIDUS "/"
 #endif
 
+/* used in various WIN32 workaround functions */
+#ifdef __BORLANDC__
+#ifndef LIT64
+#define LIT64(lit) lit##L
+#endif
+#endif
+
+#ifndef LIT64
+#define LIT64(lit) lit##LL
+#endif
+
 #ifdef MACCURSES
 /* needed for the argv[0] trick */
 #ifdef macintosh
@@ -4480,9 +4491,9 @@ pager_addch(unsigned long c, chtype a)
             pager_addch__cc = pager_addch__c;
             while ((! tile_used[pager_addch__cc])
                    &&
-                   (fallback_cp437[pager_addch__cc] != pager_addch__c)
+                   (((unsigned long) (unsigned char) fallback_cp437[pager_addch__cc]) != pager_addch__c)
                    &&
-                   (fallback_cp437[pager_addch__cc] != pager_addch__cc))
+                   (((unsigned long) (unsigned char) fallback_cp437[pager_addch__cc]) != pager_addch__cc))
             {
                 pager_addch__cc = (unsigned long) (unsigned char) fallback_cp437[pager_addch__cc];
             }

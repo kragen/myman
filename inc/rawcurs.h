@@ -395,12 +395,12 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 /* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
         union {
-            long long ns100;
+            __int64 ns100;
             FILETIME ft;
         } now;
         GetSystemTimeAsFileTime(&now.ft);
-        tv->tv_usec = (long) ((now.ns100 / 10LL) % 1000000LL);
-        tv->tv_sec = (long) ((now.ns100 - 116444736000000000LL) / 10000000LL);
+        tv->tv_usec = (long) ((now.ns100 / LIT64(10)) % LIT64(1000000));
+        tv->tv_sec = (long) ((now.ns100 - LIT64(116444736000000000)) / LIT64(10000000));
 
 #else /* ! defined(WIN32) */
 
@@ -3012,13 +3012,13 @@ typedef HWND WINAPI (*rawcurses_kernel32_GetConsoleWindow_t)(void);
 typedef BOOL WINAPI (*rawcurses_kernel32_GetConsoleScreenBufferInfoEx_t)(HANDLE, rawcurses_win32_console_screen_buffer_info_ex_t *);
 typedef COORD WINAPI (*rawcurses_kernel32_GetConsoleFontSize_t)(HANDLE, DWORD);
 
-#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__))
 /* these do not exist at all in Wine */
 typedef BOOL WINAPI (*rawcurses_kernel32_GetCurrentConsoleFont_t)(HANDLE, BOOL, PCONSOLE_FONT_INFO);
 /* UNDOCUMENTED: this allows setting the console font index for a
  * given console window */
 typedef BOOL WINAPI (*rawcurses_kernel32_SetConsoleFont_t)(HANDLE, DWORD);
-#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__)) */
 
 typedef BOOL WINAPI (*rawcurses_kernel32_SetConsoleScreenBufferInfoEx_t)(HANDLE, rawcurses_win32_console_screen_buffer_info_ex_t *);
 typedef BOOL WINAPI (*rawcurses_kernel32_QueryFullProcessImageNameW_t)(HANDLE, DWORD, LPWSTR, PDWORD);
@@ -3296,12 +3296,12 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
 #endif /* ! defined(__TINYC__) */
                 CloseHandle(hConsoleProcess);
             }
-#if ! (defined(__WINE__) || defined(__WATCOMC__))
+#if ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__))
             if (tty_pid == GetCurrentProcessId())
             {
                 exename = _pgmptr;
             }
-#endif /* ! (defined(__WINE__) || defined(__WATCOMC__)) */
+#endif /* ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__)) */
         }
     }
     if (texename && lstrlen(texename))
@@ -3484,9 +3484,9 @@ static int rawcurses_win32_get_palette(rawcurses_rgb_t *palette)
         WCHAR buf[MAX_PATH];
 
         swprintf(buf,
-#ifndef __MSVCRT__
+#if ! (defined(__MSVCRT__) || defined(__BORLANDC__))
                  MAX_PATH - 1,
-#endif /* ! defined(__MSVCRT__) */
+#endif /* ! (defined(__MSVCRT__) || defined(__BORLANDC__)) */
                  L"ColorTable%2.2d", i);
         if (i == 6) ColorTable[i] = RGB(126, 63, 0);
         else ColorTable[i] = RGB(((i & 4) ? 126 : 0) + ((i & 8) ? 63 : 0), \
@@ -3574,13 +3574,13 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
     if (! ret)
     {
         rawcurses_win32_console_info_t cc;
-#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__))
         CONSOLE_FONT_INFO cfi;
 
         cfi.nFont = (DWORD) -1;
         cfi.dwFontSize.X = 0;
         cfi.dwFontSize.Y = 0;
-#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__)) */
         if (GetConsoleScreenBufferInfo(rawcurses_stdout, &rawcurses_csbi))
         {
             int i;
@@ -3679,7 +3679,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                         */
                         RegCloseKey(hkWine);
                     }
-#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__))
                     else if (kernel32)
                     {
                         rawcurses_kernel32_GetCurrentConsoleFont_t rawcurses_GetCurrentConsoleFont;
@@ -3704,7 +3704,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                             cc.dwFontSize.X = 0;
                         }
                     }
-#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__)) */
                     hConsoleProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, tty_pid);
                     if ((hConsoleProcess != INVALID_HANDLE_VALUE)
                         &&
@@ -3743,7 +3743,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                                     {
                                         SendMessage(cc.hConsoleWindow, RAWCURSES_WM_SETCONSOLEINFO, (WPARAM) remote_mapping, 0);
                                     }
-#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__))
+#if ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__))
                                     if (kernel32)
                                     {
                                         rawcurses_kernel32_SetConsoleFont_t rawcurses_SetConsoleFont;
@@ -3754,7 +3754,7 @@ static int rawcurses_win32_set_palette(rawcurses_rgb_t *palette)
                                             rawcurses_SetConsoleFont(rawcurses_stdout, cfi.nFont);
                                         }
                                     }
-#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__)) */
+#endif /* ! (defined(__WINE__) || defined(__DMC__) || defined(__TINYC__) || defined(__BORLANDC__)) */
                                     if (DuplicateHandle(hConsoleProcess, remote_mapping,
                                                         GetCurrentProcess(), &local_mapping,
                                                         0,
@@ -5616,7 +5616,7 @@ static int rawcurses_getch(void)
                                 case VK_RMENU:
                                     return ERR;
                                 }
-#if UNICODE
+#ifdef UNICODE
                                 ret = (unsigned short) irec.Event.KeyEvent.uChar.UnicodeChar;
 #else
                                 ret = (unsigned char) irec.Event.KeyEvent.uChar.AsciiChar;
