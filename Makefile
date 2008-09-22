@@ -1178,23 +1178,41 @@ endif
 ifeq ($(subst default,undefined,$(origin PPMTOWINICON)),undefined)
 PPMTOWINICON = ppmtowinicon
 endif
-ifeq ($(subst default,undefined,$(origin WINDRES)),undefined)
-WINDRES = windres
+# (Win32) resource compiler
+ifeq ($(subst default,undefined,$(origin RC)),undefined)
+RC = windres
 endif
-ifeq ($(subst default,undefined,$(origin HOSTWINDRES)),undefined)
+ifeq ($(subst default,undefined,$(origin HOSTRC)),undefined)
 ifneq ($(host),$(build))
-HOSTWINDRES = $(hostprefix)windres
+HOSTRC = $(hostprefix)windres
 else
-HOSTWINDRES = $(WINDRES)
+HOSTRC = $(RC)
 endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCOMPILE_RESOURCE)),undefined)
-ifneq (,$(findstring brc32,$(HOSTWINDRES)))
+ifneq (,$(findstring rcc,$(HOSTRC)))
 HOSTCOMPILE_RESOURCE = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
-            $(HOSTWINDRES) -r -fo $(call q,$@) $(call q,$<)
+            $(HOSTRC) -r -o$(call q,$@) $(call q,$<)
+hostbind_resource = $(ECHOLINEX) binding $(call q,$1) to $(call q,$@) && \
+            $(HOSTRC) -o$(call q,$@) $(call q,$1) || \
+            ($(ECHOLINEX) removing file $(call q,$@) && \
+                 $(REMOVE) $(call q,$@))
+else
+ifeq (,$(findstring wrc,$(HOSTRC))$(findstring windres,$(HOSTRC)))
+HOSTCOMPILE_RESOURCE = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
+            $(HOSTRC) -r -fo$(call q,$@) $(call q,$<)
+hostbind_resource = $(ECHOLINEX) binding $(call q,$1) to $(call q,$@) && \
+            $(HOSTRC) -fe$(call q,$@) $(call q,$1) || \
+            ($(ECHOLINEX) removing file $(call q,$@) && \
+                 $(REMOVE) $(call q,$@))
 else
 HOSTCOMPILE_RESOURCE = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
-            $(HOSTWINDRES) -r -o $(call q,$@) $(call q,$<)
+            $(HOSTRC) -r $(call q,$<) $(call q,$@)
+hostbind_resource = $(ECHOLINEX) binding $(call q,$1) to $(call q,$@) && \
+            $(HOSTRC) $(call q,$1) $(call q,$@) || \
+            ($(ECHOLINEX) removing file $(call q,$@) && \
+                 $(REMOVE) $(call q,$@))
+endif
 endif
 endif
 
@@ -4558,7 +4576,17 @@ $(obj)winicon$o: $(call mw,$(obj)winicon.c)
 	@$(HOSTCOMPILE)
 
 else
+ifneq (,$(findstring windres,$(HOSTRC)))
+MYMAN_objs += $(obj)winicon$o
+
+$(obj)winicon$o: $(call mw,$(obj)winicon.res)
+	@$(call hostbind_resource,$<)
+
+else
+ifeq (,$(findstring owcc,$(HOSTLINK)))
 MYMAN_objs += $(obj)winicon.res
+endif
+endif
 endif
 
 endif
@@ -4569,6 +4597,11 @@ endif
 
 $(MYMAN)$x: $(call mw,$(obj)$(MYMAN)$o) $(foreach object,$(MYMAN_objs),$(call mw,$(object)))
 	$(HOSTLINK) $(foreach object,$(MYMAN_objs),$(call q,$(object))) $(CURSESLIBS) $(ICONVLIBS) $(HOSTLIBS)
+ifeq (yes,$(with_win_icon))
+ifneq (,$(findstring owcc,$(HOSTLINK)))
+	@$(call hostbind_resource,$(obj)winicon.res)
+endif
+endif
 ifeq (yes,$(with_mac_icon))
 	@-($(call set_mac_icon,$(obj)$(MYMAN).icns) $(call q,$@))
 endif
