@@ -1188,34 +1188,14 @@ else
 HOSTWINDRES = $(WINDRES)
 endif
 endif
-ifeq ($(subst default,undefined,$(origin HOSTCOMPILE_WIN_ICON)),undefined)
-HOSTCOMPILE_WIN_ICON = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
-        $(ECHOLINE) $(call q,$(char_number_sign)include <windows.h>$(char_newline)\
-IDI_APPLICATION ICON "$(call cq,$<)"$(char_newline)\
-1 VERSIONINFO$(char_newline)\
-    FILEVERSION $(subst .,$(char_comma),$(MYMANVERSION)$(char_comma)0)$(char_newline)\
-    PRODUCTVERSION $(subst .,$(char_comma),$(MYMANVERSION)$(char_comma)0)$(char_newline)\
-    FILEFLAGSMASK 0x3f$(char_newline)\
-    FILEOS 0x4$(char_newline)\
-    FILETYPE 0x2$(char_newline)\
-BEGIN$(char_newline)\
-    BLOCK "StringFileInfo"$(char_newline)\
-    BEGIN$(char_newline)\
-        BLOCK "040904e4"$(char_newline)\
-        BEGIN$(char_newline)\
-            VALUE "CompanyName"$(char_comma) "Benjamin C. Wiley Sittler"$(char_newline)\
-            VALUE "FileDescription"$(char_comma) "The MyMan video game"$(char_newline)\
-            VALUE "FileVersion"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
-            VALUE "Full Version"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
-            VALUE "InternalName"$(char_comma) "$(call cq,$(MYMAN))"$(char_newline)\
-            VALUE "LegalCopyright"$(char_comma) "$(call cq,$(MYMANCOPYRIGHT))"$(char_newline)\
-            VALUE "OriginalFilename"$(char_comma) "$(call cq,$(MYMAN)$x)"$(char_newline)\
-            VALUE "ProductName"$(char_comma) "$(call cq,$(MYMAN))"$(char_newline)\
-            VALUE "ProductVersion"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
-        END$(char_newline)\
-    END$(char_newline)\
-END) | \
-            $(HOSTWINDRES) -o $(call q,$@)
+ifeq ($(subst default,undefined,$(origin HOSTCOMPILE_RESOURCE)),undefined)
+ifneq (,$(findstring brc32,$(HOSTWINDRES)))
+HOSTCOMPILE_RESOURCE = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
+            $(HOSTWINDRES) -r -fo $(call q,$@) $(call q,$<)
+else
+HOSTCOMPILE_RESOURCE = $(ECHOLINEX) creating $(call q,$@) from $(call q,$<) && \
+            $(HOSTWINDRES) -r -o $(call q,$@) $(call q,$<)
+endif
 endif
 
 # directory removal (empty directories only!)
@@ -3959,10 +3939,42 @@ endif
 
 ifeq (yes,$(with_win_icon))
 
-all:: $(call mw,$(obj)winicon$o)
+all:: $(call mw,$(obj)winicon.res)
 
-$(obj)winicon$o: $(obj)myman.ico $(call mw,$(MAKEFILE))
-	@$(HOSTCOMPILE_WIN_ICON)
+$(obj)winicon.rc: $(call mw,$(MAKEFILE))
+	@$(ECHOLINEX) creating $(call q,$@) && \
+        $(ECHOLINE) $(call q,$(char_number_sign)include <windows.h>$(char_newline)\
+IDI_APPLICATION ICON "$(call cq,$(obj)myman.ico)"$(char_newline)\
+1 VERSIONINFO$(char_newline)\
+    FILEVERSION $(subst .,$(char_comma),$(MYMANVERSION)$(char_comma)0)$(char_newline)\
+    PRODUCTVERSION $(subst .,$(char_comma),$(MYMANVERSION)$(char_comma)0)$(char_newline)\
+    FILEFLAGSMASK 0x3f$(char_newline)\
+    FILEOS 0x4$(char_newline)\
+    FILETYPE 0x2$(char_newline)\
+BEGIN$(char_newline)\
+    BLOCK "StringFileInfo"$(char_newline)\
+    BEGIN$(char_newline)\
+        BLOCK "040904e4"$(char_newline)\
+        BEGIN$(char_newline)\
+            VALUE "CompanyName"$(char_comma) "Benjamin C. Wiley Sittler"$(char_newline)\
+            VALUE "FileDescription"$(char_comma) "The MyMan video game"$(char_newline)\
+            VALUE "FileVersion"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
+            VALUE "Full Version"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
+            VALUE "InternalName"$(char_comma) "$(call cq,$(MYMAN))"$(char_newline)\
+            VALUE "LegalCopyright"$(char_comma) "$(call cq,$(MYMANCOPYRIGHT))"$(char_newline)\
+            VALUE "OriginalFilename"$(char_comma) "$(call cq,$(MYMAN)$x)"$(char_newline)\
+            VALUE "ProductName"$(char_comma) "$(call cq,$(MYMAN))"$(char_newline)\
+            VALUE "ProductVersion"$(char_comma) "$(call cq,$(MYMANVERSION))"$(char_newline)\
+        END$(char_newline)\
+    END$(char_newline)\
+END) > $@ || \
+            ( \
+                $(REMOVE) $(call q,$@) ; \
+                exit 1 \
+            )
+
+$(obj)winicon.res: $(call mw,$(obj)winicon.rc) $(call mw,$(obj)myman.ico)
+	@$(HOSTCOMPILE_RESOURCE)
 
 endif
 
@@ -4114,6 +4126,9 @@ endif
 	-$(REMOVE) $(foreach size,$(MYMANSIZES),$(call q,$(call mymansize_data,$(size)).c))
 	-$(REMOVE) $(hostprefix)$(GAME)$x $(call q,$(BOOTSTRAP)$X)
 	-$(REMOVE) pdcicon.bmp $(obj)myman.ico
+ifeq (yes,$(with_win_icon))
+	-$(REMOVE) $(obj)winicon.rc $(obj)winicon.res $(obj)winicon.c
+endif
 ifeq (yes,$(with_mac))
 	-$(REMOVE) $(call q,$(obj)$(MYMAN).plist)
 endif
@@ -4530,9 +4545,21 @@ MYMAN_objs = $(foreach size,$(MYMANSIZES),$(call mymansize_data,$(size))$o) $(fo
 
 ifeq (yes,$(with_win_icon))
 
-$(MYMAN)$x: $(call mw,$(obj)winicon$o)
+$(MYMAN)$x: $(call mw,$(obj)winicon.res)
 
+ifneq (,$(findstring bcc32,$(HOSTCC)))
 MYMAN_objs += $(obj)winicon$o
+
+$(obj)winicon.c: $(call mw,$(MAKEFILE))
+	@$(ECHOLINEX) creating $(call q,$@) && \
+        $(ECHOLINE) $(call q,$(char_number_sign)pragma resource "$(call cq,$(obj)winicon.res)") > $(call q,$@)
+
+$(obj)winicon$o: $(call mw,$(obj)winicon.c)
+	@$(HOSTCOMPILE)
+
+else
+MYMAN_objs += $(obj)winicon.res
+endif
 
 endif
 
