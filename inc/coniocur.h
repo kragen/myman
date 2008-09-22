@@ -514,13 +514,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     {
         struct text_info screensize_info;
 
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         switch (screensize_info.currmode)
         {
         case BW40:
@@ -541,8 +541,76 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             coniocurses_h = 43;
             break;
 #endif
+#if defined(__BORLANDC__) && defined(WIN32)
+        case C40X14:
+        case BW40X14:
+            coniocurses_w = 40;
+            coniocurses_h = 14;
+            break;
+        case C40X21:
+        case BW40X21:
+            coniocurses_w = 40;
+            coniocurses_h = 21;
+            break;
+        case C40X28:
+        case BW40X28:
+            coniocurses_w = 40;
+            coniocurses_h = 28;
+            break;
+        case C40X43:
+        case BW40X43:
+            coniocurses_w = 40;
+            coniocurses_h = 43;
+            break;
+        case C40X50:
+        case BW40X50:
+            coniocurses_w = 40;
+            coniocurses_h = 50;
+            break;
+        case C40X60:
+        case BW40X60:
+            coniocurses_w = 40;
+            coniocurses_h = 60;
+            break;
+        case C80X14:
+        case BW80X14:
+        case MONO14:
+            coniocurses_w = 80;
+            coniocurses_h = 14;
+            break;
+        case C80X21:
+        case BW80X21:
+        case MONO21:
+            coniocurses_w = 80;
+            coniocurses_h = 21;
+            break;
+        case C80X28:
+        case BW80X28:
+        case MONO28:
+            coniocurses_w = 80;
+            coniocurses_h = 28;
+            break;
+        case C80X43:
+        case BW80X43:
+        case MONO43:
+            coniocurses_w = 80;
+            coniocurses_h = 43;
+            break;
+        case C80X50:
+        case BW80X50:
+        case MONO50:
+            coniocurses_w = 80;
+            coniocurses_h = 50;
+            break;
+        case C80X60:
+        case BW80X60:
+        case MONO60:
+            coniocurses_w = 80;
+            coniocurses_h = 60;
+            break;
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
         }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
         if (screensize_info.screenwidth)
         {
             coniocurses_w = screensize_info.screenwidth;
@@ -552,7 +620,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             coniocurses_h = screensize_info.screenheight;
         }
     }
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
     if (1)
     {
         struct text_info color_info;
@@ -564,13 +632,33 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         case BW40:
         case BW80:
         case MONO:
+#if defined(__BORLANDC__) && defined(WIN32)
+        case BW40X14:
+        case BW40X21:
+        case BW40X28:
+        case BW40X43:
+        case BW40X50:
+        case BW40X60:
+        case BW80X14:
+        case BW80X21:
+        case BW80X28:
+        case BW80X43:
+        case BW80X50:
+        case BW80X60:
+        case MONO14:
+        case MONO21:
+        case MONO28:
+        case MONO43:
+        case MONO50:
+        case MONO60:
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
             coniocurses_color = 0;
             break;
         default:
             coniocurses_color = 1;
         }
     }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
     coniocurses_ready = 1;
     coniocurses_attr = -1;
     for (i = 0; i < COLOR_PAIRS; i ++)
@@ -607,13 +695,13 @@ static int resizeterm(int y, int x)
     {
         struct text_info screensize_info;
 
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         switch (screensize_info.currmode)
         {
         case BW40:
@@ -634,8 +722,76 @@ static int resizeterm(int y, int x)
             coniocurses_h = 43;
             break;
 #endif
+#if defined(__BORLANDC__) && defined(WIN32)
+        case C40X14:
+        case BW40X14:
+            coniocurses_w = 40;
+            coniocurses_h = 14;
+            break;
+        case C40X21:
+        case BW40X21:
+            coniocurses_w = 40;
+            coniocurses_h = 21;
+            break;
+        case C40X28:
+        case BW40X28:
+            coniocurses_w = 40;
+            coniocurses_h = 28;
+            break;
+        case C40X43:
+        case BW40X43:
+            coniocurses_w = 40;
+            coniocurses_h = 43;
+            break;
+        case C40X50:
+        case BW40X50:
+            coniocurses_w = 40;
+            coniocurses_h = 50;
+            break;
+        case C40X60:
+        case BW40X60:
+            coniocurses_w = 40;
+            coniocurses_h = 60;
+            break;
+        case C80X14:
+        case BW80X14:
+        case MONO14:
+            coniocurses_w = 80;
+            coniocurses_h = 14;
+            break;
+        case C80X21:
+        case BW80X21:
+        case MONO21:
+            coniocurses_w = 80;
+            coniocurses_h = 21;
+            break;
+        case C80X28:
+        case BW80X28:
+        case MONO28:
+            coniocurses_w = 80;
+            coniocurses_h = 28;
+            break;
+        case C80X43:
+        case BW80X43:
+        case MONO43:
+            coniocurses_w = 80;
+            coniocurses_h = 43;
+            break;
+        case C80X50:
+        case BW80X50:
+        case MONO50:
+            coniocurses_w = 80;
+            coniocurses_h = 50;
+            break;
+        case C80X60:
+        case BW80X60:
+        case MONO60:
+            coniocurses_w = 80;
+            coniocurses_h = 60;
+            break;
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
         }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
         if (screensize_info.screenwidth)
         {
             coniocurses_w = screensize_info.screenwidth;
@@ -657,13 +813,13 @@ static int coniocurses_getch(void) {
     {
         struct text_info screensize_info;
 
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         screensize_info.currmode = -1;
 #endif
         screensize_info.screenwidth = 0;
         screensize_info.screenheight = 0;
         gettextinfo(&screensize_info);
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
         switch (screensize_info.currmode)
         {
         case BW40:
@@ -684,8 +840,76 @@ static int coniocurses_getch(void) {
             j = 43;
             break;
 #endif
+#if defined(__BORLANDC__) && defined(WIN32)
+        case C40X14:
+        case BW40X14:
+            i = 40;
+            j = 14;
+            break;
+        case C40X21:
+        case BW40X21:
+            i = 40;
+            j = 21;
+            break;
+        case C40X28:
+        case BW40X28:
+            i = 40;
+            j = 28;
+            break;
+        case C40X43:
+        case BW40X43:
+            i = 40;
+            j = 43;
+            break;
+        case C40X50:
+        case BW40X50:
+            i = 40;
+            j = 50;
+            break;
+        case C40X60:
+        case BW40X60:
+            i = 40;
+            j = 60;
+            break;
+        case C80X14:
+        case BW80X14:
+        case MONO14:
+            i = 80;
+            j = 14;
+            break;
+        case C80X21:
+        case BW80X21:
+        case MONO21:
+            i = 80;
+            j = 21;
+            break;
+        case C80X28:
+        case BW80X28:
+        case MONO28:
+            i = 80;
+            j = 28;
+            break;
+        case C80X43:
+        case BW80X43:
+        case MONO43:
+            i = 80;
+            j = 43;
+            break;
+        case C80X50:
+        case BW80X50:
+        case MONO50:
+            i = 80;
+            j = 50;
+            break;
+        case C80X60:
+        case BW80X60:
+        case MONO60:
+            i = 80;
+            j = 60;
+            break;
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
         }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
         if (screensize_info.screenwidth)
         {
             i = screensize_info.screenwidth;

@@ -200,6 +200,18 @@
 #endif
 #endif
 
+#ifdef __BORLANDC__
+
+/* Borland C++ supports Borland-style <conio.h>, but it is inferior to
+ * their native Win32 console hooks because it doesn't support
+ * non-standard terminal dimensions, so we disable it by default. */
+
+#ifndef USE_CONIO
+#define USE_CONIO 0
+#endif
+
+#endif /* defined(__BORLANDC__) */
+
 #else /* ! defined(WIN32) */
 
 #if defined(__PACIFIC__) || defined(HI_TECH_C)
@@ -4979,13 +4991,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
             rawcurses_stdio_conio = 1;
 #ifndef __TINYC__
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
             screensize_info.currmode = -1;
 #endif
             screensize_info.screenwidth = 0;
             screensize_info.screenheight = 0;
             gettextinfo(&screensize_info);
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
             switch (screensize_info.currmode)
             {
             case BW40:
@@ -5006,8 +5018,76 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 rawcurses_h = 43;
                 break;
 #endif
+#if defined(__BORLANDC__) && defined(WIN32)
+            case C40X14:
+            case BW40X14:
+                rawcurses_w = 40;
+                rawcurses_h = 14;
+                break;
+            case C40X21:
+            case BW40X21:
+                rawcurses_w = 40;
+                rawcurses_h = 21;
+                break;
+            case C40X28:
+            case BW40X28:
+                rawcurses_w = 40;
+                rawcurses_h = 28;
+                break;
+            case C40X43:
+            case BW40X43:
+                rawcurses_w = 40;
+                rawcurses_h = 43;
+                break;
+            case C40X50:
+            case BW40X50:
+                rawcurses_w = 40;
+                rawcurses_h = 50;
+                break;
+            case C40X60:
+            case BW40X60:
+                rawcurses_w = 40;
+                rawcurses_h = 60;
+                break;
+            case C80X14:
+            case BW80X14:
+            case MONO14:
+                rawcurses_w = 80;
+                rawcurses_h = 14;
+                break;
+            case C80X21:
+            case BW80X21:
+            case MONO21:
+                rawcurses_w = 80;
+                rawcurses_h = 21;
+                break;
+            case C80X28:
+            case BW80X28:
+            case MONO28:
+                rawcurses_w = 80;
+                rawcurses_h = 28;
+                break;
+            case C80X43:
+            case BW80X43:
+            case MONO43:
+                rawcurses_w = 80;
+                rawcurses_h = 43;
+                break;
+            case C80X50:
+            case BW80X50:
+            case MONO50:
+                rawcurses_w = 80;
+                rawcurses_h = 50;
+                break;
+            case C80X60:
+            case BW80X60:
+            case MONO60:
+                rawcurses_w = 80;
+                rawcurses_h = 60;
+                break;
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
             }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
             if (screensize_info.screenwidth)
             {
                 rawcurses_w = screensize_info.screenwidth;
@@ -5144,7 +5224,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         {
             rawcurses_color = rawcurses_stdio ? (! ((rawcurses_stdio_vt52 && ! rawcurses_stdio_st52) || rawcurses_stdio_adm3a)) : 1;
 #if USE_CONIO
-#if ! defined(WIN32)
+#if ! defined(_CONIO2_H_)
             if (rawcurses_stdio_conio)
             {
                 struct text_info color_info;
@@ -5156,13 +5236,33 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 case BW40:
                 case BW80:
                 case MONO:
+#if defined(__BORLANDC__) && defined(WIN32)
+                case BW40X14:
+                case BW40X21:
+                case BW40X28:
+                case BW40X43:
+                case BW40X50:
+                case BW40X60:
+                case BW80X14:
+                case BW80X21:
+                case BW80X28:
+                case BW80X43:
+                case BW80X50:
+                case BW80X60:
+                case MONO14:
+                case MONO21:
+                case MONO28:
+                case MONO43:
+                case MONO50:
+                case MONO60:
+#endif /* defined(__BORLANDC__) && defined(WIN32) */
                     rawcurses_color = 0;
                     break;
                 default:
                     rawcurses_color = 1;
                 }
             }
-#endif /* ! defined(WIN32) */
+#endif /* ! defined(_CONIO2_H_) */
 #endif /* USE_CONIO */
 #if USE_TOSCONSOLE
             if (rawcurses_stdio_stcon)
