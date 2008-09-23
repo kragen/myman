@@ -3333,6 +3333,8 @@ lvl/scheme.asc \
 lvl/scheme.txt \
 lvl/sidtool.asc \
 lvl/sidtool.txt \
+lvl/simplej.asc \
+lvl/simplej.txt \
 lvl/sir.asc \
 lvl/sir.txt \
 lvl/small.asc \
