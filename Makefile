@@ -3190,6 +3190,8 @@ lvl/nopoint.asc \
 lvl/nopoint.txt \
 lvl/ohno.asc \
 lvl/ohno.txt \
+lvl/p4c.asc \
+lvl/p4c.txt \
 lvl/pac.asc \
 lvl/pac.txt \
 lvl/pac2.txt \
