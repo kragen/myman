@@ -2826,7 +2826,10 @@ utl/macbuild.txt \
 utl/myman.ct \
 utl/pacificc.sh \
 utl/turboc.sh \
-utl/txt2asc.sh
+utl/txt2asc.sh \
+debian/postinst \
+debian/postrm \
+debian/rules
 
 dist_data_files = \
 $(doc_files) \
@@ -3542,6 +3545,9 @@ utl/xmyman2.in \
 utl/xmyman3.in \
 utl/xmyman4.in \
 utl/xquack.in \
+debian/changelog \
+debian/control \
+fink/myman.info \
 $(website_files)
 
 website_files = \
@@ -3561,6 +3567,8 @@ spr \
 utl \
 sfx \
 gfx \
+debian \
+fink \
 $(website_dirs)
 
 website_dirs = \

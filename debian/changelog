@@ -1,0 +1,5 @@
+myman (0.7.1) unstable; urgency=low
+
+  * Initial debianization
+
+ -- Benjamin C. Wiley Sittler <bsittler@gmail.com>  Mon, 22 Sep 2008 05:30:27 -0700

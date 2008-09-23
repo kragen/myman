@@ -1,0 +1,19 @@
+Package: myman
+Version: 0.7.1
+Revision: 1
+License: BSD
+Maintainer: Benjamin C. Wiley Sittler <bsittler@gmail.com>
+Homepage: http://myman.sf.net/
+Description: the MyMan video game
+DescDetail: <<
+MyMan is a video game for color and monochrome text
+terminals in the genre of Namco's Pac-Man. It has been
+ported to a variety of operating systems using the
+following for user interaction: ncurses, PDcurses,
+Curses, sysV-curses, S/Lang slcurses, Win32 console, raw
+stdio and termios, GGI, Allegro, aalib, libcaca, TWin,
+and Carbon. It includes many maze variations and several
+tile and sprite sets, ranging from large ASCII art
+through large pseudo-bitmap Unicode or CP437 graphics to
+single characters.
+<<
