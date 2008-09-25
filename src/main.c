@@ -30,13 +30,18 @@
 #endif
 #endif
 
+/* feature guessing */
+#ifndef MYMAN_GUESS_H_INCLUDED
+#include "guess.h"
+#endif
+
 #include <ctype.h>
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
-#if ! (defined(macintosh) || defined(__PACIFIC__) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <stdlib.h>

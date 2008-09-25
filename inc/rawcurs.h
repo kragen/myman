@@ -132,15 +132,9 @@
  *
  */
 
-#if ! defined(WIN32)
-#if defined(DOS) || defined(__TURBOC__)
-
-/* some DOS C compilers do not define __MSDOS__ */
-#ifndef __MSDOS__
-#define __MSDOS__ 1
-#endif
-
-#endif
+/* feature guessing */
+#ifndef MYMAN_GUESS_H_INCLUDED
+#include "guess.h"
 #endif
 
 #ifndef MYMAN_RAWCURS_H_INCLUDED
@@ -171,12 +165,14 @@
 #if defined(WIN32)
 
 #include <windows.h>
-#if ! (defined(__DMC__) || defined(__TINYC__))
+#if HAVE_PSAPI_H
 #include <psapi.h>
+#endif
+#if HAVE_SHLWAPI_H
 #include <shlwapi.h>
 #endif
 #include <sys/stat.h>
-#ifndef __TINYC__
+#if HAVE_TLHELP32_H
 #include <tlhelp32.h>
 #endif
 
@@ -214,20 +210,18 @@
 
 #else /* ! defined(WIN32) */
 
-#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#if HAVE_SYS_H
 #include <sys.h>
-#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
+#else
 #include <fcntl.h>
-#ifndef macintosh
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
-#endif /* ! defined(macintosh) */
-#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C)) */
+#endif
+#endif
 
-#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh))
-#if ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2))
+#if HAVE_SYS_SOCKET_H
 #include <sys/socket.h>
-#endif /* ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2)) */
-#endif /* ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh)) */
+#endif
 
 #if defined(__MSDOS__) || defined(CPM)
 
@@ -683,21 +677,27 @@ rawcurses_usleep(unsigned long usecs)
 
 #endif /* USE_TOSCONSOLE */
 
-#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
-#ifdef __atarist__
-#if ((! defined(__GNUC__)) || (__GNUC__ > 2))
-#include <stdint.h>
-#endif /* ((! defined(__GNUC__)) || (__GNUC__ > 2)) */
-#else /* ! defined(__atarist__) */
+#if HAVE_WCHAR_H
 #include <wchar.h>
-#endif /* ! defined(__atarist__) */
-#endif /* ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
-
-#if defined(LSI_C) || defined(__TURBOC__)
-#ifndef wchar_t
-#define wchar_t rawcur_wchar_t
-typedef int rawcur_wchar_t;
+#else
+#if HAVE_STDINT_H
+#include <stdint.h>
 #endif
+#endif
+
+#ifndef HAVE_WCHAR_T
+#if defined(wchar_t) || (! (defined(LSI_C) || defined(__TURBOC__)))
+#define HAVE_WCHAR_T 1
+#endif
+#endif
+
+#ifndef HAVE_WCHAR_T
+#define HAVE_WCHAR_T 0
+#endif
+
+#if ! HAVE_WCHAR_T
+#define wchar_t rawcurses_wchar_t
+typedef int rawcurses_wchar_t;
 #endif
 
 #if USE_CONIO || USE_CONIO_INPUT

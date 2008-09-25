@@ -362,7 +362,7 @@ if {{buildMode}} != 0
     set MYMANCOPYRIGHT "``catenate "{{src}}"COPYRIGHT | :u2m``" &&
 
     # convert source and include file type codes to 'TEXT'
-    setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h
+    setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:guess.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h
 
 end &&
 

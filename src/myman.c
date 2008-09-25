@@ -30,6 +30,11 @@
 #endif
 #endif
 
+/* feature guessing */
+#ifndef MYMAN_GUESS_H_INCLUDED
+#include "guess.h"
+#endif
+
 /* used in macbuild.txt to avoid 8bit chars */
 #ifndef CHAR_SOLIDUS
 #define CHAR_SOLIDUS "/"
@@ -84,21 +89,21 @@
 #endif
 
 #include <limits.h>
-#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#if HAVE_LOCALE_H
 #include <locale.h>
 #endif
 #include <math.h>
 #include <ctype.h>
-#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
+#if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 #include <stdio.h>
-#if defined(__PACIFIC__) || defined(HI_TECH_C)
+#if HAVE_UNIXIO_H
 #include <unixio.h>
 #endif
 #include <stdlib.h>
-#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__))
+#if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
 #include <time.h>
@@ -108,7 +113,7 @@
 #include "utils.h"
 #endif
 
-#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__))
+#if HAVE_LANGINFO_H
 #include <langinfo.h>
 #endif
 
@@ -315,13 +320,11 @@
 #endif
 
 #if USE_IOCTL
-#if defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)
+#if HAVE_IOCTL_H
 #include <ioctl.h>
 #else
-#ifndef __TURBOC__
-#if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
+#if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif
 #endif
 #endif
 #ifdef TIOCGWINSZ
@@ -356,10 +359,18 @@
 #if USE_ICONV
 #include <iconv.h>
 #ifndef wcwidth
+#if HAVE_WCHAR_H
 #include <wchar.h>
 #endif
+#endif
+#ifdef LC_CTYPE
+#ifndef uint32_t
 /* for uint32_t */
+#if HAVE_STDINT_H
 #include <stdint.h>
+#endif
+#endif
+#endif
 
 static iconv_t cd_to_wchar = (iconv_t) -1;
 

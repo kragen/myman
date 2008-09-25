@@ -23,10 +23,24 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifdef macintosh
-#include <types.h>
-#else
+/* HAVE_SYS_TYPES_H: do we have <sys/types.h>? */
+
+#ifndef HAVE_SYS_TYPES_H
+#ifndef macintosh
 #ifndef __PACIFIC__
+#define HAVE_SYS_TYPES_H 1
+#endif
+#endif
+#endif
+
+#ifndef HAVE_SYS_TYPES_H
+#define HAVE_SYS_TYPES_H 0
+#endif
+
+#ifdef macintosh
+#include <Types.h>
+#else
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 #endif

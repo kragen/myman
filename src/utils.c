@@ -37,6 +37,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef EINVAL
+#ifdef EARG
+#define EINVAL EARG
+#else
+#define EINVAL EDOM
+#endif
+#endif
+
 #ifdef macintosh
 #if TARGET_API_MAC_CARBON
 /* Case 1: flat Carbon headers */

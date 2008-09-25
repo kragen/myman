@@ -2943,6 +2943,7 @@ inc/dispcurs.h \
 inc/fltkcurs.h \
 inc/ggicurs.h \
 inc/gtkcurs.h \
+inc/guess.h \
 inc/maccurs.h \
 inc/mycurses.h \
 inc/newtcurs.h \
@@ -3589,7 +3590,7 @@ DRIVERS = $(call mw,${src}inc/sdlcurs.h) $(call mw,${src}inc/ggicurs.h) $(call m
 endif
 
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
-UTILS = $(call mw,${src}inc/utils.h) $(call mw,${src}src/utils.c)
+UTILS = $(call mw,${src}inc/guess.h) $(call mw,${src}inc/utils.h) $(call mw,${src}src/utils.c)
 endif
 
 .PHONY: push-website
@@ -4715,7 +4716,7 @@ ${BOOTSTRAP}$X: $(call mw,${BOOTSTRAP}$O) $(call mw,${obj}mygetopt$O) $(call mw,
 	@${MKPARENTDIR}
 	${LINK} ${BUILDCURSESLIBS} ${BUILDICONVLIBS} $(call q,${obj}mygetopt$O) $(call mw,${obj}utils$O) ${LIBS}
 
-${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} ${UTILS} $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} config.h
+${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} config.h
 	@${MKPARENTDIR}
 	@${COMPILE} ${BUILDCURSOPTS} ${EXTRABUILDCURSOPTS} ${BUILDICONVOPTS} ${BUILDCURSESINCLUDE} ${EXTRABUILDICONVOPTS} $(call gamedefs,${MYMANVARIANT},${MYMANSIZE}) ${WRAPPERDEFS}
 
