@@ -213,7 +213,9 @@
 #if HAVE_SYS_H
 #include <sys.h>
 #else
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -771,18 +773,18 @@ typedef int rawcurses_wchar_t;
 #endif
 
 #if USE_IOCTL
-#if defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)
-#include <ioctl.h>
-#else /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)) */
-#ifdef __TURBOC__
-#include <io.h>
-#else /* ! defined(__TURBOC__) */
-#if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
+#if HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>
-#endif /* ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__)) */
-#endif /* ! defined(__TURBOC__) */
-#endif /* ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh)) */
-#endif /* USE_IOCTL */
+#else
+#if HAVE_IOCTL_H
+#include <ioctl.h>
+#else
+#if HAVE_IO_H
+#include <io.h>
+#endif
+#endif
+#endif
+#endif
 
 #undef chtype
 #define chtype rawcurses_chtype

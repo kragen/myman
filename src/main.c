@@ -37,9 +37,13 @@
 
 #include <ctype.h>
 #include <string.h>
+#if HAVE_FCNTL_H
 #include <fcntl.h>
+#endif
 #include <stdio.h>
+#if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
 #include <time.h>
 #if HAVE_UNISTD_H
 #include <unistd.h>

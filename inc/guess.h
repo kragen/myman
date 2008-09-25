@@ -36,6 +36,24 @@
 #endif
 #endif
 
+/* HAVE_FCNTL_H: do we have <fcntl.h>? */
+
+#ifndef HAVE_FCNTL_H
+#define HAVE_FCNTL_H 1
+#endif
+
+/* HAVE_IO_H: do we have <io.h>? */
+
+#ifndef HAVE_IO_H
+#ifdef __TURBOC__
+#define HAVE_IO_H 1
+#endif
+#endif
+
+#ifndef HAVE_IO_H
+#define HAVE_IO_H 0
+#endif
+
 /* HAVE_IOCTL_H: do we have <ioctl.h>? */
 
 #ifndef HAVE_IOCTL_H
@@ -102,6 +120,7 @@
 
 /* HAVE_STDINT_H: do we have <stdint.h>? */
 
+#ifndef HAVE_STDINT_H
 #if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
 #ifdef __atarist__
 #if ((! defined(__GNUC__)) || (__GNUC__ > 2))
@@ -113,21 +132,10 @@
 #define HAVE_STDINT_H 1
 #endif /* ! defined(__atarist__) */
 #endif /* ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
+#endif
 
 #ifndef HAVE_STDINT_H
 #define HAVE_STDINT_H 0
-#endif
-
-/* HAVE_WCHAR_H: do we have <wchar.h>? */
-
-#ifndef HAVE_WCHAR_H
-#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__atarist__))
-#define HAVE_WCHAR_H 1
-#endif
-#endif
-
-#ifndef HAVE_WCHAR_H
-#define HAVE_WCHAR_H 0
 #endif
 
 /* HAVE_SYS_H: do we have <sys.h>? */
@@ -145,7 +153,7 @@
 /* HAVE_SYS_IOCTL_H: do we have <sys/ioctl.h>? */
 
 #ifndef HAVE_SYS_IOCTL_H
-#if ! (defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__) || defined(__TURBOC__))
+#if ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh) || defined(__TURBOC__) || defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
 #define HAVE_SYS_IOCTL_H 1
 #endif
 #endif
@@ -166,6 +174,18 @@
 
 #ifndef HAVE_SYS_SOCKET_H
 #define HAVE_SYS_SOCKET_H 0
+#endif
+
+/* HAVE_SYS_STAT_H: do we have <sys/stat.h>? */
+
+#ifndef HAVE_SYS_STAT_H
+#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh))
+#define HAVE_SYS_STAT_H 1
+#endif
+#endif
+
+#ifndef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 0
 #endif
 
 /* HAVE_SYS_TIME_H: do we have <sys/time.h>? */
@@ -230,6 +250,18 @@
 
 #ifndef HAVE_UNIXIO_H
 #define HAVE_UNIXIO_H 0
+#endif
+
+/* HAVE_WCHAR_H: do we have <wchar.h>? */
+
+#ifndef HAVE_WCHAR_H
+#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__atarist__))
+#define HAVE_WCHAR_H 1
+#endif
+#endif
+
+#ifndef HAVE_WCHAR_H
+#define HAVE_WCHAR_H 0
 #endif
 
 #endif /* ! defined(MYMAN_GUESS_H_INCLUDED) */
