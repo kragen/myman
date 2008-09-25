@@ -316,7 +316,7 @@ char_reverse_solidus
 
 # q: re-quote $1 for interpretation as a shell word
 $(eval \
-q ${char_equals_sign} ${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}(char_newline),"${char_dollar_sign}${char_dollar_sign}{char_newline}",$(subst ${char_comma}${char_space},${char_comma},$(foreach charname,$(strip ${charclass_q_unsafe}),$$${char_left_parenthesis}subst $$(value ${charname})${char_comma}$${char_reverse_solidus}$$(value ${charname})${char_comma}))${char_dollar_sign}1$(subst ${char_space},,$(patsubst %,${char_right_parenthesis},$(strip ${charclass_q_unsafe})))${char_right_parenthesis})
+q ${char_equals_sign} ${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}{char_newline},"${char_dollar_sign}${char_dollar_sign}{char_newline}",$(subst ${char_comma}${char_space},${char_comma},$(foreach charname,$(strip ${charclass_q_unsafe}),$$${char_left_parenthesis}subst $$(value ${charname})${char_comma}$${char_reverse_solidus}$$(value ${charname})${char_comma}))${char_dollar_sign}1$(subst ${char_space},,$(patsubst %,${char_right_parenthesis},$(strip ${charclass_q_unsafe})))${char_right_parenthesis})
 
 # characters that need simple backslashing for the C compiler (we pass
 # apostrophe unmodified at the moment; this works fine for
@@ -332,7 +332,7 @@ char_reverse_solidus
 
 # cq: re-quote $1 for inclusion in a literal C string
 $(eval \
-cq ${char_equals_sign} ${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}(char_tab)${char_comma}${char_reverse_solidus}t${char_comma}${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}(char_newline)${char_comma}${char_reverse_solidus}n${char_comma}$(subst ${char_comma}${char_space},${char_comma},$(foreach charname,$(strip ${charclass_cq_unsafe}),$$${char_left_parenthesis}subst $$(value ${charname})${char_comma}$${char_reverse_solidus}$$(value ${charname})${char_comma}))${char_dollar_sign}1$(subst ${char_space},,$(patsubst %,${char_right_parenthesis},$(strip ${charclass_cq_unsafe})))${char_right_parenthesis}${char_right_parenthesis})
+cq ${char_equals_sign} ${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}{char_tab}${char_comma}${char_reverse_solidus}t${char_comma}${char_dollar_sign}${char_left_parenthesis}subst ${char_dollar_sign}{char_newline}${char_comma}${char_reverse_solidus}n${char_comma}$(subst ${char_comma}${char_space},${char_comma},$(foreach charname,$(strip ${charclass_cq_unsafe}),$$${char_left_parenthesis}subst $$(value ${charname})${char_comma}$${char_reverse_solidus}$$(value ${charname})${char_comma}))${char_dollar_sign}1$(subst ${char_space},,$(patsubst %,${char_right_parenthesis},$(strip ${charclass_cq_unsafe})))${char_right_parenthesis}${char_right_parenthesis})
 
 # ccq: re-quote $1 for inclusion in a C or C++ comment (the /* ... */ syntax or the // ... syntax )
 
@@ -2433,7 +2433,7 @@ endif
 
 # finalize values of all substituted variables
 $(eval \
-$(foreach substitute_var,${substitute_vars},${substitute_var} ${char_colon}${char_equals_sign} ${char_dollar_sign}(${substitute_var})${char_newline}))
+$(foreach substitute_var,${substitute_vars},${substitute_var} ${char_colon}${char_equals_sign} ${char_dollar_sign}{${substitute_var}}${char_newline}))
 
 # The substitution language is as follows for troff/groff manpages:
 
