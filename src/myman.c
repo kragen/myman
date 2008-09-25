@@ -102,7 +102,9 @@
 #include <time.h>
 
 /* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
+#ifndef UTILS_H_INC
 #include "utils.h"
+#endif
 
 #if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__))
 #include <langinfo.h>

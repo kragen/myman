@@ -51,7 +51,10 @@
 #endif /* ! defined(TARGET_API_MAC_CARBON) */
 #endif /* ! defined(macintosh) */
 
+/* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
+#ifndef UTILS_H_INC
 #include "utils.h"
+#endif
 
 /* command-line argument parser */
 #ifdef MYGETOPT_H
