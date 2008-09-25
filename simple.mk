@@ -74,7 +74,7 @@ clean:
 bigman=${big} ${myman}
 
 bigman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${bigman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${bigman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 # "huge" is the largest size (huge ASCII-art pictures)
 TILEFILE_huge=chr5x3.txt
@@ -85,7 +85,7 @@ huge=-DMYMANSIZE=\"huge\" ${hugetiles} ${hugesprites}
 hugeman=${huge} ${myman}
 
 hugeman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${hugeman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${hugeman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 # "small" uses a pair of character-cells to represent each tile and sprite
 TILEFILE_small=khr2h.txt
@@ -96,7 +96,7 @@ small=-DMYMANSIZE=\"small\" ${smalltiles} ${smallsprites}
 smallman=${small} ${myman}
 
 smallman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${smallman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${smallman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 # "square" uses one character-cell to represent each tile and sprite
 TILEFILE_square=khr1.txt
@@ -107,7 +107,7 @@ square=-DMYMANSIZE=\"square\" ${squaretiles} ${squaresprites}
 squareman=${square} ${myman}
 
 squareman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${squareman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${squareman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 .PHONY: all clean
 
