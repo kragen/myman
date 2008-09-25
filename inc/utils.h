@@ -22,8 +22,8 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef UTILS_H_INC
-#define UTILS_H_INC 1
+#ifndef MYMAN_UTILS_H_INCLUDED
+#define MYMAN_UTILS_H_INCLUDED 1
 
 #if ! defined(WIN32)
 #if defined(_WIN32)
@@ -1008,4 +1008,4 @@ extern int find_home_dir(int s, int r, int c);
 /* heuristic for rewriting maze tiles */
 extern long maze_visual(int n, int i, int j);
 
-#endif /* ! defined(UTILS_H_INC) */
+#endif /* ! defined(MYMAN_UTILS_H_INCLUDED) */

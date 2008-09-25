@@ -25,8 +25,8 @@
 
 #error SDL driver is not yet finished -- use pdcursessdl for now
 
-#ifndef SDLCURS_H_INC
-#define SDLCURS_H_INC 1
+#ifndef MYMAN_SDLCURS_H_INCLUDED
+#define MYMAN_SDLCURS_H_INCLUDED 1
 
 #include <SDL.h>
 
@@ -279,9 +279,6 @@ static int addch(const chtype ch) {
     sdlcurses_x ++;
     return OK;
 }
-
-#define NEED_CP437_TO_ASCII
-static chtype cp437_to_ascii(unsigned char ch);
 
 static int sdlcurses_addch(unsigned long ch, unsigned long attr, unsigned long x, unsigned long y) {
     int fg, bg;
@@ -1347,4 +1344,4 @@ static int sdlcurses_wcwidth(const chtype ch) {
 #undef wcwidth
 #define wcwidth sdlcurses_wcwidth
 
-#endif /* SDLCURS_H_INC */
+#endif /* MYMAN_SDLCURS_H_INCLUDED */

@@ -56,8 +56,8 @@
  *
  */
 
-#ifndef MACCURS_H_INC
-#define MACCURS_H_INC 1
+#ifndef MYMAN_MACCURS_H_INCLUDED
+#define MYMAN_MACCURS_H_INCLUDED 1
 
 #ifdef macintosh
 
@@ -3805,4 +3805,4 @@ static int maccurses_start_color(void)
 #endif
 #endif
 
-#endif /* ! defined(MACCURS_H_INC) */
+#endif /* ! defined(MYMAN_MACCURS_H_INCLUDED) */

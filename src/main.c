@@ -23,18 +23,27 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* configuration information */
+#ifdef HAVE_CONFIG_H
+#ifndef MYMAN_CONFIG_H_INCLUDED
+#include "config.h"
+#endif
+#endif
+
 #include <ctype.h>
 #include <string.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <time.h>
+#if ! (defined(macintosh) || defined(__PACIFIC__) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
 #include <unistd.h>
+#endif
 #include <stdlib.h>
 
 /* command-line argument parser */
-#ifdef MY_GETOPT_H
-#include MY_GETOPT_H
+#ifdef MYGETOPT_H
+#include MYGETOPT_H
 #else
 #include <getopt.h>
 #endif
@@ -57,6 +66,9 @@
 #include <SDL.h>
 #endif
 #endif
+
+/* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
+#include "utils.h"
 
 #ifdef XCURSES
 #define XCURSES_USAGE \
@@ -106,21 +118,7 @@ MYMANCOPYRIGHT "\n"
 #ifdef BUILTIN_SIZES
 const char *builtin_size;
 const char *builtin_tilefile;
-const char *tile;
-int tile_used[256];
-int tile_color[256];
-int tile_w;
-int tile_h;
-int tile_flags;
-const char *tile_args;
 const char *builtin_spritefile;
-const char *sprite;
-int sprite_used[256];
-int sprite_color[256];
-int sprite_w;
-int sprite_h;
-int sprite_flags;
-const char *sprite_args;
 #endif
 
 #ifdef BUILTIN_VARIANTS
@@ -128,11 +126,6 @@ const char *builtin_variant;
 const char *builtin_mazefile;
 const char *maze_data;
 const char *maze_color_data;
-int maze_n;
-int maze_w;
-int maze_h;
-int maze_flags;
-const char *maze_args;
 extern int main_builtin(int argc, char *argv[], char *envp[]);
 #endif
 
@@ -160,16 +153,6 @@ main(int argc, char *argv[]
 #ifdef PRIVATELIBEXECDIR
     char scratch[] = PRIVATELIBEXECDIR "/\0" MYMANVARIANTS "-" MYMANSIZES;
 #endif
-    static struct option long_options[] =
-        {
-            {"version", 0, 0, 'V'},
-            {"help", 0, 0, 'h'},
-            {"keys", 0, 0, 'k'},
-            {"legal", 0, 0, 'L'},
-            {"variant", 1, 0, 'v'},
-            {"size", 1, 0, 'z'},
-            {0, 0, 0, 0}
-        };
 
     if (argc >= 1)
     {
@@ -192,7 +175,7 @@ main(int argc, char *argv[]
         argc = 1;
     }
 #endif
-    while((i = getopt_long(argc, argv, "Vv:z:bcd:g:l:Lhkm:noprqs:t:uUMRSTf:F:aAeEBNiI12xX",
+    while((i = getopt_long(argc, argv, short_options,
                            long_options, &option_index))
           != -1)
         switch(i)
@@ -334,8 +317,8 @@ main(int argc, char *argv[]
     if (1) { BUILTIN_SIZES }
 #endif
 #ifdef BUILTIN_VARIANTS
-#ifdef MY_GETOPT_H
-    my_getopt_reset();
+#ifdef MYGETOPT_H
+    mygetopt_reset();
 #else
     optind = 1;
     opterr = 1;

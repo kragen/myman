@@ -23,8 +23,8 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef OPTCURS_H_INC
-#define OPTCURS_H_INC 1
+#ifndef MYMAN_OPTCURS_H_INCLUDED
+#define MYMAN_OPTCURS_H_INCLUDED 1
 
 #ifndef wcwidth
 #include <wchar.h>
@@ -690,7 +690,7 @@ static int optcurses__combine_bitmap_attr_ok(attr_t fgattr, attr_t bgattr)
             }
         }
 #else
-#ifdef CACACURS_H_INC
+#ifdef MYMAN_CACACURS_H_INCLUDED
 #ifdef CACA_API_VERSION_1
         if (has_colors())
         {
@@ -700,10 +700,10 @@ static int optcurses__combine_bitmap_attr_ok(attr_t fgattr, attr_t bgattr)
         return fgattr && bgattr;
 #endif
 #else
-#ifdef ALLEGCUR_H_INC
+#ifdef MYMAN_ALLEGCUR_H_INCLUDED
         return (fgattr & 0xf) || (bgattr & 0xf0);
 #else
-#ifdef GGICURS_H_INC
+#ifdef MYMAN_GGICURS_H_INCLUDED
         return (fgattr & 0xf) || (bgattr & 0xf0);
 #endif
 #endif
@@ -862,7 +862,7 @@ static attr_t optcurses__combine_bitmap_attr(attr_t fgattr, attr_t bgattr)
         }
     }
 #else
-#ifdef CACACURS_H_INC
+#ifdef MYMAN_CACACURS_H_INCLUDED
 #ifdef CACA_API_VERSION_1
     if (has_colors())
     {
@@ -887,10 +887,10 @@ static attr_t optcurses__combine_bitmap_attr(attr_t fgattr, attr_t bgattr)
     fgattr = (fgattr & ~0xf) | ((bgattr & 0xf0) >> 4) | ((bgattr & A_BOLD) ? 0x8 : 0);
 #endif
 #else
-#ifdef ALLEGCUR_H_INC
+#ifdef MYMAN_ALLEGCUR_H_INCLUDED
     fgattr = (fgattr & ~0xf0) | ((bgattr & 0xf) << 4);
 #else
-#ifdef GGICURS_H_INC
+#ifdef MYMAN_GGICURS_H_INCLUDED
     fgattr = (fgattr & ~0xf0) | ((bgattr & 0xf) << 4);
 #endif
 #endif
@@ -1572,4 +1572,4 @@ static int optcurses_init_color(short i, short r, short g, short b)
 #undef mvprintw
 #define mvprintw optcurses_mvprintw
 
-#endif /* OPTCURS_H_INC */
+#endif /* MYMAN_OPTCURS_H_INCLUDED */

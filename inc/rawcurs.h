@@ -143,8 +143,8 @@
 #endif
 #endif
 
-#ifndef RAWCURS_H_INC
-#define RAWCURS_H_INC 1
+#ifndef MYMAN_RAWCURS_H_INCLUDED
+#define MYMAN_RAWCURS_H_INCLUDED 1
 
 #if defined(WIN32)
 #ifndef USE_WINCONSOLE
@@ -7657,4 +7657,4 @@ static int clear(void) {
     return erase();
 }
 
-#endif /* RAWCURS_H_INC */
+#endif /* MYMAN_RAWCURS_H_INCLUDED */

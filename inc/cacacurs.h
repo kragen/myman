@@ -23,8 +23,8 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef CACACURS_H_INC
-#define CACACURS_H_INC 1
+#ifndef MYMAN_CACACURS_H_INCLUDED
+#define MYMAN_CACACURS_H_INCLUDED 1
 
 #ifdef CACACURSES0
 #include <caca0.h>
@@ -1193,4 +1193,4 @@ static int pair_content(int i, short *fg, short *bg) {
 
 #endif
 
-#endif /* CACACURS_H_INC */
+#endif /* MYMAN_CACACURS_H_INCLUDED */

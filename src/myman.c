@@ -25,7 +25,9 @@
 
 /* configuration information */
 #ifdef HAVE_CONFIG_H
+#ifndef MYMAN_CONFIG_H_INCLUDED
 #include "config.h"
+#endif
 #endif
 
 /* used in macbuild.txt to avoid 8bit chars */
@@ -102,7 +104,7 @@
 #include <time.h>
 
 /* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
-#ifndef UTILS_H_INC
+#ifndef MYMAN_UTILS_H_INCLUDED
 #include "utils.h"
 #endif
 

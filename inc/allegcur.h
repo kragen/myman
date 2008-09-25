@@ -23,8 +23,8 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef ALLEGCUR_H_INC
-#define ALLEGCUR_H_INC 1
+#ifndef MYMAN_ALLEGCUR_H_INCLUDED
+#define MYMAN_ALLEGCUR_H_INCLUDED 1
 
 #define ALLEGRO_NO_CLEAR_BITMAP_ALIAS
 
@@ -1409,4 +1409,4 @@ static void endwin(void) {
     }
 }
 
-#endif /* ALLEGCUR_H_INC */
+#endif /* MYMAN_ALLEGCUR_H_INCLUDED */

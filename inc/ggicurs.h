@@ -23,8 +23,8 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
-#ifndef GGICURS_H_INC
-#define GGICURS_H_INC 1
+#ifndef MYMAN_GGICURS_H_INCLUDED
+#define MYMAN_GGICURS_H_INCLUDED 1
 
 #include <ggi/gii.h>
 #include <ggi/ggi.h>
@@ -1441,4 +1441,4 @@ static int ggicurses_wcwidth(const chtype ch) {
 #undef wcwidth
 #define wcwidth ggicurses_wcwidth
 
-#endif /* GGICURS_H_INC */
+#endif /* MYMAN_GGICURS_H_INCLUDED */
