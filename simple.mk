@@ -51,9 +51,14 @@ CURSESINCLUDE=
 CURSOPTS=
 
 # getopt library
-MY_GETOPTDIR=my_getopt
-MY_GETOPTCPPFLAGS=-DMY_GETOPT_H=\"$(MY_GETOPTDIR)/getopt.h\"
-MY_GETOPTLIBS=$(MY_GETOPTDIR)/my_getopt.c
+MYGETOPTDIR=mygetopt
+MYGETOPTCPPFLAGS=-DMYGETOPT_H=\"getopt.h\"
+MYGETOPTLIBS=${MYGETOPTDIR}/mygetopt.c
+
+# utility functions
+UTILSOBJS=src/utils.c
+
+CINCLUDES=-Iinc -I${MYGETOPTDIR}
 
 all: hugeman bigman smallman squareman
 
@@ -63,52 +68,46 @@ clean:
 	-rm smallman
 	-rm squareman
 
-# "myman" is the default maze; see Makefile for more;
+# "myman" is the default maze; see Makefile for more
+
 # "big" is the default size (large ASCII-art pictures)
-bigman=$(big) $(myman)
+bigman=${big} ${myman}
 
-bigman: myman.c
-	$(CC) $(CFLAGS) $(CURSOPTS) $(CURSESINCLUDE) $(MY_GETOPTCPPFLAGS) $(bigman) -o $@ $< $(CURSESLIBS) $(MY_GETOPTLIBS)
+bigman: src/myman.c ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${bigman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
-# "myman" is the default maze; see Makefile for more;
 # "huge" is the largest size (huge ASCII-art pictures)
-TILEFILE_huge=tile5x3.txt
-TILEDEFS_huge=-DTILE_W=5 -DTILE_H=3
-hugetiles=-DTILEFILE=\"$(TILEFILE_huge)\" $(TILEDEFS_huge)
-STILEFILE_huge=stile10x6.txt
-STILEDEFS_huge=-DSTILE_W=10 -DSTILE_H=6
-hugesprites=-DSTILEFILE=\"$(STILEFILE_huge)\" $(STILEDEFS_huge)
-huge=-DSIZE=\"huge\" $(hugetiles) $(hugesprites)
-hugeman=$(huge) $(myman)
+TILEFILE_huge=chr5x3.txt
+hugetiles=-DTILEFILE=\"chr/${TILEFILE_huge}\"
+SPRITEFILE_huge=spr10x6.txt
+hugesprites=-DSPRITEFILE=\"spr/${SPRITEFILE_huge}\"
+huge=-DMYMANSIZE=\"huge\" ${hugetiles} ${hugesprites}
+hugeman=${huge} ${myman}
 
-hugeman: myman.c
-	$(CC) $(CFLAGS) $(CURSOPTS) $(CURSESINCLUDE) $(MY_GETOPTCPPFLAGS) $(hugeman) -o $@ $< $(CURSESLIBS) $(MY_GETOPTLIBS)
+hugeman: src/myman.c ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${hugeman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 # "small" uses a pair of character-cells to represent each tile and sprite
-TILEFILE_small=tile2x1.txt
-TILEDEFS_small=-DTILE_W=2 -DTILE_H=1
-smalltiles=-DTILEFILE=\"$(TILEFILE_small)\" $(TILEDEFS_small)
-STILEFILE_small=stile2x1.txt
-STILEDEFS_small=-DSTILE_W=2 -DSTILE_H=1 -DVISIBLE_EYES=0
-smallsprites=-DSTILEFILE=\"$(STILEFILE_small)\" $(STILEDEFS_small)
-small=-DSIZE=\"small\" $(smalltiles) $(smallsprites)
-smallman=$(small) $(myman)
+TILEFILE_small=khr2h.txt
+smalltiles=-DTILEFILE=\"chr/${TILEFILE_small}\"
+SPRITEFILE_small=spr2h.txt
+smallsprites=-DSPRITEFILE=\"spr/${SPRITEFILE_small}\"
+small=-DMYMANSIZE=\"small\" ${smalltiles} ${smallsprites}
+smallman=${small} ${myman}
 
-smallman: myman.c
-	$(CC) $(CFLAGS) $(CURSOPTS) $(CURSESINCLUDE) $(MY_GETOPTCPPFLAGS) $(smallman) -o $@ $< $(CURSESLIBS) $(MY_GETOPTLIBS)
+smallman: src/myman.c ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${smallman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 # "square" uses one character-cell to represent each tile and sprite
-TILEFILE_square=tile1x1.txt
-TILEDEFS_square=-DTILE_W=1 -DTILE_H=1
-squaretiles=-DTILEFILE=\"$(TILEFILE_square)\" $(TILEDEFS_square)
-STILEFILE_square=stile1x1.txt
-STILEDEFS_square=-DSTILE_W=1 -DSTILE_H=1 -DVISIBLE_EYES=0
-squaresprites=-DSTILEFILE=\"$(STILEFILE_square)\" $(STILEDEFS_square)
-square=-DSIZE=\"square\" $(squaretiles) $(squaresprites)
-squareman=$(square) $(myman)
+TILEFILE_square=khr1.txt
+squaretiles=-DTILEFILE=\"chr/${TILEFILE_square}\"
+SPRITEFILE_square=spr1.txt
+squaresprites=-DSPRITEFILE=\"spr/${SPRITEFILE_square}\"
+square=-DMYMANSIZE=\"square\" ${squaretiles} ${squaresprites}
+squareman=${square} ${myman}
 
-squareman: myman.c
-	$(CC) $(CFLAGS) $(CURSOPTS) $(CURSESINCLUDE) $(MY_GETOPTCPPFLAGS) $(squareman) -o $@ $< $(CURSESLIBS) $(MY_GETOPTLIBS)
+squareman: src/myman.c ${UTILSOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${squareman} -o$@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
 
 .PHONY: all clean
 

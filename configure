@@ -196,12 +196,12 @@ mqw()
             $ {;
                 g;
                 s/\$/$$/g;
-                s/ /$(char_space)/g;
-                s/'"${char_tab}"'/$(char_tab)/g;
-                s/#/$(char_number_sign)/g;
-                s/@/$(char_commercial_at)/g;
-                s/'\\"${char_newline}"'/$(char_newline)/g;
-                s/\\/$(char_reverse_solidus)/g;
+                s/ /${char_space}/g;
+                s/'"${char_tab}"'/${char_tab}/g;
+                s/#/${char_number_sign}/g;
+                s/@/${char_commercial_at}/g;
+                s/'\\"${char_newline}"'/${char_newline}/g;
+                s/\\/${char_reverse_solidus}/g;
                 p;
             }
         '
