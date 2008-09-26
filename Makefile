@@ -825,10 +825,14 @@ endif
 
 # MYGETOPT_H is the argument to #include in order to include the
 # 'getopt.h' file from ${MYGETOPTDIR} from a source file inside the
-# ${src}src directory. MYGETOPTCPPFLAGS includes preprocessor
-# options needed for this arrangement.
+# ${src}src directory. MYGETOPTCPPFLAGS includes preprocessor options
+# needed for this arrangement and MYGETOPTCINCLUDES adds the
+# needed include path entry or entries.
 ifeq ($(subst default,undefined,$(origin MYGETOPTCPPFLAGS)),undefined)
-MYGETOPTCPPFLAGS = -I${src}mygetopt
+MYGETOPTCPPFLAGS =
+endif
+ifeq ($(subst default,undefined,$(origin MYGETOPTCINCLUDES)),undefined)
+MYGETOPTCINCLUDES = -I${src}mygetopt
 endif
 ifeq ($(subst default,undefined,$(origin MYGETOPT_H)),undefined)
 MYGETOPT_H = ${char_quotation_mark}getopt.h${char_quotation_mark}
@@ -1506,16 +1510,24 @@ endif
 
 ## C preprocessing flags
 ifeq ($(subst default,undefined,$(origin CPPFLAGS)),undefined)
-CPPFLAGS = -DHAVE_CONFIG_H=1 ${MYGETOPTCPPFLAGS} ${EXTRACPPFLAGS}
+CPPFLAGS = ${EXTRACPPFLAGS}
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCPPFLAGS)),undefined)
 HOSTCPPFLAGS = ${CPPFLAGS}
 endif
 ifeq ($(subst default,undefined,$(origin CINCLUDES)),undefined)
-CINCLUDES = -I${src}inc -I. ${EXTRACINCLUDES}
+CINCLUDES = ${EXTRACINCLUDES}
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCINCLUDES)),undefined)
 HOSTCINCLUDES = ${CINCLUDES}
+endif
+
+## Extra C preprocessing flags for MyMan
+ifeq ($(subst default,undefined,$(origin MYMANCPPFLAGS)),undefined)
+MYMANCPPFLAGS = -DHAVE_CONFIG_H=1 ${MYGETOPTCPPFLAGS}
+endif
+ifeq ($(subst default,undefined,$(origin MYMANCINCLUDES)),undefined)
+MYMANCINCLUDES = -I${src}inc -I. ${MYGETOPTCINCLUDES}
 endif
 
 ## ANSI C/C++ compiler (choose one)
@@ -1570,9 +1582,14 @@ endif
 
 ifneq (,$(findstring gcc,$(subst g++,gcc,$(subst gxx,g++,${HOSTCC}))))
 
-# looks like GCC, let's optimize
 ifeq ($(subst default,undefined,$(origin HOSTCFLAGS)),undefined)
-HOSTCFLAGS = ${CFLAGS} ${EXTRAHOSTCFLAGS} -O3
+HOSTCFLAGS = ${CFLAGS} ${EXTRAHOSTCFLAGS}
+endif
+
+# looks like GCC, let's optimize unless there's already an
+# opitimization flag
+ifeq (,$(findstring ${char_space}-O,${HOSTCC} ${HOSTCFLAGS}))
+HOSTCFLAGS += -O3
 endif
 
 #ifneq ($(subst -darwin,-,-${host}-),-${host}-)
@@ -1592,16 +1609,16 @@ endif
 # Complete preprocessing and compilation action for option 1 or 2
 ifeq ($(subst default,undefined,$(origin COMPILE)),undefined)
 ifneq (,$(findstring dmc,${CC})$(findstring bcc32,${CC}))
-COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${CINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${CINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; compile
+COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; compile
 else
-COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${CINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${CINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; compile
+COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; compile
 endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCOMPILE)),undefined)
 ifneq (,$(findstring dmc,${HOSTCC})$(findstring bcc32,${HOSTCC}))
-HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${HOSTCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${HOSTCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; hostcompile
+HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; hostcompile
 else
-HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${HOSTCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${HOSTCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; hostcompile
+HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCPPFLAGS} "$$@" -o $(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; hostcompile
 endif
 endif
 
