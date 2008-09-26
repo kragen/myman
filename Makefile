@@ -3646,7 +3646,7 @@ fill-dir-xq-$(call xq,${DIST}):: $(call mw,${MAKEFILE}) $(addprefix $(call mw,${
 	@${MAKE} ${MAKELOOP} \
             $(foreach dir,${dist_dirs},install-dir-xq-$(call qxq,${DIST}/${dir}))
 	${POST_UNPACK}
-	@($(foreach file,${dist_data_files}, \
+	@${NOP}$(foreach file,${dist_data_files},${char_newline}${char_tab}@( \
             ${ECHOLINEX} installing data file $(call q,${DIST}/${file}); \
             ${INSTALL_DATA} $(call q,${src}${file}) $(call q,${DIST}/${file}) \
                 || exit $$?; \
