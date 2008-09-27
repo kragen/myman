@@ -4915,7 +4915,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #ifdef ONLCR
         rawcurses_tty.c_oflag &= ~ONLCR;
 #else
+#ifdef CRMOD
         rawcurses_tty.c_oflag &= ~CRMOD;
+#endif
 #endif
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
         setbuf(stdin, NULL);
@@ -5951,7 +5953,7 @@ static int rawcurses_getch(void)
 #ifdef FIONREAD
                 if (! avail) ioctl(fileno(stdin), FIONREAD, &avail);
 #endif /* defined(FIONREAD) */
-                if (avail && (read(fileno(stdin), buf, 1) > 0))
+                if (avail && (read(fileno(stdin), (void *) buf, 1) > 0))
                 {
                     ret = buf[0];
                 }

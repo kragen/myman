@@ -1570,7 +1570,24 @@ static const char SPRITEFILE_str[] = SPRITEFILE;
 
 /* mapping from CP437 to VT-100 altcharset */
 #if USE_WIDEC_SUPPORT
-static cchar_t *
+/* ncurses defines WACS_* as cchar_t * whereas unix95 (at least
+ * according to TenDRA) defines them as cchar_t */
+#ifdef NCURSES_VERSION
+#ifndef MY_WACS_PTR
+#define MY_WACS_PTR
+#endif
+#ifndef MY_WACS_REF
+#define MY_WACS_REF *
+#endif
+#else
+#ifndef MY_WACS_PTR
+#define MY_WACS_PTR &
+#endif
+#ifndef MY_WACS_REF
+#define MY_WACS_REF
+#endif
+#endif
+static cchar_t MY_WACS_REF
 #else
 static chtype
 #endif
@@ -4212,20 +4229,21 @@ my_addch(unsigned long b, chtype attrs)
 
                 my_len =
                     getcchar(
-                        altcharset_cp437[b],
+                        MY_WACS_PTR altcharset_cp437[b],
                         NULL,
                         &my_acs_attrs,
                         &my_color_pair,
                         NULL);
                 if (my_len &&
                     (getcchar(
-                        altcharset_cp437[b],
+                        MY_WACS_PTR altcharset_cp437[b],
                         my_wchbuf,
                         &my_acs_attrs,
                         &my_color_pair,
                         NULL) != ERR) &&
                     (my_wcswidth(my_wchbuf, my_len) == 1))
                 {
+#ifdef _XOPEN_SOURCE_EXTENDED
                     attr_get(
                         & my_current_attrs,
                         & my_color_pair,
@@ -4234,6 +4252,10 @@ my_addch(unsigned long b, chtype attrs)
                         my_current_attrs | my_acs_attrs,
                         my_color_pair,
                         NULL);
+#else
+                    my_current_attrs = attr_get();
+                    attr_set(my_current_attrs | my_acs_attrs);
+#endif
                     ret = addnwstr(
                         my_wchbuf,
                         my_len);
@@ -4249,14 +4271,14 @@ my_addch(unsigned long b, chtype attrs)
                             {
                                 my_len =
                                     getcchar(
-                                        altcharset_cp437[rhs],
+                                        MY_WACS_PTR altcharset_cp437[rhs],
                                         NULL,
                                         &my_acs_attrs,
                                         &my_color_pair,
                                         NULL);
                                 if (my_len &&
                                     (getcchar(
-                                        altcharset_cp437[rhs],
+                                        MY_WACS_PTR altcharset_cp437[rhs],
                                         my_wchbuf,
                                         &my_acs_attrs,
                                         &my_color_pair,
@@ -4274,10 +4296,14 @@ my_addch(unsigned long b, chtype attrs)
                             }
                         }
                     }
+#ifdef _XOPEN_SOURCE_EXTENDED
                     attr_set(
                         my_current_attrs,
                         my_color_pair,
                         NULL);
+#else
+                    attr_set(my_current_attrs);
+#endif
                     if ((old_x != new_x) || (old_y != new_y))
                     {
                         return ret;
