@@ -27,14 +27,17 @@ single characters.
 make CFLAGS="${CFLAGS:-%optflags}" CXXFLAGS="${CXXFLAGS:-%optflags}" FFLAGS="${FFLAGS:-%optflags}"
 
 %install
-mkdir -p "${RPM_BUILD_ROOT}"
+mkdir -p "%{buildroot}"
 %makeinstall MAKEWHATIS=: MANDB=:
-gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}.6"
-gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}.command.6"
-gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}-%{version}.6"
+gzip -9 "%{buildroot}%{_mandir}/man6/%{name}.6"
+gzip -9 "%{buildroot}%{_mandir}/man6/%{name}.command.6"
+gzip -9 "%{buildroot}%{_mandir}/man6/%{name}-%{version}.6"
 
 %clean
-make uninstall distclean DESTDIR="${RPM_BUILD_ROOT}"
+rm -f "%{buildroot}%{_mandir}/man6/%{name}.6.gz"
+rm -f "%{buildroot}%{_mandir}/man6/%{name}.command.6.gz"
+rm -f "%{buildroot}%{_mandir}/man6/%{name}-%{version}.6.gz"
+make uninstall distclean DESTDIR="%{buildroot}"
 
 %post
 mandb "%{_mandir}" || makewhatis "%{_mandir}"
