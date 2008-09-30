@@ -23,10 +23,12 @@ single characters.
 %setup
 
 %build
-sh ./configure --prefix=/usr CFLAGS="${CFLAGS:-${RPM_OPT_FLAGS}}" CXXFLAGS="${CFLAGS:-${RPM_OPT_FLAGS}}"
+%configure
+make CFLAGS="${CFLAGS:-%optflags}" CXXFLAGS="${CXXFLAGS:-%optflags}" FFLAGS="${FFLAGS:-%optflags}"
 
 %install
-make -C "${RPM_BUILD_ROOT}" install DESTDIR="${RPM_BUILD_ROOT}"
+mkdir -p "${RPM_BUILD_ROOT}"
+%makeinstall
 
 %clean
 make -C "${RPM_BUILD_ROOT}" uninstall distclean DESTDIR="${RPM_BUILD_ROOT}"
