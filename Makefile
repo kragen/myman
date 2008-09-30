@@ -554,6 +554,11 @@ ifeq ($(subst default,undefined,$(origin MYMAN_CT)),undefined)
 MYMAN_CT = ${MYMAN}.ct
 endif
 
+# EXTRAPROGS: extra programs to install into ${bindir}
+ifeq ($(subst default,undefined,$(origin EXTRAPROGS)),undefined)
+EXTRAPROGS =
+endif
+
 ## MYMANVERSION: package version number
 
 # NOTE: The following format must be adhered to exactly when windows
@@ -4290,9 +4295,16 @@ ifeq (yes,${with_xterm})
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${XQUACKMAN_EXE}${sh}) \
              program_file=$(call qmq,${XQUACKMAN}${sh})
 endif
+
 	@${MAKE} ${MAKELOOP} \
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${MYMANCOMMAND_EXE}) \
              program_file=$(call qmq,${MYMANCOMMAND})
+	@($(foreach extraprog,${EXTRAPROGS}, \
+	${MAKE} ${MAKELOOP} \
+            install-program-xq-$(call qxq,${DESTDIR}${bindir}/$(call program,${extraprog})) \
+            program_file=$(call qmq,${extraprog}) || \
+	    exit 1; \
+	))
 ifeq (yes,${with_ctheme})
 	@${MAKE} ${MAKELOOP} \
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${MYMAN_CT_EXE}) \
@@ -4478,7 +4490,7 @@ ifeq (yes,${with_mac})
 	@($(call uninstall_file,${DESTDIR}${appdir_MYMAN_APP_CONTENTS_PLATFORM}/${MYMAN_EXE}$x))
 	@($(call uninstall_file,${DESTDIR}${appdir_MYMAN_APP_CONTENTS_RESOURCES}/${MYMAN_ICNS}))
 endif
-	@($(foreach file,${DESTDIR}${bindir}/${MYMAN_EXE}$x ${DESTDIR}${bindir}/${DIST_EXE}$x ${DESTDIR}${bindir}/${XMYMAN_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN2_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN3_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN4_EXE}${sh} ${DESTDIR}${bindir}/${XBIGMAN_EXE}${sh} ${DESTDIR}${bindir}/${XHUGEMAN_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN2_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN3_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN4_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN5_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN6_EXE}${sh} ${DESTDIR}${bindir}/${XQUACKMAN_EXE}${sh} ${DESTDIR}${bindir}/${MYMANCOMMAND_EXE} ${DESTDIR}${bindir}/${MYMAN_CT_EXE} ${DESTDIR}${privatedocdir}/${MYMAN}${txt} ${DESTDIR}${privatedocdir}/${MYMAN}.ps ${DESTDIR}${privatedocdir}/${MYMAN}.dvi ${DESTDIR}${privatedocdir}/${MYMAN}${htm} ${DESTDIR}${man6dir}/${MYMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMAN_CT_EXE}${man6ext} ${DESTDIR}${man6dir}/${XQUACKMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMANCOMMAND_EXE}${man6ext} ${DESTDIR}${man6dir}/${XHUGEMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN2_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN3_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN4_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN5_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN6_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBIGMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN4_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN3_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN2_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${DIST_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMAN_EXE}$x${man6ext} ${DESTDIR}${man6dir}/${DIST_EXE}$x${man6ext} ${DESTDIR}${man6dir}/${XQUACKMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XHUGEMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN2_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN3_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN4_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN5_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN6_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBIGMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN4_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN3_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN2_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN_EXE}${sh}${man6ext} ${DESTDIR}${gfxdir}/myman.png ${DESTDIR}${gfxdir}/myman64.png ${DESTDIR}${gfxdir}/myman48.png ${DESTDIR}${gfxdir}/myman32.png $(foreach file,${doc_files},${DESTDIR}${privatedocdir}/${file}) $(foreach variant,${MYMANVARIANTS},$(call s,$(call xq,${src}lvl/)%,$(call xq,${DESTDIR}${mazedir}/)%,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call s,$(call xq,${src}chr/)%,$(call xq,${DESTDIR}${tiledir}/)%,$(call tilefile,${size})) $(call s,$(call xq,${src}spr/)%,$(call xq,${DESTDIR}${spritedir}/)%,$(call spritefile,${size}))),\
+	@($(foreach file,${DESTDIR}${bindir}/${MYMAN_EXE}$x ${DESTDIR}${bindir}/${DIST_EXE}$x ${DESTDIR}${bindir}/${XMYMAN_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN2_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN3_EXE}${sh} ${DESTDIR}${bindir}/${XMYMAN4_EXE}${sh} ${DESTDIR}${bindir}/${XBIGMAN_EXE}${sh} ${DESTDIR}${bindir}/${XHUGEMAN_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN2_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN3_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN4_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN5_EXE}${sh} ${DESTDIR}${bindir}/${XBITMAN6_EXE}${sh} ${DESTDIR}${bindir}/${XQUACKMAN_EXE}${sh} ${DESTDIR}${bindir}/${MYMANCOMMAND_EXE} $(foreach extraprog,${EXTRAPROGS},${DESTDIR}${bindir}/$(call program,${extraprog})) ${DESTDIR}${bindir}/${MYMAN_CT_EXE} ${DESTDIR}${privatedocdir}/${MYMAN}${txt} ${DESTDIR}${privatedocdir}/${MYMAN}.ps ${DESTDIR}${privatedocdir}/${MYMAN}.dvi ${DESTDIR}${privatedocdir}/${MYMAN}${htm} ${DESTDIR}${man6dir}/${MYMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMAN_CT_EXE}${man6ext} ${DESTDIR}${man6dir}/${XQUACKMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMANCOMMAND_EXE}${man6ext} ${DESTDIR}${man6dir}/${XHUGEMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN2_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN3_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN4_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN5_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN6_EXE}${man6ext} ${DESTDIR}${man6dir}/${XBIGMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN4_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN3_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN2_EXE}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN_EXE}${man6ext} ${DESTDIR}${man6dir}/${DIST_EXE}${man6ext} ${DESTDIR}${man6dir}/${MYMAN_EXE}$x${man6ext} ${DESTDIR}${man6dir}/${DIST_EXE}$x${man6ext} ${DESTDIR}${man6dir}/${XQUACKMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XHUGEMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN2_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN3_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN4_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN5_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBITMAN6_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XBIGMAN_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN4_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN3_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN2_EXE}${sh}${man6ext} ${DESTDIR}${man6dir}/${XMYMAN_EXE}${sh}${man6ext} ${DESTDIR}${gfxdir}/myman.png ${DESTDIR}${gfxdir}/myman64.png ${DESTDIR}${gfxdir}/myman48.png ${DESTDIR}${gfxdir}/myman32.png $(foreach file,${doc_files},${DESTDIR}${privatedocdir}/${file}) $(foreach variant,${MYMANVARIANTS},$(call s,$(call xq,${src}lvl/)%,$(call xq,${DESTDIR}${mazedir}/)%,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call s,$(call xq,${src}chr/)%,$(call xq,${DESTDIR}${tiledir}/)%,$(call tilefile,${size})) $(call s,$(call xq,${src}spr/)%,$(call xq,${DESTDIR}${spritedir}/)%,$(call spritefile,${size}))),\
             $(call uninstall_file,${file}) \
                 || exit $$?; \
         ))
