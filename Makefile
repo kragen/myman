@@ -1633,7 +1633,9 @@ endif
 ## Linker (choose one)
 
 # Option 1: Link using C/C++ compiler (specified above)
+# Option 2: Link using linker (specified as [HOST]LD)
 ifeq ($(subst default,undefined,$(origin LINK)),undefined)
+ifeq ($(subst default,undefined,$(origin LD)),undefined)
 ifneq (,$(findstring dmc,${CC}))
 LINK = ${CC} ${CFLAGS} ${EXTRACFLAGS} -o$(call q,$@) $(call q,$<)
 else
@@ -1643,8 +1645,12 @@ else
 LINK = ${CC} ${CFLAGS} ${EXTRACFLAGS} -o $(call q,$@) $(call q,$<)
 endif
 endif
+else
+LINK = ${LD} ${LDFLAGS} ${EXTRALDFLAGS} -o $(call q,$@) $(call q,$<)
+endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTLINK)),undefined)
+ifeq ($(subst default,undefined,$(origin HOSTLD)),undefined)
 ifneq (,$(findstring dmc,${HOSTCC}))
 HOSTLINK = ${HOSTCC} ${HOSTCFLAGS} ${EXTRAHOSTCFLAGS} -o$(call q,$@) $(call q,$<)
 else
@@ -1654,15 +1660,10 @@ else
 HOSTLINK = ${HOSTCC} ${HOSTCFLAGS} ${EXTRAHOSTCFLAGS} -o $(call q,$@) $(call q,$<)
 endif
 endif
+else
+HOSTLINK = ${HOSTLD} ${HOSTLDFLAGS} ${EXTRAHOSTLDFLAGS} -o $(call q,$@) $(call q,$<)
 endif
-
-# Option 2: Link using system linker
-#LD = ld
-#LDFLAGS = ${EXTRALDFLAGS}
-
-# Complete linking action for option 1 or 2
-#LINK ?= ${LD} ${LDFLAGS} -o $(call q,$@) $(call q,$<)
-#HOSTLINK ?= ${HOSTLD} ${HOSTLDFLAGS} -o $(call q,$@) $(call q,$<)
+endif
 
 
 ##
