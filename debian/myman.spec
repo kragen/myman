@@ -54,5 +54,5 @@ mandb "%{_mandir}" || makewhatis "%{_mandir}"
 %{_mandir}/man6/%{name}-%{version}.6.gz
 
 %changelog
-* Tue Sep 30 2008 Benjamin C. Wiley Sittler <bsittler@gmail.com>
+* Tue Sep 30 2008 Benjamin C. Wiley Sittler <bsittler@gmail.com> 0.7.1-1
 - initial RPM spec file created
