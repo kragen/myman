@@ -4299,12 +4299,14 @@ endif
 	@${MAKE} ${MAKELOOP} \
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${MYMANCOMMAND_EXE}) \
              program_file=$(call qmq,${MYMANCOMMAND})
+ifneq (,${EXTRAPROGS})
 	@($(foreach extraprog,${EXTRAPROGS}, \
 	${MAKE} ${MAKELOOP} \
             install-program-xq-$(call qxq,${DESTDIR}${bindir}/$(call program,${extraprog})) \
             program_file=$(call qmq,${extraprog}) || \
 	    exit 1; \
 	))
+endif
 ifeq (yes,${with_ctheme})
 	@${MAKE} ${MAKELOOP} \
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${MYMAN_CT_EXE}) \
