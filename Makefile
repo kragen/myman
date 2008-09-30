@@ -4206,7 +4206,7 @@ endif
 
 all install-files:: docs
 
-install-files:: $(call mw,${MAKEFILE}) installdirs ${MYMAN}$x $(call mw,${MYMANCOMMAND}) $(call mw,${src})utl/myman.ct $(foreach variant,${MYMANVARIANTS},$(call mw,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call mw,$(call tilefile,${size})) $(call mw,$(call spritefile,${size}))) ${src}gfx/myman.png ${src}gfx/myman64.png ${src}gfx/myman48.png ${src}gfx/myman32.png
+install-files:: $(call mw,${MAKEFILE}) installdirs ${MYMAN}$x $(call mw,${MYMANCOMMAND}) $(call mw,${src})utl/myman.ct $(foreach variant,${MYMANVARIANTS},$(call mw,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call mw,$(call tilefile,${size})) $(call mw,$(call spritefile,${size}))) ${src}gfx/myman.png ${src}gfx/myman64.png ${src}gfx/myman48.png ${src}gfx/myman32.png $(foreach extraprog,${EXTRAPROGS},$(call mw,${extraprog}))
 	@${MAKE} ${MAKELOOP} \
              install-program-xq-$(call qxq,${DESTDIR}${bindir}/${MYMAN_EXE}$x) \
              program_file=$(call qmq,${MYMAN}$x) \
