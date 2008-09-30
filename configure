@@ -247,7 +247,7 @@ dump_command=echoline
 while test $# -gt 0
 do
   case :"$1" in
-      :"-help"|:"-help="*|:"-enable"[-_]*"="*|:"-enable"[-_]*|:"-disable"[-_]*|:"-with"[-_]*"="*|:"-with"[-_]*|:"-without"[-_]*|:"-srcdir="*|:"-build="*|:"-host="*|:"-srcdir"|:"-build"|:"-host"|:"-prefix"|:"-exec"[-_]"prefix"|:"-bindir"|:"-objdir"|:"-sbindir"|:"-appdir"|:"-libexecdir"|:"-datarootdir"|:"-datadir"|:"-sysconfdir"|:"-sharedstatedir"|:"-localstatedir"|:"-docdir"|:"-includedir"|:"-oldincludedir"|:"-infodir"|:"-libdir"|:"-lispdir"|:"-localedir"|:"-mandir"|:"-program"[-_]"prefix"|:"-program"[-_]"suffix"|:"-program"[-_]"transform"[-_]"name"|:"-version"|:"-x"[-_]"includes"|:"-x"[-_]"libraries"|:"-prefix="*|:"-exec"[-_]"prefix="*|:"-bindir="*|:"-objdir="*|:"-sbindir="*|:"-appdir="*|:"-libexecdir="*|:"-datarootdir="*|:"-datadir="*|:"-sysconfdir="*|:"-sharedstatedir="*|:"-localstatedir="*|:"-docdir="*|:"-includedir="*|:"-oldincludedir="*|:"-infodir="*|:"-libdir="*|:"-lispdir="*|:"-localedir="*|:"-mandir="*|:"-program"[-_]"prefix="*|:"-program"[-_]"suffix="*|:"-program"[-_]"transform"[-_]"name="*|:"-version="*|:"-x"[-_]"includes="*|:"-x"[-_]"libraries="*|:"-dump"|:"-dump="*|:"-dump"[-_]"ucase"|:"-dump"[-_]"ucase="*)
+      :"-help"|:"-help="*|:"-enable"[-_]*"="*|:"-enable"[-_]*|:"-disable"[-_]*|:"-with"[-_]*"="*|:"-with"[-_]*|:"-without"[-_]*|:"-srcdir="*|:"-build="*|:"-host="*|:"-target="*|:"-srcdir"|:"-build"|:"-host"|"-target"|:"-prefix"|:"-exec"[-_]"prefix"|:"-bindir"|:"-objdir"|:"-sbindir"|:"-appdir"|:"-libexecdir"|:"-datarootdir"|:"-datadir"|:"-sysconfdir"|:"-sharedstatedir"|:"-localstatedir"|:"-docdir"|:"-includedir"|:"-oldincludedir"|:"-infodir"|:"-libdir"|:"-lispdir"|:"-localedir"|:"-mandir"|:"-program"[-_]"prefix"|:"-program"[-_]"suffix"|:"-program"[-_]"transform"[-_]"name"|:"-version"|:"-x"[-_]"includes"|:"-x"[-_]"libraries"|:"-prefix="*|:"-exec"[-_]"prefix="*|:"-bindir="*|:"-objdir="*|:"-sbindir="*|:"-appdir="*|:"-libexecdir="*|:"-datarootdir="*|:"-datadir="*|:"-sysconfdir="*|:"-sharedstatedir="*|:"-localstatedir="*|:"-docdir="*|:"-includedir="*|:"-oldincludedir="*|:"-infodir="*|:"-libdir="*|:"-lispdir="*|:"-localedir="*|:"-mandir="*|:"-program"[-_]"prefix="*|:"-program"[-_]"suffix="*|:"-program"[-_]"transform"[-_]"name="*|:"-version="*|:"-x"[-_]"includes="*|:"-x"[-_]"libraries="*|:"-dump"|:"-dump="*|:"-dump"[-_]"ucase"|:"-dump"[-_]"ucase="*)
           _param="${1}"
           shift
           set : "-${_param}" "$@"
@@ -291,6 +291,7 @@ do
           echolinex "--version          "show \`"${progname}"\' version and exit
           echoline "--build=BUILD      "type of system to build the program on \[guessed\]
           echoline "--host=HOST        "type of system to build the program for \[BUILD\]
+          echoline "--target=TARGET    "type of system the program should build programs for \[HOST\]
           echolinex "--srcdir=DIR       "look for \`"${basename}"\' package in DIR \(default: . or ..\)
           echoline "--objdir=DIR       "create intermediate object files in DIR \(default: obj\)
           echoline
@@ -432,7 +433,11 @@ do
           feature host "${1#--host=}" ;
           shift
           ;;
-      :"--srcdir"|:"--build"|:"--host"|:"--prefix"|:"--exec"[-_]"prefix"|:"--bindir"|:"--objdir"|:"--sbindir"|:"--appdir"|:"--libexecdir"|:"--datarootdir"|:"--datadir"|:"--sysconfdir"|:"--sharedstatedir"|:"--localstatedir"|:"--docdir"|:"--includedir"|:"--oldincludedir"|:"--infodir"|:"--libdir"|:"--lispdir"|:"--localedir"|:"--mandir"|:"--dump"|:"--x"[-_]"includes"|:"--x"[-_]"libraries"|:"--program"[-_]"prefix"|:"--program"[-_]"suffix"|:"--program"[-_]"transform"[-_]"name")
+      :"--target="*)
+          feature target "${1#--target=}" ;
+          shift
+          ;;
+      :"--srcdir"|:"--build"|:"--host"|:"--target"|:"--prefix"|:"--exec"[-_]"prefix"|:"--bindir"|:"--objdir"|:"--sbindir"|:"--appdir"|:"--libexecdir"|:"--datarootdir"|:"--datadir"|:"--sysconfdir"|:"--sharedstatedir"|:"--localstatedir"|:"--docdir"|:"--includedir"|:"--oldincludedir"|:"--infodir"|:"--libdir"|:"--lispdir"|:"--localedir"|:"--mandir"|:"--dump"|:"--x"[-_]"includes"|:"--x"[-_]"libraries"|:"--program"[-_]"prefix"|:"--program"[-_]"suffix"|:"--program"[-_]"transform"[-_]"name")
           _param="${1}"
           _value="${2}"
           if test $# -lt 2 -o :"${_value}" != :"-" -a :"${_value#-}" != :"${_value}"
