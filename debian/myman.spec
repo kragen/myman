@@ -2,7 +2,7 @@ Summary: the MyMan video game
 Name: myman
 Version: 0.7.1
 Group: Amusements/Games
-Copyright: BSD
+License: BSD
 Source: %{name}-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 
