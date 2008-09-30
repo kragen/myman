@@ -9,7 +9,7 @@ BuildRoot: /var/tmp/%{name}-%{version}-buildroot
 
 %description
 MyMan is a video game for color and monochrome text
-terminals in the genre of Namco's Pac-Man. It has been
+terminals in the genre of Namco\'s Pac-Man. It has been
 ported to a variety of operating systems using the
 following for user interaction: ncurses, PDcurses,
 Curses, sysV-curses, S/Lang slcurses, Win32 console, raw
@@ -29,27 +29,29 @@ make CFLAGS="${CFLAGS:-%optflags}" CXXFLAGS="${CXXFLAGS:-%optflags}" FFLAGS="${F
 %install
 mkdir -p "${RPM_BUILD_ROOT}"
 %makeinstall
+gzip -9 "%{_mandir}/man6/%{name}.6"
+gzip -9 "%{_mandir}/man6/%{name}.command.6"
+gzip -9 "%{_mandir}/man6/%{name}-%{version}.6"
 
 %clean
-make -C "${RPM_BUILD_ROOT}" uninstall distclean DESTDIR="${RPM_BUILD_ROOT}"
+make uninstall distclean DESTDIR="${RPM_BUILD_ROOT}"
 
 %post
-mandb /usr/share/man || makewhatis /usr/share/man
+mandb "%{_mandir}" || makewhatis "%{_mandir}"
 
 %postun
-mandb /usr/share/man || makewhatis /usr/share/man
+mandb "%{_mandir}" || makewhatis "%{_mandir}"
 
 %files
 %defattr(-,games,games)
-%doc README TODO COPYING ChangeLog
-/usr/bin/%{name}
-/usr/bin/%{name}.command
-/usr/bin/%{name}-%{version}
-/usr/share/%{name}-%{version}
-/usr/share/doc/%{name}-%{version}
-/usr/share/man/man6/%{name}.6
-/usr/share/man/man6/%{name}.command.6
-/usr/share/man/man6/%{name}-%{version}.6
+%doc %{_datadir}/doc/%{name}-%{version}/*
+%{_bindir}/%{name}
+%{_bindir}/%{name}.command
+%{_bindir}/%{name}-%{version}
+%{_datadir}/%{name}-%{version}
+%{_mandir}/man6/%{name}.6.gz
+%{_mandir}/man6/%{name}.command.6.gz
+%{_mandir}/man6/%{name}-%{version}.6.gz
 
 %changelog
 * Tue Sep 30 2008 Benjamin C. Wiley Sittler <bsittler@gmail.com>
