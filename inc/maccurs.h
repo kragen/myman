@@ -764,7 +764,7 @@ static int maccurses_usleep(unsigned long us)
 
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    gettimeofday(&tv, NULL);
+    myman_gettimeofday(&tv, NULL);
     tv2.tv_sec = tv.tv_sec + ((tv.tv_usec + us) / 1000000L);
     tv2.tv_usec = tv.tv_usec + ((tv.tv_usec + us) % 1000000L);
     while (1)
@@ -778,7 +778,7 @@ static int maccurses_usleep(unsigned long us)
             }
             return -1;
         }
-        gettimeofday(&tv, NULL);
+        myman_gettimeofday(&tv, NULL);
         if ((tv.tv_sec != tv2.tv_sec)
             ||
             (tv.tv_usec >= tv2.tv_usec))

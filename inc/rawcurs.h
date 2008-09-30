@@ -538,7 +538,7 @@ rawcurses_usleep(unsigned long usecs)
 
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    gettimeofday(&tv, NULL);
+    myman_gettimeofday(&tv, NULL);
     tv2.tv_sec = tv.tv_sec + ((tv.tv_usec + usecs) / 1000000L);
     tv2.tv_usec = tv.tv_usec + ((tv.tv_usec + usecs) % 1000000L);
     while (1)
@@ -552,7 +552,7 @@ rawcurses_usleep(unsigned long usecs)
             }
             return -1;
         }
-        gettimeofday(&tv, NULL);
+        myman_gettimeofday(&tv, NULL);
         if ((tv.tv_sec != tv2.tv_sec)
             ||
             (tv.tv_usec >= tv2.tv_usec))
@@ -567,7 +567,7 @@ rawcurses_usleep(unsigned long usecs)
         struct timeval tv0, tv1;
         int ret;
 
-        if (gettimeofday(&tv0, NULL)) break;
+        if (myman_gettimeofday(&tv0, NULL)) break;
         ret = 0;
 #ifndef LSI_C
 #if ! (defined(__DMC__) || defined(__TURBOC__))
@@ -576,7 +576,7 @@ rawcurses_usleep(unsigned long usecs)
             sleep(0);
 #endif
         if (ret) break;
-        if (gettimeofday(&tv1, NULL)) break;
+        if (myman_gettimeofday(&tv1, NULL)) break;
         if (tv1.tv_sec < tv0.tv_sec) break;
         if ((tv1.tv_sec == tv0.tv_sec)
             &&

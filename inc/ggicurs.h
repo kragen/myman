@@ -649,7 +649,7 @@ static double ggicurses_now(void)
 
     tv.tv_sec = 0;
     tv.tv_usec = 0;
-    gettimeofday(&tv, 0);
+    myman_gettimeofday(&tv, 0);
     return 1.0L * tv.tv_sec + 1.0e-6 * tv.tv_usec;
 }
 

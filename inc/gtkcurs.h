@@ -192,7 +192,7 @@ gtkcurses_usleep(unsigned long usecs)
         struct timeval tv0, tv1;
         int ret;
 
-        if (gettimeofday(&tv0, NULL)) break;
+        if (myman_gettimeofday(&tv0, NULL)) break;
         ret = 0;
 #ifndef LSI_C
 #if ! (defined(__DMC__) || defined(__TURBOC__))
@@ -201,7 +201,7 @@ gtkcurses_usleep(unsigned long usecs)
             sleep(0);
 #endif
         if (ret) break;
-        if (gettimeofday(&tv1, NULL)) break;
+        if (myman_gettimeofday(&tv1, NULL)) break;
         if (tv1.tv_sec < tv0.tv_sec) break;
         if ((tv1.tv_sec == tv0.tv_sec)
             &&

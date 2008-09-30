@@ -106,9 +106,9 @@ static int usleep(unsigned long usecs)
     {
         struct timeval tv0, tv1;
 
-        if (gettimeofday(&tv0, NULL)) break;
+        if (myman_gettimeofday(&tv0, NULL)) break;
         sleep(0);
-        if (gettimeofday(&tv1, NULL)) break;
+        if (myman_gettimeofday(&tv1, NULL)) break;
         if (tv1.tv_sec < tv0.tv_sec) break;
         if ((tv1.tv_sec == tv0.tv_sec)
             &&

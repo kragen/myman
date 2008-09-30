@@ -264,4 +264,15 @@
 #define HAVE_WCHAR_H 0
 #endif
 
+/* HAVE_OLD_GETTIMEOFDAY: de we have a one-argument version of gettimeofday(2)? */
+#ifndef HAVE_OLD_GETTIMEOFDAY
+#define HAVE_OLD_GETTIMEOFDAY 0
+#endif
+
+#if HAVE_OLD_GETTIMEOFDAY
+#define myman_gettimeofday(tv,tz) gettimeofday(tv)
+#else
+#define myman_gettimeofday(tv,tz) gettimeofday(tv,tz)
+#endif
+
 #endif /* ! defined(MYMAN_GUESS_H_INCLUDED) */

@@ -2434,6 +2434,14 @@ pen_pal[16][3] =
 
 #if USE_COLOR
 
+#ifndef COLORS
+#define COLORS 8
+#endif
+
+#ifndef COLOR_PAIRS
+#define COLOR_PAIRS ((COLORS) * (COLORS))
+#endif
+
 #define trans_color(i) \
 (((i) == 0) ? COLOR_BLACK \
 : ((i) == 1) ? COLOR_BLUE \
@@ -6441,7 +6449,7 @@ gamecycle(void)
         do
         {
             actual_delay = (myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1);
-            if (gettimeofday(&tv2, 0))
+            if (myman_gettimeofday(&tv2, 0))
             {
                 tv.tv_sec = 0;
                 tv.tv_usec = 0;
@@ -6539,7 +6547,7 @@ gamecycle(void)
         }
         while (1);
         ignore_delay = 0;
-        if (gettimeofday(&tv, 0))
+        if (myman_gettimeofday(&tv, 0))
         {
             ignore_delay = 1;
             frameskip = 0;
@@ -6556,11 +6564,11 @@ gamecycle(void)
 
         tv_pre.tv_sec = 0;
         tv_pre.tv_usec = 0;
-        gettimeofday(&tv_pre, 0);
+        myman_gettimeofday(&tv_pre, 0);
         k = getch();
         tv_post.tv_sec = 0;
         tv_post.tv_usec = 0;
-        gettimeofday(&tv_post, 0);
+        myman_gettimeofday(&tv_post, 0);
         /* a very slow keypress is likely a sign of unmapping, suspending, or some similar mess */
 
         /* TODO: treat job control signals similarly */
@@ -8167,7 +8175,7 @@ main(int argc, char *argv[]
     memset((void *) inside_wall, '\0', sizeof(inside_wall));
     tvt.tv_sec = 0;
     tvt.tv_usec = 0;
-    gettimeofday(&tvt, 0);
+    myman_gettimeofday(&tvt, 0);
     tvt_used = 0;
     for (n = 0; n < maze_n; n ++)
     {
@@ -8188,7 +8196,7 @@ main(int argc, char *argv[]
                     {
                         tvt2.tv_sec = 0;
                         tvt2.tv_usec = 0;
-                        gettimeofday(&tvt2, 0);
+                        myman_gettimeofday(&tvt2, 0);
                         if (tvt2.tv_sec != tvt.tv_sec)
                         {
                             tvt.tv_sec = tvt2.tv_sec;
@@ -8788,8 +8796,8 @@ main(int argc, char *argv[]
             sdl_audio_open = 1;
         }
 #endif
-        if (! lines) lines = (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + (3 * tile_h + sprite_h);
-        if (! columns) columns = (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) * (use_fullwidth ? 2 : 1);
+        if (! myman_lines) myman_lines = (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + (3 * tile_h + sprite_h);
+        if (! myman_columns) myman_columns = (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) * (use_fullwidth ? 2 : 1);
 #ifdef GTKCURSES
         if (((! getenv("GTKCURSES_ICON")) || ! *(getenv("GTKCURSES_ICON"))) && MYMANICONPNG && *MYMANICONPNG)
         {
@@ -8801,8 +8809,8 @@ main(int argc, char *argv[]
         }
 #endif
 #ifdef INITSCR_WITH_HINTS
-        initscrWithHints(lines,
-                         columns,
+        initscrWithHints(myman_lines,
+                         myman_columns,
                          "MyMan [" MYMAN " " MYMANVERSION "]",
                          MYMAN);
 #else
@@ -8942,8 +8950,8 @@ main(int argc, char *argv[]
 
                 if (! ioctl(fileno(stdout), TIOCGWINSZ, &wsz))
                 {
-                    lines = wsz.ws_row;
-                    columns = wsz.ws_col;
+                    myman_lines = wsz.ws_row;
+                    myman_columns = wsz.ws_col;
                 }
 #else
 #ifdef TIOCGSIZE
@@ -8951,27 +8959,27 @@ main(int argc, char *argv[]
 
                 if (! ioctl(fileno(stdout), TIOCGSIZE, &tsz))
                 {
-                    lines = tsz.ts_lines;
-                    columns = tsz.ts_cols;
+                    myman_lines = tsz.ts_lines;
+                    myman_columns = tsz.ts_cols;
                 }
 #endif
 #endif
 #endif
-                if (! lines) lines = LINES;
-                if (! columns) columns = COLS;
+                if (! myman_lines) myman_lines = LINES;
+                if (! myman_columns) myman_columns = COLS;
 #ifdef KEY_RESIZE
 #ifdef __PDCURSES__
                 resize_term(0, 0);
 #else
-                resizeterm(lines ? lines : LINES, columns ? columns : COLS);
+                resizeterm(myman_lines ? myman_lines : LINES, myman_columns ? myman_columns : COLS);
 #endif
 #else
                 {
                     static char buf[15];
 
-                    sprintf(buf, "%d", lines);
+                    sprintf(buf, "%d", myman_lines);
                     setenv("LINES", buf, 1);
-                    sprintf(buf, "%d", columns);
+                    sprintf(buf, "%d", myman_columns);
                     setenv("COLUMNS", buf, 1);
                 }
 #endif

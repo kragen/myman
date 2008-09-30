@@ -515,8 +515,8 @@ extern int level,
     dying,
     dead,
     deadpan,
-    lines,
-    columns,
+    myman_lines,
+    myman_columns,
     oldplayer,
     player;
 extern int key_buffer;
