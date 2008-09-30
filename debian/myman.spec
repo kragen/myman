@@ -43,7 +43,7 @@ mandb "%{_mandir}" || makewhatis "%{_mandir}"
 mandb "%{_mandir}" || makewhatis "%{_mandir}"
 
 %files
-%defattr(-,games,games)
+%defattr(-,root,root)
 %doc %{_datadir}/doc/%{name}-%{version}/*
 %{_bindir}/%{name}
 %{_bindir}/%{name}.command
