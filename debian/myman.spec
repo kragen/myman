@@ -28,7 +28,7 @@ make CFLAGS="${CFLAGS:-%optflags}" CXXFLAGS="${CXXFLAGS:-%optflags}" FFLAGS="${F
 
 %install
 mkdir -p "${RPM_BUILD_ROOT}"
-%makeinstall
+%makeinstall MAKEWHATIS=:
 gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}.6"
 gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}.command.6"
 gzip -9 "${RPM_BUILD_ROOT}%{_mandir}/man6/%{name}-%{version}.6"
