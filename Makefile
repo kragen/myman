@@ -2853,7 +2853,7 @@ utl/txt2asc.sh \
 debian/postinst \
 debian/postrm \
 debian/rules \
-debian/spec
+debian/myman.spec
 
 dist_data_files = \
 ${doc_files} \
