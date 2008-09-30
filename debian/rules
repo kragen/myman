@@ -2,27 +2,27 @@
 
 version = $(shell cat VERSION)
 package = myman
-destdir = $(package)_$(version)_$(DEB_HOST_ARCH)
+destdir = ${package}_${version}_${DEB_HOST_ARCH}
 prefix = /usr
 
 build:
-	sh ./configure --prefix="$(prefix)" && \
-	$(MAKE) all && \
+	sh ./configure --prefix="${prefix}" && \
+	${MAKE} all && \
 	touch build
 
 .PHONY: clean binary binary-arch
 
 clean:
 	rm -f build && \
-	rm -rf "$(destdir)" && \
+	rm -rf "${destdir}" && \
 	rm -f debian/files && \
-	$(MAKE) distclean
+	${MAKE} distclean
 
 binary: binary-arch
 
 binary-arch: build
-	$(MAKE) install DESTDIR="$(destdir)" && \
-	rm -f "$(destdir)"/"$(prefix)"/share/man/whatis && \
-	mkdir -p "$(destdir)"/DEBIAN && \
-	dpkg-gencontrol -P"$(destdir)" && \
-	dpkg-deb --build "$(destdir)" ..
+	${MAKE} install DESTDIR="${destdir}" && \
+	rm -f "${destdir}"/"${prefix}"/share/man/whatis && \
+	mkdir -p "${destdir}"/DEBIAN && \
+	dpkg-gencontrol -P"${destdir}" && \
+	dpkg-deb --build "${destdir}" ..
