@@ -2852,7 +2852,8 @@ utl/turboc.sh \
 utl/txt2asc.sh \
 debian/postinst \
 debian/postrm \
-debian/rules
+debian/rules \
+debian/spec
 
 dist_data_files = \
 ${doc_files} \
