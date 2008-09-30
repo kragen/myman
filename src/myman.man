@@ -594,13 +594,6 @@ equivalent to ESC
 .SH FILES
 .PP
 The following directories are used by MyMan:
-.TP
-.I @privatelibexecdir@
-Directory of individual tile/sprite size and maze variant
-binaries. These are invoked automatically by the main
-.B @MYMAN_EXE@
-executable in non-monolithic installations.
-.TP
 .I @mazedir@
 Directory of maze datafiles.
 .I @tiledir@
@@ -665,8 +658,6 @@ above.) You may need to enable it and recompile.
 .IB ... " @MYMAN_EXE@: command not found"
 .TP
 .IB ... " @MYMAN_EXE@: not found"
-.TP
-.IB @privatelibexecdir@/variant\-size ": No such file or directory"
 .TP
 .BI "@MYMAN_EXE@: game variant `" variant "' not included in this binary"
 .TP
