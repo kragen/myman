@@ -3659,6 +3659,8 @@ cvsdist: fill-dir-xq-$(call xq,${CVSDUMP}) empty-dir-xq-$(call mwxq,${CVSDIST})
 
 .PHONY: cvsdump
 
+$(call mw,${CVSDUMP}${tgz}): cvsdump
+
 cvsdump: compressed-tarball-xq-$(call mwxq,${CVSDUMP})
 	-${REMOVE} $(call q,${CVSDUMP})${tar}
 	${INSTALL_DATA} $(call q,${CVSDUMP})${tgz} $(call q,${CVSDUMP})-${isodate}${tgz}
@@ -3683,6 +3685,8 @@ fill-dir-xq-$(call xq,${DIST}):: $(call mw,${MAKEFILE}) $(addprefix $(call mw,${
 	${NORMAL_UNPACK}
 
 .PHONY: dist
+
+$(call mw,${DIST}${tgz}): dist
 
 dist:: $(call mw,${MAKEFILE})
 	@${MAKE} ${MAKELOOP} \
@@ -3946,6 +3950,16 @@ ifeq (yes,${with_mac})
 endif
 
 .PHONY: bindist
+
+$(call mw,${BINDIST}${tgz}): bindist
+
+ifeq (yes,${with_zip})
+$(call mw,${BINDIST}.zip): bindist
+endif
+
+ifeq (yes,${with_dmg})
+$(call mw,${BINDIST}.dmg): bindist
+endif
 
 bindist:: $(call mw,${MAKEFILE})
 	@${MAKE} ${MAKELOOP} \
