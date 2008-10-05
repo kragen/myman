@@ -39,12 +39,6 @@ rm -f "%{buildroot}%{_mandir}/man6/%{name}.command.6.gz"
 rm -f "%{buildroot}%{_mandir}/man6/%{name}-%{version}.6.gz"
 make uninstall distclean DESTDIR="%{buildroot}"
 
-%post
-mandb "%{_mandir}" || makewhatis "%{_mandir}"
-
-%postun
-mandb "%{_mandir}" || makewhatis "%{_mandir}"
-
 %files
 %defattr(-,root,root)
 %doc %{_datadir}/doc/%{name}-%{version}/*
