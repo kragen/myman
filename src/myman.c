@@ -97,12 +97,12 @@
 #if HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #if HAVE_UNIXIO_H
 #include <unixio.h>
 #endif
-#include <stdlib.h>
 #if HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
