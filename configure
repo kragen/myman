@@ -243,6 +243,24 @@ dump=
 dump_tr=
 dump_command=echoline
 
+# promote a few environment variables to features if they exist for
+# autoconf compatibility; autoconf calls these "precious variables"
+
+for varname in \
+    CC \
+    CFLAGS \
+    CPPFLAGS \
+    LDFLAGS \
+    LIBS \
+    PKG_CONFIG \
+    host_alias \
+    target_alias \
+    ; do
+  if eval 'test :"${'"${varname}"'}" != :"" -o :"${'"${varname}"'-unset}" != :unset'; then
+      eval 'feature "${varname%_alias}" "${'"${varname}"'}"'
+  fi
+done
+
 # parse arguments
 while test $# -gt 0
 do
@@ -283,8 +301,22 @@ do
           ;;
       :"--help"|:"--help="*|:"-h"|:"-h"*)
           # undocumented: --dump=VAR, --dump-ucase, --dump-escaped
-          echolinex Usage: "${progname}" \[OPTION\]... \[BUILD\]
+          echolinex Usage: "${progname}" \[OPTION\]... \[BUILD\] \[VAR\=VALUE\]...
           echolinex Configure the \`"${basename}"\' package.
+          echoline
+          echoline Some useful \`make\' variables \(specify using VAR\=VALUE\):
+          echoline SHELL"              "Bourne-compatible shell \(e.g. /bin/sh or /bin/bash\)
+          echoline \[BUILD_\]EXE_SUFFIX" "\[Build\] executable-file suffix \(e.g. .exe or .prg\)
+          echoline \[BUILD_\]OBJ_SUFFIX" "\[Build\] object-file suffix \(e.g. .o or .obj\)
+          echoline \[BUILD_\]SH_SUFFIX"  "\[Build\] Bourne-compatible shell script suffix \(e.g. .sh\)
+          echoline \[HOST\]CC"           "\[Host\] C compiler \(e.g. gcc or cc or g++\)
+          echoline \[HOST\]CFLAGS"       "\[Host\] C compiler options \(e.g. \'-Wall -Werror -ansi\'\)
+          echoline \[HOST\]CPPFLAGS"     "\[Host\] C preprocessor options \(e.g. -DHAVE_LANGINFO_H=0\)
+          echoline \[HOST\]CINCLUDES"    "\[Host\] C preprocessor include directives \(.e.g \'-I/usr/local/include -I/opt/local/include\'\)
+          echoline \[HOST\]RC"           "\[Host\] Win32 resource compiler \(e.g. windres or rc\)
+          echoline \[HOST\]LD"           "\[Host\] linker \(C compiler is used if this is not specified\)
+          echoline \[HOST\]LDFLAGS"      "\[Host\] linker options \(e.g. -L/usr/local/lib\)
+          echoline \[HOST\]LIBS"         "\[Host\] library link directives \(e.g. \'-lm -lc\'\)
           echoline
           echoline Options:
           echoline "--help             "show this message and exit
