@@ -784,6 +784,12 @@ MYMANCOMMAND_EXE \
 MYMANCOPYRIGHT \
 MYMANVERSION \
 MYMANWEBSITE \
+NCURSES_CONFIG \
+NCURSESCFLAGS \
+NCURSESLIBS \
+NCURSESW_CONFIG \
+NCURSESWCFLAGS \
+NCURSESWLIBS \
 PKG_CONFIG \
 SDL_CONFIG \
 SHELL \
@@ -1754,10 +1760,10 @@ endif
 
 # curses library
 
-# ncurses under Linux, improperly installed in /usr
+# ncurses under Linux, installed in /usr (not neccessarily as <curses.h> / -lcurses)
 #CURSESLIBS = -L/usr/lib -lncurses
 #CURSESINCLUDE = -I/usr/include/ncurses
-# same, in /usr/local
+# same, in /usr/local (not neccessarily as <curses.h> / -lcurses)
 #CURSESLIBS = -L/usr/local/lib -lncurses
 #CURSESINCLUDE = -I/usr/local/include/ncurses
 # SysV curses in the SysV optional installation dirs, on a SunOS 4 system
@@ -2236,13 +2242,26 @@ EXTRAWRAPPERDEFS += -DXCURSES
 else
 ifeq (yes,${with_ncursesw})
 
+# ncurses 5.x (wide character version)
+
 ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
 CURSES_FLAVOR = ncursesw
 endif
 
-# ncurses (wide character version)
-CURSESLIBS += -lncursesw
-CURSESINCLUDE += $(call q,-DMY_CURSES_H=<ncursesw/curses.h>)
+ifeq ($(subst default,undefined,$(origin NCURSESW_CONFIG)),undefined)
+NCURSESW_CONFIG = ${hostprefix}ncursesw5-config
+endif
+ifeq ($(origin NCURSESWLIBS),undefined)
+NCURSESWLIBS := $(call shell,${NCURSESW_CONFIG} --libs)
+endif
+CURSESLIBS += ${NCURSESWLIBS}
+
+ifeq ($(origin NCURSESWCFLAGS),undefined)
+NCURSESWCFLAGS := $(call shell,${NCURSESW_CONFIG} --cflags)
+endif
+CURSOPTS += ${NCURSESWCFLAGS}
+
+CURSESINCLUDE += $(call q,-DMY_CURSES_H=<ncurses.h>)
 
 # use X/OPEN wide character API when in raw mode
 CURSOPTS += -DNCURSES_XOPEN_HACK
@@ -2250,12 +2269,25 @@ CURSOPTS += -DNCURSES_XOPEN_HACK
 else
 ifeq (yes,${with_ncurses})
 
+# ncurses 5.x in the usual place, but called "ncurses" instead of "curses"
+
 ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
 CURSES_FLAVOR = ncurses
 endif
 
-# ncurses in the usual place, but called "ncurses" instead of "curses"
-CURSESLIBS += -lncurses
+ifeq ($(subst default,undefined,$(origin NCURSES_CONFIG)),undefined)
+NCURSES_CONFIG = ${hostprefix}ncurses5-config
+endif
+ifeq ($(origin NCURSESLIBS),undefined)
+NCURSESLIBS := $(call shell,${NCURSES_CONFIG} --libs)
+endif
+CURSESLIBS += ${NCURSESLIBS}
+
+ifeq ($(origin NCURSESCFLAGS),undefined)
+NCURSESCFLAGS := $(call shell,${NCURSES_CONFIG} --cflags)
+endif
+CURSOPTS += ${NCURSESCFLAGS}
+
 CURSESINCLUDE += $(call q,-DMY_CURSES_H=<ncurses.h>)
 
 else
