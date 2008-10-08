@@ -1,0 +1,39 @@
+<?xml version="1.0" ?>
+<?xml-stylesheet type='text/xsl' href='interface.xsl'?>
+<interface uri="http://myman.sf.net/myman.xml" xmlns="http://zero-install.sourceforge.net/2004/injector/interface">
+  <name>myman</name>
+  <summary>the MyMan video game</summary>
+  <description>
+MyMan is a video game for color and monochrome text
+
+terminals in the genre of Namco's Pac-Man. It has been
+
+ported to a variety of operating systems using the
+
+following for user interaction: ncurses, PDcurses,
+
+Curses, sysV-curses, S/Lang slcurses, Win32 console, raw
+
+stdio and termios, GGI, Allegro, aalib, libcaca, TWin,
+
+and Carbon. It includes many maze variations and several
+
+tile and sprite sets, ranging from large ASCII art
+
+through large pseudo-bitmap Unicode or CP437 graphics to
+
+single characters.</description>
+  <homepage>http://myman.sf.net/</homepage>
+  <category>Game</category>
+  <needs-terminal/>
+  <icon href="http://myman.sf.net/myman.png" type="image/png"/>
+  <group license="OSI Approved :: MIT/X Consortium License" released="2008-07-28" stability="testing" version="0.7.0"/>
+  <implementation arch="Linux-i486" doc-dir="dist/usr/local/share/doc/myman-0.7.0" id="sha1new=ce54af207278ae1b080796535c94682e018b58b8" license="OSI Approved :: MIT/X Consortium License" main="myman" released="2008-10-08" stability="testing" version="0.7.0">
+    <archive extract="myman-0.7.0-i486-pc-linux-gnu" href="http://internap.dl.sourceforge.net/sourceforge/myman/myman-0.7.0-i486-pc-linux-gnu.tar.gz" size="1455093" type="application/x-compressed-tar"/>
+  </implementation>
+</interface>
+<!-- Base64 Signature
+iEYEABECAAYFAkjtRqcACgkQ+vNHg6gC02IGGgCdG6WnzlaBPjKkqgsesPlKS6Clz88AoI+waKyz
+FPUaDxWGUnEuHXnYS4TQ
+
+-->
