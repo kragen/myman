@@ -1620,16 +1620,16 @@ endif
 # Complete preprocessing and compilation action for option 1 or 2
 ifeq ($(subst default,undefined,$(origin COMPILE)),undefined)
 ifneq (,$(findstring dmc,${CC})$(findstring bcc32,${CC}))
-COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; compile
+COMPILE = compile() { ${ECHOLINEX} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; compile
 else
-COMPILE = compile() { ${ECHOLINE} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; compile
+COMPILE = compile() { ${ECHOLINEX} ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); ${CC} ${CFLAGS} ${CPPFLAGS} ${MYMANCPPFLAGS} ${CINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; compile
 endif
 endif
 ifeq ($(subst default,undefined,$(origin HOSTCOMPILE)),undefined)
 ifneq (,$(findstring dmc,${HOSTCC})$(findstring bcc32,${HOSTCC}))
-HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; hostcompile
+HOSTCOMPILE = hostcompile() { ${ECHOLINEX} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o$(call q,$@) -c $(call q,$<); }; hostcompile
 else
-HOSTCOMPILE = hostcompile() { ${ECHOLINE} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCPPFLAGS} "$$@" -o $(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; hostcompile
+HOSTCOMPILE = hostcompile() { ${ECHOLINEX} ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCPPFLAGS} "$$@" -o $(call q,$@) -c $(call q,$<); ${HOSTCC} ${HOSTCFLAGS} ${HOSTCPPFLAGS} ${MYMANCPPFLAGS} ${HOSTCINCLUDES} ${MYMANCINCLUDES} "$$@" -o $(call q,$@) -c $(call q,$<); }; hostcompile
 endif
 endif
 
@@ -3612,8 +3612,12 @@ fink/myman.info \
 ${website_files}
 
 website_files = \
+website/htdocs/FAF34783A802D362.gpg \
 website/htdocs/favicon.ico \
 website/htdocs/index.html \
+website/htdocs/interface.xsl \
+website/htdocs/myman.png \
+website/htdocs/myman.xml \
 website/htdocs/myman-0.7.0.png \
 website/htdocs/snap0000.html \
 website/htdocs/snap0000.txt
