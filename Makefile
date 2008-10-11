@@ -1093,31 +1093,39 @@ ifeq ($(subst default,undefined,$(origin CVS)),undefined)
 CVS = cvs
 endif
 
+# SourceForge project name
+ifeq ($(subst default,undefined,$(origin SFGROUP)),undefined)
+SFGROUP = myman
+endif
 # SourceForge user name to use with rsync-over-ssh
 ifeq ($(subst default,undefined,$(origin SFUSER)),undefined)
-SFUSER =
+ifeq ($(subst default,undefined,$(origin USER)),undefined)
+SFUSER := $(shell id -un)
+else
+SFUSER := ${USER}
+endif
 endif
 ifeq ($(subst default,undefined,$(origin SFPREFIX)),undefined)
 ifneq (${SFUSER},)
-SFPREFIX = ${SFUSER}@
+SFPREFIX = ${SFUSER},${SFGROUP}@
 else
 SFPREFIX =
 endif
 endif
 ifeq ($(subst default,undefined,$(origin MYMANWEBSITE)),undefined)
-MYMANWEBSITE = http://myman.sf.net/
+MYMANWEBSITE = http://${SFGROUP}.sf.net/
 endif
 ifeq ($(subst default,undefined,$(origin MYMANWEBSITERSYNC)),undefined)
-MYMANWEBSITERSYNC = ${SFPREFIX}shell.sf.net:/home/groups/m/my/myman
+MYMANWEBSITERSYNC = ${SFPREFIX}web.sf.net:/home/groups/$(call shell,${SHELL} -c $(call q,${ECHOLINE_internal} $(call q,${SFGROUP}) | ${SED} ${SEDFLAGS} -e $(call q,1 s|^..|&/&|; 1 s|^.|&/&|)))
 endif
 ifeq ($(subst default,undefined,$(origin UPLOADSRSYNC)),undefined)
 UPLOADSRSYNC = ${SFPREFIX}frs.sf.net:uploads/
 endif
 ifeq ($(subst default,undefined,$(origin UPLOADSWEBSITE)),undefined)
-UPLOADSWEBSITE = http://sourceforge.net/project/admin/newrelease.php?package_id=288220&group_id=236995
+UPLOADSWEBSITE = http://sf.net/project/admin/newrelease.php?package_id=288220&group_id=236995
 endif
 ifeq ($(subst default,undefined,$(origin MYMANCVSRSYNC)),undefined)
-MYMANCVSRSYNC = rsync://myman.cvs.sf.net/cvsroot/myman/*
+MYMANCVSRSYNC = rsync://${SFGROUP}.cvs.sf.net/cvsroot/${SFGROUP}/*
 endif
 
 # function to generate removal command for file $1
@@ -3661,9 +3669,11 @@ push-website: $(foreach file,${website_files},$(call mw,${src}${file}))
             (${ECHOLINEX} creating directory $(call q,${dir}) && \
                 ${INSTALL_DIR} $(call q,${dir})) || \
                 exit $$?; \
-            ${RSYNC} ${RSYNCFLAGS} -essh --times --dirs $(call q,${MYMANWEBSITERSYNC}$(call s,$(call xq,website)%,%,${dir})/) $(call q,${src}${dir}/) || \
+            ${RSYNC} ${RSYNCFLAGS} -r -l -t --chmod=ugo=rwX --executability -essh --cvs-exclude $(call q,${src}${dir}/) $(call q,${MYMANWEBSITERSYNC}$(call s,$(call xq,website)%,%,${dir})/) || \
+                exit $$?; \
+            ${RSYNC} ${RSYNCFLAGS} -essh --cvs-exclude --times --dirs $(call q,${MYMANWEBSITERSYNC}$(call s,$(call xq,website)%,%,${dir})/) $(call q,${src}${dir}/) || \
                 exit $$?;)
-	${RSYNC} ${RSYNCFLAGS} -aessh --delete --cvs-exclude --delete-excluded $(call q,${src})website/ $(call q,${MYMANWEBSITERSYNC}/)
+	${RSYNC} ${RSYNCFLAGS} -r -l -t --chmod=ugo=rwX --executability -essh --delete --cvs-exclude --delete-excluded $(call q,${src})website/ $(call q,${MYMANWEBSITERSYNC}/)
 	@${ECHOLINE} $(call q,)
 	@${ECHOLINE} $(call q,Now visit the website here:)
 	@${ECHOLINE} $(call q,    ${MYMANWEBSITE})
