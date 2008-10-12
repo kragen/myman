@@ -4206,9 +4206,9 @@ ${MYMAN}.app/Contents/${PLATFORM}/${MYMAN}$x: ${MYMAN}$x $(call mw,${MYMAN}.app/
 	@-(${PROD_FINDER} $(call q,${MYMAN}.app))
 endif
 
-.PHONY: docs
+.PHONY: doc docs
 
-docs: ${MYMAN}${man6ext} ${MYMAN}${txt} ${MYMAN}.ps dvi ${MYMAN}${htm} $(addprefix $(call mw,${src}),${doc_files})
+doc docs: ${MYMAN}${man6ext} ${MYMAN}${txt} ${MYMAN}.ps dvi ${MYMAN}${htm} $(addprefix $(call mw,${src}),${doc_files})
 
 .PHONY: dvi
 
