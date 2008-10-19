@@ -786,6 +786,14 @@ typedef int rawcurses_wchar_t;
 #endif
 #endif
 
+#ifndef HAVE_SELECT
+#ifdef FD_SET
+#define HAVE_SELECT 1
+#else
+#define HAVE_SELECT 0
+#endif
+#endif
+
 #undef chtype
 #define chtype rawcurses_chtype
 
@@ -5806,7 +5814,7 @@ static int rawcurses_getch(void)
                 }
             }
 #endif
-#ifdef FD_SET
+#if HAVE_SELECT
             if (avail == -1)
             {
                 fd_set readfds, writefds, exceptfds;
