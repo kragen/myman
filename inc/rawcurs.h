@@ -337,8 +337,8 @@
 
 #if defined(__AROS__) || defined(AMIGA) || defined(MORPHOS)
 
-#ifndef USE_AROSCONSOLE
-#define USE_AROSCONSOLE 1
+#ifndef USE_AMIGACONSOLE
+#define USE_AMIGACONSOLE 1
 #endif
 
 #endif /* defined(__AROS__) || defined(AMIGA) || defined(MORPHOS) */
@@ -652,12 +652,12 @@ rawcurses_usleep(unsigned long usecs)
 #define USE_CONIO_INPUT USE_CONIO
 #endif
 
-#ifndef USE_AROSCONSOLE
-#define USE_AROSCONSOLE 0
+#ifndef USE_AMIGACONSOLE
+#define USE_AMIGACONSOLE 0
 #endif
 
-#if USE_AROSCONSOLE
-/* Workarounds for AROS (tested; seems to work) and AmigaOS (untested) */
+#if USE_AMIGACONSOLE
+/* Workarounds for AROS (tested; seems to work) and AmigaOS/MorphOS (untested) */
 
 #include <proto/dos.h>
 
@@ -858,6 +858,8 @@ typedef chtype attr_t;
 #define ESCAPE(s) "\x1b" s
 
 #define CSI(s) ESCAPE("[" s)
+
+#define CSI8(s) ("\x9B" s)
 
 #define ST ESCAPE("\\")
 
@@ -1162,9 +1164,9 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
 #if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
 #endif
-#if USE_AROSCONSOLE
-RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon, = 0);
-RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon_oldmode, = 0);
+#if USE_AMIGACONSOLE
+RAWCURSES_GLOBAL(int rawcurses_stdio_amigacon, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_amigacon_oldmode, = 0);
 #endif
 #if USE_CONIO
 RAWCURSES_GLOBAL(int rawcurses_stdio_conio, = 0);
@@ -2221,6 +2223,7 @@ static int rawcurses_fput_civis(FILE *fh)
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("f"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_amiga) return fputs(CSI("0 p"), fh) != EOF;
     return fputs(CSI("\?25l"), fh) != EOF;
 }
 
@@ -2238,7 +2241,8 @@ static int rawcurses_fput_cnorm(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("e"), fh) != EOF;
-    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a || rawcurses_stdio_amiga) return 0;
+    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_amiga) return fputs(CSI(" p"), fh) != EOF;
     return fputs(CSI("\?25h"), fh) != EOF;
 }
 
@@ -2354,6 +2358,7 @@ static int rawcurses_fput_request_winsize(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_amiga) return fputs(rawcurses_stdio_utf8 ? CSI("0 q") : CSI8("0 q"), fh) != EOF;
     return fputs(CSI("999B") CSI("999C") CSI("999;999H") CSI("6n"), fh) != EOF;
 }
 
@@ -2431,6 +2436,7 @@ static int rawcurses_fput_clrtobot(FILE *fh)
 #endif
     if (rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("J"), fh) != EOF;
+    if (rawcurses_stdio_amiga) return fputs(CSI("J"), fh) != EOF;
     return fputs(CSI("0J"), fh) != EOF;
 }
 
@@ -2490,8 +2496,24 @@ static int rawcurses_fput_relcup(FILE *fh, int dy, int dx)
     {
         if (dx < 0) ret = ret && (fprintf(fh, CSI("%dD"), -dx) > 0);
         else if (dx > 0) ret = ret && (fprintf(fh, CSI("%dC"), dx) > 0);
-        if (dy < 0) ret = ret && (fprintf(fh, CSI("%dA"), -dy) > 0);
-        else if (dy > 0) ret = ret && (fprintf(fh, CSI("%dB"), dy) > 0);
+        if (rawcurses_stdio_amiga)
+        {
+            while (dy < 0)
+            {
+                ret = ret && (fputs(rawcurses_stdio_utf8 ? CSI("A") : "\x8D", fh) != EOF);
+                dy ++;
+            }
+            while (dy > 0)
+            {
+                ret = ret && (fputs(rawcurses_stdio_utf8 ? CSI("B") : "\x84", fh) != EOF);
+                dy --;
+            }
+        }
+        else
+        {
+            if (dy < 0) ret = ret && (fprintf(fh, CSI("%dA"), -dy) > 0);
+            else if (dy > 0) ret = ret && (fprintf(fh, CSI("%dB"), dy) > 0);
+        }
     }
     return ret;
 }
@@ -2556,7 +2578,7 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
         if (rawcurses_stdio_tw52)
         {
             int toswinfg, toswinbg;
-                
+
             toswinfg = (((a_rgb & FOREGROUND_RED) ? 1 : 0)
                         |
                         ((a_rgb & FOREGROUND_GREEN) ? 2 : 0)
@@ -4968,18 +4990,18 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
     }
 #endif /* USE_TOSCONSOLE */
-#if USE_AROSCONSOLE
+#if USE_AMIGACONSOLE
     {
         if (IsInteractive(Input()))
         {
-            rawcurses_stdio_aroscon = 1;
+            rawcurses_stdio_amigacon = 1;
         }
         else
         {
-            rawcurses_stdio_aroscon = 0;
+            rawcurses_stdio_amigacon = 0;
         }
     }
-#endif /* USE_AROSCONSOLE */
+#endif /* USE_AMIGACONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
 #ifdef TIOCGWINSZ
@@ -5004,16 +5026,16 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
 #endif
 #endif /* ! USE_WINCONSOLE */
-#if USE_AROSCONSOLE
-    if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+    if (rawcurses_stdio_amigacon)
     {
         if (SetMode(Input(), 1) != DOSTRUE)
         {
-            rawcurses_stdio_aroscon_oldmode = 1;
+            rawcurses_stdio_amigacon_oldmode = 1;
         }
         else
         {
-            rawcurses_stdio_aroscon_oldmode = 0;
+            rawcurses_stdio_amigacon_oldmode = 0;
         }
     }
 #endif
@@ -5682,10 +5704,10 @@ static void endwin(void)
 #if USE_TERMIOS
     tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AROSCONSOLE
-    if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+    if (rawcurses_stdio_amigacon)
     {
-        SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+        SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
     }
 #endif
 }
@@ -5751,10 +5773,10 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AROSCONSOLE
-        if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+        if (rawcurses_stdio_amigacon)
         {
-            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+            SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
         }
 #endif
         raise(SIGTSTP);
@@ -5764,16 +5786,16 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
-#if USE_AROSCONSOLE
-        if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+        if (rawcurses_stdio_amigacon)
         {
             if (SetMode(Input(), 1) != DOSTRUE)
             {
-                rawcurses_stdio_aroscon_oldmode = 1;
+                rawcurses_stdio_amigacon_oldmode = 1;
             }
             else
             {
-                rawcurses_stdio_aroscon_oldmode = 0;
+                rawcurses_stdio_amigacon_oldmode = 0;
             }
         }
 #endif
@@ -5820,10 +5842,10 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AROSCONSOLE
-        if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+        if (rawcurses_stdio_amigacon)
         {
-            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+            SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
         }
 #endif
         raise(SIGINT);
@@ -5833,16 +5855,16 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
-#if USE_AROSCONSOLE
-        if (rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+        if (rawcurses_stdio_amigacon)
         {
             if (SetMode(Input(), 1) != DOSTRUE)
             {
-                rawcurses_stdio_aroscon_oldmode = 1;
+                rawcurses_stdio_amigacon_oldmode = 1;
             }
             else
             {
-                rawcurses_stdio_aroscon_oldmode = 0;
+                rawcurses_stdio_amigacon_oldmode = 0;
             }
         }
 #endif
@@ -5994,8 +6016,8 @@ static int rawcurses_getch(void)
                 }
             }
 #endif
-#if USE_AROSCONSOLE
-            if ((avail == -1) && rawcurses_stdio_aroscon)
+#if USE_AMIGACONSOLE
+            if ((avail == -1) && rawcurses_stdio_amigacon)
             {
                 if (WaitForChar(Input(), 1))
                 {
@@ -6631,6 +6653,78 @@ static int rawcurses_getch(void)
                     if (! strlen(rawcurses_input_intermed))
                         ret = KEY_LEFT;
                     break;
+                case 'r':
+                    ret = ERR;
+                    if (! strcmp(rawcurses_input_intermed, " "))
+                    {
+                        int w, h;
+                        size_t i;
+                        int scanstate;
+
+                        /* window bounds report (Amiga) */
+                        rawcurses_winsize_pending = 0;
+                        rawcurses_got_winsize = 1;
+                        w = 0;
+                        h = 0;
+                        scanstate = 0;
+                        for (i = 0; (i < sizeof(rawcurses_input_param)) && rawcurses_input_param[i]; i ++)
+                        {
+                            if ((rawcurses_input_param[i] >= '0')
+                                &&
+                                (rawcurses_input_param[i] <= '9'))
+                            {
+                                if (scanstate == 3)
+                                {
+                                    h *= 10;
+                                    h += (rawcurses_input_param[i] - '0');
+                                }
+                                else if (scanstate == 2)
+                                {
+                                    w *= 10;
+                                    w += (rawcurses_input_param[i] - '0');
+                                }
+                            }
+                            else if (rawcurses_input_param[i] == ';')
+                            {
+                                scanstate ++;
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                        if ((w >= 1)
+                            &&
+                            (h >= 1)
+                            &&
+                            ((w > 1) || (h > 1))
+                            &&
+                            ((w != rawcurses_w)
+                             ||
+                             (h != rawcurses_h))
+                            &&
+                            ! (rawcurses_nw && rawcurses_nh))
+                        {
+                            rawcurses_nw = w;
+                            rawcurses_nh = h;
+                            ret = KEY_RESIZE;
+                        }
+                        else
+                        {
+                            ret = ERR;
+                            if (rawcurses_stdio_new_shortname && ! rawcurses_stdio_old_shortname)
+                            {
+                                rawcurses_fput_request_icon_name(stdout);
+                                fflush(stdout);
+                            }
+                            else if (rawcurses_stdio_new_title && ! rawcurses_stdio_old_title)
+                            {
+                                rawcurses_fput_request_title(stdout);
+                                fflush(stdout);
+                            }
+                        }
+                        break;
+                    }
                 case 'R':
                     ret = ERR;
                     if (! strlen(rawcurses_input_intermed))
