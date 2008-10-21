@@ -1,5 +1,5 @@
 /*
- * rawcurs.h - Win32 Console / CONIO / TOS / *nix TTY driver for the MyMan video game
+ * rawcurs.h - Win32 Console / CONIO / TOS / AROS / *nix TTY driver for the MyMan video game
  * Copyright 2007-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
@@ -34,9 +34,9 @@
  * attributes. */
 
 /* FIXME: Maybe we should use termcap or terminfo for the stdio
- * (i.e. non-Win32 Console, non-CONIO, non-TOS) case... then again,
- * maybe not. If you have those, you probably have curses too and
- * don't care about this light-weight reimplementation of a curses
+ * (i.e. non-Win32 Console, non-CONIO, non-TOS, non-AROS) case... then
+ * again, maybe not. If you have those, you probably have curses too
+ * and don't care about this light-weight reimplementation of a curses
  * subset. */
 
 /* NOTE: You can test the VT52 mode fairly easily using a real VT100,
@@ -335,14 +335,22 @@
 
 #endif /* defined(__atarist__) */
 
+#if defined(__AROS__) || defined(AMIGA) || defined(MORPHOS)
+
+#ifndef USE_AROSCONSOLE
+#define USE_AROSCONSOLE 1
+#endif
+
+#endif /* defined(__AROS__) || defined(AMIGA) || defined(MORPHOS) */
+
 #ifndef HAVE_WCWIDTH
-#if defined(__MSDOS__) || defined(__atarist__)
+#if defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) || defined(AMIGA) || defined(MORPHOS)
 #define HAVE_WCWIDTH 0
 #else
 #define HAVE_WCWIDTH 1
 #endif
 
-#endif /* defined(__MSDOS__) || defined(__atarist__) */
+#endif /* defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) || defined(AMIGA) || defined(MORPHOS) */
 
 #ifndef USE_TERMIOS
 #ifdef macintosh
@@ -642,6 +650,17 @@ rawcurses_usleep(unsigned long usecs)
 
 #ifndef USE_CONIO_INPUT
 #define USE_CONIO_INPUT USE_CONIO
+#endif
+
+#ifndef USE_AROSCONSOLE
+#define USE_AROSCONSOLE 0
+#endif
+
+#if USE_AROSCONSOLE
+/* Workarounds for AROS (tested; seems to work) and AmigaOS (untested) */
+
+#include <proto/dos.h>
+
 #endif
 
 #ifndef USE_TOSCONSOLE
@@ -1128,6 +1147,7 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_acs_nobullet, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_nocolorbold, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_vt52, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_st52, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_amiga, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_tw52, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_adm3a, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_relcup, = 0);
@@ -1141,6 +1161,10 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_ccc_linux, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
 #if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
+#endif
+#if USE_AROSCONSOLE
+RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon_oldmode, = 0);
 #endif
 #if USE_CONIO
 RAWCURSES_GLOBAL(int rawcurses_stdio_conio, = 0);
@@ -1600,6 +1624,12 @@ static const char *RAWCURSES_CP437LIKE =
     "wyse60-AT" "\0"
     "wyse60-PC" "\0"
     "xenix" "\0"
+    "\0\0";
+
+/* list of terminals for which we assume Amiga-style quirks */
+static const char *RAWCURSES_AMIGALIKE =
+    "amiga" "\0"
+    "morphos" "\0"
     "\0\0";
 
 /* list of terminals for which we send ADM3A-type escape sequences */
@@ -2172,6 +2202,7 @@ static int rawcurses_fput_clear(FILE *fh)
 #endif
     if (rawcurses_stdio_adm3a) return fputs(ESCAPE(";") ESCAPE("*") ESCAPE("+") "\x1a", fh) != EOF;
     if (rawcurses_stdio_vt52) return fputs("\f" ESCAPE("H") ESCAPE("J"), fh) != EOF;
+    if (rawcurses_stdio_amiga) return fputs(CSI("H") CSI("J"), fh) != EOF;
     return fputs(CSI("1;1H") CSI("2J"), fh) != EOF;
 }
 
@@ -2190,7 +2221,7 @@ static int rawcurses_fput_civis(FILE *fh)
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("f"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
-    return fputs(CSI("?25l"), fh) != EOF;
+    return fputs(CSI("\?25l"), fh) != EOF;
 }
 
 static int rawcurses_fput_cnorm(FILE *fh)
@@ -2207,8 +2238,8 @@ static int rawcurses_fput_cnorm(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("e"), fh) != EOF;
-    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
-    return fputs(CSI("?25h"), fh) != EOF;
+    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a || rawcurses_stdio_amiga) return 0;
+    return fputs(CSI("\?25h"), fh) != EOF;
 }
 
 static int rawcurses_fput_smcup(FILE *fh)
@@ -2221,8 +2252,9 @@ static int rawcurses_fput_smcup(FILE *fh)
         return 1;
     }
 #endif
-    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return rawcurses_fput_clear(fh);
-    return fputs(ESCAPE("7") CSI("s") CSI("\?47h") CSI("\?7l") CSI("r"), fh) != EOF;
+    if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a || rawcurses_stdio_amiga) return rawcurses_fput_clear(fh);
+    return (fprintf(fh, ESCAPE("7") CSI("s") "%s" CSI("r"),
+                    rawcurses_stdio_amiga ? "" : (CSI("\?47h") CSI("\?7l"))) > 0);
 }
 
 static int rawcurses_fput_rmcup(FILE *fh, int lines)
@@ -2235,7 +2267,9 @@ static int rawcurses_fput_rmcup(FILE *fh, int lines)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 1;
-    return (fprintf(fh, CSI("%d;1H") CSI("39;49m") CSI("0m") CSI("\?7h") CSI("\?47l") CSI("u") ESCAPE("8"), lines) > 0);
+    return (fprintf(fh, CSI("%d;1H") CSI("39;49m") CSI("0m") "%s" CSI("u") ESCAPE("8"),
+                    lines,
+                    rawcurses_stdio_amiga ? "" : (CSI("\?7h") CSI("\?47l"))) > 0);
 }
 
 static int rawcurses_fput_enacs(FILE *fh)
@@ -4160,6 +4194,12 @@ static const char *rawcurses_term_type(void)
 #if USE_TOSCONSOLE
     if (! termType) termType = "st52";
 #endif
+#if defined(MORPHOS)
+    if (! termType) termType = "morphos";
+#endif
+#if defined(__AROS__) || defined(AMIGA)
+    if (! termType) termType = "amiga";
+#endif
 #ifdef __MSDOS__
     if (! termType) termType = "ansi.sys";
 #endif
@@ -4458,6 +4498,25 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 break;
             }
             vt52like += strlen(vt52like) + 1;
+        }
+    }
+    if (rawcurses_getenv_boolean("RAWCURSES_AMIGA"))
+    {
+        rawcurses_stdio_amiga = *(rawcurses_getenv_boolean("RAWCURSES_AMIGA")) ? 1 : 0;
+    }
+    else
+    {
+        const char *amigalike = RAWCURSES_AMIGALIKE;
+
+        rawcurses_stdio_amiga = 0;
+        while (strlen(amigalike))
+        {
+            if (! strncmp(termType, amigalike, strlen(amigalike)))
+            {
+                rawcurses_stdio_amiga = 1;
+                break;
+            }
+            amigalike += strlen(amigalike) + 1;
         }
     }
     if (rawcurses_getenv_boolean("RAWCURSES_ST52"))
@@ -4909,6 +4968,18 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
     }
 #endif /* USE_TOSCONSOLE */
+#if USE_AROSCONSOLE
+    {
+        if (IsInteractive(Input()))
+        {
+            rawcurses_stdio_aroscon = 1;
+        }
+        else
+        {
+            rawcurses_stdio_aroscon = 0;
+        }
+    }
+#endif /* USE_AROSCONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
 #ifdef TIOCGWINSZ
@@ -4933,6 +5004,19 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
 #endif
 #endif /* ! USE_WINCONSOLE */
+#if USE_AROSCONSOLE
+    if (rawcurses_stdio_aroscon)
+    {
+        if (SetMode(Input(), 1) != DOSTRUE)
+        {
+            rawcurses_stdio_aroscon_oldmode = 1;
+        }
+        else
+        {
+            rawcurses_stdio_aroscon_oldmode = 0;
+        }
+    }
+#endif
 #if USE_TERMIOS
     {
         fflush(stdout);
@@ -4956,10 +5040,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         fflush(stdout);
         ioctl(fileno(stdin), TIOCGETP, &rawcurses_old_sgtty);
         rawcurses_sgtty = rawcurses_old_sgtty;
-        rawcurses_sgtty.sg_flags |= RAW;
+        rawcurses_sgtty.sg_flags |= CBREAK;
         rawcurses_sgtty.sg_flags &= ~ECHO;
 #ifdef CRMOD
         rawcurses_sgtty.sg_flags &= ~CRMOD;
+#endif
+#ifdef NODELAY
+        rawcurses_sgtty.sg_flags |= NODELAY;
 #endif
         ioctl(fileno(stdin), TIOCSETP, &rawcurses_sgtty);
         setbuf(stdin, NULL);
@@ -5595,6 +5682,12 @@ static void endwin(void)
 #if USE_TERMIOS
     tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
+#if USE_AROSCONSOLE
+    if (rawcurses_stdio_aroscon)
+    {
+        SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+    }
+#endif
 }
 
 static int refresh(void)
@@ -5658,6 +5751,12 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
+        {
+            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+        }
+#endif
         raise(SIGTSTP);
 #if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
@@ -5665,6 +5764,19 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
+        {
+            if (SetMode(Input(), 1) != DOSTRUE)
+            {
+                rawcurses_stdio_aroscon_oldmode = 1;
+            }
+            else
+            {
+                rawcurses_stdio_aroscon_oldmode = 0;
+            }
+        }
+#endif
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
 #endif
@@ -5708,6 +5820,12 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
+        {
+            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
+        }
+#endif
         raise(SIGINT);
 #if USE_WINCONSOLE
         if (rawcurses_old_mode_valid)
@@ -5715,6 +5833,19 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
+        {
+            if (SetMode(Input(), 1) != DOSTRUE)
+            {
+                rawcurses_stdio_aroscon_oldmode = 1;
+            }
+            else
+            {
+                rawcurses_stdio_aroscon_oldmode = 0;
+            }
+        }
+#endif
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
 #endif
@@ -5854,6 +5985,19 @@ static int rawcurses_getch(void)
             if ((avail == -1) && rawcurses_stdio_stcon)
             {
                 if (Cconis())
+                {
+                    avail = 1;
+                }
+                else
+                {
+                    avail = 0;
+                }
+            }
+#endif
+#if USE_AROSCONSOLE
+            if ((avail == -1) && rawcurses_stdio_aroscon)
+            {
+                if (WaitForChar(Input(), 1))
                 {
                     avail = 1;
                 }
