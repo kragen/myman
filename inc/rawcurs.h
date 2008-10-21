@@ -2253,8 +2253,8 @@ static int rawcurses_fput_smcup(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a || rawcurses_stdio_amiga) return rawcurses_fput_clear(fh);
-    return (fprintf(fh, ESCAPE("7") CSI("s") "%s" CSI("r"),
-                    rawcurses_stdio_amiga ? "" : (CSI("\?47h") CSI("\?7l"))) > 0);
+    return (fprintf(fh, ESCAPE("7") CSI("s") "%s" CSI("\?7l") CSI("r"),
+                    rawcurses_stdio_amiga ? "" : (CSI("\?47h"))) > 0);
 }
 
 static int rawcurses_fput_rmcup(FILE *fh, int lines)
@@ -2267,9 +2267,9 @@ static int rawcurses_fput_rmcup(FILE *fh, int lines)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 1;
-    return (fprintf(fh, CSI("%d;1H") CSI("39;49m") CSI("0m") "%s" CSI("u") ESCAPE("8"),
+    return (fprintf(fh, CSI("%d;1H") CSI("39;49m") CSI("0m") CSI("\?7h") "%s" CSI("u") ESCAPE("8"),
                     lines,
-                    rawcurses_stdio_amiga ? "" : (CSI("\?7h") CSI("\?47l"))) > 0);
+                    rawcurses_stdio_amiga ? "" : (CSI("\?47l"))) > 0);
 }
 
 static int rawcurses_fput_enacs(FILE *fh)
