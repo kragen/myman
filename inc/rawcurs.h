@@ -208,6 +208,10 @@
 
 #endif /* defined(__BORLANDC__) */
 
+#ifndef HAVE_WCWIDTH
+#define HAVE_WCWIDTH 0
+#endif
+
 #else /* ! defined(WIN32) */
 
 #if HAVE_SYS_H
@@ -338,15 +342,6 @@
 #define HAVE_WCWIDTH 1
 #endif
 
-/* FIXME: this is a horrible hack! */
-#if ! HAVE_WCWIDTH
-#ifdef UNICODE
-#define wcwidth(wc) (((((long) (wc)) >= 0x0020L) && (((long) (wc)) < 0x3000L)) ? 1 : ((((long) (wc)) >= 0x3000L) && (((long) (wc)) <= 0x10fffdL)) ? 2 : -1)
-#else
-#define wcwidth(wc) (((((long) (wc)) >= 0x20L) && (((long) (wc)) < 0xffL)) ? 1 : -1)
-#endif
-#endif
-
 #endif /* defined(__MSDOS__) || defined(__atarist__) */
 
 #ifndef USE_TERMIOS
@@ -358,6 +353,19 @@
 #endif
 
 #endif /* ! defined(WIN32) */
+
+#ifndef HAVE_WCWIDTH
+#define HAVE_WCWIDTH 1
+#endif
+
+/* FIXME: this is a horrible hack! */
+#if ! HAVE_WCWIDTH
+#ifdef UNICODE
+#define wcwidth(wc) (((((long) (wc)) >= 0x0020L) && (((long) (wc)) < 0x3000L)) ? 1 : ((((long) (wc)) >= 0x3000L) && (((long) (wc)) <= 0x10fffdL)) ? 2 : -1)
+#else
+#define wcwidth(wc) (((((long) (wc)) >= 0x20L) && (((long) (wc)) < 0xffL)) ? 1 : -1)
+#endif
+#endif
 
 #ifndef HAVE_STRUCT_TIMEVAL
 #ifdef macintosh
@@ -379,6 +387,10 @@ struct timeval
 
 #ifndef USE_TERMIOS
 #define USE_TERMIOS 0
+#endif
+
+#ifndef USE_SGTTY
+#define USE_SGTTY 0
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
@@ -618,6 +630,10 @@ rawcurses_usleep(unsigned long usecs)
 
 #if USE_TERMIOS
 #include <termios.h>
+#endif
+
+#if USE_SGTTY
+#include <sgtty.h>
 #endif
 
 #ifndef USE_CONIO
@@ -1186,6 +1202,10 @@ RAWCURSES_GLOBAL(CHAR_INFO *rawcurses_old_screen, = NULL);
 #if USE_TERMIOS
 RAWCURSES_GLOBAL0(struct termios rawcurses_tty);
 RAWCURSES_GLOBAL0(struct termios rawcurses_old_tty);
+#endif
+#if USE_SGTTY
+RAWCURSES_GLOBAL0(struct sgttyb rawcurses_sgtty);
+RAWCURSES_GLOBAL0(struct sgttyb rawcurses_old_sgtty);
 #endif
 
 RAWCURSES_GLOBAL0(chtype rawcurses_pairs[COLOR_PAIRS]);
@@ -4931,6 +4951,20 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         setbuf(stdin, NULL);
     }
 #endif /* USE_TERMIOS */
+#if USE_SGTTY
+    {
+        fflush(stdout);
+        ioctl(fileno(stdin), TIOCGETP, &rawcurses_old_sgtty);
+        rawcurses_sgtty = rawcurses_old_sgtty;
+        rawcurses_sgtty.sg_flags |= RAW;
+        rawcurses_sgtty.sg_flags &= ~ECHO;
+#ifdef CRMOD
+        rawcurses_sgtty.sg_flags &= ~CRMOD;
+#endif
+        ioctl(fileno(stdin), TIOCSETP, &rawcurses_sgtty);
+        setbuf(stdin, NULL);
+    }
+#endif /* USE_SGTTY */
 #if USE_CONIO || USE_CONIO_INPUT
 #if USE_CONIO
     rawcurses_stdio_conio = -1;
@@ -5555,6 +5589,9 @@ static void endwin(void)
         SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
     }
 #endif /* USE_WINCONSOLE */
+#if USE_SGTTY
+    ioctl(fileno(stdin), TIOCSETP, &rawcurses_old_sgtty);
+#endif
 #if USE_TERMIOS
     tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
@@ -5615,6 +5652,9 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
         }
 #endif /* USE_WINCONSOLE */
+#if USE_SGTTY
+        ioctl(fileno(stdin), TIOCSETP, &rawcurses_old_sgtty);
+#endif
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
@@ -5627,6 +5667,9 @@ static int rawcurses_getch(void)
 #endif /* USE_WINCONSOLE */
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
+#endif
+#if USE_SGTTY
+        ioctl(fileno(stdin), TIOCSETP, &rawcurses_sgtty);
 #endif
         signal(SIGTSTP, rawcurses_sigtstp_handler);
         if (rawcurses_palette_ever_changed) rawcurses_fput_palette(stdout, rawcurses_palette);
@@ -5659,6 +5702,9 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, rawcurses_old_mode);
         }
 #endif /* USE_WINCONSOLE */
+#if USE_SGTTY
+        ioctl(fileno(stdin), TIOCSETP, &rawcurses_old_sgtty);
+#endif
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
@@ -5671,6 +5717,9 @@ static int rawcurses_getch(void)
 #endif /* USE_WINCONSOLE */
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_tty);
+#endif
+#if USE_SGTTY
+        ioctl(fileno(stdin), TIOCSETP, &rawcurses_sgtty);
 #endif
         signal(SIGINT, rawcurses_sigint_handler);
         if (rawcurses_palette_ever_changed) rawcurses_fput_palette(stdout, rawcurses_palette);
