@@ -3699,7 +3699,7 @@ gamelogic(void)
                            &&
                            ((! ghost_eaten_timer) || ! sprite_register_used[MEANGHOST(s)])) {
                     int dx, dy;
-                    unsigned char d, d1;
+                    unsigned char d, d1 = 0;
 
                     /* goin' home */
                     ghost_timer[s] = (int) MEMDELAY(s);
