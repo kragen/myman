@@ -335,22 +335,22 @@
 
 #endif /* defined(__atarist__) */
 
-#if defined(__AROS__) || defined(AMIGA) || defined(MORPHOS)
+#if defined(__AROS__)
 
-#ifndef USE_AMIGACONSOLE
-#define USE_AMIGACONSOLE 1
+#ifndef USE_AROSCONSOLE
+#define USE_AROSCONSOLE 1
 #endif
 
-#endif /* defined(__AROS__) || defined(AMIGA) || defined(MORPHOS) */
+#endif /* defined(__AROS__) */
 
 #ifndef HAVE_WCWIDTH
-#if defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) || defined(AMIGA) || defined(MORPHOS)
+#if defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__)
 #define HAVE_WCWIDTH 0
 #else
 #define HAVE_WCWIDTH 1
 #endif
 
-#endif /* defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) || defined(AMIGA) || defined(MORPHOS) */
+#endif /* defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) */
 
 #ifndef USE_TERMIOS
 #ifdef macintosh
@@ -652,12 +652,12 @@ rawcurses_usleep(unsigned long usecs)
 #define USE_CONIO_INPUT USE_CONIO
 #endif
 
-#ifndef USE_AMIGACONSOLE
-#define USE_AMIGACONSOLE 0
+#ifndef USE_AROSCONSOLE
+#define USE_AROSCONSOLE 0
 #endif
 
-#if USE_AMIGACONSOLE
-/* Workarounds for AROS (tested; seems to work) and AmigaOS/MorphOS (untested) */
+#if USE_AROSCONSOLE
+/* Workarounds for AROS */
 
 #include <proto/dos.h>
 
@@ -1164,9 +1164,9 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
 #if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
 #endif
-#if USE_AMIGACONSOLE
-RAWCURSES_GLOBAL(int rawcurses_stdio_amigacon, = 0);
-RAWCURSES_GLOBAL(int rawcurses_stdio_amigacon_oldmode, = 0);
+#if USE_AROSCONSOLE
+RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_aroscon_oldmode, = 0);
 #endif
 #if USE_CONIO
 RAWCURSES_GLOBAL(int rawcurses_stdio_conio, = 0);
@@ -4990,18 +4990,18 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
     }
 #endif /* USE_TOSCONSOLE */
-#if USE_AMIGACONSOLE
+#if USE_AROSCONSOLE
     {
         if (IsInteractive(Input()))
         {
-            rawcurses_stdio_amigacon = 1;
+            rawcurses_stdio_aroscon = 1;
         }
         else
         {
-            rawcurses_stdio_amigacon = 0;
+            rawcurses_stdio_aroscon = 0;
         }
     }
-#endif /* USE_AMIGACONSOLE */
+#endif /* USE_AROSCONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
 #ifdef TIOCGWINSZ
@@ -5026,16 +5026,16 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
 #endif
 #endif /* ! USE_WINCONSOLE */
-#if USE_AMIGACONSOLE
-    if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+    if (rawcurses_stdio_aroscon)
     {
         if (SetMode(Input(), 1) != DOSTRUE)
         {
-            rawcurses_stdio_amigacon_oldmode = 1;
+            rawcurses_stdio_aroscon_oldmode = 1;
         }
         else
         {
-            rawcurses_stdio_amigacon_oldmode = 0;
+            rawcurses_stdio_aroscon_oldmode = 0;
         }
     }
 #endif
@@ -5704,10 +5704,10 @@ static void endwin(void)
 #if USE_TERMIOS
     tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AMIGACONSOLE
-    if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+    if (rawcurses_stdio_aroscon)
     {
-        SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
+        SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
     }
 #endif
 }
@@ -5773,10 +5773,10 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AMIGACONSOLE
-        if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
         {
-            SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
+            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
         }
 #endif
         raise(SIGTSTP);
@@ -5786,16 +5786,16 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
-#if USE_AMIGACONSOLE
-        if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
         {
             if (SetMode(Input(), 1) != DOSTRUE)
             {
-                rawcurses_stdio_amigacon_oldmode = 1;
+                rawcurses_stdio_aroscon_oldmode = 1;
             }
             else
             {
-                rawcurses_stdio_amigacon_oldmode = 0;
+                rawcurses_stdio_aroscon_oldmode = 0;
             }
         }
 #endif
@@ -5842,10 +5842,10 @@ static int rawcurses_getch(void)
 #if USE_TERMIOS
         tcsetattr(fileno(stdin), TCSANOW, &rawcurses_old_tty);
 #endif
-#if USE_AMIGACONSOLE
-        if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
         {
-            SetMode(Input(), rawcurses_stdio_amigacon_oldmode);
+            SetMode(Input(), rawcurses_stdio_aroscon_oldmode);
         }
 #endif
         raise(SIGINT);
@@ -5855,16 +5855,16 @@ static int rawcurses_getch(void)
             SetConsoleMode(rawcurses_stdin, ENABLE_WINDOW_INPUT);
         }
 #endif /* USE_WINCONSOLE */
-#if USE_AMIGACONSOLE
-        if (rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+        if (rawcurses_stdio_aroscon)
         {
             if (SetMode(Input(), 1) != DOSTRUE)
             {
-                rawcurses_stdio_amigacon_oldmode = 1;
+                rawcurses_stdio_aroscon_oldmode = 1;
             }
             else
             {
-                rawcurses_stdio_amigacon_oldmode = 0;
+                rawcurses_stdio_aroscon_oldmode = 0;
             }
         }
 #endif
@@ -6016,8 +6016,8 @@ static int rawcurses_getch(void)
                 }
             }
 #endif
-#if USE_AMIGACONSOLE
-            if ((avail == -1) && rawcurses_stdio_amigacon)
+#if USE_AROSCONSOLE
+            if ((avail == -1) && rawcurses_stdio_aroscon)
             {
                 if (WaitForChar(Input(), 1))
                 {
