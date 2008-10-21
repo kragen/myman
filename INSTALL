@@ -84,7 +84,7 @@ try again.
   (c) a modern curses library, e.g. ncurses, slang, PDCurses or
       XCurses; or libcaca, AA-lib, Twin, LibGGI/LibGII, Allegro, newt,
       Carbon/Toolbox, FLTK, GTK, <disp.h>, or the Win32
-      Console/CONIO/TOS/*nix TTY APIs
+      Console/CONIO/TOS/AROS/*nix TTY APIs
     ---- old BSD curses *will not work*!
   (d) GNU Make
     ---- version 3.80 works; version 3.79.1 *will not work*!
@@ -195,3 +195,8 @@ AFROS          http://aranym.org/afros.html
 EmuTOS         http://emutos.sourceforge.net/
 ARAnyM         http://aranym.org/
 Hatari         http://hatari.sourceforge.net/
+
+For AROS hosting:
+
+AROS           http://aros.sourceforge.net/
+QEMU           http://bellard.org/qemu/

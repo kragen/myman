@@ -384,8 +384,8 @@ do
           echoline "--with-libcaca     "use libcaca
           echoline "--with-libcaca0    "use libcaca with \<caca0.h\>
           echoline "--with-aalib       "use AA-Lib
-          echoline "--with-raw         "use *nix TTY/CONIO/TOS/Win32 Console API \(Unicode\)
-          echoline "--with-raw-cp437   "use *nix TTY/CONIO/TOS/Win32 Console API \(CP-437\)
+          echoline "--with-raw         "use *nix TTY/CONIO/TOS/AROS/Win32 Console API \(Unicode\)
+          echoline "--with-raw-cp437   "use *nix TTY/CONIO/TOS/AROS/Win32 Console API \(CP-437\)
           echoline "--with-allegro     "use Allegro
           echoline "--with-twin        "use Twin
           echoline "--with-ggi         "use LibGGI/LibGII
