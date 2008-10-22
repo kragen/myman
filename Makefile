@@ -2889,6 +2889,7 @@ utl/macbuild.txt \
 utl/myman.ct \
 utl/pacificc.sh \
 utl/turboc.sh \
+utl/aztecc.sh \
 utl/txt2asc.sh \
 debian/postinst \
 debian/postrm \
@@ -3601,6 +3602,7 @@ utl/mymancmd.in \
 utl/pacificc.bat \
 utl/quackman.term \
 utl/turboc.bat \
+utl/aztecc.bat \
 utl/xbigman.in \
 utl/xbitman.in \
 utl/xbitman2.in \
