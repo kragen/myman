@@ -318,6 +318,20 @@
 #define HAVE_TTYNAME 0
 #endif
 
+/* Aztec C has no conio support, but it does support <sgtty.h> */
+
+#ifdef AZTEC
+
+#ifndef USE_CONIO_INPUT
+#define USE_CONIO_INPUT 0
+#endif
+
+#ifndef USE_SGTTY
+#define USE_SGTTY 1
+#endif
+
+#endif /* defined(AZTEC) */
+
 /* other DOS environments typically support only Microsoft-style
  * CONIO */
 

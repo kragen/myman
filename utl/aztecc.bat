@@ -22,9 +22,9 @@ if not exist cgen.exe copy %CBIN%cgen.exe .
 
 if not exist obj mkdir obj
 
-cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\mygetopt.o mygetopt\mygetopt.c
-cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\utils.o src\utils.c
-cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\myman.o src\myman.c
+cc -Z4096 +l -B -DAZTEC -D__MSDOS__ -DRAWCURSES=1 -Imygetopt -Iinc -o obj\mygetopt.o mygetopt\mygetopt.c
+cc -Z4096 +l -B -DAZTEC -D__MSDOS__ -DRAWCURSES=1 -Imygetopt -Iinc -o obj\utils.o src\utils.c
+cc -Z4096 +l -B -DAZTEC -D__MSDOS__ -DRAWCURSES=1 -Imygetopt -Iinc -o obj\myman.o src\myman.c
 c +l -B -o myman.exe obj\mygetopt.o obj\utils.o obj\myman.o
 
 if errorlevel 1 goto croaked

@@ -28,7 +28,9 @@
 #ifndef HAVE_SYS_TYPES_H
 #ifndef macintosh
 #ifndef __PACIFIC__
+#ifndef AZTEC
 #define HAVE_SYS_TYPES_H 1
+#endif
 #endif
 #endif
 #endif

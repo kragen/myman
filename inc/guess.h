@@ -121,7 +121,7 @@
 /* HAVE_STDINT_H: do we have <stdint.h>? */
 
 #ifndef HAVE_STDINT_H
-#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#if ! (defined(macintosh) || defined(AZTEC) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
 #ifdef __atarist__
 #if ((! defined(__GNUC__)) || (__GNUC__ > 2))
 #define HAVE_STDINT_H 1
@@ -153,7 +153,7 @@
 /* HAVE_SYS_IOCTL_H: do we have <sys/ioctl.h>? */
 
 #ifndef HAVE_SYS_IOCTL_H
-#if ! (defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh) || defined(__TURBOC__) || defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
+#if ! (defined(AZTEC) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh) || defined(__TURBOC__) || defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
 #define HAVE_SYS_IOCTL_H 1
 #endif
 #endif
@@ -191,7 +191,7 @@
 /* HAVE_SYS_TIME_H: do we have <sys/time.h>? */
 
 #ifndef HAVE_SYS_TIME_H
-#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__))
+#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__))
 #define HAVE_SYS_TIME_H 1
 #endif
 #endif
@@ -205,7 +205,9 @@
 #ifndef HAVE_SYS_TYPES_H
 #ifndef macintosh
 #ifndef __PACIFIC__
+#ifndef AZTEC
 #define HAVE_SYS_TYPES_H 1
+#endif
 #endif
 #endif
 #endif
@@ -231,7 +233,7 @@
 /* HAVE_UNISTD_H: do we have <unistd.h>? */
 
 #ifndef HAVE_UNISTD_H
-#if ! (defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
+#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
 #define HAVE_UNISTD_H 1
 #endif
 #endif
@@ -255,7 +257,7 @@
 /* HAVE_WCHAR_H: do we have <wchar.h>? */
 
 #ifndef HAVE_WCHAR_H
-#if ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__atarist__))
+#if ! (defined(macintosh) || defined(AZTEC) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__atarist__))
 #define HAVE_WCHAR_H 1
 #endif
 #endif
