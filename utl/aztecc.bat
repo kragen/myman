@@ -3,8 +3,6 @@
 @rem #
 @rem # NOTE: this does not work yet -- the compiler runs out of memory and croaks
 
-set CC=c +l
-
 if "%CLIB%" == "" goto setup
 
 goto ready
@@ -19,12 +17,15 @@ set PATH=%CBIN%;%PATH%
 
 :ready
 
-if not exist as.exe copy %cbin%as.exe .
-if not exist cgen.exe copy %cbin%cgen.exe .
+if not exist as.exe copy %CBIN%as.exe .
+if not exist cgen.exe copy %CBIN%cgen.exe .
 
 if not exist obj mkdir obj
 
-%CC% -D RAWCURSES=1 -i mygetopt -i inc -o myman.exe mygetopt\mygetopt.c src\utils.c src\myman.c
+cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\mygetopt.o mygetopt\mygetopt.c
+cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\utils.o src\utils.c
+cc -Z4096 +l -B -DRAWCURSES=1 -DHAVE_SYS_TYPES_H=0 -Imygetopt -Iinc -o obj\myman.o src\myman.c
+c +l -B -o myman.exe obj\mygetopt.o obj\utils.o obj\myman.o
 
 if errorlevel 1 goto croaked
 set ret=0
