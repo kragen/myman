@@ -261,7 +261,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             drivers = caca_get_display_driver_list();
             while (drivers && *drivers)
             {
-                fprintf(stderr, "%sd\t%s\n", drivers[0], drivers[1]);
+                fprintf(stderr, "%s\t%s\n", drivers[0], drivers[1]);
                 drivers += 2;
             }
             fflush(stderr);
