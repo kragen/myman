@@ -262,7 +262,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             while (drivers && *drivers)
             {
                 fprintf(stderr, "%sd\t%s\n", drivers[0], drivers[1]);
-                drviers += 2;
+                drivers += 2;
             }
             fflush(stderr);
         }
