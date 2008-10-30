@@ -247,9 +247,25 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     dp = caca_create_display(cv);
     if (! dp)
     {
+        int goterror;
+
+        goterror = errno;
         perror("caca_create_display");
         fflush(stderr);
         cucul_free_canvas(cv);
+        if (goterror == ENODEV)
+        {
+            char const * const * drivers;
+
+            fprintf(stderr, "Supported values for the CACA_DRIVER environment variable:\n");
+            drivers = caca_get_display_driver_list();
+            while (drivers && *drivers)
+            {
+                fprintf(stderr, "%sd\t%s\n", drivers[0], drivers[1]);
+                drviers += 2;
+            }
+            fflush(stderr);
+        }
         exit(1);
     }
     cucul_put_char(cv, 0, 0, ' ');
