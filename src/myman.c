@@ -2305,7 +2305,7 @@ static int use_acs_p = 0;
 static int use_dim_and_bright = 0;
 static int use_dim_and_bright_p = 0;
 
-static int use_color = 0;
+int use_color = 0;
 static int use_color_p = 0;
 
 static int use_bullet_for_dots = 0;
@@ -7173,9 +7173,7 @@ main(int argc, char *argv[]
     for (i = 0; i < SPRITE_REGISTERS; i ++) {
         sprite_register_used[i] = 0;
         sprite_register_frame[i] = 0;
-#if USE_COLOR
         sprite_register_color[i] = 0x7;
-#endif
     }
     for (i = 0; i < 256; i ++) {
 #ifndef BUILTIN_TILE
@@ -8649,13 +8647,11 @@ main(int argc, char *argv[]
     sprite_register_y[HERO] = (int) YHERO;
     sprite_register_used[HERO] = 0;
 
-#if USE_COLOR
     sprite_register_color[HERO] = 0xE;
     sprite_register_color[BIGHERO_UL] = 0xE;
     sprite_register_color[BIGHERO_UR] = 0xE;
     sprite_register_color[BIGHERO_LL] = 0xE;
     sprite_register_color[BIGHERO_LR] = 0xE;
-#endif
 
     for (i = 0; i < ghosts; i++) {
         int eyes, mean, blue;
@@ -8675,19 +8671,15 @@ main(int argc, char *argv[]
         ghost_mem[i] = 0;
         ghost_timer[i] = TWOSECS;
         ghost_man[i] = 0;
-#if USE_COLOR
         sprite_register_color[eyes] = 0xF;
         sprite_register_color[blue] = 0x9;
         sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(i % strlen(EXTRA_GHOST_COLORS))];
-#endif
     }
 
-#if USE_COLOR
     if (GHOST0 < ghosts) sprite_register_color[MEANGHOST(GHOST0)] = 0xB;
     if (GHOST1 < ghosts) sprite_register_color[MEANGHOST(GHOST1)] = 0xC;
     if (GHOST2 < ghosts) sprite_register_color[MEANGHOST(GHOST2)] = 0xD;
     if (GHOST3 < ghosts) sprite_register_color[MEANGHOST(GHOST3)] = 0x6;
-#endif
 
     if (dump_maze) {
         printf("int maze_n = %d;\n", maze_n);

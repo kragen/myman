@@ -996,6 +996,7 @@ extern void my_clearok(int ok);
 #endif
 
 extern int use_underline;
+extern int use_color;
 extern int bonus_score[8];
 
 #define COLLISION_TYPE_HERO 1

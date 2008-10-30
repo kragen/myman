@@ -2477,11 +2477,7 @@ gameintro(void)
         }
         if (myman_intro == (1 + (s * 3 + 1) * TWOSECS / 4))
         {
-#if USE_COLOR
-#define MEANCOLOR sprite_register_color[mean]
-#else
-#define MEANCOLOR 0xF
-#endif                            
+#define MEANCOLOR (use_color ? sprite_register_color[mean] : 0xF)
             sprite_register_x[HERO] = name_col * gfx_w + gfx_w / 2;
             maze_puts(name_row, name_col,
                       sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
@@ -2647,7 +2643,6 @@ gameintro(void)
                     sprite_register_x[mean] =
                     sprite_register_x[blue] ++;
             }
-#if USE_COLOR
             sprite_register_color[eyes] = 0xF;
             sprite_register_color[blue] = 0x9;
             sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(s % strlen(EXTRA_GHOST_COLORS))];
@@ -2655,7 +2650,6 @@ gameintro(void)
             if (s == 0) sprite_register_color[mean] = 0xC;
             if (s == 1) sprite_register_color[mean] = 0xD;
             if (s == 3) sprite_register_color[mean] = 0x6;
-#endif
         }
     }
     if (! ghost_eaten_timer)
@@ -3262,9 +3256,7 @@ gamelogic(void)
             }
             hero_dir = dirhero;
             sprite_register[HERO] = SPRITE_HERO + ((hero_dir == LEFT) ? 4 : (hero_dir == RIGHT) ? 12 : (hero_dir == DOWN) ? 16 : 0);
-#if USE_COLOR
             if (! use_color)
-#endif
                 if (use_underline)
                 {
                     my_clear();
