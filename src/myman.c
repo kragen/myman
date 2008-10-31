@@ -8967,12 +8967,12 @@ main(int argc, char *argv[]
 #endif
 #else
                 {
-                    static char buf[15];
+                    static char buf[32];
 
-                    sprintf(buf, "%d", myman_lines);
-                    setenv("LINES", buf, 1);
-                    sprintf(buf, "%d", myman_columns);
-                    setenv("COLUMNS", buf, 1);
+                    sprintf(buf, "LINES=%d", myman_lines);
+                    putenv(buf);
+                    sprintf(buf, "COLUMNS=%d", myman_columns);
+                    putenv(buf);
                 }
 #endif
             }
