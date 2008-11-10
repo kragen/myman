@@ -424,7 +424,10 @@ def main(argv, envp, stdin, stdout, stderr):
         outfile = sys.stdout
     else:
         outfile = file(outfn, 'wb')
-    n, wxh = infile.readline().decode('utf-8').rstrip(u'\r\n').lstrip(u'\ufeff').split(' ',1)
+    line = infile.readline().decode('utf-8').rstrip(u'\r\n').lstrip(u'\ufeff')
+    while ("".join(line.split(u"\\\\")))[-1:] == u"\\":
+        line = line[:-1] + infile.readline().decode('utf-8').rstrip(u'\r\n')
+    n, wxh = line.split(' ',1)
     opts = ''
     flags = '0'
     if len(wxh.split()) > 1: wxh, opts = wxh.split(None, 1)
