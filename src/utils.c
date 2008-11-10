@@ -1288,6 +1288,14 @@ long *strtollist(const char *from, const char **endp, size_t *lenp)
         int errno_tmp;
         int errno_strtol;
 
+        while (*from && isspace(*from))
+        {
+            from ++;
+        }
+        if (! *from)
+        {
+            break;
+        }
         errno_tmp = errno;
         errno = 0;
         tmp = strtol(from, &endp_tmp, 0);
@@ -1319,6 +1327,10 @@ long *strtollist(const char *from, const char **endp, size_t *lenp)
             list[listlen] = tmp;
             listlen = listlen + 1;
             list[listlen] = 0;
+            while (*from && isspace(*from))
+            {
+                from ++;
+            }
             if (*from != ',')
             {
                 break;
@@ -1359,6 +1371,14 @@ double *strtodlist(const char *from, const char **endp, size_t *lenp)
         int errno_tmp;
         int errno_strtod;
 
+        while (*from && isspace(*from))
+        {
+            from ++;
+        }
+        if (! *from)
+        {
+            break;
+        }
         errno_tmp = errno;
         errno = 0;
         tmp = strtod(from, &endp_tmp);
@@ -1390,6 +1410,10 @@ double *strtodlist(const char *from, const char **endp, size_t *lenp)
             list[listlen] = tmp;
             listlen = listlen + 1;
             list[listlen] = 0;
+            while (*from && isspace(*from))
+            {
+                from ++;
+            }
             if (*from != ',')
             {
                 break;
@@ -1409,6 +1433,66 @@ double *strtodlist(const char *from, const char **endp, size_t *lenp)
     }
     if (list && endp) *endp = from;
     if (list) *lenp = listlen;
+    return list;
+}
+
+long *strtollist_word(const char *from, const char **endp, size_t *lenp)
+{
+    long *list = NULL;
+    char *word = NULL;
+    size_t word_len = 0;
+
+    *lenp = 0;
+    word = strword(from, endp, &word_len);
+    if (word)
+    {
+        const char *list_end;
+        int i;
+
+        for (i = 0; i < word_len; i ++)
+        {
+            /* convert NUL -> SP */
+            if (! word[i]) word[i] = ' ';
+        }
+        list = strtollist(word, &list_end, lenp);
+        if (*list_end)
+        {
+            free((void *) list);
+            list = NULL;
+            errno = EINVAL;
+        }
+        free((void *) word);
+    }
+    return list;
+}
+
+double *strtodlist_word(const char *from, const char **endp, size_t *lenp)
+{
+    double *list = NULL;
+    char *word = NULL;
+    size_t word_len = 0;
+
+    *lenp = 0;
+    word = strword(from, endp, &word_len);
+    if (word)
+    {
+        const char *list_end;
+        int i;
+
+        for (i = 0; i < word_len; i ++)
+        {
+            /* convert NUL -> SP */
+            if (! word[i]) word[i] = ' ';
+        }
+        list = strtodlist(word, &list_end, lenp);
+        if (*list_end)
+        {
+            free((void *) list);
+            list = NULL;
+            errno = EINVAL;
+        }
+        free((void *) word);
+    }
     return list;
 }
 

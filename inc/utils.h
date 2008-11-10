@@ -210,6 +210,10 @@ extern long *strtollist(const char *from, const char **endp, size_t *lenp);
 
 extern double *strtodlist(const char *from, const char **endp, size_t *lenp);
 
+extern long *strtollist_word(const char *from, const char **endp, size_t *lenp);
+
+extern double *strtodlist_word(const char *from, const char **endp, size_t *lenp);
+
 extern void mymanescape(const char *s, int len);
 
 extern int readfont(const char *fontfile,

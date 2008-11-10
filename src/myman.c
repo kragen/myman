@@ -7790,7 +7790,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RGHOST", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RGHOST = strtodlist(argp, &endp, &maze_RGHOST_len);
+                    maze_RGHOST = strtodlist_word(argp, &endp, &maze_RGHOST_len);
                     if (! maze_RGHOST)
                     {
                         perror("RGHOST");
@@ -7801,7 +7801,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "CGHOST", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_CGHOST = strtodlist(argp, &endp, &maze_CGHOST_len);
+                    maze_CGHOST = strtodlist_word(argp, &endp, &maze_CGHOST_len);
                     if (! maze_CGHOST)
                     {
                         perror("CGHOST");
@@ -7812,7 +7812,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "ROGHOST", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_ROGHOST = strtodlist(argp, &endp, &maze_ROGHOST_len);
+                    maze_ROGHOST = strtodlist_word(argp, &endp, &maze_ROGHOST_len);
                     if (! maze_ROGHOST)
                     {
                         perror("ROGHOST");
@@ -7823,7 +7823,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "COGHOST", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_COGHOST = strtodlist(argp, &endp, &maze_COGHOST_len);
+                    maze_COGHOST = strtodlist_word(argp, &endp, &maze_COGHOST_len);
                     if (! maze_COGHOST)
                     {
                         perror("COGHOST");
@@ -7834,7 +7834,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RFRUIT", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RFRUIT = strtodlist(argp, &endp, &maze_RFRUIT_len);
+                    maze_RFRUIT = strtodlist_word(argp, &endp, &maze_RFRUIT_len);
                     if (! maze_RFRUIT)
                     {
                         perror("RFRUIT");
@@ -7845,7 +7845,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "CFRUIT", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_CFRUIT = strtodlist(argp, &endp, &maze_CFRUIT_len);
+                    maze_CFRUIT = strtodlist_word(argp, &endp, &maze_CFRUIT_len);
                     if (! maze_CFRUIT)
                     {
                         perror("CFRUIT");
@@ -7856,7 +7856,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RTOP", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RTOP = strtodlist(argp, &endp, &maze_RTOP_len);
+                    maze_RTOP = strtodlist_word(argp, &endp, &maze_RTOP_len);
                     if (! maze_RTOP)
                     {
                         perror("RTOP");
@@ -7867,7 +7867,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RHERO", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RHERO = strtodlist(argp, &endp, &maze_RHERO_len);
+                    maze_RHERO = strtodlist_word(argp, &endp, &maze_RHERO_len);
                     if (! maze_RHERO)
                     {
                         perror("RHERO");
@@ -7878,7 +7878,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "CHERO", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_CHERO = strtodlist(argp, &endp, &maze_CHERO_len);
+                    maze_CHERO = strtodlist_word(argp, &endp, &maze_CHERO_len);
                     if (! maze_CHERO)
                     {
                         perror("CHERO");
@@ -7889,7 +7889,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RMSG", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RMSG = strtollist(argp, &endp, &maze_RMSG_len);
+                    maze_RMSG = strtollist_word(argp, &endp, &maze_RMSG_len);
                     if (! maze_RMSG)
                     {
                         perror("RMSG");
@@ -7900,7 +7900,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "CMSG", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_CMSG = strtollist(argp, &endp, &maze_CMSG_len);
+                    maze_CMSG = strtollist_word(argp, &endp, &maze_CMSG_len);
                     if (! maze_CMSG)
                     {
                         perror("CMSG");
@@ -7911,7 +7911,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "RMSG2", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_RMSG2 = strtollist(argp, &endp, &maze_RMSG2_len);
+                    maze_RMSG2 = strtollist_word(argp, &endp, &maze_RMSG2_len);
                     if (! maze_RMSG2)
                     {
                         perror("RMSG2");
@@ -7922,7 +7922,7 @@ main(int argc, char *argv[]
                 else if (! strncmp(argp, "CMSG2", endp - argp))
                 {
                     argp = endp + 1;
-                    maze_CMSG2 = strtollist(argp, &endp, &maze_CMSG2_len);
+                    maze_CMSG2 = strtollist_word(argp, &endp, &maze_CMSG2_len);
                     if (! maze_CMSG2)
                     {
                         perror("CMSG2");
