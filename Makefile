@@ -1910,7 +1910,8 @@ guppy \
 pepperii \
 p4c \
 simplej \
-3b1
+3b1 \
+k3
 all_sizes = \
 small \
 big \
@@ -3420,6 +3421,8 @@ lvl/jrsmall.asc \
 lvl/jrsmall.txt \
 lvl/jrtiny.asc \
 lvl/jrtiny.txt \
+lvl/k3.asc \
+lvl/k3.txt \
 lvl/kasper.asc \
 lvl/kasper.txt \
 lvl/kcm.asc \
