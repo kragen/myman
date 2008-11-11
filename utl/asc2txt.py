@@ -426,7 +426,7 @@ def main(argv, envp, stdin, stdout, stderr):
         outfile = file(outfn, 'wb')
     line = infile.readline().decode('utf-8').rstrip(u'\r\n').lstrip(u'\ufeff')
     while ("".join(line.split(u"\\\\")))[-1:] == u"\\":
-        line = line[:-1] + infile.readline().decode('utf-8').rstrip(u'\r\n')
+        line = line + u'\r\n' + infile.readline().decode('utf-8').rstrip(u'\r\n')
     n, wxh = line.split(' ',1)
     opts = ''
     flags = '0'
