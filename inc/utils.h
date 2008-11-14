@@ -362,15 +362,11 @@ extern void maze_putsn_nonblank(int y, int x, int color, const char *s, int n);
 #endif
 
 #ifndef GHOSTS
-#define GHOSTS 4
+#define GHOSTS (maze_GHOSTS_len ? maze_GHOSTS[maze_level % maze_GHOSTS_len] : 4)
 #endif
 
 #ifndef MAXGHOSTS
-#if GHOSTS > 16
-#define MAXGHOSTS GHOSTS
-#else
 #define MAXGHOSTS 16
-#endif
 #endif
 
 extern int ghost_dir[MAXGHOSTS], ghost_mem[MAXGHOSTS], ghost_man[MAXGHOSTS], ghost_timer[MAXGHOSTS];
@@ -527,7 +523,6 @@ extern int key_buffer;
 extern int key_buffer_ERR;
 extern long pellet_timer,
     pellet_time;
-extern int ghosts;
 
 #define GHOST0 ((ghosts > 2) ? 0 : 2)
 #define GHOST1 1
@@ -698,6 +693,8 @@ extern int ghosts;
 
 #endif
 
+#define ghosts ((GHOSTS > MAXGHOSTS) ? MAXGHOSTS : GHOSTS)
+
 #define WHOSE_HOME_DIR(r,c) (home_dir[(GHOST2 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST2 \
 : home_dir[(GHOST0 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST0 \
 : home_dir[(GHOST3 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST3 \
@@ -861,6 +858,8 @@ extern const char *maze_PELLET_COLORS;
 extern size_t maze_PELLET_COLORS_len;
 extern const char *maze_MORTAR_COLORS;
 extern size_t maze_MORTAR_COLORS_len;
+extern long *maze_GHOSTS;
+extern size_t maze_GHOSTS_len;
 extern double *maze_RGHOST;
 extern size_t maze_RGHOST_len;
 extern double *maze_CGHOST;

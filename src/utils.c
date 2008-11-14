@@ -2472,7 +2472,6 @@ int level = 0,
     player = 1;
 long pellet_timer = 0,
     pellet_time = 0;
-int ghosts = GHOSTS;
 
 void
 gameintro(void)
@@ -3906,6 +3905,8 @@ const char *maze_PELLET_COLORS = PELLET_COLORS;
 size_t maze_PELLET_COLORS_len = sizeof(PELLET_COLORS) - 1;
 const char *maze_MORTAR_COLORS = MORTAR_COLORS;
 size_t maze_MORTAR_COLORS_len = sizeof(MORTAR_COLORS) - 1;
+long *maze_GHOSTS = NULL;
+size_t maze_GHOSTS_len = 0;
 double *maze_RGHOST = NULL;
 size_t maze_RGHOST_len = 0;
 double *maze_CGHOST = NULL;

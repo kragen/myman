@@ -7256,19 +7256,22 @@ main(int argc, char *argv[]
         }
         case 'g':
         {
-            char garbage;
+            const char *tmp_ghosts_endp = NULL;
 
-            if ((sscanf(optarg, "%lu%c", &uli, &garbage) != 1)
-                ||
-                (uli > (unsigned long) MAXGHOSTS))
+            maze_GHOSTS = strtollist(optarg, &tmp_ghosts_endp, &maze_GHOSTS_len);
+            if (! maze_GHOSTS)
             {
-                fprintf(stderr,
-                        "%s: argument to -g must be an unsigned integer no greater than %lu.\n",
-                        progname,
-                        (unsigned long) MAXGHOSTS);
+                perror("-g");
                 fflush(stderr), exit(1);
             }
-            ghosts = (int) uli;
+            else if (tmp_ghosts_endp && *tmp_ghosts_endp)
+            {
+                fprintf(stderr,
+                        "%s: -g: garbage after argument: %s\n",
+                        progname,
+                        tmp_ghosts_endp);
+                fflush(stderr), exit(1);
+            }
             ghosts_p = 1;
             break;
         }
@@ -7338,7 +7341,7 @@ main(int argc, char *argv[]
                    "-F FILE \tredirect stdout to FILE (truncate)",
                    "-x \treflect maze diagonally, exchanging the upper right and lower left corners",
                    "-X \tdo not reflect maze");
-            printf("Defaults:%s%s%s%s%s%s%s%s%s%s%s -d %lu -l %d -g %d -m \"",
+            printf("Defaults:%s%s%s%s%s%s%s%s%s%s%s -d %lu -l %d -m \"",
                    use_raw ? " -r" : " -R",
                    use_raw_ucs ? " -e" : " -E",
                    (use_acs_p ? (use_acs ? " -A" : " -a") : ""),
@@ -7351,8 +7354,7 @@ main(int argc, char *argv[]
                    use_fullwidth ? " -2" : " -1",
                    reflect ? " -x" : " -X",
                    mymandelay ? mymandelay : 0,
-                   lives,
-                   ghosts);
+                   lives);
             if (mazefile)
                 mymanescape(mazefile, strlen(mazefile));
             else {
@@ -7767,25 +7769,28 @@ main(int argc, char *argv[]
                 }
                 else if (! strncmp(argp, "GHOSTS", endp - argp))
                 {
-                    int tmp_ghosts;
+                    long * tmp_ghosts = NULL;
+                    size_t tmp_ghosts_len = 0;
 
                     argp = endp + 1;
-                    tmp_ghosts = strtol(argp, (char **) &endp, 0);
-                    if (endp == argp)
+                    tmp_ghosts = strtollist_word(argp, &endp, &tmp_ghosts_len);
+                    if (! tmp_ghosts)
                     {
-                        perror("strtol: GHOSTS");
-                        return 1;
-                    }
-                    if ((*endp) && ! isspace(*endp))
-                    {
-                        fprintf(stderr, "%s: GHOSTS: garbage after argument: %s\n",
-                                mazefile ? mazefile : builtin_mazefile,
-                                endp);
-                        fflush(stderr);
+                        perror("GHOSTS");
                         return 1;
                     }
                     argp = endp;
-                    if (! ghosts_p) ghosts = tmp_ghosts;
+                    if (! ghosts_p)
+                    {
+                        maze_GHOSTS = tmp_ghosts;
+                        maze_GHOSTS_len = tmp_ghosts_len;
+                    }
+                    else
+                    {
+                        free((void *) tmp_ghosts);
+                        tmp_ghosts = NULL;
+                        tmp_ghosts_len = 0;
+                    }
                 }
                 else if (! strncmp(argp, "RGHOST", endp - argp))
                 {
@@ -8653,7 +8658,7 @@ main(int argc, char *argv[]
     sprite_register_color[BIGHERO_LL] = 0xE;
     sprite_register_color[BIGHERO_LR] = 0xE;
 
-    for (i = 0; i < ghosts; i++) {
+    for (i = 0; i < MAXGHOSTS; i++) {
         int eyes, mean, blue;
 
         eyes = GHOSTEYES(i);
@@ -8676,10 +8681,10 @@ main(int argc, char *argv[]
         sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(i % strlen(EXTRA_GHOST_COLORS))];
     }
 
-    if (GHOST0 < ghosts) sprite_register_color[MEANGHOST(GHOST0)] = 0xB;
-    if (GHOST1 < ghosts) sprite_register_color[MEANGHOST(GHOST1)] = 0xC;
-    if (GHOST2 < ghosts) sprite_register_color[MEANGHOST(GHOST2)] = 0xD;
-    if (GHOST3 < ghosts) sprite_register_color[MEANGHOST(GHOST3)] = 0x6;
+    if (GHOST0 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST0)] = 0xB;
+    if (GHOST1 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST1)] = 0xC;
+    if (GHOST2 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST2)] = 0xD;
+    if (GHOST3 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST3)] = 0x6;
 
     if (dump_maze) {
         printf("int maze_n = %d;\n", maze_n);
