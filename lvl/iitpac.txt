@@ -1,0 +1,26 @@
+﻿1 17x17 \
+ RGHOST=9.5 RTOP=8.5 \
+ RHERO=11.5 \
+ RFRUIT=11.5 \
+ RMSG=16 CMSG=5 \
+ RMSG2=0 CMSG2=5 \
+ GHOSTS=6 ROGHOST=0 COGHOST=1 \
+ READY="READY!!" PLAYER1="PLAYER1" PLAYER2="PLAYER2" GAMEOVER="GOODBYE" \
+ ABOUT="Inspired by a game by 2007 students Niket Narang, Nikhil Garg, Omprakash Parganiha, Suhel Khan and Vinay V in K V Dinesha's IT 740 course at IIT-Bombay; it was in turn inspired by Brian Postma's 'Java PacMan'/'PacMan 3D'"
+╔═══════╦═══════╗
+║·······║·······║
+║·╞╡·╞╡·╨·╞╡·╞╡·║
+║···············║
+║·╞╗·╥·╞╦╡·╥·╔╡·║
+║··║·║··║··║·║··║
+╚╗·╨·╠╡·╨·╞╣·╨·╔╝
+ ║···║·····║···║ 
+╔╝·•·╨·╔≡╗·╨·•·╚╗
+║······║ ║······║
+╠══╡·╥·╚═╝·╥·╞══╣
+║····╨·· ··╨····║
+║·╞╡···╞╦╡···╞╡·║
+║····╥··║··╥····║
+║■╞══╩╡·╨·╞╩══╡■║
+║···············║
+╚═══════════════╝

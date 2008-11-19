@@ -1,0 +1,16 @@
+﻿1 10x9 \
+ RTOP=2.5 RGHOST=3.5 CGHOST=5 ROGHOST=0.5 COGHOST=0.5 \
+ RFRUIT=5.5 CFRUIT=5 \
+ RHERO=7.5 CHERO=5.5 \
+ RMSG=8 CMSG=0 \
+ RMSG2=0 CMSG2=0 \
+ ABOUT="Inspired by hello_naomi's cupcakes"
+╔════════╗
+║■······■║
+╚╗·╔≡≡╗·╔╝
+═╝·║  ║·╚═
+  ·╚══╝·  
+═╗······╔═
+╔╝·╞══╡·╚╗
+║■······■║
+╚════════╝

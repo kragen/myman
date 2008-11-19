@@ -1911,7 +1911,11 @@ pepperii \
 p4c \
 simplej \
 3b1 \
-k3
+k3 \
+pacmes \
+cupcake \
+iitpac \
+pacmanx
 all_sizes = \
 small \
 big \
@@ -1957,7 +1961,8 @@ bitmap8a \
 kpac8 \
 bitmap9a \
 kpac9 \
-otto3a
+otto3a \
+rogue
 
 ## game sizes and variants to actually build
 ifeq ($(subst default,undefined,$(origin enable_variants)),undefined)
@@ -2890,6 +2895,8 @@ TILEFILE_quack = khr2h.txt
 SPRITEFILE_quack = quack2h.txt
 TILEFILE_custom = khr1b.txt
 SPRITEFILE_custom = spr3.txt
+TILEFILE_rogue = rogue.txt
+SPRITEFILE_rogue = rogues.txt
 
 # Tile and sprite definitions for the selected size
 tilefile = ${src}chr/$(firstword $(TILEFILE_$1) $1.txt)
@@ -3254,6 +3261,7 @@ chr/prq28h.asc \
 chr/prq28h.txt \
 chr/prq7.asc \
 chr/prq7.txt \
+chr/rogue.txt \
 game.html \
 gfx/monster.gif \
 gfx/monster.xcf \
@@ -3333,6 +3341,8 @@ lvl/crazyg.asc \
 lvl/crazyg.txt \
 lvl/crush.asc \
 lvl/crush.txt \
+lvl/cupcake.asc \
+lvl/cupcake.txt \
 lvl/dacman.asc \
 lvl/dacman.txt \
 lvl/deluxe.asc \
@@ -3403,6 +3413,8 @@ lvl/hatman.asc \
 lvl/hatman.txt \
 lvl/hedges.asc \
 lvl/hedges.txt \
+lvl/iitpac.asc \
+lvl/iitpac.txt \
 lvl/ipac.asc \
 lvl/ipac.txt \
 lvl/javapac.asc \
@@ -3585,8 +3597,12 @@ lvl/pacmanpc.asc \
 lvl/pacmanpc.txt \
 lvl/pacmanvs.asc \
 lvl/pacmanvs.txt \
+lvl/pacmanx.asc \
+lvl/pacmanx.txt \
 lvl/pacmen.asc \
 lvl/pacmen.txt \
+lvl/pacmes.asc \
+lvl/pacmes.txt \
 lvl/pacmsx.asc \
 lvl/pacmsx.txt \
 lvl/pacmunch.asc \
@@ -3782,6 +3798,7 @@ spr/pqs48h.asc \
 spr/pqs48h.txt \
 spr/quack1.txt \
 spr/quack2h.txt \
+spr/rogues.txt \
 spr/spr1.txt \
 spr/spr10.asc \
 spr/spr10.txt \
