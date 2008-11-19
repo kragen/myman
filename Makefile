@@ -1915,7 +1915,8 @@ k3 \
 pacmes \
 cupcake \
 iitpac \
-pacmanx
+pacmanx \
+pacex2
 all_sizes = \
 small \
 big \
@@ -3567,6 +3568,8 @@ lvl/pacclone.asc \
 lvl/pacclone.txt \
 lvl/paccv.asc \
 lvl/paccv.txt \
+lvl/pacex2.asc \
+lvl/pacex2.txt \
 lvl/pacgal.asc \
 lvl/pacgal.txt \
 lvl/pacgalax.asc \
