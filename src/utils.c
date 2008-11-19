@@ -1888,6 +1888,10 @@ readfont(const char *fontfile,
                     args_tmp_len ++;
                     args_tmp[args_tmp_len] = '\0';
                 }
+                if (escaped && (c != '\\'))
+                {
+                    escaped = 0;
+                }
             }
             if (args_tmp_len)
             {
@@ -2203,6 +2207,10 @@ readmaze(const char *mazefile,
                     args_tmp[args_tmp_len] = c;
                     args_tmp_len ++;
                     args_tmp[args_tmp_len] = '\0';
+                }
+                if (escaped && (c != '\\'))
+                {
+                    escaped = 0;
                 }
             }
             if (args_tmp_len)
