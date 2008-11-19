@@ -1916,7 +1916,8 @@ pacmes \
 cupcake \
 iitpac \
 pacmanx \
-pacex2
+pacex2 \
+armpac2
 all_sizes = \
 small \
 big \
@@ -3306,6 +3307,8 @@ lvl/alien.asc \
 lvl/alien.txt \
 lvl/apollo.asc \
 lvl/apollo.txt \
+lvl/armpac2.asc \
+lvl/armpac2.txt \
 lvl/arrange.asc \
 lvl/arrange.txt \
 lvl/asciiman.asc \
