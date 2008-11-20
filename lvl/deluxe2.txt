@@ -19,7 +19,7 @@ PELLET_COLORS="\x0C\x05\x05\x0E\x05\x05\x0C\x0C\x05\x09\x05\x09\x0C\x07" \
      GAMEOVER=" GAME OVER " \
       PLAYER1="PLAYER ONE " \
       PLAYER2="PLAYER TWO " \
-        ABOUT="Inspired by Edgar M Vigdal's 'Deluxe Poc-Man' game"
+        ABOUT="Inspired by Edgar M Vigdal's 'Deluxe Poc-Man' demo"
 ╔═════════════════════╗
 ║·····················║
 ╚╗·┌───┐·┌───┐·┌───┐·╔╝
