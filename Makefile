@@ -1917,7 +1917,8 @@ cupcake \
 iitpac \
 pacmanx \
 pacex2 \
-armpac2
+armpac2 \
+deluxe2
 all_sizes = \
 small \
 big \
@@ -3351,6 +3352,8 @@ lvl/dacman.asc \
 lvl/dacman.txt \
 lvl/deluxe.asc \
 lvl/deluxe.txt \
+lvl/deluxe2.asc \
+lvl/deluxe2.txt \
 lvl/demon.asc \
 lvl/demon.txt \
 lvl/eatit.asc \
