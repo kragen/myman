@@ -1918,7 +1918,8 @@ iitpac \
 pacmanx \
 pacex2 \
 armpac2 \
-deluxe2
+deluxe2 \
+zaurus
 all_sizes = \
 small \
 big \
@@ -3748,6 +3749,8 @@ lvl/xfred.asc \
 lvl/xfred.txt \
 lvl/yoyopac.asc \
 lvl/yoyopac.txt \
+lvl/zaurus.asc \
+lvl/zaurus.txt \
 lvl/zuckman.asc \
 lvl/zuckman.txt \
 mygetopt/ChangeLog \
