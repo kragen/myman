@@ -1919,7 +1919,9 @@ pacmanx \
 pacex2 \
 armpac2 \
 deluxe2 \
-zaurus
+zaurus \
+vermin \
+cgkit
 all_sizes = \
 small \
 big \
@@ -3333,6 +3335,8 @@ lvl/catchum.asc \
 lvl/catchum.txt \
 lvl/cattrax.asc \
 lvl/cattrax.txt \
+lvl/cgkit.asc \
+lvl/cgkit.txt \
 lvl/chicky.asc \
 lvl/chicky.txt \
 lvl/chomp.asc \
@@ -3743,6 +3747,8 @@ lvl/toyman.txt \
 lvl/ultrapac.asc \
 lvl/ultrapac.txt \
 lvl/upacthin.txt \
+lvl/vermin.asc \
+lvl/vermin.txt \
 lvl/xensrvng.asc \
 lvl/xensrvng.txt \
 lvl/xfred.asc \
