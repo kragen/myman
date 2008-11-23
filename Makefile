@@ -1921,7 +1921,8 @@ armpac2 \
 deluxe2 \
 zaurus \
 vermin \
-cgkit
+cgkit \
+misspac
 all_sizes = \
 small \
 big \
@@ -3471,6 +3472,8 @@ lvl/mini.asc \
 lvl/mini.txt \
 lvl/minipac.asc \
 lvl/minipac.txt \
+lvl/misspac.asc \
+lvl/misspac.txt \
 lvl/mmpalm.asc \
 lvl/mmpalm.txt \
 lvl/mmproto.asc \
