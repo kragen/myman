@@ -1923,7 +1923,8 @@ zaurus \
 vermin \
 cgkit \
 misspac \
-misstiny
+misstiny \
+pac49
 all_sizes = \
 small \
 big \
@@ -3567,6 +3568,8 @@ lvl/pac26.asc \
 lvl/pac26.txt \
 lvl/pac2600.asc \
 lvl/pac2600.txt \
+lvl/pac49.asc \
+lvl/pac49.txt \
 lvl/pac4a.asc \
 lvl/pac4a.txt \
 lvl/pac6001.asc \
