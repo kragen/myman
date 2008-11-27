@@ -1924,7 +1924,9 @@ vermin \
 cgkit \
 misspac \
 misstiny \
-pac49
+pac49 \
+pac188 \
+small188
 all_sizes = \
 small \
 big \
@@ -3561,6 +3563,8 @@ lvl/p4c.asc \
 lvl/p4c.txt \
 lvl/pac.asc \
 lvl/pac.txt \
+lvl/pac188.asc \
+lvl/pac188.txt \
 lvl/pac2.txt \
 lvl/pac20.asc \
 lvl/pac20.txt \
@@ -3714,6 +3718,8 @@ lvl/sir.asc \
 lvl/sir.txt \
 lvl/small.asc \
 lvl/small.txt \
+lvl/small188.asc \
+lvl/small188.txt \
 lvl/smallpac.asc \
 lvl/smallpac.txt \
 lvl/smartpac.asc \
