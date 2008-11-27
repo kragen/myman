@@ -1926,7 +1926,8 @@ misspac \
 misstiny \
 pac49 \
 pac188 \
-small188
+small188 \
+full188
 all_sizes = \
 small \
 big \
@@ -3372,6 +3373,8 @@ lvl/ebipac.asc \
 lvl/ebipac.txt \
 lvl/fhmcpac.asc \
 lvl/fhmcpac.txt \
+lvl/full188.asc \
+lvl/full188.txt \
 lvl/ghost.asc \
 lvl/ghost.txt \
 lvl/ghost2.asc \
