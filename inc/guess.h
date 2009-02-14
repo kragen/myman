@@ -69,7 +69,7 @@
 /* HAVE_LANGINFO_H: do we have <langinfo.h>? */
 
 #ifndef HAVE_LANGINFO_H
-#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__))
+#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__) || defined(__HAIKU__))
 #define HAVE_LANGINFO_H 1
 #endif
 #endif
