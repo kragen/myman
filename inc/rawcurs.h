@@ -1160,6 +1160,7 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_acs_h19, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_noswapdots, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_cp437, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_nobullet, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vwmterm, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_nocolorbold, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_vt52, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_st52, = 0);
@@ -2319,6 +2320,7 @@ static int rawcurses_fput_smacs(FILE *fh)
         if (rawcurses_stdio_iso2022) fputs("\x0e" ESCAPE("(0"), fh);
         return (fputs(CSI("12m") CSI("11m"), fh) != EOF);
     }
+    if (rawcurses_stdio_vwmterm) return fputs(CSI("11m"), fh) != EOF;
     return fputc('\x0e', fh) != EOF;
 }
 
@@ -2344,6 +2346,7 @@ static int rawcurses_fput_rmacs(FILE *fh)
             return 0;
         }
     }
+    if (rawcurses_stdio_vwmterm) return fputs(CSI("10m"), fh) != EOF;
     return fputc('\x0f', fh) != EOF;
 }
 
@@ -4574,6 +4577,18 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             st52like += strlen(st52like) + 1;
         }
     }
+    if (rawcurses_getenv_boolean("RAWCURSES_VWMTERM"))
+    {
+        rawcurses_stdio_vwmterm = *(rawcurses_getenv_boolean("RAWCURSES_VWMTERM")) ? 1 : 0;
+    }
+    else
+    {
+        rawcurses_stdio_vwmterm = 0;
+        if (! strcmp(termType, "vwmterm"))
+        {
+            rawcurses_stdio_vwmterm = 1;
+        }
+    }
     if (rawcurses_getenv_boolean("RAWCURSES_ADM3A"))
     {
         rawcurses_stdio_adm3a = *(rawcurses_getenv_boolean("RAWCURSES_ADM3A")) ? 1 : 0;
@@ -4671,6 +4686,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
              (! strcmp(termType, "cxterm"))
              ||
              (! strcmp(termType, "nsterm-16color"))
+             ||
+             rawcurses_stdio_vwmterm
              ||
              (! strncmp(termType, "xterm", strlen("xterm")))
              ||
@@ -4779,7 +4796,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         rawcurses_stdio_noswapdots = 0;
         if ((! strncmp(termType, "tw100", strlen("tw100")))
             ||
-            (! strncmp(termType, "tw52", strlen("tw52"))))
+            (! strncmp(termType, "tw52", strlen("tw52")))
+            ||
+            (! strcmp(termType, "vwmterm")))
         {
             rawcurses_stdio_noswapdots = 1;
         }
