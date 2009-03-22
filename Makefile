@@ -791,6 +791,8 @@ NCURSESW_CONFIG \
 NCURSESWCFLAGS \
 NCURSESWLIBS \
 PKG_CONFIG \
+SDLCFLAGS \
+SDLLIBS \
 SDL_CONFIG \
 SHELL \
 with_dmg \
@@ -2127,6 +2129,14 @@ CURSOPTS += -DCACACURSES0
 
 endif
 
+ifeq (yes,${with_bsdcurses})
+
+with_curses = yes
+
+CURSOPTS += -DHAVE_NODELAY=0 -DUSE_BEEP=0 -Dchtype=char -Dintrflush= -Duse_env= -Dcurs_set=
+
+endif
+
 ifeq (yes,${with_xcursesw})
 
 with_xcurses = yes
@@ -2598,7 +2608,13 @@ CURSESLIBS += -lpdcurses
 else
 
 # ncurses or SysV curses in the usual place
-CURSESLIBS += -lcurses
+ifeq ($(subst default,undefined,$(origin LIBCURSES)),undefined)
+LIBCURSES = -lcurses
+endif
+ifeq ($(subst default,undefined,$(origin LIBTERMCAP)),undefined)
+LIBTERMCAP =
+endif
+CURSESLIBS += $(LIBCURSES) $(LIBTERMCAP)
 
 endif
 endif

@@ -417,24 +417,24 @@ mark_sprite_register(int s);
 #define SPRITE_BIGHERO_LL 0x40
 #define SPRITE_BIGHERO_LR 0x44
 
-#define UP 1
-#define LEFT 2
-#define DOWN 3
-#define RIGHT 4
+#define MYMAN_UP 1
+#define MYMAN_LEFT 2
+#define MYMAN_DOWN 3
+#define MYMAN_RIGHT 4
 
 #ifndef DIRHERO
-#define DIRHERO LEFT
+#define DIRHERO MYMAN_LEFT
 #endif
 
 #define DIRWRAP(dir) (((dir) + 3) % 4 + 1)
 
-#define XDIR(dir) ((((dir) == RIGHT) ? 1 : 0) - (((dir) == LEFT) ? 1 : 0))
-#define YDIR(dir) ((((dir) == DOWN) ? 1 : 0) - (((dir) == UP) ? 1 : 0))
+#define XDIR(dir) ((((dir) == MYMAN_RIGHT) ? 1 : 0) - (((dir) == MYMAN_LEFT) ? 1 : 0))
+#define YDIR(dir) ((((dir) == MYMAN_DOWN) ? 1 : 0) - (((dir) == MYMAN_UP) ? 1 : 0))
 
-#define YLEAVING(dir, y) ( -((((dir) == UP) && ! NOTTOP(y)) ? 1 : 0) + \
-((((dir) == DOWN) && ! NOTBOTTOM(y)) ? 1 : 0))
-#define XLEAVING(dir, x) ( -((((dir) == LEFT) && ! NOTLEFT(x)) ? 1 : 0) + \
-((((dir) == RIGHT) && ! NOTRIGHT(x)) ? 1 : 0))
+#define YLEAVING(dir, y) ( -((((dir) == MYMAN_UP) && ! NOTTOP(y)) ? 1 : 0) + \
+((((dir) == MYMAN_DOWN) && ! NOTBOTTOM(y)) ? 1 : 0))
+#define XLEAVING(dir, x) ( -((((dir) == MYMAN_LEFT) && ! NOTLEFT(x)) ? 1 : 0) + \
+((((dir) == MYMAN_RIGHT) && ! NOTRIGHT(x)) ? 1 : 0))
 
 extern unsigned char gfx2(unsigned char c);
 

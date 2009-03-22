@@ -1,10 +1,71 @@
-NEWS - news about the MyMan video game
-Copyright 2003, 2006, Benjamin Sittler <bsittler@gmail.com>
+﻿NEWS - news about the MyMan video game
+Copyright 2003, 2006-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
 
+
+myman 0.7.1
+
+Added preliminary drivers for "newt" (--with-newt) and GTK+
+(--with-gtk/--with-gtk2); added THANKS and AUTHORS files.
+
+Classic BSD curses now works, thanks to a the FIONREAD ioctl. Just
+configure --with-bsdcurses.
+
+
+myman 0.7.0
+
+Monolithic (compiled-in tile, sprite and maze data) is now the only
+configuration supported by "configure" and "Makefile". Non-monolithic
+builds can still be made using "simple.mk".
+
+Added a new variant (--variant=kpacman) inspired by Jörg Thönnissen's
+Kpacman, another new variant (--variant=mspp) inspired by Ms Pac Plus,
+and yet another new variant (--variant=kasper) inspired by the
+'Puckman' level for Liquid War by Kasper (low line) Hviid (at) hotmail
+(dot) com. Added many other new variants, too.
+
+Now all the data files (mazes, tiles and sprites) are stored in
+UTF-8. Only the CP437-alike subset of Unicode is supported, other
+characters are treated as space (U+0020). There is a conversion tool
+(asc2txt.py) to aid in maze creation. The data files contain all
+parameters, so a single MyMan executable can load any maze file, tile
+file, and/or sprite file. This means myman.c is compiled twice rather
+than 150+ times, which saves a lot of CPU time and disk space.
+
+In addition to HTML screenshots, UTF-8 plain text screenshots are now
+generated.
+
+Added a libcaca backend (--with-libcaca). libcaca is the Colour AsCii
+Art library; see http://sam.zoy.org/libcaca/ for details, downloads,
+etc.
+
+Added an AA-Lib backend (--with-aalib). AA-Lib is a grayscale
+Ascii-Art library; see
+http://zoehep.xent.com/~bsittler/myman-0.7pre4.tar.gz for details.
+
+Added a "raw" backend (--with-raw) that uses no external libraries and
+displays on Win32 console, most UNIX terminals, and various Atari ST
+operating systems.
+
+Added an Allegro backend (--with-allegro). Allegro is a cross-platfrom
+general-purpose game-programming library; see
+http://www.talula.demon.co.uk/allegro/ for details.
+
+Added a LibGGI/LibGII backend (--with-ggi). GGI is a cross-platform
+General Graphics Interface library; see http://www.ggi-project.org/
+for details.
+
+Added a Twin backend (--with-twin). Twin is a text-mode windowing
+system; see http://twin.sourceforce.net/ for details.
+
+Added a Carbon/Toolbox backend, optionally using ATSUI
+(--with-mac/--with-mac-unicode).
+
+Added a PDCurses/SDL (--with-pdcursessdl) backend, including SDL mixer
+support (--with-sdl-mixer) inspired by "Spot"'s Amiga OS4 port.
 
 myman 0.6
 

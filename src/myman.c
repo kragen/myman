@@ -717,6 +717,10 @@ static int locale_is_utf8(void)
 #endif
 #endif
 
+#ifndef USE_BEEP
+#define USE_BEEP 1
+#endif
+
 #ifndef SOUND
 #define SOUND 0
 #endif
@@ -4069,24 +4073,55 @@ snapshot_addch(unsigned long inbyte)
         }
         if (snapshot_txt)
         {
+#if USE_ATTR
+#ifdef MY_A_BOLD
             if (snapshot_attrs_active & MY_A_BOLD)
             {
+#ifdef MY_A_UNDERLINE
                 if (snapshot_attrs_active & MY_A_UNDERLINE)
                 {
                     fputs("_\b", snapshot_txt);
                 }
+#endif
                 fputc_utf8(codepoint, snapshot_txt);
                 fputc('\b', snapshot_txt);
             }
+#endif
+#ifdef MY_A_UNDERLINE
             if (snapshot_attrs_active & MY_A_UNDERLINE)
             {
                 fputs("_\b", snapshot_txt);
             }
+#endif
+#endif
             fputc_utf8(codepoint, snapshot_txt);
             fflush(snapshot_txt);
         }
         snapshot_x ++;
     }
+}
+
+/* non-blocking version of getch(); return a single character if it is
+ * available, ERR otherwise */
+static int
+my_getch(void)
+{
+    int k = ERR;
+#if ! HAVE_NODELAY
+    {
+        int avail = 1;
+
+#ifdef FIONREAD
+        ioctl(fileno(stdin), FIONREAD, &avail);
+#endif /* defined(FIONREAD) */
+        if (! avail)
+        {
+            return k;
+        }
+    }
+#endif
+    k = getch();
+    return k;
 }
 
 /* add CP437 byte b with attributes attrs */
@@ -4138,7 +4173,7 @@ my_addch(unsigned long b, chtype attrs)
                     addstr(buf);
                 }
             }
-            return ret;
+            goto my_addch_done;
         }
     }
     if (b <= 0xFF)
@@ -4189,7 +4224,7 @@ my_addch(unsigned long b, chtype attrs)
                             leaveok(stdscr, TRUE);
                             move((old_y + ((old_x + 2) / COLS)) % LINES, (old_x + 2) % COLS);
                         }
-                        return ret;
+                        goto my_addch_done;
                     }
                     /* U+30FB KATAKANA MIDDLE DOT -> 0xFF0E FULLWIDTH FULL STOP */
                     if (my_ucs == 0x30fb)
@@ -4205,7 +4240,7 @@ my_addch(unsigned long b, chtype attrs)
                                 (((old_x + 1) % COLS) == (new_x % COLS)))
                             {
                             }
-                            return ret;
+                            goto my_addch_done;
                         }
                     }
                     /* U+301C WAVE DASH -> 0xFF5E FULLWIDTH TILDE */
@@ -4222,7 +4257,7 @@ my_addch(unsigned long b, chtype attrs)
                                 (((old_x + 1) % COLS) == (new_x % COLS)))
                             {
                             }
-                            return ret;
+                            goto my_addch_done;
                         }
                     }
                 }
@@ -4314,7 +4349,7 @@ my_addch(unsigned long b, chtype attrs)
 #endif
                     if ((old_x != new_x) || (old_y != new_y))
                     {
-                        return ret;
+                        goto my_addch_done;
                     }
                 }
             }
@@ -4348,7 +4383,7 @@ my_addch(unsigned long b, chtype attrs)
                                     getyx(stdscr, new_y, new_x);
                                     if ((old_x != new_x) || (old_y != new_y))
                                     {
-                                        return ret;
+                                        goto my_addch_done;
                                     }
                                 }
                                 c = altcharset_cp437[rhs];
@@ -4366,14 +4401,14 @@ my_addch(unsigned long b, chtype attrs)
                                 getyx(stdscr, new_y, new_x);
                                 if ((old_x != new_x) || (old_y != new_y))
                                 {
-                                    return ret;
+                                    goto my_addch_done;
                                 }
                                 addch(ascii_cp437[rhs]);
                             }
                         }
                     }
 #endif
-                    return ret;
+                    goto my_addch_done;
                 }
             }
             c = altcharset_cp437[b];
@@ -4412,7 +4447,7 @@ my_addch(unsigned long b, chtype attrs)
 #endif
                     }
                 }
-                return ret;
+                goto my_addch_done;
             }
 #endif /* ! USE_WIDEC_SUPPORT */
         }
@@ -4431,6 +4466,7 @@ my_addch(unsigned long b, chtype attrs)
             addch(ascii_cp437[rhs]);
         }
     }
+  my_addch_done:
     return ret;
 }
 
@@ -4626,7 +4662,9 @@ pager(void)
     int c = ERR;
     int k = ERR;
 
+#if USE_ATTR || USE_COLOR
     my_attrset(0);
+#endif
     my_erase();
 #if USE_COLOR
     if (use_color)
@@ -4878,7 +4916,7 @@ pager(void)
                         }
                     }
                     my_refresh();
-                    while ((k = getch()) == ERR)
+                    while ((k = my_getch()) == ERR)
                     {
                         my_refresh();
                         if (got_sigwinch) break;
@@ -5025,7 +5063,7 @@ pager(void)
                             pager = pager_remaining;
                             break;
                         }
-                        else if (k == MYMANCTRL('@'))
+                        else if ((k == MYMANCTRL('@')) && (k != ERR))
                         {
                             /* NUL - idle keepalive (iTerm, maybe others?) */
                             pager = pager_remaining;
@@ -5056,7 +5094,9 @@ pager(void)
                         }
                         else if (k != ERR)
                         {
+#if USE_BEEP
                             if (use_sound) beep();
+#endif
                             pager = pager_remaining;
                             break;
                         }
@@ -5105,7 +5145,7 @@ pager(void)
                 }
             }
             my_refresh();
-            while ((k = getch()) == ERR)
+            while ((k = my_getch()) == ERR)
             {
                 my_refresh();
                 if (got_sigwinch) break;
@@ -5215,7 +5255,7 @@ pager(void)
                     got_sigwinch = 0;
                     reinit_requested = 1;
                 }
-                else if (k == MYMANCTRL('@'))
+                else if ((k == MYMANCTRL('@')) && (k != ERR))
                 {
                     /* NUL - idle keepalive (iTerm, maybe others?) */
                 }
@@ -5239,7 +5279,9 @@ pager(void)
                 }
                 else if (k != ERR)
                 {
+#if USE_BEEP
                     if (use_sound) beep();
+#endif
                 }
         }
         my_attrset(0);
@@ -5303,7 +5345,11 @@ gamesfx(void)
                 } \
             } } while (0)
 #else
+#if USE_BEEP
 #define handle_sfx(n) do { if (myman_sfx & myman_sfx_ ## n) { myman_sfx &= ~myman_sfx_##n; if ((myman_sfx_##n & ~myman_sfx_nobeep_mask) && use_sound && ! myman_demo) beep(); } } while (0)
+#else
+#define handle_sfx(n) do { if (myman_sfx & myman_sfx_ ## n) { myman_sfx &= ~myman_sfx_##n; } } while (0)
+#endif
 #endif
 #endif
     handle_sfx(credit);
@@ -5323,7 +5369,13 @@ gamesfx(void)
     handle_sfx(life);
     handle_sfx(level);
     handle_sfx(bonus);
-    if (myman_sfx) { myman_sfx = 0UL; if (use_sound && ! myman_demo) beep(); }
+    if (myman_sfx)
+    {
+        myman_sfx = 0UL;
+#if USE_BEEP
+        if (use_sound && ! myman_demo) beep();
+#endif
+    }
 }
 
 static void
@@ -5384,7 +5436,10 @@ gamerender(void)
     else if (gfx_w * maze_w <= VCOLS)
         c_off = (VCOLS - gfx_w * maze_w + 1) / 2;
     if (c_off < 0) c_off = 0;
+#if USE_ATTR || USE_COLOR
+    standend();
     attrset(0);
+#endif
     for (vline = -(3 * tile_h); (vline < LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
     {
         if ((vline + (reflect ? c_off : r_off)) < 0) continue;
@@ -5960,10 +6015,10 @@ gamerender(void)
                                 unsigned char d;
                                             
                                 d = home_dir[(s % ghosts*maze_h+ytile)*(maze_w+1)+xtile];
-                                c = (d == UP) ? '^'
-                                    : (d == DOWN) ? 'v'
-                                    : (d == LEFT) ? '<'
-                                    : (d == RIGHT) ? '>'
+                                c = (d == MYMAN_UP) ? '^'
+                                    : (d == MYMAN_DOWN) ? 'v'
+                                    : (d == MYMAN_LEFT) ? '<'
+                                    : (d == MYMAN_RIGHT) ? '>'
                                     : ISDOT(c) ? ','
                                     : ISPELLET(c) ? ';'
                                     : ISOPEN(c) ? ' '
@@ -6565,7 +6620,7 @@ gamecycle(void)
         tv_pre.tv_sec = 0;
         tv_pre.tv_usec = 0;
         myman_gettimeofday(&tv_pre, 0);
-        k = getch();
+        k = my_getch();
         tv_post.tv_sec = 0;
         tv_post.tv_usec = 0;
         myman_gettimeofday(&tv_post, 0);
@@ -6615,7 +6670,7 @@ gamecycle(void)
         quit_requested = 0;
         return 0;
     }
-    else if (k == MYMANCTRL('@'))
+    else if ((k == MYMANCTRL('@')) && (k != ERR))
     {
         /* NUL - idle keepalive (iTerm, maybe others?) */
         return 1;
@@ -6870,7 +6925,7 @@ gamecycle(void)
     } else if ((k == ',') || (k == '<')) {
         if (reflect ? (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)) : (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)))
         {
-            if (reflect ? ((hero_dir != LEFT) && (hero_dir != RIGHT)) : ((hero_dir != UP) && (hero_dir != DOWN)))
+            if (reflect ? ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)) : ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)))
             {
                 key_buffer = ERR;
             }
@@ -6878,7 +6933,7 @@ gamecycle(void)
     } else if ((k == '.') || (k == '>')) {
         if (reflect ? (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)) : (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)))
         {
-            if (reflect ? ((hero_dir != UP) && (hero_dir != DOWN)) : ((hero_dir != LEFT) && (hero_dir != RIGHT)))
+            if (reflect ? ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)) : ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)))
             {
                 key_buffer = ERR;
             }
@@ -6897,7 +6952,7 @@ gamecycle(void)
     {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
-            hero_dir = LEFT;
+            hero_dir = MYMAN_LEFT;
             sprite_register[HERO] = SPRITE_HERO + 4;
         }
     } else if ((reflect ? IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)) : IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)))
@@ -6905,7 +6960,7 @@ gamecycle(void)
     {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
-            hero_dir = RIGHT;
+            hero_dir = MYMAN_RIGHT;
             sprite_register[HERO] = SPRITE_HERO + 12;
         }
     } else if ((reflect ? IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)) : IS_UP_ARROW(((k == ERR) ? key_buffer : k)))
@@ -6913,7 +6968,7 @@ gamecycle(void)
     {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
-            hero_dir = UP;
+            hero_dir = MYMAN_UP;
             sprite_register[HERO] = SPRITE_HERO;
         }
     } else if ((reflect ? IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)) : IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)))
@@ -6921,7 +6976,7 @@ gamecycle(void)
     {
         if (! (winning || dying || (dead && ! ghost_eaten_timer)))
         {
-            hero_dir = DOWN;
+            hero_dir = MYMAN_DOWN;
             sprite_register[HERO] = SPRITE_HERO + 16;
         }
     }
@@ -7982,19 +8037,19 @@ main(int argc, char *argv[]
                     argp = endp;
                     if (! strcmp(dirhero_tmp, "UP"))
                     {
-                        dirhero = UP;
+                        dirhero = MYMAN_UP;
                     }
                     else if (! strcmp(dirhero_tmp, "DOWN"))
                     {
-                        dirhero = DOWN;
+                        dirhero = MYMAN_DOWN;
                     }
                     else if (! strcmp(dirhero_tmp, "LEFT"))
                     {
-                        dirhero = LEFT;
+                        dirhero = MYMAN_LEFT;
                     }
                     else if (! strcmp(dirhero_tmp, "RIGHT"))
                     {
-                        dirhero = RIGHT;
+                        dirhero = MYMAN_RIGHT;
                     }
                     else
                     {
@@ -8646,7 +8701,7 @@ main(int argc, char *argv[]
     sprite_register_frame[GHOST_SCORE] = 0;
 
     hero_dir = dirhero;
-    sprite_register[HERO] = SPRITE_HERO + ((hero_dir == LEFT) ? 4 : (hero_dir == RIGHT) ? 12 : (hero_dir == DOWN) ? 16 : 0);
+    sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
     sprite_register_frame[HERO] = 0;
     sprite_register_x[HERO] = (int) XHERO;
     sprite_register_y[HERO] = (int) YHERO;
@@ -8848,7 +8903,9 @@ main(int argc, char *argv[]
         cbreak();
         noecho();
         nonl();
+#if HAVE_NODELAY
         nodelay(stdscr, TRUE);
+#endif
         intrflush(stdscr, FALSE);
         my_attrset(0);
 #if USE_ATTR

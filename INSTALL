@@ -81,7 +81,7 @@ try again.
                  src/utils.c mygetopt/mygetopt.c \
                  -luser32 -ladvapi32 \
                  -run src/myman.c
-  (c) a modern curses library, e.g. ncurses, slang, PDCurses or
+  (c) a curses library, e.g. ncurses, BSD curses, slang, PDCurses or
       XCurses; or libcaca, AA-lib, Twin, LibGGI/LibGII, Allegro, newt,
       Carbon/Toolbox, FLTK, GTK, <disp.h>, or the Win32
       Console/CONIO/TOS/AROS/*nix TTY APIs

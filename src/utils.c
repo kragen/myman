@@ -2557,7 +2557,7 @@ gameintro(void)
                     sprite_register_y[mean] = YPIXWRAP(sgfx_h / 2);
             }
             deadpan = 0;
-            sprite_register_frame[eyes] = RIGHT - 1;
+            sprite_register_frame[eyes] = MYMAN_RIGHT - 1;
         }
         else if ((myman_intro > (1 + s * 3 * TWOSECS / 4))
                  &&
@@ -2691,12 +2691,12 @@ gameintro(void)
             sprite_register_y[eyes] =
                 sprite_register_y[mean] =
                 sprite_register_y[blue] = sprite_register_y[HERO];
-            sprite_register_frame[eyes] = RIGHT - 1;
+            sprite_register_frame[eyes] = MYMAN_RIGHT - 1;
             sprite_register_frame[blue] =
                 (sprite_register_frame[mean] = ((myman_intro / MYMANFIFTH) & 1) ? 1 : 0);
             if ((sprite_register[HERO] == (SPRITE_HERO + 4)) && ! ghost_eaten_timer)
             {
-                sprite_register_frame[eyes] = LEFT - 1;
+                sprite_register_frame[eyes] = MYMAN_LEFT - 1;
                 sprite_register_used[eyes] = VISIBLE_EYES;
                 sprite_register_used[mean] = 1;
                 sprite_register_used[blue] = 0;
@@ -2829,84 +2829,84 @@ gamedemo(void)
                 &&
                 ISPELLET(mleft))
             {
-                hero_dir = LEFT;
+                hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
             else if (ISOPEN(mdown)
                      &&
                      ISPELLET(mdown))
             {
-                hero_dir = DOWN;
+                hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
             else if (ISOPEN(mright)
                      &&
                      ISPELLET(mright))
             {
-                hero_dir = RIGHT;
+                hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
             else if (ISOPEN(mup)
                      &&
                      ISPELLET(mup))
             {
-                hero_dir = UP;
+                hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
             else if (ISOPEN(mup)
                      &&
                      ISDOT(mup))
             {
-                hero_dir = UP;
+                hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
             else if (ISOPEN(mleft)
                      &&
                      ISDOT(mleft))
             {
-                hero_dir = LEFT;
+                hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
             else if (ISOPEN(mdown)
                      &&
                      ISDOT(mdown))
             {
-                hero_dir = DOWN;
+                hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
             else if (ISOPEN(mright)
                      &&
                      ISDOT(mright))
             {
-                hero_dir = RIGHT;
+                hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
             else if (ISOPEN(mleft)
                      &&
-                     (hero_dir != RIGHT))
+                     (hero_dir != MYMAN_RIGHT))
             {
-                hero_dir = LEFT;
+                hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
             else if (ISOPEN(mup)
                      &&
-                     (hero_dir != DOWN))
+                     (hero_dir != MYMAN_DOWN))
             {
-                hero_dir = UP;
+                hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
             else if (ISOPEN(mright)
                      &&
-                     (hero_dir != LEFT))
+                     (hero_dir != MYMAN_LEFT))
             {
-                hero_dir = RIGHT;
+                hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
             else if (ISOPEN(mdown)
                      &&
-                     (hero_dir != UP))
+                     (hero_dir != MYMAN_UP))
             {
-                hero_dir = DOWN;
+                hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
             else if (! (ISOPEN(mleft)
@@ -2915,7 +2915,7 @@ gamedemo(void)
                         ||
                         ISOPEN(mdown)))
             {
-                hero_dir = UP;
+                hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
             else if (! (ISOPEN(mleft)
@@ -2924,7 +2924,7 @@ gamedemo(void)
                         ||
                         ISOPEN(mup)))
             {
-                hero_dir = DOWN;
+                hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
             else if (! (ISOPEN(mright)
@@ -2933,7 +2933,7 @@ gamedemo(void)
                         ||
                         ISOPEN(mup)))
             {
-                hero_dir = LEFT;
+                hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
             else if (! (ISOPEN(mleft)
@@ -2942,7 +2942,7 @@ gamedemo(void)
                         ||
                         ISOPEN(mup)))
             {
-                hero_dir = RIGHT;
+                hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
         }
@@ -3025,7 +3025,7 @@ gameintermission(void)
                 sprite_register[mean] = SPRITE_MEAN;
                 sprite_register[eyes] = SPRITE_EYES;
                 sprite_register[blue] = SPRITE_BLUE;
-                sprite_register_frame[eyes] = LEFT - 1;
+                sprite_register_frame[eyes] = MYMAN_LEFT - 1;
                 sprite_register_frame[blue] =
                     (sprite_register_frame[mean] = (((INTERMISSION_TIME - intermission_running) / MYMANFIFTH) & 1) ? 1 : 0);
                 sprite_register_used[mean] = 1;
@@ -3093,7 +3093,7 @@ gameintermission(void)
                 sprite_register[mean] = SPRITE_MEAN;
                 sprite_register[eyes] = SPRITE_EYES;
                 sprite_register[blue] = SPRITE_BLUE;
-                sprite_register_frame[eyes] = LEFT - 1;
+                sprite_register_frame[eyes] = MYMAN_LEFT - 1;
                 sprite_register_frame[blue] =
                     (sprite_register_frame[mean] = (((INTERMISSION_TIME - intermission_running) / MYMANFIFTH) & 1) ? 1 : 0);
                 sprite_register_used[mean] = 0;
@@ -3346,7 +3346,7 @@ gamelogic(void)
                 }
             }
             hero_dir = dirhero;
-            sprite_register[HERO] = SPRITE_HERO + ((hero_dir == LEFT) ? 4 : (hero_dir == RIGHT) ? 12 : (hero_dir == DOWN) ? 16 : 0);
+            sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
             if (! use_color)
                 if (use_underline)
                 {
@@ -3444,7 +3444,7 @@ gamelogic(void)
                 &&
                 (! YDIR(hero_dir))
                 &&
-                (hero_dir == LEFT)) {
+                (hero_dir == MYMAN_LEFT)) {
                 int ii;
 
                 for (ii = 1; ii < maze_w; ii ++)
@@ -3460,7 +3460,7 @@ gamelogic(void)
                      &&
                      (! YDIR(hero_dir))
                      &&
-                     (hero_dir == RIGHT)) {
+                     (hero_dir == MYMAN_RIGHT)) {
                 int ii;
 
                 for (ii = 1; ii < maze_w; ii ++)
@@ -3476,7 +3476,7 @@ gamelogic(void)
                      &&
                      (! XDIR(hero_dir))
                      &&
-                     (hero_dir == UP)) {
+                     (hero_dir == MYMAN_UP)) {
                 int ii;
 
                 for (ii = 1; ii < maze_h; ii ++)
@@ -3492,7 +3492,7 @@ gamelogic(void)
                      &&
                      (! XDIR(hero_dir))
                      &&
-                     (hero_dir == DOWN)) {
+                     (hero_dir == MYMAN_DOWN)) {
                 int ii;
 
                 for (ii = 1; ii < maze_h; ii ++)
@@ -3734,20 +3734,20 @@ gamelogic(void)
                                 find_home_dir(s,
                                               YWRAP(j1 + YDIR(dir0)),
                                               XWRAP(i1 + XDIR(dir0))))
-                        && dir0 != DOWN
-                        && dir0 != LEFT;
+                        && dir0 != MYMAN_DOWN
+                        && dir0 != MYMAN_LEFT;
                     d2 = d2 && (dir2 !=
                                 find_home_dir(s,
                                               YWRAP(j1 + YDIR(dir2)),
                                               XWRAP(i1 + XDIR(dir2))))
-                        && dir2 != DOWN
-                        && dir2 != LEFT;
+                        && dir2 != MYMAN_DOWN
+                        && dir2 != MYMAN_LEFT;
                     d1 = d1 && (dir1 !=
                                 find_home_dir(s,
                                               YWRAP(j1 + YDIR(dir1)),
                                               XWRAP(i1 + XDIR(dir1))))
-                        && dir1 != DOWN
-                        && dir1 != LEFT;
+                        && dir1 != MYMAN_DOWN
+                        && dir1 != MYMAN_LEFT;
                     if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
                         || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
                         if (d2 || (o2 && (dir2 == ghost_mem[s])))
@@ -3802,16 +3802,16 @@ gamelogic(void)
                     else {
                         if (dx * dx > dy * dy) {
                             if (dx > 0)
-                                ghost_mem[s] = RIGHT;
+                                ghost_mem[s] = MYMAN_RIGHT;
                             else
-                                ghost_mem[s] = LEFT;
+                                ghost_mem[s] = MYMAN_LEFT;
                         }
                         else
                         {
                             if (dy < 0)
-                                ghost_mem[s] = UP;
+                                ghost_mem[s] = MYMAN_UP;
                             else
-                                ghost_mem[s] = DOWN;
+                                ghost_mem[s] = MYMAN_DOWN;
                         }
                     }
                     if (! (dx || dy)) {
