@@ -291,12 +291,16 @@
 #define HAVE_ATTRSET 0
 #endif
 
+#ifdef _STANDOUT
+
 #ifndef USE_ATTR
 #define USE_ATTR 1
 #endif
 
-#ifndef MY_A_STANDOUT
-#define MY_A_STANDOUT 0x80
+#ifndef A_STANDOUT
+#define A_STANDOUT _STANDOUT
+#endif
+
 #endif
 
 #ifndef USE_BEEP
@@ -1632,7 +1636,9 @@ static const char SPRITEFILE_str[] = SPRITEFILE;
 #endif
 
 #if ! HAVE_CHTYPE
+#ifndef chtype
 #define chtype char
+#endif
 #endif
 
 #if ! HAVE_ATTRSET
