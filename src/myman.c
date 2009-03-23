@@ -291,20 +291,26 @@
 #define HAVE_ATTRSET 0
 #endif
 
-#ifdef _STANDOUT
-
 #ifndef USE_ATTR
 #define USE_ATTR 1
 #endif
 
+#if USE_ATTR
 #ifndef A_STANDOUT
+#ifdef _STANDOUT
 #define A_STANDOUT _STANDOUT
+#else
+#ifdef __STANDOUT
+#define A_STANDOUT ((__STANDOUT) << 8)
+#else
+#define A_STANDOUT 0x100
+#endif
+#endif
+#endif
 #endif
 
-#endif
-
-#ifndef USE_BEEP
-#define USE_BEEP 0
+#ifndef beep
+#define beep() do{putchar('\a');fflush(stdout);}while(0)
 #endif
 
 #ifndef HAVE_CHTYPE
@@ -1635,14 +1641,19 @@ static const char SPRITEFILE_str[] = SPRITEFILE;
 #define HAVE_ATTRSET 1
 #endif
 
+/* NOTE: while this is actually "char" inside the old BSD libcurses,
+ * the old C calling conventions mean we can safely use int instead,
+ * and it will eventually get coerced */
 #if ! HAVE_CHTYPE
 #ifndef chtype
-#define chtype char
+#define chtype int
 #endif
 #endif
 
+#if USE_ATTR || USE_COLOR
 #if ! HAVE_ATTRSET
 static chtype my_attrs = 0;
+#endif
 #endif
 
 /* mapping from CP437 to VT-100 altcharset */
@@ -3284,8 +3295,6 @@ my_clearok(int ok)
 static int
 my_refresh(void)
 {
-    int ret;
-
     if (snapshot)
     {
         snapshot_attrset_active(0);
@@ -4232,6 +4241,7 @@ my_addch(unsigned long b, chtype attrs)
             snapshot_addch(rhs);
         }
     }
+#if USE_ATTR || USE_COLOR
 #if ! HAVE_ATTRSET
 #ifdef MY_A_STANDOUT
     if (my_attrs & MY_A_STANDOUT)
@@ -4247,6 +4257,7 @@ my_addch(unsigned long b, chtype attrs)
             standout();
         }
     }
+#endif
 #endif
 #endif
     if (use_acs && use_raw && ! use_raw_ucs)
@@ -4563,9 +4574,11 @@ my_addch(unsigned long b, chtype attrs)
         }
     }
   my_addch_done:
+#if USE_ATTR || USE_COLOR
 #if ! HAVE_ATTRSET
 #ifdef MY_A_STANDOUT
     if (my_attrs & MY_A_STANDOUT) standend();
+#endif
 #endif
 #endif
     return ret;

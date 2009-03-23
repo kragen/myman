@@ -2129,11 +2129,16 @@ CURSOPTS += -DCACACURSES0
 
 endif
 
+# old BSD curses
 ifeq (yes,${with_bsdcurses})
 
 with_curses = yes
 
 CURSOPTS += -DOLDCURSES
+
+ifeq ($(subst default,undefined,$(origin LIBTERMCAP)),undefined)
+LIBTERMCAP = -ltermcap
+endif
 
 endif
 
