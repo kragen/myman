@@ -268,6 +268,47 @@
 #include <curses.h>
 #endif
 
+/* work-arounds for old BSD curses */
+#ifdef OLDCURSES
+
+#ifndef intrflush
+#define intrflush(win, x)
+#endif
+
+#ifndef use_env
+#define use_env(x)
+#endif
+
+#ifndef HAVE_NODELAY
+#define HAVE_NODELAY 0
+#endif
+
+#ifndef HAVE_CURS_SET
+#define HAVE_CURS_SET 0
+#endif
+
+#ifndef HAVE_ATTRSET
+#define HAVE_ATTRSET 0
+#endif
+
+#ifndef USE_ATTR
+#define USE_ATTR 1
+#endif
+
+#ifndef MY_A_STANDOUT
+#define MY_A_STANDOUT 0x80
+#endif
+
+#ifndef USE_BEEP
+#define USE_BEEP 0
+#endif
+
+#ifndef HAVE_CHTYPE
+#define HAVE_CHTYPE 0
+#endif
+
+#endif
+
 /* work-arounds for slcurses */
 #ifdef SLCURSES
 
@@ -307,6 +348,12 @@
  (*(b) = (p) ? (((SLtt_get_color_object ((p))) >> 8) & 0xff) : 0))
 #endif
 
+#endif
+
+/* HAVE_NODELAY: does our curses implementation include nodelay()? */
+
+#ifndef HAVE_NODELAY
+#define HAVE_NODELAY 1
 #endif
 
 /* for resizing */

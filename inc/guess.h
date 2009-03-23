@@ -277,10 +277,4 @@
 #define myman_gettimeofday(tv,tz) gettimeofday(tv,tz)
 #endif
 
-/* HAVE_NODELAY: does our curses implementation include nodelay()? */
-
-#ifndef HAVE_NODELAY
-#define HAVE_NODELAY 1
-#endif
-
 #endif /* ! defined(MYMAN_GUESS_H_INCLUDED) */

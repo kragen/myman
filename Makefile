@@ -2133,7 +2133,7 @@ ifeq (yes,${with_bsdcurses})
 
 with_curses = yes
 
-CURSOPTS += -DHAVE_NODELAY=0 -DHAVE_CURS_SET=0 -DHAVE_ATTRSET=0 -DUSE_ATTR=1 -DA_STANDOUT=0x80 -DA_CHARTEXT=0x7f -DUSE_BEEP=0 -DHAVE_CHTYPE=0 -Dintrflush= -Duse_env=
+CURSOPTS += -DOLDCURSES
 
 endif
 
