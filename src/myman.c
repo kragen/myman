@@ -711,6 +711,10 @@ static int locale_is_utf8(void)
 #endif
 #endif
 
+#ifndef HAVE_CURS_SET
+#define HAVE_CURS_SET USE_ATTR
+#endif
+
 #if ! USE_ATTR
 #ifndef USE_COLOR
 #define USE_COLOR 0
@@ -1570,6 +1574,22 @@ static const char SPRITEFILE_str[] = SPRITEFILE;
 #undef SPRITEFILE
 #define SPRITEFILE SPRITEFILE_str
 #define builtin_spritefile SPRITEFILE
+#endif
+
+#ifndef HAVE_CHTYPE
+#define HAVE_CHTYPE 1
+#endif
+
+#ifndef HAVE_ATTRSET
+#define HAVE_ATTRSET 1
+#endif
+
+#if ! HAVE_CHTYPE
+#define chtype char
+#endif
+
+#if ! HAVE_ATTRSET
+static chtype my_attrs = 0;
 #endif
 
 /* mapping from CP437 to VT-100 altcharset */
@@ -3211,6 +3231,8 @@ my_clearok(int ok)
 static int
 my_refresh(void)
 {
+    int ret;
+
     if (snapshot)
     {
         snapshot_attrset_active(0);
@@ -3356,7 +3378,11 @@ my_attrset(chtype attrs)
       0
 #endif
       : 0;
+#if HAVE_ATTRSET
     attrset(attrs);
+#else
+    my_attrs = attrs;
+#endif
 #endif
     return 1;
 }
@@ -4153,6 +4179,23 @@ my_addch(unsigned long b, chtype attrs)
             snapshot_addch(rhs);
         }
     }
+#if ! HAVE_ATTRSET
+#ifdef MY_A_STANDOUT
+    if (my_attrs & MY_A_STANDOUT)
+    {
+        int cur_x, cur_y;
+
+        getyx(stdscr, cur_y, cur_x);
+        /* classic BSD curses has an annoying bug which causes it to
+         * hang if standout is used in the last writable screen
+         * cell */
+        if ((cur_x < (COLS - 2 * (cur_y == (LINES - 1)))))
+        {
+            standout();
+        }
+    }
+#endif
+#endif
     if (use_acs && use_raw && ! use_raw_ucs)
     {
         char buf[2];
@@ -4467,6 +4510,11 @@ my_addch(unsigned long b, chtype attrs)
         }
     }
   my_addch_done:
+#if ! HAVE_ATTRSET
+#ifdef MY_A_STANDOUT
+    if (my_attrs & MY_A_STANDOUT) standend();
+#endif
+#endif
     return ret;
 }
 
@@ -5438,7 +5486,9 @@ gamerender(void)
     if (c_off < 0) c_off = 0;
 #if USE_ATTR || USE_COLOR
     standend();
+#if HAVE_ATTRSET
     attrset(0);
+#endif
 #endif
     for (vline = -(3 * tile_h); (vline < LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
     {
@@ -8908,7 +8958,7 @@ main(int argc, char *argv[]
 #endif
         intrflush(stdscr, FALSE);
         my_attrset(0);
-#if USE_ATTR
+#if HAVE_CURS_SET
         curs_set(0);
 #endif
 #if USE_KEYPAD
@@ -8975,7 +9025,7 @@ main(int argc, char *argv[]
         signal(SIGWINCH, old_sigwinch_handler ? old_sigwinch_handler : SIG_DFL);
 #endif
         my_attrset(0);
-#if USE_ATTR
+#if HAVE_CURS_SET
         curs_set(1); /* slcurses doesn't do this in endwin() */
 #endif
         my_clear();
