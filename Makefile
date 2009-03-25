@@ -1114,6 +1114,13 @@ else
 SFPREFIX =
 endif
 endif
+ifeq ($(subst default,undefined,$(origin SFPREFIX2)),undefined)
+ifneq (${SFUSER},)
+SFPREFIX2 = ${SFUSER}@
+else
+SFPREFIX2 =
+endif
+endif
 ifeq ($(subst default,undefined,$(origin MYMANWEBSITE)),undefined)
 MYMANWEBSITE = http://${SFGROUP}.sf.net/
 endif
@@ -1121,7 +1128,7 @@ ifeq ($(subst default,undefined,$(origin MYMANWEBSITERSYNC)),undefined)
 MYMANWEBSITERSYNC = ${SFPREFIX}web.sf.net:/home/groups/$(call shell,${SHELL} -c $(call q,${ECHOLINE_internal} $(call q,${SFGROUP}) | ${SED} ${SEDFLAGS} -e $(call q,1 s|^..|&/&|; 1 s|^.|&/&|)))
 endif
 ifeq ($(subst default,undefined,$(origin UPLOADSRSYNC)),undefined)
-UPLOADSRSYNC = ${SFPREFIX}frs.sf.net:uploads/
+UPLOADSRSYNC = ${SFPREFIX2}frs.sf.net:uploads/
 endif
 ifeq ($(subst default,undefined,$(origin UPLOADSWEBSITE)),undefined)
 UPLOADSWEBSITE = http://sf.net/project/admin/newrelease.php?package_id=288220&group_id=236995
