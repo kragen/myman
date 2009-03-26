@@ -13,9 +13,9 @@ $ cc -
  /define=(-
 OLDCURSES,-
 USE_IOCTL=0,-
-"cbreak()=",-
+"cbreak=crmode",-
 "idlok(s,f)=",-
-"mvprintw(y,x,s)=move(y,x),addstr(s)") -
+"mvprintw=mvaddstr") -
  /include_directory=([.inc],[.mygetopt]) -
  [.src]myman.c,[.mygetopt]mygetopt.c,[.src]utils.c
 $ write sys$output "$! linking"
