@@ -291,6 +291,18 @@
 #define HAVE_ATTRSET 0
 #endif
 
+#ifndef HAVE_SETATTR
+#ifdef VMS
+#ifdef _REVERSE
+#define HAVE_SETATTR 1
+#endif
+#endif
+#endif
+
+#ifndef HAVE_SETATTR
+#define HAVE_SETATTR 1
+#endif
+
 #ifndef USE_ATTR
 #define USE_ATTR 1
 #endif
@@ -303,10 +315,39 @@
 #ifdef __STANDOUT
 #define A_STANDOUT ((__STANDOUT) << 8)
 #else
+#ifdef _REVERSE
+#ifdef _BOLD
+#define A_STANDOUT ((_BOLD | _REVERSE) << 8)
+#else
+#define A_STANDOUT ((_REVERSE) << 8)
+#endif
+#else
 #define A_STANDOUT 0x100
 #endif
 #endif
 #endif
+#endif
+#ifndef A_BLINK
+#ifdef _BLINK
+#define A_BLINK ((_BLINK) << 8)
+#endif
+#endif
+#ifndef A_BOLD
+#ifdef _BOLD
+#define A_BOLD ((_BOLD) << 8)
+#endif
+#endif
+#ifndef A_REVERSE
+#ifdef _REVERSE
+#define A_REVERSE ((_REVERSE) << 8)
+#endif
+#ifndef A_UNDERLINE
+#ifdef _UNDERLINE
+#define A_UNDERLINE ((_UNDERLINE) << 8)
+#endif
+#endif
+#endif
+
 #endif
 
 #ifndef beep
@@ -3443,6 +3484,46 @@ my_attrset(chtype attrs)
 #if HAVE_ATTRSET
     attrset(attrs);
 #else
+#if HAVE_SETATTR
+#ifdef MY_A_STANDOUT
+#ifndef _STANDOUT
+#ifndef __STANDOUT
+    if (my_attrs == MY_A_STANDOUT) standend();
+#endif
+#endif
+#endif
+#ifdef MY_A_BLINK
+#ifdef _BLINK
+    if (attrs & MY_A_BLINK) setattr(_BLINK);
+    else clrattr(_BLINK);
+#endif
+#endif
+#ifdef MY_A_BOLD
+#ifdef _BOLD
+    if (attrs & MY_A_BOLD) setattr(_BOLD);
+    else clrattr(_BOLD);
+#endif
+#endif
+#ifdef MY_A_REVERSE
+#ifdef _REVERSE
+    if (attrs & MY_A_REVERSE) setattr(_REVERSE);
+    else clrattr(_REVERSE);
+#endif
+#endif
+#ifdef MY_A_UNDERLINE
+#ifdef _UNDERLINE
+    if (attrs & MY_A_UNDERLINE) setattr(_UNDERLINE);
+    else clrattr(_UNDERLINE);
+#endif
+#endif
+#ifdef MY_A_STANDOUT
+#ifndef _STANDOUT
+#ifndef __STANDOUT
+    if (attrs == MY_A_STANDOUT) standout();
+#endif
+#endif
+#endif
+#endif
     my_attrs = attrs;
 #endif
 #endif
