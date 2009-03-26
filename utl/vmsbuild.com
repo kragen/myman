@@ -10,8 +10,12 @@ $ delete utils.obj;*
 $ delete myman.exe;*
 $ write sys$output "$! compiling"
 $ cc -
- /define=(OLDCURSES,USE_IOCTL=0,"cbreak()=","idlok(s,f)=","mvprintw(y,x,s)=move(
-y,x),addstr(s)") -
+ /define=(-
+OLDCURSES,-
+USE_IOCTL=0,-
+"cbreak()=",-
+"idlok(s,f)=",-
+"mvprintw(y,x,s)=move(y,x),addstr(s)") -
  /include_directory=([.inc],[.mygetopt]) -
  [.src]myman.c,[.mygetopt]mygetopt.c,[.src]utils.c
 $ write sys$output "$! linking"
