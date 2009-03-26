@@ -22,4 +22,4 @@ $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! done"
 $ write sys$output "$! to run myman, first define a logical:"
-$ write sys$output "$ myman :== $''f$directory()'myman.exe"
+$ write sys$output "$ myman :== $''f$environment("default")'myman.exe"
