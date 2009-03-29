@@ -69,15 +69,15 @@ Basic premise of the MyMan video game:
    rival Pac, and they're out for (yellow) blood!"
 
 MyMan displays (A) on a text terminal or terminal emulator (using
-ncurses, slang, PDCurses, SysV curses, BSD curses, or the raw stdio
-terminal driver), (B) on an X Window System display (using PDCurses
-for X, a.k.a. XCurses), (C) on any terminal or display supported by
-PDCurses for SDL, libcaca, LibGGI/LibGII, Allegro, TWin, aalib,
-Carbon/Toolbox, newt, GTK+, FLTK, <disp.h>, or (D) in a Win32 command
-prompt window (using the raw Win32 terminal driver).  Since MyMan is
-fairly fast-moving, you'll need a reasonably fast computer and
-display.  It once ran acceptably fast on a 486-66 under Linux, and may
-still.
+ncurses, slang, PDCurses, SysV curses, BSD curses, old VMS curses, or
+the raw stdio terminal driver), (B) on an X Window System display
+(using PDCurses for X, a.k.a. XCurses), (C) on any terminal or display
+supported by PDCurses for SDL, libcaca, LibGGI/LibGII, Allegro, TWin,
+aalib, Carbon/Toolbox, newt, GTK+, FLTK, <disp.h>, or (D) in a Win32
+command prompt window (using the raw Win32 terminal driver).  Since
+MyMan is fairly fast-moving, you'll need a reasonably fast computer
+and display.  It once ran acceptably fast on a 486-66 under Linux, and
+may still.
 
 Installation
 ------------
@@ -705,7 +705,8 @@ The preceding options affect which curses features MyMan uses. MyMan
 was developed using ncurses, primarily under GNU/Linux. It should be
 fairly portable to other operating systems and other SysV-like curses
 implementations. A partial port to old BSD curses has been completed,
-and uses the FIONREAD ioctl to simulate nodelay().
+and uses the FIONREAD ioctl to simulate nodelay(). A port to old VMS
+curses has also been completed bypassing getch() and using raw QIO.
 
 Options with automatic default values will be enabled if your curses
 implementation seems to support them. Support is verified by checking
