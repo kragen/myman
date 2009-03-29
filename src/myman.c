@@ -4680,13 +4680,29 @@ my_addch(unsigned long b, chtype attrs)
                                 c = altcharset_cp437[rhs];
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-                                my_attrset(attrs | (c & ~A_CHARTEXT));
+                                if (c & ~A_CHARTEXT)
+                                {
+                                    my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                    my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                                }
 #endif
 #endif
                                 addch(c);
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-                                my_attrset(attrs);
+                                if (c & ~A_CHARTEXT)
+                                {
+                                    my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                    my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                                }
 #endif
 #endif
                                 getyx(stdscr, new_y, new_x);
