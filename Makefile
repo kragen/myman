@@ -3199,6 +3199,7 @@ utl/bitmap4.py \
 utl/cpmbuild.sh \
 utl/lsic.sh \
 utl/macbuild.txt \
+utl/vmsbuild.com \
 utl/myman.ct \
 utl/pacificc.sh \
 utl/turboc.sh \
