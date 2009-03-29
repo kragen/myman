@@ -306,7 +306,7 @@
 #endif
 
 /* work-arounds for BSD 4.4 curses as seen on OpenVMS */
-#if defined(_BSD44_CURSES)
+#if defined(_BSD44_CURSES) || defined(__BSD44_CURSES)
 
 #ifndef OLDCURSES
 #define OLDCURSES 1
