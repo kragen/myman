@@ -268,8 +268,58 @@
 #include <curses.h>
 #endif
 
+/* general workarounds for VMS */
+
+#ifdef VMS
+
+#ifndef USE_IOCTL
+#define USE_IOCTL 0
+#endif
+
+/* work-arounds for old VMS curses */
+#if defined(_VMS_CURSES) || defined(__VMS_CURSES)
+
+#ifndef OLDCURSES
+#define OLDCURSES 1
+#endif
+
+#ifdef _BOLD
+#ifndef HAVE_SETATTR
+#define HAVE_SETATTR 1
+#endif
+#endif
+
+#ifndef cbreak
+#define cbreak() crmode()
+#endif
+
+#ifndef idlok
+#define idlok(s,f)
+#endif
+
+#ifndef mvprintw
+#define mvprintw mvaddstr
+#endif
+
+#endif
+
+#endif
+
+/* work-arounds for BSD 4.4 curses as seen on OpenVMS */
+#if defined(_BSD44_CURSES)
+
+#ifndef OLDCURSES
+#define OLDCURSES 1
+#endif
+
+#endif
+
 /* work-arounds for old BSD curses */
 #ifdef OLDCURSES
+
+#ifndef DANGEROUS_ATTRS
+#define DANGEROUS_ATTRS 1
+#endif
 
 #ifndef intrflush
 #define intrflush(win, x)
@@ -280,27 +330,23 @@
 #endif
 
 #ifndef HAVE_NODELAY
+#ifndef nodelay
 #define HAVE_NODELAY 0
+#endif
 #endif
 
 #ifndef HAVE_CURS_SET
+#ifndef curs_set
 #define HAVE_CURS_SET 0
 #endif
+#endif
 
+#ifndef A_STANDOUT
 #ifndef HAVE_ATTRSET
+#ifndef attrset
 #define HAVE_ATTRSET 0
 #endif
-
-#ifndef HAVE_SETATTR
-#ifdef VMS
-#ifdef _REVERSE
-#define HAVE_SETATTR 1
 #endif
-#endif
-#endif
-
-#ifndef HAVE_SETATTR
-#define HAVE_SETATTR 1
 #endif
 
 #ifndef USE_ATTR
@@ -355,7 +401,9 @@
 #endif
 
 #ifndef HAVE_CHTYPE
+#ifndef chtype
 #define HAVE_CHTYPE 0
+#endif
 #endif
 
 #endif
@@ -399,6 +447,12 @@
  (*(b) = (p) ? (((SLtt_get_color_object ((p))) >> 8) & 0xff) : 0))
 #endif
 
+#endif
+
+/* HAVE_SETATTR: does our curses implementation include setattr()/clrattr()? */
+
+#ifndef HAVE_SETATTR
+#define HAVE_SETATTR 0
 #endif
 
 /* HAVE_NODELAY: does our curses implementation include nodelay()? */
@@ -755,32 +809,46 @@ static int locale_is_utf8(void)
 }
 #endif
 
+#ifndef MY_A_BOLD
 #ifdef A_BOLD
 #define MY_A_BOLD A_BOLD
 #endif
+#endif
 
+#ifndef MY_A_UNDERLINE
 #ifdef A_UNDERLINE
 #define MY_A_UNDERLINE A_UNDERLINE
 #endif
+#endif
 
+#ifndef MY_A_STANDOUT
 #ifdef A_STANDOUT
 #define MY_A_STANDOUT A_STANDOUT
 #endif
+#endif
 
+#ifndef MY_A_REVERSE
 #ifdef A_REVERSE
 #define MY_A_REVERSE A_REVERSE
 #endif
+#endif
 
+#ifndef MY_A_DIM
 #ifdef A_DIM
 #define MY_A_DIM A_DIM
 #endif
+#endif
 
+#ifndef MY_A_ATTRIBUTES
 #ifdef A_ATTRIBUTES
 #define MY_A_ATTRIBUTES A_ATTRIBUTES
 #endif
+#endif
 
+#ifndef MY_A_CHARTEXT
 #ifdef A_CHARTEXT
 #define MY_A_CHARTEXT A_CHARTEXT
+#endif
 #endif
 
 #ifndef MY_A_REVERSE
@@ -807,6 +875,10 @@ static int locale_is_utf8(void)
 #else
 #define USE_ATTR 0
 #endif
+#endif
+
+#ifndef DANGEROUS_ATTRS
+#define DANGEROUS_ATTRS 0
 #endif
 
 #ifndef HAVE_CURS_SET
@@ -1688,12 +1760,6 @@ static const char SPRITEFILE_str[] = SPRITEFILE;
 #if ! HAVE_CHTYPE
 #ifndef chtype
 #define chtype int
-#endif
-#endif
-
-#if USE_ATTR || USE_COLOR
-#if ! HAVE_ATTRSET
-static chtype my_attrs = 0;
 #endif
 #endif
 
@@ -3469,6 +3535,58 @@ my_move(int y, int x)
     while(0);
 }
 
+#if USE_ATTR || USE_COLOR
+
+static int
+my_real_attrset(chtype attrs)
+{
+#if HAVE_ATTRSET
+    attrset(attrs);
+#else
+    {
+#ifdef MY_A_STANDOUT
+        if (attrs & MY_A_STANDOUT) standout();
+        else standend();
+#endif
+#if HAVE_SETATTR
+        {
+#ifdef MY_A_BLINK
+#ifdef _BLINK
+            if (attrs & MY_A_BLINK) setattr(_BLINK);
+            else clrattr(_BLINK);
+#endif
+#endif
+#ifdef MY_A_BOLD
+#ifdef _BOLD
+            if (attrs & MY_A_BOLD) setattr(_BOLD);
+            else clrattr(_BOLD);
+#endif
+#endif
+#ifdef MY_A_REVERSE
+#ifdef _REVERSE
+            if (attrs & MY_A_REVERSE) setattr(_REVERSE);
+            else clrattr(_REVERSE);
+#endif
+#endif
+#ifdef MY_A_UNDERLINE
+#ifdef _UNDERLINE
+            if (attrs & MY_A_UNDERLINE) setattr(_UNDERLINE);
+            else clrattr(_UNDERLINE);
+#endif
+#endif
+        }
+#endif
+    }
+#endif
+    return 1;
+}
+
+#if DANGEROUS_ATTRS
+static chtype my_attrs = 0;
+#endif
+
+#endif /* USE_ATTR || USE_COLOR */
+
 static int
 my_attrset(chtype attrs)
 {
@@ -3481,52 +3599,12 @@ my_attrset(chtype attrs)
       0
 #endif
       : 0;
-#if HAVE_ATTRSET
-    attrset(attrs);
-#else
-#if HAVE_SETATTR
-#ifdef MY_A_STANDOUT
-#ifndef _STANDOUT
-#ifndef __STANDOUT
-    if (my_attrs == MY_A_STANDOUT) standend();
-#endif
-#endif
-#endif
-#ifdef MY_A_BLINK
-#ifdef _BLINK
-    if (attrs & MY_A_BLINK) setattr(_BLINK);
-    else clrattr(_BLINK);
-#endif
-#endif
-#ifdef MY_A_BOLD
-#ifdef _BOLD
-    if (attrs & MY_A_BOLD) setattr(_BOLD);
-    else clrattr(_BOLD);
-#endif
-#endif
-#ifdef MY_A_REVERSE
-#ifdef _REVERSE
-    if (attrs & MY_A_REVERSE) setattr(_REVERSE);
-    else clrattr(_REVERSE);
-#endif
-#endif
-#ifdef MY_A_UNDERLINE
-#ifdef _UNDERLINE
-    if (attrs & MY_A_UNDERLINE) setattr(_UNDERLINE);
-    else clrattr(_UNDERLINE);
-#endif
-#endif
-#ifdef MY_A_STANDOUT
-#ifndef _STANDOUT
-#ifndef __STANDOUT
-    if (attrs == MY_A_STANDOUT) standout();
-#endif
-#endif
-#endif
-#endif
+#if DANGEROUS_ATTRS
     my_attrs = attrs;
+#else
+    my_real_attrset(attrs);
 #endif
-#endif
+#endif /* USE_ATTR || USE_COLOR */
     return 1;
 }
 
@@ -4323,24 +4401,22 @@ my_addch(unsigned long b, chtype attrs)
         }
     }
 #if USE_ATTR || USE_COLOR
-#if ! HAVE_ATTRSET
-#ifdef MY_A_STANDOUT
-    if (my_attrs & MY_A_STANDOUT)
+#if DANGEROUS_ATTRS
+    if (my_attrs)
     {
         int cur_x, cur_y;
 
         getyx(stdscr, cur_y, cur_x);
         /* classic BSD curses has an annoying bug which causes it to
-         * hang if standout is used in the last writable screen
+         * hang if attributes are used in the last writable screen
          * cell */
-        if ((cur_x < (COLS - 2 * (cur_y == (LINES - 1)))))
+        if ((cur_x < (COLS - (CJK_MODE ? 1 : 0) - 2 * (cur_y == (LINES - 1)))))
         {
-            standout();
+            my_real_attrset(my_attrs);
         }
     }
 #endif
-#endif
-#endif
+#endif /* USE_ATTR || USE_COLOR */
     if (use_acs && use_raw && ! use_raw_ucs)
     {
         char buf[2];
@@ -4656,12 +4732,10 @@ my_addch(unsigned long b, chtype attrs)
     }
   my_addch_done:
 #if USE_ATTR || USE_COLOR
-#if ! HAVE_ATTRSET
-#ifdef MY_A_STANDOUT
-    if (my_attrs & MY_A_STANDOUT) standend();
+#if DANGEROUS_ATTRS
+    if (my_attrs) my_real_attrset(0);
 #endif
-#endif
-#endif
+#endif /* USE_ATTR || USE_COLOR */
     return ret;
 }
 
