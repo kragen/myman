@@ -406,6 +406,22 @@
 #endif
 #endif
 
+#ifdef A_STANDOUT
+#if A_STANDOUT == 0x80
+#ifndef A_CHARTEXT
+#define A_CHARTEXT 0x7f
+#endif
+#endif
+#endif
+
+#ifndef A_CHARTEXT
+#define A_CHARTEXT 0xff
+#endif
+
+#ifndef USE_A_CHARTEXT
+#define USE_A_CHARTEXT 1
+#endif
+
 #endif
 
 /* work-arounds for slcurses */
@@ -1932,9 +1948,13 @@ init_trans(int use_bullet_for_dots)
     if (! isprint(8))
     {
 #if ! USE_WIDEC_SUPPORT
+#if ! (MY_A_REVERSE & 0xff)
         altcharset_cp437[8] |= MY_A_REVERSE;
 #endif
+#endif
+#if ! (MY_A_REVERSE & 0x7f)
         ascii_cp437[8] |= MY_A_REVERSE;
+#endif
     }
 #endif
 #endif
@@ -2320,9 +2340,13 @@ init_trans(int use_bullet_for_dots)
 #if USE_ATTR
 #ifdef MY_A_REVERSE
 #if ! USE_WIDEC_SUPPORT
+#if ! (MY_A_REVERSE & 0xff)
     altcharset_cp437[8] |= MY_A_REVERSE;
 #endif
+#endif
+#if ! (MY_A_REVERSE & 0x7f)
     ascii_cp437[8] |= MY_A_REVERSE;
+#endif
 #endif
 #endif
     altcharset_cp437[25] =
@@ -3540,6 +3564,21 @@ my_move(int y, int x)
 static int
 my_real_attrset(chtype attrs)
 {
+#if DANGEROUS_ATTRS
+    if (attrs)
+    {
+        int cur_x, cur_y;
+
+        getyx(stdscr, cur_y, cur_x);
+        /* classic BSD curses has an annoying bug which causes it to
+         * hang if attributes are used in the last writable screen
+         * cell */
+        if ((cur_x >= (COLS - (CJK_MODE ? 1 : 0) - 2 * (cur_y == (LINES - 1)))))
+        {
+            return 1;
+        }
+    }
+#endif
 #if HAVE_ATTRSET
     attrset(attrs);
 #else
@@ -4402,19 +4441,7 @@ my_addch(unsigned long b, chtype attrs)
     }
 #if USE_ATTR || USE_COLOR
 #if DANGEROUS_ATTRS
-    if (my_attrs)
-    {
-        int cur_x, cur_y;
-
-        getyx(stdscr, cur_y, cur_x);
-        /* classic BSD curses has an annoying bug which causes it to
-         * hang if attributes are used in the last writable screen
-         * cell */
-        if ((cur_x < (COLS - (CJK_MODE ? 1 : 0) - 2 * (cur_y == (LINES - 1)))))
-        {
-            my_real_attrset(my_attrs);
-        }
-    }
+    my_real_attrset(my_attrs);
 #endif
 #endif /* USE_ATTR || USE_COLOR */
     if (use_acs && use_raw && ! use_raw_ucs)
@@ -4678,13 +4705,29 @@ my_addch(unsigned long b, chtype attrs)
             c = altcharset_cp437[b];
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-            my_attrset(attrs | (c & ~A_CHARTEXT));
+            if (c & ~A_CHARTEXT)
+            {
+                my_attrset(attrs | (c & ~A_CHARTEXT));
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+            }
 #endif
 #endif
             ret = addch(c);
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-            my_attrset(attrs);
+            if (c & ~A_CHARTEXT)
+            {
+                my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+            }
 #endif
 #endif
             getyx(stdscr, new_y, new_x);
@@ -4700,13 +4743,29 @@ my_addch(unsigned long b, chtype attrs)
                         c = altcharset_cp437[rhs];
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-                        my_attrset(attrs | (c & ~A_CHARTEXT));
+                        if (c & ~A_CHARTEXT)
+                        {
+                            my_attrset(attrs | (c & ~A_CHARTEXT));
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                            my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                        }
 #endif
 #endif
                         addch(c);
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
-                        my_attrset(attrs);
+                        if (c & ~A_CHARTEXT)
+                        {
+                            my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                            my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                        }
 #endif
 #endif
                     }
