@@ -268,14 +268,6 @@
 #include <curses.h>
 #endif
 
-/* general workarounds for VMS */
-
-#ifdef VMS
-
-#ifndef USE_IOCTL
-#define USE_IOCTL 0
-#endif
-
 /* work-arounds for old VMS curses */
 #if defined(_VMS_CURSES) || defined(__VMS_CURSES)
 
@@ -299,8 +291,6 @@
 
 #ifndef mvprintw
 #define mvprintw mvaddstr
-#endif
-
 #endif
 
 #endif
@@ -496,7 +486,9 @@
 #endif
 #endif
 #ifdef TIOCGWINSZ
+#ifndef VMS
 #include <termios.h>
+#endif
 #endif
 #endif
 
