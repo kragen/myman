@@ -6,6 +6,9 @@ $!
 $! If you would like to build with the "BSD 4.4" curses:
 $! $ @[.utl]vmsbuild "/define=_BSD44_CURSES"
 $!
+$! Once it's built, easy launch using the undocumented mcr:
+$! $ mcr []myman
+$!
 $ write sys$output "$! cleaning"
 $ delete myman.obj;*
 $ delete mygetopt.obj;*
@@ -24,4 +27,4 @@ $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! done"
 $ write sys$output "$! to run myman, first define a logical:"
 $ myman :== "$''f$environment("default")'myman.exe"
-$ write sys$output "myman :== ''myman'"
+$ write sys$output "$ myman :== ''myman'"
