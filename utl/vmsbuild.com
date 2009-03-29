@@ -6,7 +6,7 @@ $!
 $! If you would like to build with the "BSD 4.4" curses:
 $! $ @[.utl]vmsbuild "/define=_BSD44_CURSES"
 $!
-$! Once it's built, launch easily using the undocumented mcr:
+$! Once it's built, launch easily using (undocumented) mcr:
 $! $ mcr []myman
 $!
 $ write sys$output "$! cleaning"
