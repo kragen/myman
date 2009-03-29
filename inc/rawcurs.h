@@ -651,7 +651,9 @@ rawcurses_usleep(unsigned long usecs)
 #endif
 
 #if USE_TERMIOS
+#ifndef VMS
 #include <termios.h>
+#endif
 #endif
 
 #if USE_SGTTY
