@@ -3,6 +3,9 @@ $!
 $! Run it from the parent directory like this:
 $! $ @[.utl]vmsbuild
 $!
+$! If you would like to build with the "BSD 4.4" curses:
+$! $ @[.utl]vmsbuild "/define=_BSD44_CURSES"
+$!
 $ write sys$output "$! cleaning"
 $ delete myman.obj;*
 $ delete mygetopt.obj;*
@@ -10,14 +13,12 @@ $ delete utils.obj;*
 $ delete myman.exe;*
 $ write sys$output "$! compiling"
 $ cc -
- /define=(-
-OLDCURSES,-
-USE_IOCTL=0,-
-"cbreak=crmode",-
-"idlok(s,f)=",-
-"mvprintw=mvaddstr") -
- /include_directory=([.inc],[.mygetopt]) -
- [.src]myman.c,[.mygetopt]mygetopt.c,[.src]utils.c
+/include_directory=([.inc],[.mygetopt])-
+ 'p1' 'p2' 'p3' 'p4' 'p5' 'p6' 'p7' 'p8' 'p9'-
+ -
+[.src]myman.c,-
+[.mygetopt]mygetopt.c,-
+[.src]utils.c
 $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! done"
