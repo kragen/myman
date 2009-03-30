@@ -381,13 +381,13 @@ do
           echoline "--with-win-icon    "include program icon and version information for Win32
           echoline
           echoline Output drivers \(select at most one\):
-          echoline "--with-curses      "use system curses library \(new SysV-style or ncurses\)
-          echoline "--with-bsdcurses   "use system curses library \(classic BSD style\)
+          echoline "--with-curses      "use system curses library \(SysV-curses or ncurses\)
+          echoline "--with-bsdcurses   "use system curses library \(classic BSD curses\)
           echoline "--with-libcaca     "use libcaca
           echoline "--with-libcaca0    "use libcaca with \<caca0.h\>
           echoline "--with-aalib       "use AA-Lib
-          echoline "--with-raw         "use *nix TTY/CONIO/TOS/AROS/Win32 Console API \(Unicode\)
-          echoline "--with-raw-cp437   "use *nix TTY/CONIO/TOS/AROS/Win32 Console API \(CP-437\)
+          echoline "--with-raw         "use *nix TTY/CONIO/TOS/AROS/VMS/Win32 Console API \(Unicode\)
+          echoline "--with-raw-cp437   "use *nix TTY/CONIO/TOS/AROS/VMS/Win32 Console API \(CP-437\)
           echoline "--with-allegro     "use Allegro
           echoline "--with-twin        "use Twin
           echoline "--with-ggi         "use LibGGI/LibGII
