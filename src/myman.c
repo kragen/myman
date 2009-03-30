@@ -317,7 +317,7 @@ vmscurses_getch(void)
     if (vmscurses_tty_stdin_assigned != 1)
     {
         vmscurses_tty_stdin_assigned = sys$assign(&tty_stdin_dev, &vmscurses_tty_stdin_channel, 0, 0);
-        if (vmscurses_tty_stdin_channel == 1)
+        if (vmscurses_tty_stdin_assigned == 1)
         {
             atexit(vmscurses_getch_free_channel);
         }
