@@ -61,6 +61,10 @@
 #endif /* ! defined(TARGET_API_MAC_CARBON) */
 #endif /* ! defined(macintosh) */
 
+#ifdef VMS
+#include <unixlib.h>
+#endif /* defined(VMS) */
+
 /* MyMan utilities; also defines cruft like __MSDOS__ under some circumstances */
 #ifndef MYMAN_UTILS_H_INCLUDED
 #include "utils.h"
@@ -1631,6 +1635,14 @@ static FILE *fopen_datafile(const char *path, const char *mode)
 #endif
     if (progname && *progname && (! ret))
     {
+#ifdef VMS
+        const char *progname_posix = NULL;
+
+        progname_posix = decc$translate_vms(progname);
+        if (! progname_posix) progname_posix = progname;
+#undef progname
+#define progname progname_posix
+#endif /* defined(VMS) */
         buf = (char *) malloc(strlen(progname) + 1 + strlen(path) + 1);
         if (buf)
         {
@@ -1663,6 +1675,9 @@ static FILE *fopen_datafile(const char *path, const char *mode)
                 if (! ret)
                 {
                     strcpy(buf, progname);
+#ifdef VMS
+#undef progname
+#endif /* defined(VMS) */
                     sep = strstr(buf, ".app/");
                     if (sep)
                     {
