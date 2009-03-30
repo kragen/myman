@@ -27,10 +27,13 @@ $!
 $! Run it from the parent directory like this:
 $! $ @[.utl]vmsbuild
 $!
-$! If you would like to build with the "BSD 4.4" curses:
+$! If you would like to build with "BSD 4.4" curses:
 $! $ @[.utl]vmsbuild "/define=_BSD44_CURSES"
 $!
-$! Once it's built, launch easily using (undocumented) mcr:
+$! If you would like to build with the built-in curses replacement:
+$! $ @[.utl]vmsbuild "/define=RAWCURSES"
+$!
+$! Once it's built, you may launch it using the undocumented mcr:
 $! $ mcr []myman
 $!
 $ write sys$output "$! cleaning"
