@@ -2141,7 +2141,7 @@ ifeq (yes,${with_bsdcurses})
 
 with_curses = yes
 
-CURSOPTS += -DOLDCURSES
+CURSOPTS += -DOLDCURSES -D_BSD44_CURSES
 
 ifeq ($(subst default,undefined,$(origin LIBTERMCAP)),undefined)
 LIBTERMCAP = -ltermcap
