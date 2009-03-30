@@ -316,7 +316,7 @@ the underlying display libraries:
                                             Braille pseudo-bitmap characters
                                             on a Unicode display
 
- Win32 Console/CONIO/TOS/AROS/*nix TTY
+ Win32 Console/CONIO/TOS/AROS/VMS/*nix TTY
                         RAWCURSES_RAW       Nonzero value causes raw UTF-8
                                             character output (Unicode) or
                                             CP-437 byte output (CP-437)
