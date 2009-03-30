@@ -1,3 +1,219 @@
+2009-03-30  bsittler  <bsittler@>
+
+	* src/main.c: old BSD curses (-DOLDCURSES -D_BSD44_CURSES) is now
+	supported, using FIONREAD when nodelay is not defined
+
+	* src/utils.c: argv[0] is converted to POSIX format on VMS when
+	looking for datafiles
+
+	* src/main.c: old VMS curses is now supported using QIO instead of
+	getch()
+
+	* inc/rawcurses.h: nonblocking I/O is now supported on VMS using
+	QIO
+
+	* utl/vmsbuild.com: there's now a build script for VMS
+
+2008-08-16  bsittler  <bsittler@>
+
+	* website/htdocs/index.html: website is now in the source package
+
+	* src/myman.man: new URL: http://myman.sourceforge.net/
+
+2008-08-15  bsittler  <bsittler@>
+
+	* utl/lsic.sh: wrapper to run utl/lsic.bat inside DOSBox
+
+	* utl/lsic.bat: compile using LSIC-86 (does not work yet,
+	compiler runs out of memory)
+
+2008-08-12  bsittler  <bsittler@>
+
+	* Makefile (config.h): moved some of the lengthier definitions to
+	an automatically-generated config.h file so that compiler command
+	lines do not need unreasonable length or special quoting
+
+2008-08-11  bsittler@macosx  <bsittler@>
+
+	* configure (dump_command): removed --help reference to
+	--with-sdl, since pure SDL builds do not work yet; use
+	--with-pdcursessdl instead
+
+2008-08-08  bsittler  <bsittler@>
+
+	* inc/rawcurs.h: preliminary support for compiling with dmc (the
+	Digital Mars C/C++ compiler); so far this works for Win32 but not
+	for 16-bit DOS (although it does get further than the other
+	compilers...); options used:
+	    configure --with-raw \
+	              objdir=. \
+	              CC=dmc \
+	              CFLAGS=-DWIN32\ -DUSE_CONIO_INPUT=1\ -o+space\ -NS\ -mn\ -3 \
+	              EXTRAHOSTLIBS=advapi32.lib
+
+	* utl/cpmbuild.sh: build script for CP/M (does not work yet,
+	compiler runs out of memory)
+
+2008-08-07  bsittler  <bsittler@>
+
+	* src/utils.c: moved a lot of stuff to a separate compilation unit
+	to make small compilers happy (not done yet)
+
+	* utl/turboc.sh: wrapper to run utl/turboc.bat in DOSBox
+
+	* utl/turboc.bat: build script for Turbo C (does not work yet,
+	compiler runs out of memory)
+
+	* utl/pacificc.sh: wrapper to run utl/pacificc.bat in DOSBox
+
+	* utl/pacificc.bat: build script for Pacific C (does not work yet,
+	compiler runs out of memory)
+
+2008-08-05  bsittler  <bsittler@>
+
+	* src/myman.c (fopen_datafile): add support for DOS
+
+	* inc/rawcurs.h: add support for Borland-style CONIO; so far
+	tested only with the DJGPP implementation, CONIO 2.0 under MinGW, and
+	Ronald S. Burkey's "TurboC" porting package
+
+2008-07-28  bsittler  <bsittler@>
+
+	* inc/fltkcurs.h: preliminary FLTK driver; there are still no
+	attributes, and major color problems persist.
+
+2008-07-23  bsittler  <bsittler@>
+
+	* AUTHORS: added a preliminary list of authors
+
+	* THANKS: added an initial (and very incomplete) list of
+	thank-yous
+
+	* inc/gtkcurs.h: added a preliminary GTK+ driver
+
+	* inc/newtcurs.h: added a very skeletal driver using "newt" (which
+	in turn uses S/Lang); this is useful mainly as a starting point
+	for other drivers, since "newt" is not well suited to a colorful
+	video game
+
+2008-07-18  bsittler  <bsittler@>
+
+	* utl/mymancmd.in: added a shell script for launching MyMan using
+	X11 or a terminal window; the generated script is called
+	'myman.command' for Mac OS X compatibility
+
+	* utl/txt2asc.sh: added a shell script for semi-automatic
+	conversion from our modified CP437 subset to ASCII; the output
+	still generally needs manual cleanup.
+
+	* src/myman.c (pager): factored out the pager used for in-game
+	help and the splash-screen legal notice; this should be rewritten
+	as event handlers
+
+	* TODO (TODO): added a wish list
+
+	* src/myman.c (gamecycle): began factoring out game logic and
+	redraw code into a separate function; these should be further
+	disentangled and moved to separate files; these should also be
+	rewritten as event handlers so that we could eventually support
+	e.g. Palm OS
+
+	* VERSION: 0.7.0
+
+	* COPYRIGHT: moved copyright string to a file
+
+	* Makefile: switched version numbering schemes to a purely-numeric
+	one compatible with that used by Mac OS X; massively reorganized
+	file structure and renamed most of the data files; made the x*man
+	scripts and myman.ct optional and not built or installed by
+	default; added program icon on Win32 (--with-win-icon) and Mac OS
+	X (--with-mac-icon)
+
+	* myman.c: a single executable with a single instance of the game
+	engine supports all variants and sizes; metadata (ABOUT, FIXME and
+	NOTE) are stored as parameters on the first line of a data file.
+
+	* inc/maccurs.h: added a Carbon/Toolbox driver
+	(--with-mac/--with-mac-unicode) which works both for Mac OS X/gcc
+	builds and for Mac OS 9/MPW builds (for which see macbuild.txt)
+
+2008-05-08  bsittler  <bsittler@>
+
+	* rawcurs.h: minor tweaks to work under (Mac-)MiNT and EmuTOS,
+	including support for various VT52-like terminal emulations with
+	color codes
+
+2008-01-26  bsittler  <bsittler@>
+
+	* VERSION: 0.7pre2
+
+	* myman.c: you can use any maze with any variant, but other stuff
+	might end up in the wrong place
+
+2007-10-16  bsittler  <bsittler@>
+
+	* optcurs.h: added a basic redraw optimizer driver
+
+2007-10-13  bsittler  <bsittler@>
+
+	* rawcurs.h: added a Win32 Console/*nix TTY driver
+
+2007-07-02  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* twcurses.h: added a Twin driver
+
+2007-06-30  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* myman.c: added an aalib driver
+
+2007-06-28  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* Makefile (dist_data_files): added new size 'bitmap2'
+
+	* myman.c (init_trans): added ASCII mappings for upper and lower
+	half block
+
+2007-06-22  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* myman.c: experimental libcaca driver
+
+2007-01-11  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* asc2txt.py: added an ASCII to Unicode maze converter
+
+2007-01-05  Benjamin C. Wiley Sittler  <bsittler@>
+
+	* Makefile: added variants kasper, mspp and kpacman
+
+2007-01-03  Benjamin C. W. Sittler  <bsittler@>
+
+	* INSTALL (NOTE): updated pointers to infrastructure software
+
+	* configure: support --program-prefix, --program-suffix and
+	--program-transform-name
+
+	* myman.c (fputc_utf8_cp437): generate UTF-8 or CP437 plaintext
+	screenshots, too
+
+	* myman.c (ignore_bom_utf8): ignore leading U+FEFF in data files
+
+	* Makefile ($(MYMAN).txt): generate UTF-8 for myman.txt
+
+	* myman.c (fgetc_cp437_utf8): changed data file encoding to UTF-8;
+	only the CP437 subset of Unicode is supported, with other
+	characters becoming spaces (silently!)
+
+2007-01-01  Benjamin C. W. Sittler  <bsittler@>
+
+	* myman.c (main): do not skip the first maze
+
+2006-12-31  Benjamin C. W. Sittler  <bsittler@>
+
+	* myman.c (main): calculate total dot count rather than hardcoding
+	it
+
+	* Makefile: fixed broken "tiny" variant
+
 2006-12-09  Benjamin C. W. Sittler  <bsittler@>
 
 	* configure: added support for --enable-monolithic
