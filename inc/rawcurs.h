@@ -367,6 +367,12 @@
 #endif /* defined(__MSDOS__) || defined(__atarist__) || defined(__AROS__) */
 
 #ifndef USE_TERMIOS
+#ifdef VMS
+#define USE_TERMIOS 0
+#endif
+#endif
+
+#ifndef USE_TERMIOS
 #ifdef macintosh
 #define USE_TERMIOS 0
 #else
@@ -670,10 +676,29 @@ rawcurses_usleep(unsigned long usecs)
 #define USE_AROSCONSOLE 0
 #endif
 
+#ifdef VMS
+#ifndef USE_VMSCONSOLE
+#define USE_VMSCONSOLE 1
+#endif
+#endif
+
+#ifndef USE_VMSCONSOLE
+#define USE_VMSCONSOLE 0
+#endif
+
 #if USE_AROSCONSOLE
 /* Workarounds for AROS */
 
 #include <proto/dos.h>
+
+#endif
+
+#if USE_VMSCONSOLE
+/* Workarounds for VMS and OpenVMS */
+
+#include <descrip.h>
+#include <iodef.h>
+#include <starlet.h>
 
 #endif
 
@@ -1176,6 +1201,10 @@ RAWCURSES_GLOBAL(int rawcurses_fixedpal, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_ccc, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_ccc_linux, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
+#if USE_VMSCONSOLE
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_tty_channel, = 0);
+#endif
 #if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
 #endif
@@ -2106,6 +2135,17 @@ static const char *RAWCURSES_NOCIVIS =
     "xnuppc-m-f2" "\0"
     "xnuppc-m-f2-acs" "\0"
     "\0\0";
+
+#if USE_VMSCONSOLE
+static void rawcurses_stdio_vmscon_free_tty_channel(void)
+{
+    if (rawcurses_stdio_vmscon)
+    {
+        (void) sys$dassgn(rawcurses_stdio_vmscon_tty_channel);
+        rawcurses_stdio_vmscon = 0;
+    }
+}
+#endif /* USE_VMSCONSOLE */
 
 /* The rawcurses_fput_* family return >0 on success, <=0 otherwise;
  * they are somewhat analogous to terminfo but much less flexible. */
@@ -5035,6 +5075,19 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
     }
 #endif /* USE_AROSCONSOLE */
+#if USE_VMSCONSOLE
+    {
+        $DESCRIPTOR(tty_stdin_dev, "tt");
+        if (rawcurses_stdio_vmscon != 1)
+        {
+            rawcurses_stdio_vmscon = sys$assign(&tty_stdin_dev, &rawcurses_stdio_vmscon_tty_channel, 0, 0) == 1;
+            if (rawcurses_stdio_vmscon)
+            {
+                atexit(rawcurses_stdio_vmscon_free_tty_channel);
+            }
+        }
+    }
+#endif /* USE_VMSCONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
 #ifdef TIOCGWINSZ
@@ -6017,7 +6070,7 @@ static int rawcurses_getch(void)
                 }
             }
         }
-#else
+#else /* ! USE_WINCONSOLE */
         {
             unsigned char buf[2];
             int avail;
@@ -6205,6 +6258,44 @@ static int rawcurses_getch(void)
             }
             else
 #endif /* USE_TOSCONSOLE */
+#if USE_VMSCONSOLE
+            if (rawcurses_stdio_vmscon)
+            {
+                struct {
+                    unsigned short iosb_status;
+                    unsigned short iosb_bytes;
+                    void *iosb_buffer;
+                } iosb;
+                struct {
+                    unsigned short iotrm__unused_zeros;
+                    unsigned short iotrm_masksize;
+                    union {
+                        unsigned long iotrm_mask_bits;
+                        void *iotrm_mask_ptr;
+                    } iotrm_mask;
+                } iotrm;
+                char retchr;
+
+                iosb.iosb_status = 0;
+                iosb.iosb_bytes = 0;
+                iosb.iosb_buffer = NULL;
+                iotrm.iotrm__unused_zeros = 0;
+                iotrm.iotrm_masksize = 0;
+                iotrm.iotrm_mask.iotrm_mask_bits = 0;
+                retchr = 0;
+                if (1 &
+                    sys$qiow(0,
+                             rawcurses_stdio_vmscon_tty_channel,
+                             IO$_READVBLK | IO$M_NOECHO | IO$M_TIMED | IO$M_NOWAIT | IO$M_NOFILTR,
+                             &iosb, 0, 0,
+                             &retchr, 1, 0, &iotrm, 0, 0))
+                {
+                    if (! iosb.iosb_bytes) ret = ERR;
+                    else ret = (int) (unsigned char) retchr;
+                }
+            }
+            else
+#endif /* USE_VMSCONSOLE */
             {
 #ifdef FIONREAD
                 if (! avail) ioctl(fileno(stdin), FIONREAD, &avail);
@@ -6215,7 +6306,7 @@ static int rawcurses_getch(void)
                 }
             }
         }
-#endif
+#endif /* ! USE_WINCONSOLE */
         soft_ERR = (ret == ERR) ? 0 : 1;
         if (rawcurses_stdio && rawcurses_stdio_utf8 && (ret != ERR))
         {
