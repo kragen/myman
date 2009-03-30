@@ -24,6 +24,12 @@ $ cc -
 $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! done"
-$ write sys$output "$! to run myman, first define a foreign symbol:"
+$ write sys$output "$!"
+$ write sys$output "$! Example using the undocumented mcr command to run myman"
+$ write sys$output "$! with smaller tiles and sprites and a non-default maze:"
+$ write sys$output "$!"
+$ write sys$output "$! $ mcr []myman -s spr/spr2h -t chr/khr2h -m lvl/kpacman"
+$ write sys$output "$!"
+$ write sys$output "$! To run myman without ""mcr []"", define a symbol:"
 $ myman :== "$''f$environment("default")'myman.exe"
 $ write sys$output "$ myman :== ''myman'"
