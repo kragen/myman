@@ -1,4 +1,28 @@
-$! MyMan build script for OpenVMS
+$! VMSBUILD.COM
+$! -*- dcl -*- coding: iso-8859-1 -*-
+$! vmsbuild.com - OpenVMS DCL build script for the MyMan video game
+$! Copyright 2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+$!
+$! Permission is hereby granted, free of charge, to any person
+$! obtaining a copy of this software and associated documentation
+$! files (the "Software"), to deal in the Software without
+$! restriction, including without limitation the rights to use, copy,
+$! modify, merge, publish, distribute, sublicense, and/or sell copies
+$! of the Software, and to permit persons to whom the Software is
+$! furnished to do so, subject to the following conditions:
+$!
+$! The above copyright notice and this permission notice shall be
+$! included in all copies or substantial portions of the Software.
+$!
+$! THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+$! EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+$! MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+$! NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+$! HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+$! WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+$! OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+$! DEALINGS IN THE SOFTWARE.
+$!
 $!
 $! Run it from the parent directory like this:
 $! $ @[.utl]vmsbuild
@@ -10,10 +34,10 @@ $! Once it's built, launch easily using (undocumented) mcr:
 $! $ mcr []myman
 $!
 $ write sys$output "$! cleaning"
-$ delete myman.obj;*
-$ delete mygetopt.obj;*
-$ delete utils.obj;*
-$ delete myman.exe;*
+$ if f$search("myman.obj") .nes. "" then delete myman.obj;*
+$ if f$search("mygetopt.obj") .nes. "" then delete mygetopt.obj;*
+$ if f$search("utils.obj") .nes. "" then delete utils.obj;*
+$ if f$search("myman.exe") .nes. "" then delete myman.exe;*
 $ write sys$output "$! compiling"
 $ cc -
 /include_directory=([.inc],[.mygetopt])-
@@ -30,6 +54,13 @@ $ write sys$output "$! with smaller tiles and sprites and a non-default maze:"
 $ write sys$output "$!"
 $ write sys$output "$! $ mcr []myman -s spr/spr2h -t chr/khr2h -m lvl/kpacman"
 $ write sys$output "$!"
-$ write sys$output "$! To run myman without ""mcr []"", define a symbol:"
+$ write sys$output "$! Once you define a symbol or extend DCL$PATH to include"
+$ write sys$output "$!    ''f$environment("default")'"
+$ write sys$output "$! you can omit the ""mcr []"" prefix:"
+$ write sys$output "$!"
+$ write sys$output "$! $ myman -s spr/spr2h -t chr/khr2h -m lvl/kpacman"
+$ write sys$output "$!"
+$ write sys$output "$! To define the symbol:"
+$ write sys$output "$!"
 $ myman :== "$''f$environment("default")'myman.exe"
 $ write sys$output "$ myman :== ''myman'"
