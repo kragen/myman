@@ -24,6 +24,6 @@ $ cc -
 $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! done"
-$ write sys$output "$! to run myman, first define a logical:"
+$ write sys$output "$! to run myman, first define a foreign symbol:"
 $ myman :== "$''f$environment("default")'myman.exe"
 $ write sys$output "$ myman :== ''myman'"
