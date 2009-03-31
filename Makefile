@@ -4046,8 +4046,10 @@ push-cvsdist: cvsdump cvsdist
 	@${ECHOLINE} $(call q,)
 	@${ECHOLINE} $(call q,Now create a new file release called myman-cvs-${isodate} here:)
 	@${ECHOLINE} $(call q,    ${UPLOADSWEBSITE})
-	@${ECHOLINE} $(call q,And add the files ${CVSDUMP}-${isodate}${tgz} and ${CVSDIST}-${isodate}${tgz} ${char_left_parenthesis}and -- if it exists -- ${CVSDIST}-${isodate}.zip${char_right_parenthesis} to it.)
-	@${ECHOLINE} $(call q,Set the type of each file to platform-independent source .gz or .zip)
+	@${ECHOLINE} $(call q,And add the files ${CVSDUMP}-${isodate}${tgz} and ${CVSDIST}-${isodate}${tgz} to it.)
+	@${ECHOLINE} $(call q,Set the type of each file to platform-independent source .gz)
+	@test -f $(call q,${CVSDIST})-${isodate}.zip && ${ECHOLINE} $(call q,Also add ${CVSDIST}-${isodate}.zip to it.)
+	@test -f $(call q,${CVSDIST})-${isodate}.zip && ${ECHOLINE} $(call q,Set the type of that file to platform-independent source .zip)
 
 .PHONY: cvsdist
 
