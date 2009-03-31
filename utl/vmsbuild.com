@@ -38,7 +38,7 @@ $ if f$search("myman.obj") .nes. "" then delete myman.obj;*
 $ if f$search("mygetopt.obj") .nes. "" then delete mygetopt.obj;*
 $ if f$search("utils.obj") .nes. "" then delete utils.obj;*
 $ if f$search("myman.exe") .nes. "" then delete myman.exe;*
-$ if f$search("myman''f$getsyi("arch_type")'.exe") .nes. "" then delete myman'f$getsyi("arch_type")'.exe;*
+$ if f$search("myman_''f$getsyi("arch_name")'.exe") .nes. "" then delete myman_'f$getsyi("arch_name")'.exe;*
 $ write sys$output "$! compiling"
 $ cc -
 /include_directory=([.inc],[.mygetopt])-
@@ -49,7 +49,7 @@ $ cc -
 $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
 $ write sys$output "$! copying"
-$ copy myman.exe myman'f$getsyi("arch_type")'.exe
+$ copy myman.exe myman_'f$getsyi("arch_name")'.exe
 $ write sys$output "$! done"
 $ write sys$output "$!"
 $ write sys$output "$! Example using the undocumented mcr command to run myman"
@@ -65,5 +65,5 @@ $ write sys$output "$! $ myman -s spr/spr2h -t chr/khr2h -m lvl/kpacman"
 $ write sys$output "$!"
 $ write sys$output "$! To define the symbol:"
 $ write sys$output "$!"
-$ myman :== "$''f$environment("default")'myman''f$getsyi("arch_type")'.exe"
+$ myman :== "$''f$environment("default")'myman_''f$getsyi("arch_name")'.exe"
 $ write sys$output "$ myman :== ''myman'"
