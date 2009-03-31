@@ -4041,11 +4041,12 @@ fill-dir-xq-$(call xq,${CVSDUMP}):
 .PHONY: push-cvsdist
 
 push-cvsdist: cvsdump cvsdist
-	${RSYNC} ${RSYNCFLAGS} -aessh $(call q,${CVSDUMP})-${isodate}${tgz} $(call q,${CVSDIST})-${isodate}${tgz} $(call q,${UPLOADSRSYNC})
+	${RSYNC} ${RSYNCFLAGS} -aessh $(call q,${CVSDUMP})-${isodate}${tgz} $(call q,${CVSDIST})-${isodate}${tgz} $(call q,${CVSDIST})-${isodate}.zip $(call q,${UPLOADSRSYNC})
+	-${RSYNC} ${RSYNCFLAGS} -aessh $(call q,${CVSDIST})-${isodate}.zip $(call q,${UPLOADSRSYNC})
 	@${ECHOLINE} $(call q,)
 	@${ECHOLINE} $(call q,Now create a new file release called myman-cvs-${isodate} here:)
 	@${ECHOLINE} $(call q,    ${UPLOADSWEBSITE})
-	@${ECHOLINE} $(call q,And add the files ${CVSDUMP}-${isodate}${tgz} and ${CVSDIST}-${isodate}${tgz} to it.)
+	@${ECHOLINE} $(call q,And add the files ${CVSDUMP}-${isodate}${tgz}, ${CVSDIST}-${isodate}${tgz} and -- if it exists -- ${CVSDIST}-${isodate}.zip to it.)
 	@${ECHOLINE} $(call q,Set the type of each file to platform-independent source .gz)
 
 .PHONY: cvsdist
@@ -4092,6 +4093,12 @@ dist:: $(call mw,${MAKEFILE})
 	@${MAKE} ${MAKELOOP} \
             compressed-tarball-xq-$(call qxq,${DIST})
 	-${REMOVE} ${DIST}${tar}
+	-${REMOVE} $(call q,${DIST}.zip)
+	-${ZIP} -r -9 $(call q,${DIST}.zip) $(call q,${DIST}) || \
+            ( \
+                ${REMOVE} $(call q,${DIST}.zip) ; \
+                exit 1 \
+            )
 	@${MAKE} ${MAKELOOP} \
             wipe-dir-xq-$(call qxq,${DIST})
 
