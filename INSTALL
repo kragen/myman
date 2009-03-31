@@ -1,10 +1,11 @@
 INSTALL - installation instructions for the MyMan video game
-Copyright 2003, 2006-2007, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+Copyright 2003, 2006-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
 
+Website: http://myman.sourceforge.net/
 
 NOTE: If you have a broken Bourne shell (Slowaris /bin/sh, for example)
       you will need to substitute the path to a better shell (GNU
