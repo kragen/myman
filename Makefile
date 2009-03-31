@@ -4055,6 +4055,7 @@ cvsdist: fill-dir-xq-$(call xq,${CVSDUMP}) empty-dir-xq-$(call mwxq,${CVSDIST})
 	${CVS} -d $(call q,$(shell pwd)/${CVSDUMP}) co -P -d $(call q,${CVSDIST}) myman
 	${MAKE} -C $(call q,${CVSDIST}) dist DIST=$(call q,${CVSDIST})-${isodate}
 	${INSTALL_DATA} $(call q,${CVSDIST}/${CVSDIST})-${isodate}${tgz} $(call q,${CVSDIST})-${isodate}${tgz}
+	-${INSTALL_DATA} $(call q,${CVSDIST}/${CVSDIST})-${isodate}.zip $(call q,${CVSDIST})-${isodate}.zip
 	@${MAKE} ${MAKELOOP} \
             wipe-dir-xq-$(call qxq,${CVSDIST})
 
@@ -4087,7 +4088,7 @@ fill-dir-xq-$(call xq,${DIST}):: $(call mw,${MAKEFILE}) $(addprefix $(call mw,${
 
 .PHONY: dist
 
-$(call mw,${DIST}${tgz}): dist
+$(call mw,${DIST}${tgz}) $(call mw,${DIST}.zip): dist
 
 dist:: $(call mw,${MAKEFILE})
 	@${MAKE} ${MAKELOOP} \
@@ -4581,12 +4582,13 @@ endif
 
 clean:: wipe-dir-xq-$(call mwxq,${DIST}) wipe-dir-xq-$(call mwxq,${BINDIST}) wipe-dir-xq-$(call mwxq,${CVSDIST})
 	-${REMOVE} config.h
-	-${REMOVE} ${DIST}${tgz} ${DIST}${tar}
+	-${REMOVE} ${DIST}${tgz} ${DIST}${tar} ${DIST}.zip
 	-${REMOVE} ${BINDIST}${tgz} ${BINDIST}${tar}
 	-${REMOVE} ${CVSDUMP}${tgz} ${CVSDUMP}${tar}
 	-${REMOVE} ${CVSDUMP}-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]${tgz}
 	-${REMOVE} ${CVSDUMP}-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]${tar}
 	-${REMOVE} ${CVSDIST}-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9]${tgz}
+	-${REMOVE} ${CVSDIST}-[0-9][0-9][0-9][0-9]*-[0-9][0-9]-[0-9][0-9].zip
 ifeq (yes,${with_zip})
 	-${REMOVE} ${BINDIST}.zip
 endif
