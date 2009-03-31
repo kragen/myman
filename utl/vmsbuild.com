@@ -30,17 +30,15 @@ $!
 $! If you would like to build with "BSD 4.4" curses:
 $! $ @[.utl]vmsbuild "/define=_BSD44_CURSES"
 $!
-$! If you would like to build with the built-in curses replacement:
+$! If you would like to build with the built-in (color) TTY driver:
 $! $ @[.utl]vmsbuild "/define=RAWCURSES"
-$!
-$! Once it's built, you may launch it using the undocumented mcr:
-$! $ mcr []myman
 $!
 $ write sys$output "$! cleaning"
 $ if f$search("myman.obj") .nes. "" then delete myman.obj;*
 $ if f$search("mygetopt.obj") .nes. "" then delete mygetopt.obj;*
 $ if f$search("utils.obj") .nes. "" then delete utils.obj;*
 $ if f$search("myman.exe") .nes. "" then delete myman.exe;*
+$ if f$search("myman''f$getsyi("arch_type")'.exe") .nes. "" then delete myman'f$getsyi("arch_type")'.exe;*
 $ write sys$output "$! compiling"
 $ cc -
 /include_directory=([.inc],[.mygetopt])-
@@ -50,6 +48,8 @@ $ cc -
 [.src]utils.c
 $ write sys$output "$! linking"
 $ link myman.obj,utils.obj,mygetopt.obj
+$ write sys$output "$! copying"
+$ copy myman.exe myman'f$getsyi("arch_type")'.exe
 $ write sys$output "$! done"
 $ write sys$output "$!"
 $ write sys$output "$! Example using the undocumented mcr command to run myman"
@@ -65,5 +65,5 @@ $ write sys$output "$! $ myman -s spr/spr2h -t chr/khr2h -m lvl/kpacman"
 $ write sys$output "$!"
 $ write sys$output "$! To define the symbol:"
 $ write sys$output "$!"
-$ myman :== "$''f$environment("default")'myman.exe"
+$ myman :== "$''f$environment("default")'myman''f$getsyi("arch_type")'.exe"
 $ write sys$output "$ myman :== ''myman'"
