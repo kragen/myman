@@ -271,9 +271,8 @@
 /* work-arounds for old VMS curses */
 #if defined(_VMS_CURSES) || defined(__VMS_CURSES)
 
-#include <descrip.h>
-#include <iodef.h>
-#include <starlet.h>
+#include <smg$routines.h>
+#include <ssdef.h>
 
 #ifndef OLDCURSES
 #define OLDCURSES 1
@@ -297,71 +296,48 @@
 #define mvprintw mvaddstr
 #endif
 
-static int vmscurses_tty_stdin_assigned = 0;
-static int vmscurses_tty_stdin_channel = 0;
-
-static void
-vmscurses_getch_free_channel(void)
-{
-    if (vmscurses_tty_stdin_assigned == 1)
-    {
-        (void) sys$dassgn(vmscurses_tty_stdin_channel);
-        vmscurses_tty_stdin_assigned = 0;
-    }
-}
-
 static int
 vmscurses_getch(void)
 {
-    $DESCRIPTOR(tty_stdin_dev, "tt");
-    if (vmscurses_tty_stdin_assigned != 1)
-    {
-        vmscurses_tty_stdin_assigned = sys$assign(&tty_stdin_dev, &vmscurses_tty_stdin_channel, 0, 0);
-        if (vmscurses_tty_stdin_assigned == 1)
-        {
-            atexit(vmscurses_getch_free_channel);
-        }
-    }
-    if (vmscurses_tty_stdin_assigned == 1)
-    {
-        struct {
-            unsigned short iosb_status;
-            unsigned short iosb_bytes;
-            void *iosb_buffer;
-        } iosb;
-        struct {
-            unsigned short iotrm__unused_zeros;
-            unsigned short iotrm_masksize;
-            union {
-                unsigned long iotrm_mask_bits;
-                void *iotrm_mask_ptr;
-            } iotrm_mask;
-        } iotrm;
-        char buf;
+    int res;
+    unsigned long kbdid;
+    unsigned short keycode = ERR;
+    int timeout;
 
-        iosb.iosb_status = 0;
-        iosb.iosb_bytes = 0;
-        iosb.iosb_buffer = NULL;
-        iotrm.iotrm__unused_zeros = 0;
-        iotrm.iotrm_masksize = 0;
-        iotrm.iotrm_mask.iotrm_mask_bits = 0;
-        buf = 0;
-        if (1 &
-            sys$qiow(0,
-                     vmscurses_tty_stdin_channel,
-                     IO$_READVBLK | IO$M_NOECHO | IO$M_TIMED | IO$M_NOWAIT | IO$M_NOFILTR,
-                     &iosb, 0, 0,
-                     &buf, 1, 0, &iotrm, 0, 0))
-        {
-            if (! iosb.iosb_bytes) return ERR;
-            return (int) (unsigned char) buf;
-        }
-    }
+    kbdid = stdkb->_id;
+    timeout = 0;
+    res = smg$read_keystroke(&kbdid, &keycode, 0, &timeout);
+    if (res == SS$_TIMEOUT) return ERR;
+    if (res & 1) return keycode;
     return getch();
 }
 
 #undef getch
 #define getch vmscurses_getch
+
+#ifndef KEY_UP
+#define KEY_UP SMG$K_TRM_UP
+#endif
+
+#ifndef KEY_DOWN
+#define KEY_DOWN SMG$K_TRM_DOWN
+#endif
+
+#ifndef KEY_LEFT
+#define KEY_LEFT SMG$K_TRM_LEFT
+#endif
+
+#ifndef KEY_RIGHT
+#define KEY_RIGHT SMG$K_TRM_RIGHT
+#endif
+
+#ifndef keypad
+#define keypad(s,f) OK
+#endif
+
+#ifndef curs_set
+#define curs_set(f) ((smg$set_cursor_mode(&(stdkb->_id),(f)?SMG$M_CURSOR_ON:SMG$M_CURSOR_OFF)&1)?1:-1)
+#endif
 
 #endif
 
