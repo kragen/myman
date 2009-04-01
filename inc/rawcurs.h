@@ -701,7 +701,6 @@ rawcurses_usleep(unsigned long usecs)
 #include <descrip.h>
 #include <dcdef.h>
 #include <iodef.h>
-#include <iosbdef.h>
 #include <ssdef.h>
 #include <ttdef.h>
 #include <starlet.h>
