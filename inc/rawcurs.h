@@ -5226,8 +5226,14 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 {
                     if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
                     {
-                        if (! rawcurses_h) rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
-                        if (! rawcurses_w) rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
+                        if (vmscon_tt_mode.vmscon_tt_mode_length)
+                        {
+                            rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
+                        }
+                        if (vmscon_tt_mode.vmscon_tt_mode_width)
+                        {
+                            rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
+                        }
                     }
                 }
             }
