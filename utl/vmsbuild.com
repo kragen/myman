@@ -67,8 +67,8 @@ $ write sys$output "$! To define the symbols:"
 $ write sys$output "$!"
 $ myman :== "$''f$environment("default")'myman_''f$getsyi("arch_name")'.exe"
 $ bigman :== "''myman'"
-$ smallman :== "''myman'" -s spr/spr2h -t chr/khr2h
-$ squareman :== "''myman'" -s spr/spr1 -t chr/khr1
+$ smallman :== "''myman'" "-s" "spr/spr2h" "-t" "chr/khr2h"
+$ squareman :== "''myman'" "-s" "spr/spr1" "-t" "chr/khr1"
 $ write sys$output "$ myman :== ''myman'"
 $ write sys$output "$ bigman :== ''bigman'"
 $ write sys$output "$ smallman :== ''smallman'"
