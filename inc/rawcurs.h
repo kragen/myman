@@ -5215,7 +5215,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 vmscon_iosb.iosb$w_status = 0;
                 vmscon_iosb.iosb$w_bcnt = 0;
                 memset((void *) &vmscon_tt_mode, 0, sizeof(vmscon_tt_mode));
-                if ((! (rawcurses_w && rawcurses_h))
+                if ((! (rawcurses_w && rawcurses_h && rawcurses_got_winsize))
                     &&
                     (1 &
                      sys$qiow(0,
