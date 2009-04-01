@@ -706,6 +706,22 @@ rawcurses_usleep(unsigned long usecs)
 #include <ttdef.h>
 #include <starlet.h>
 
+#ifdef __VAX
+
+struct _iosb
+{
+    unsigned short iosb$w_status;
+    unsigned short iosb$w_bcnt;
+    unsigned iosb$l_dev_depend;
+};
+
+#else /* ! defined(__VAX) */
+
+#include <iosbdef.h>
+
+#endif /* ! defined(__VAX) */
+
+
 typedef struct
 {
     unsigned short vmscon_iotrm__unused_zeros;
