@@ -696,9 +696,36 @@ rawcurses_usleep(unsigned long usecs)
 #if USE_VMSCONSOLE
 /* Workarounds for VMS and OpenVMS */
 
+#include <stat.h>
+
 #include <descrip.h>
+#include <dcdef.h>
 #include <iodef.h>
+#include <iosbdef.h>
+#include <ssdef.h>
+#include <ttdef.h>
 #include <starlet.h>
+
+typedef struct
+{
+    unsigned short vmscon_iotrm__unused_zeros;
+    unsigned short vmscon_iotrm_masksize;
+    union
+    {
+        unsigned long vmscon_iotrm_mask_bits;
+        void *vmscon_iotrm_mask_ptr;
+    } vmscon_iotrm_mask;
+} rawcurses_stdio_vmscon_iotrm_t;
+
+typedef struct
+{
+    char vmscon_tt_mode_class;
+    char vmscon_tt_mode_type;
+    short vmscon_tt_mode_width;
+    char vmscon_tt_mode_basic[3];
+    char vmscon_tt_mode_length;
+    int vmscon_tt_mode_extended;
+} rawcurses_stdio_vmscon_tt_mode_t;
 
 #endif
 
@@ -1192,6 +1219,7 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_st52, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_amiga, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_tw52, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_adm3a, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_decterm, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_relcup, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_256color, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_88color, = 0);
@@ -1202,8 +1230,10 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_ccc, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_ccc_linux, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_blink, = 0);
 #if USE_VMSCONSOLE
-RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon, = 0);
-RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_tty_channel, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_stdin_assigned, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_stdin_channel, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_stdout_assigned, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_vmscon_stdout_channel, = 0);
 #endif
 #if USE_TOSCONSOLE
 RAWCURSES_GLOBAL(int rawcurses_stdio_stcon, = 0);
@@ -1678,6 +1708,14 @@ static const char *RAWCURSES_AMIGALIKE =
     "morphos" "\0"
     "\0\0";
 
+/* list of terminal prefices for which we assume DECterm/dxterm-style quirks */
+static const char *RAWCURSES_DECTERMLIKE =
+    "DECterm" "\0"
+    "decterm" "\0"
+    "dxterm" "\0"
+    "vt300" "\0"
+    "\0\0";
+
 /* list of terminals for which we send ADM3A-type escape sequences */
 static const char *RAWCURSES_ADM3ALIKE =
     "1178" "\0"
@@ -2137,12 +2175,17 @@ static const char *RAWCURSES_NOCIVIS =
     "\0\0";
 
 #if USE_VMSCONSOLE
-static void rawcurses_stdio_vmscon_free_tty_channel(void)
+static void rawcurses_stdio_vmscon_cleanup(void)
 {
-    if (rawcurses_stdio_vmscon)
+    if (rawcurses_stdio_vmscon_stdin_assigned)
     {
-        (void) sys$dassgn(rawcurses_stdio_vmscon_tty_channel);
-        rawcurses_stdio_vmscon = 0;
+        (void) sys$dassgn(rawcurses_stdio_vmscon_stdin_channel);
+        rawcurses_stdio_vmscon_stdin_assigned = 0;
+    }
+    if (rawcurses_stdio_vmscon_stdout_assigned)
+    {
+        (void) sys$dassgn(rawcurses_stdio_vmscon_stdout_channel);
+        rawcurses_stdio_vmscon_stdout_assigned = 0;
     }
 }
 #endif /* USE_VMSCONSOLE */
@@ -2428,6 +2471,7 @@ static int rawcurses_fput_request_title(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_decterm) return 0;
     return fputs(CSI("21t"), fh) != EOF;
 }
 
@@ -2444,6 +2488,7 @@ static int rawcurses_fput_title(FILE *fh, const char *title)
         return (fprintf(fh, ESCAPE("S%s\r"), (title)) > 0);
     }
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_decterm) return (fprintf(fh, OSC("21;%s" ST), (title)) > 0);
     return (fprintf(fh, OSC("2;%s" ST), (title)) > 0);
 }
 
@@ -2456,6 +2501,7 @@ static int rawcurses_fput_request_icon_name(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_decterm) return 0;
     return fputs(CSI("20t"), fh) != EOF;
 }
 
@@ -2468,6 +2514,7 @@ static int rawcurses_fput_icon_name(FILE *fh, const char *icon_name)
     }
 #endif
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
+    if (rawcurses_stdio_decterm) return (fprintf(fh, OSC("2L;%s" ST), (icon_name)) > 0);
     return (fprintf(fh, OSC("1;%s" ST), (icon_name)) > 0);
 }
 
@@ -4648,6 +4695,29 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             adm3alike += strlen(adm3alike) + 1;
         }
     }
+    if (rawcurses_getenv_boolean("RAWCURSES_DECTERM"))
+    {
+        rawcurses_stdio_decterm = *(rawcurses_getenv_boolean("RAWCURSES_DECTERM")) ? 1 : 0;
+    }
+    else
+    {
+        const char *dectermlike = RAWCURSES_DECTERMLIKE;
+
+        rawcurses_stdio_decterm = 0;
+        while (strlen(dectermlike))
+        {
+            if ((! strcmp(termType, dectermlike))
+                ||
+                ((! strncmp(termType, dectermlike, strlen(dectermlike)))
+                 &&
+                 (termType[strlen(dectermlike)] == '-')))
+            {
+                rawcurses_stdio_decterm = 1;
+                break;
+            }
+            dectermlike += strlen(dectermlike) + 1;
+        }
+    }
     if (rawcurses_getenv_boolean("RAWCURSES_ISO2022"))
     {
         rawcurses_stdio_iso2022 = *(rawcurses_getenv_boolean("RAWCURSES_ISO2022")) ? 1 : 0;
@@ -4800,6 +4870,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
               (! strcmp(termType, "nsterm-16color"))
               ||
               (! strncmp(termType, "xterm", strlen("xterm")))))
+            ||
+            rawcurses_stdio_decterm
             ||
             (! strncmp(termType, "darwin", strlen("darwin")))
             ||
@@ -5077,13 +5149,72 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #endif /* USE_AROSCONSOLE */
 #if USE_VMSCONSOLE
     {
-        $DESCRIPTOR(tty_stdin_dev, "tt");
-        if (rawcurses_stdio_vmscon != 1)
+        struct stat vmscon_stbuf;
+
+        if ((! rawcurses_stdio_vmscon_stdin_assigned)
+            &&
+            (! stat("sys$input", &vmscon_stbuf)))
         {
-            rawcurses_stdio_vmscon = sys$assign(&tty_stdin_dev, &rawcurses_stdio_vmscon_tty_channel, 0, 0) == 1;
-            if (rawcurses_stdio_vmscon)
+            struct dsc$descriptor_s vmscon_stdin_dev;
+
+            vmscon_stdin_dev.dsc$w_length = strlen(vmscon_stbuf.st_dev);
+            vmscon_stdin_dev.dsc$a_pointer = vmscon_stbuf.st_dev;
+            vmscon_stdin_dev.dsc$b_class = DSC$K_CLASS_S;
+            vmscon_stdin_dev.dsc$b_dtype = DSC$K_DTYPE_T;
+            rawcurses_stdio_vmscon_stdin_assigned = (
+                sys$assign(&vmscon_stdin_dev, &rawcurses_stdio_vmscon_stdin_channel, 0, 0)
+                ==
+                SS$_NORMAL);
+            if (rawcurses_stdio_vmscon_stdin_assigned)
             {
-                atexit(rawcurses_stdio_vmscon_free_tty_channel);
+                if (! rawcurses_stdio_vmscon_stdout_assigned)
+                {
+                    atexit(rawcurses_stdio_vmscon_cleanup);
+                }
+            }
+        }
+        if ((! rawcurses_stdio_vmscon_stdout_assigned)
+            &&
+            (! stat("sys$output", &vmscon_stbuf)))
+        {
+            struct dsc$descriptor_s vmscon_stdout_dev;
+
+            vmscon_stdout_dev.dsc$w_length = strlen(vmscon_stbuf.st_dev);
+            vmscon_stdout_dev.dsc$a_pointer = vmscon_stbuf.st_dev;
+            vmscon_stdout_dev.dsc$b_class = DSC$K_CLASS_S;
+            vmscon_stdout_dev.dsc$b_dtype = DSC$K_DTYPE_T;
+            rawcurses_stdio_vmscon_stdout_assigned = (
+                sys$assign(&vmscon_stdout_dev, &rawcurses_stdio_vmscon_stdout_channel, 0, 0)
+                ==
+                SS$_NORMAL);
+            if (rawcurses_stdio_vmscon_stdout_assigned)
+            {
+                struct _iosb vmscon_iosb;
+                rawcurses_stdio_vmscon_tt_mode_t vmscon_tt_mode;
+
+                if (! rawcurses_stdio_vmscon_stdin_assigned)
+                {
+                    atexit(rawcurses_stdio_vmscon_cleanup);
+                }
+                memset((void *) &vmscon_iosb, 0, sizeof(vmscon_iosb));
+                vmscon_iosb.iosb$w_status = 0;
+                vmscon_iosb.iosb$w_bcnt = 0;
+                memset((void *) &vmscon_tt_mode, 0, sizeof(vmscon_tt_mode));
+                if ((! (rawcurses_w && rawcurses_h))
+                    &&
+                    (1 &
+                     sys$qiow(0,
+                              rawcurses_stdio_vmscon_stdout_channel,
+                              IO$_SENSEMODE,
+                              &vmscon_iosb, 0, 0,
+                              &vmscon_tt_mode, sizeof(vmscon_tt_mode), 0, 0, 0, 0)))
+                {
+                    if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
+                    {
+                        if (! rawcurses_h) rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
+                        if (! rawcurses_w) rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
+                    }
+                }
             }
         }
     }
@@ -6259,39 +6390,28 @@ static int rawcurses_getch(void)
             else
 #endif /* USE_TOSCONSOLE */
 #if USE_VMSCONSOLE
-            if (rawcurses_stdio_vmscon)
+            if (rawcurses_stdio_vmscon_stdin_assigned)
             {
-                struct {
-                    unsigned short iosb_status;
-                    unsigned short iosb_bytes;
-                    void *iosb_buffer;
-                } iosb;
-                struct {
-                    unsigned short iotrm__unused_zeros;
-                    unsigned short iotrm_masksize;
-                    union {
-                        unsigned long iotrm_mask_bits;
-                        void *iotrm_mask_ptr;
-                    } iotrm_mask;
-                } iotrm;
-                char retchr;
+                struct _iosb vmscon_iosb;
+                rawcurses_stdio_vmscon_iotrm_t vmscon_iotrm;
+                char vmscon_retchr;
 
-                iosb.iosb_status = 0;
-                iosb.iosb_bytes = 0;
-                iosb.iosb_buffer = NULL;
-                iotrm.iotrm__unused_zeros = 0;
-                iotrm.iotrm_masksize = 0;
-                iotrm.iotrm_mask.iotrm_mask_bits = 0;
-                retchr = 0;
+                memset((void *) &vmscon_iosb, 0, sizeof(vmscon_iosb));
+                vmscon_iosb.iosb$w_status = 0;
+                vmscon_iosb.iosb$w_bcnt = 0;
+                vmscon_iotrm.vmscon_iotrm__unused_zeros = 0;
+                vmscon_iotrm.vmscon_iotrm_masksize = 0;
+                vmscon_iotrm.vmscon_iotrm_mask.vmscon_iotrm_mask_bits = 0;
+                vmscon_retchr = 0;
                 if (1 &
                     sys$qiow(0,
-                             rawcurses_stdio_vmscon_tty_channel,
+                             rawcurses_stdio_vmscon_stdin_channel,
                              IO$_READVBLK | IO$M_NOECHO | IO$M_TIMED | IO$M_NOWAIT | IO$M_NOFILTR,
-                             &iosb, 0, 0,
-                             &retchr, 1, 0, &iotrm, 0, 0))
+                             &vmscon_iosb, 0, 0,
+                             &vmscon_retchr, sizeof(vmscon_retchr), 0, &vmscon_iotrm, 0, 0))
                 {
-                    if (! iosb.iosb_bytes) ret = ERR;
-                    else ret = (int) (unsigned char) retchr;
+                    if (! vmscon_iosb.iosb$w_bcnt) ret = ERR;
+                    else ret = (int) (unsigned char) vmscon_retchr;
                 }
             }
             else
