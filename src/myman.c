@@ -9389,23 +9389,32 @@ main(int argc, char *argv[]
 #if USE_IOCTL
 #ifdef TIOCGWINSZ
                 struct winsize wsz;
+#endif
+#ifdef TIOCGSIZE
+                struct ttysize tsz;
+#endif
 
+
+#ifdef TIOCGWINSZ
                 if (! ioctl(fileno(stdout), TIOCGWINSZ, &wsz))
                 {
                     myman_lines = wsz.ws_row;
                     myman_columns = wsz.ws_col;
                 }
-#else
+                else
+#endif
 #ifdef TIOCGSIZE
-                struct ttysize tsz;
-
                 if (! ioctl(fileno(stdout), TIOCGSIZE, &tsz))
                 {
                     myman_lines = tsz.ts_lines;
                     myman_columns = tsz.ts_cols;
                 }
+                else
 #endif
-#endif
+                {
+                    myman_lines = LINES;
+                    myman_columns = COLS;
+                }
 #endif
                 if (! myman_lines) myman_lines = LINES;
                 if (! myman_columns) myman_columns = COLS;
