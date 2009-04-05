@@ -6779,6 +6779,22 @@ static int rawcurses_getch(void)
                 case 'D': /* VT52 */
                     ret = KEY_LEFT;
                     break;
+                case 'L':
+                case 'l':
+                    /* iTerm.app (buggy emulator, they forgot the ']',
+                     * at least as of Build 0.9.6.20090209!) */
+                    if (((ret == 'L') &&
+                         rawcurses_stdio_new_shortname && ! rawcurses_stdio_old_shortname)
+                        ||
+                        ((ret == 'l') &&
+                         rawcurses_stdio_new_title && ! rawcurses_stdio_old_title))
+                    {
+                        rawcurses_input_state = RAWCURSES_INPUT_STATE_OSC;
+                        rawcurses_input_param[0] = ret;
+                        rawcurses_input_param[1] = '\0';
+                    }
+                    ret = ERR;
+                    break;
                 case '/':
                     ret = ERR;
                     rawcurses_input_state = RAWCURSES_INPUT_STATE_IDENTITY_VT52;
