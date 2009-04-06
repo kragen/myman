@@ -736,13 +736,13 @@ typedef struct
 {
     char vmscon_tt_mode_class;
     char vmscon_tt_mode_type;
-    short vmscon_tt_mode_width;
+    unsigned short vmscon_tt_mode_width;
     char vmscon_tt_mode_basic[3];
-    char vmscon_tt_mode_length;
+    unsigned char vmscon_tt_mode_length;
     int vmscon_tt_mode_extended;
 } rawcurses_stdio_vmscon_tt_mode_t;
 
-#endif
+#endif /* USE_VMSCONSOLE */
 
 #ifndef USE_TOSCONSOLE
 #define USE_TOSCONSOLE 0
@@ -4359,6 +4359,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     const char *termType;
     const char *lines;
     const char *columns;
+#if USE_VMSCONSOLE
+    rawcurses_stdio_vmscon_tt_mode_t vmscon_tt_mode;
+    struct _iosb vmscon_iosb;
+    struct dsc$descriptor_s vmscon_stdin_dev;
+    struct dsc$descriptor_s vmscon_stdout_dev;
+    struct stat vmscon_stbuf;
+#endif
 
     termType = rawcurses_term_type();
     rawcurses_stdio_tw52 = 0;
@@ -4983,6 +4990,55 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
     if (rawcurses_nw && rawcurses_nh)
     {
+#if USE_VMSCONSOLE
+        {
+            if ((! rawcurses_stdio_vmscon_stdout_assigned)
+                &&
+                (! stat("sys$output", &vmscon_stbuf)))
+            {
+                vmscon_stdout_dev.dsc$w_length = strlen(vmscon_stbuf.st_dev);
+                vmscon_stdout_dev.dsc$a_pointer = vmscon_stbuf.st_dev;
+                vmscon_stdout_dev.dsc$b_class = DSC$K_CLASS_S;
+                vmscon_stdout_dev.dsc$b_dtype = DSC$K_DTYPE_T;
+                rawcurses_stdio_vmscon_stdout_assigned = (
+                    sys$assign(&vmscon_stdout_dev, &rawcurses_stdio_vmscon_stdout_channel, 0, 0)
+                    ==
+                    SS$_NORMAL);
+                if (rawcurses_stdio_vmscon_stdout_assigned)
+                {
+                    if (! rawcurses_stdio_vmscon_stdin_assigned)
+                    {
+                        atexit(rawcurses_stdio_vmscon_cleanup);
+                    }
+                }
+            }
+            if (rawcurses_stdio_vmscon_stdout_assigned)
+            {
+                memset((void *) &vmscon_iosb, 0, sizeof(vmscon_iosb));
+                vmscon_iosb.iosb$w_status = 0;
+                vmscon_iosb.iosb$w_bcnt = 0;
+                memset((void *) &vmscon_tt_mode, 0, sizeof(vmscon_tt_mode));
+                if ((1 &
+                     sys$qiow(0,
+                              rawcurses_stdio_vmscon_stdout_channel,
+                              IO$_SENSEMODE,
+                              &vmscon_iosb, 0, 0,
+                              &vmscon_tt_mode, sizeof(vmscon_tt_mode), 0, 0, 0, 0)))
+                {
+                    if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
+                    {
+                        vmscon_tt_mode.vmscon_tt_mode_length = (rawcurses_nh > 255) ? 255 : rawcurses_nh;
+                        vmscon_tt_mode.vmscon_tt_mode_width = (rawcurses_nw > 511) ? 511 : rawcurses_nw;
+                        sys$qiow(0,
+                                 rawcurses_stdio_vmscon_stdout_channel,
+                                 IO$_SETMODE,
+                                 &vmscon_iosb, 0, 0,
+                                 &vmscon_tt_mode, sizeof(vmscon_tt_mode), 0, 0, 0, 0);
+                    }
+                }
+            }
+        }
+#endif
         rawcurses_w = rawcurses_nw;
         rawcurses_h = rawcurses_nh;
         w = rawcurses_w;
@@ -5164,14 +5220,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #endif /* USE_AROSCONSOLE */
 #if USE_VMSCONSOLE
     {
-        struct stat vmscon_stbuf;
-
         if ((! rawcurses_stdio_vmscon_stdin_assigned)
             &&
             (! stat("sys$input", &vmscon_stbuf)))
         {
-            struct dsc$descriptor_s vmscon_stdin_dev;
-
             vmscon_stdin_dev.dsc$w_length = strlen(vmscon_stbuf.st_dev);
             vmscon_stdin_dev.dsc$a_pointer = vmscon_stbuf.st_dev;
             vmscon_stdin_dev.dsc$b_class = DSC$K_CLASS_S;
@@ -5192,8 +5244,6 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             &&
             (! stat("sys$output", &vmscon_stbuf)))
         {
-            struct dsc$descriptor_s vmscon_stdout_dev;
-
             vmscon_stdout_dev.dsc$w_length = strlen(vmscon_stbuf.st_dev);
             vmscon_stdout_dev.dsc$a_pointer = vmscon_stbuf.st_dev;
             vmscon_stdout_dev.dsc$b_class = DSC$K_CLASS_S;
@@ -5204,36 +5254,36 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 SS$_NORMAL);
             if (rawcurses_stdio_vmscon_stdout_assigned)
             {
-                struct _iosb vmscon_iosb;
-                rawcurses_stdio_vmscon_tt_mode_t vmscon_tt_mode;
-
                 if (! rawcurses_stdio_vmscon_stdin_assigned)
                 {
                     atexit(rawcurses_stdio_vmscon_cleanup);
                 }
-                memset((void *) &vmscon_iosb, 0, sizeof(vmscon_iosb));
-                vmscon_iosb.iosb$w_status = 0;
-                vmscon_iosb.iosb$w_bcnt = 0;
-                memset((void *) &vmscon_tt_mode, 0, sizeof(vmscon_tt_mode));
-                if ((! (rawcurses_w && rawcurses_h && rawcurses_got_winsize))
-                    &&
-                    (1 &
-                     sys$qiow(0,
-                              rawcurses_stdio_vmscon_stdout_channel,
-                              IO$_SENSEMODE,
-                              &vmscon_iosb, 0, 0,
-                              &vmscon_tt_mode, sizeof(vmscon_tt_mode), 0, 0, 0, 0)))
+            }
+        }
+        if ((! (rawcurses_w && rawcurses_h))
+            &&
+            rawcurses_stdio_vmscon_stdout_assigned)
+        {
+            memset((void *) &vmscon_iosb, 0, sizeof(vmscon_iosb));
+            vmscon_iosb.iosb$w_status = 0;
+            vmscon_iosb.iosb$w_bcnt = 0;
+            memset((void *) &vmscon_tt_mode, 0, sizeof(vmscon_tt_mode));
+            if (1 &
+                sys$qiow(0,
+                         rawcurses_stdio_vmscon_stdout_channel,
+                         IO$_SENSEMODE,
+                         &vmscon_iosb, 0, 0,
+                         &vmscon_tt_mode, sizeof(vmscon_tt_mode), 0, 0, 0, 0))
+            {
+                if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
                 {
-                    if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
+                    if (vmscon_tt_mode.vmscon_tt_mode_length)
                     {
-                        if (vmscon_tt_mode.vmscon_tt_mode_length)
-                        {
-                            rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
-                        }
-                        if (vmscon_tt_mode.vmscon_tt_mode_width)
-                        {
-                            rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
-                        }
+                        rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
+                    }
+                    if (vmscon_tt_mode.vmscon_tt_mode_width)
+                    {
+                        rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
                     }
                 }
             }
@@ -5567,7 +5617,17 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 rawcurses_cursor_visibility ? rawcurses_fput_cnorm(stdout) : rawcurses_fput_civis(stdout);
             }
             if (rawcurses_stdio_acs) rawcurses_fput_enacs(stdout);
-            if (got_winsize && ! rawcurses_got_winsize)
+            if (got_winsize
+                &&
+                (! rawcurses_got_winsize)
+#if USE_VMSCONSOLE
+                /* on VMS we always ask the terminal about the window
+                 * size since nothing seems to bother sending
+                 * SIGWINCH */
+                &&
+                (! rawcurses_stdio_vmscon_stdout_assigned)
+#endif
+                )
             {
                 if (rawcurses_stdio_new_shortname && ! rawcurses_stdio_old_shortname)
                 {
