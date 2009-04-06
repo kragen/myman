@@ -1431,7 +1431,7 @@ static const char *RAWCURSES_VT52LIKE =
     "sc410" "\0"
     "sc415" "\0"
     "scanset" "\0"
-    "scr"/* hmm... */"ewpoint" "\0"
+    "scr" /* hmm... */ "ewpoint" "\0"
     "sibo" "\0"
     "st52" "\0"
     "stv52" "\0"
