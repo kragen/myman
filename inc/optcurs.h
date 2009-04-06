@@ -65,17 +65,19 @@ OPTCURSES_GLOBAL(optcurses_cell_t *optcurses_backing, = NULL);
 
 static int OPTCURSES_IS_ROW_DIRTY(int y)
 {
-    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] != 0xFF);
+    return (0xFFU
+            !=
+            (unsigned) ((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))]);
 }
 
 static int OPTCURSES_DIRTY_ROW(int y)
 {
-    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0);
+    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0U);
 }
 
 static int OPTCURSES_CLEAN_ROW(int y)
 {
-    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0xFF);
+    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0xFFU);
 }
 
 #define OPTCURSES__LINES (LINES * ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))

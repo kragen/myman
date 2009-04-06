@@ -1509,14 +1509,14 @@ mymanescape(const char *s, int len)
     int i;
 
     for (i = 0; i < len; i ++)
-        if (MYMAN_ISPRINT((c = (unsigned char) s[i]))) {
+        if (MYMAN_ISPRINT((c = (int) (unsigned char) s[i]))) {
             if ((c == '\"') || (c == '\\') || (c == '\'') || (c == '\?'))
                 putchar('\\');
             putchar(c);
         }
         else
         {
-            if (((i + 1 == len) || ! isdigit((unsigned char) s[i + 1])) && (c == '\0'))
+            if (((i + 1 == len) || ! isdigit((int) (unsigned char) s[i + 1])) && (c == '\0'))
                 printf("\\0");
             else
                 printf("\\%3.3o", c);
@@ -2359,29 +2359,31 @@ mark_cell(int x, int y)
 {
     if ((! all_dirty) && ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h)))
     {
-        dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)] |=
-            (1 << ((x)&7));
+        int idx;
+
+        idx = ((y)) * ((maze_w+1+7) >> 3) + ((x)>>3);
+        dirty_cell[idx] =
+            (1U << ((x)&7))
+            |
+            (unsigned) (unsigned char) dirty_cell[idx];
     }
 }
 
 void
 maze_puts(int y, int x, int color, const char *s)
 {
-    int _mpi;
-    unsigned char _mpc;
-    int _mpy, _mpx;
-            
-    _mpy = (y);
-    _mpx = (x);
-    if (_mpy < 0) return;
-    if (_mpy >= maze_h) return;
-    for (_mpi = 0; (_mpc = (unsigned char) (s)[_mpi]) != 0; _mpi ++)
+    int i;
+    unsigned char c;
+
+    if (y < 0) return;
+    if (y >= maze_h) return;
+    for (i = 0; 0 != (int) (unsigned char) (c = (unsigned) (unsigned char) (s)[i]); i ++)
     {
-        if (((_mpx + _mpi) >= 0) && ((_mpx + _mpi) < maze_w))
+        if (((x + i) >= 0) && ((x + i) < maze_w))
         {
-            maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = _mpc;
-            maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = (unsigned char) color;
-            mark_cell(XWRAP(_mpx + _mpi), YWRAP(_mpy));
+            maze[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)] = c;
+            maze_color[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)] = (char) (unsigned char) color;
+            mark_cell(XWRAP(x + i), YWRAP(y));
         }
     }
 }
@@ -2389,29 +2391,26 @@ maze_puts(int y, int x, int color, const char *s)
 void
 maze_putsn_nonblank(int y, int x, int color, const char *s, int n)
 {
-    int _mpi;
-    unsigned char _mpc;
-    int _mpy, _mpx;
-            
-    _mpy = (y);
-    _mpx = (x);
-    if (_mpy < 0) return;
-    if (_mpy >= maze_h) return;
-    for (_mpi = 0; (_mpi < (n)) && ((_mpc = (unsigned char) (s)[_mpi]) != 0); _mpi ++)
+    int i;
+    unsigned char c;
+
+    if (y < 0) return;
+    if (y >= maze_h) return;
+    for (i = 0; (i < (n)) && (0 != (int) (unsigned char) (c = (unsigned) (unsigned char) (s)[i])); i ++)
     {
-        int _mpcc;
+        int cc;
                 
-        _mpcc = color;
-        if (((_mpx + _mpi) >= 0) && ((_mpx + _mpi) < maze_w))
+        cc = color;
+        if (((x + i) >= 0) && ((x + i) < maze_w))
         {
-            if (_mpc == ' ')
+            if (' ' == (char) c)
             {
-                _mpc = blank_maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)];
-                _mpcc = blank_maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)];
+                c = blank_maze[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)];
+                cc = blank_maze_color[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)];
             }
-            maze[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = _mpc;
-            maze_color[(maze_level*maze_h+YWRAP(_mpy)) * (maze_w + 1)+XWRAP(_mpx + _mpi)] = (unsigned char) _mpcc;
-            mark_cell(XWRAP(_mpx + _mpi), YWRAP(_mpy));
+            maze[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)] = c;
+            maze_color[(maze_level*maze_h+YWRAP(y)) * (maze_w + 1)+XWRAP(x + i)] = (char) (unsigned char) cc;
+            mark_cell(XWRAP(x + i), YWRAP(y));
         }
     }
 }
@@ -2442,7 +2441,7 @@ unsigned char *home_dir = NULL;
 unsigned char
 gfx2(unsigned char c)
 {
-    return (((reflect ^ gfx_reflect) && ! REFLECT_LARGE) ? reflect_cp437[(unsigned long) (unsigned char) (c)] : (c));
+    return (((reflect ^ gfx_reflect) && ! REFLECT_LARGE) ? ((unsigned) reflect_cp437[(unsigned long) (unsigned char) (c)]) : (unsigned) (c));
 }
 
 size_t
@@ -2454,7 +2453,7 @@ gfx1(unsigned char c, int y, int x, int w, int h)
 unsigned char
 gfx0(unsigned char c, unsigned char *m)
 {
-    return (REFLECT_LARGE | gfx_reflect) ? ((unsigned long) (unsigned char) ((m)[(unsigned long) (unsigned char) (c)])) : ((unsigned long) (unsigned char) (c));
+    return (REFLECT_LARGE | gfx_reflect) ? ((unsigned) (unsigned char) ((m)[(unsigned long) (unsigned char) (c)])) : ((unsigned) (unsigned char) (c));
 }
 
 int reflect = 0;
@@ -2586,9 +2585,9 @@ gameintro(void)
 #define MEANCOLOR (use_color ? sprite_register_color[mean] : 0xF)
             sprite_register_x[HERO] = name_col * gfx_w + gfx_w / 2;
             maze_puts(name_row, name_col,
-                      sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
+                      sprite_color[((unsigned) sprite_register[mean]) + sprite_register_frame[mean]]
                       ?
-                      sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
+                      sprite_color[((unsigned) sprite_register[mean]) + sprite_register_frame[mean]]
                       :
                       MEANCOLOR
                       ,
@@ -2605,9 +2604,9 @@ gameintro(void)
         {
             sprite_register_x[HERO] = nick_col * gfx_w + gfx_w / 2;
             maze_puts(nick_row, nick_col,
-                      sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
+                      sprite_color[((unsigned) sprite_register[mean]) + sprite_register_frame[mean]]
                       ?
-                      sprite_color[sprite_register[mean] + sprite_register_frame[mean]]
+                      sprite_color[((unsigned) sprite_register[mean]) + sprite_register_frame[mean]]
                       :
                       MEANCOLOR
                       ,
@@ -2671,7 +2670,7 @@ gameintro(void)
         else
         {
             sprite_register_frame[HERO] = (myman_intro / (1 + (MYMANFIFTH / 2))) % 4;
-            if ((sprite_register[HERO] == (SPRITE_HERO + 4))
+            if ((((unsigned) sprite_register[HERO]) == (SPRITE_HERO + 4))
                 &&
                 (sprite_register_x[HERO] == gfx_w * (4 + (maze_w - 28) / 2)))
             {
@@ -2679,7 +2678,7 @@ gameintro(void)
                 sprite_register[HERO] = SPRITE_HERO + 12;
                 sprite_register_frame[HERO] = 0;
             }
-            else if (sprite_register[HERO] == (SPRITE_HERO + 4))
+            else if (((unsigned) sprite_register[HERO]) == (SPRITE_HERO + 4))
             {
                 sprite_register_x[HERO] --;
             }
@@ -2709,7 +2708,7 @@ gameintro(void)
             sprite_register_frame[eyes] = MYMAN_RIGHT - 1;
             sprite_register_frame[blue] =
                 (sprite_register_frame[mean] = ((myman_intro / MYMANFIFTH) & 1) ? 1 : 0);
-            if ((sprite_register[HERO] == (SPRITE_HERO + 4)) && ! ghost_eaten_timer)
+            if ((((unsigned) sprite_register[HERO]) == (SPRITE_HERO + 4)) && ! ghost_eaten_timer)
             {
                 sprite_register_frame[eyes] = MYMAN_LEFT - 1;
                 sprite_register_used[eyes] = VISIBLE_EYES;
@@ -2836,126 +2835,126 @@ gamedemo(void)
         if (! (frames % ((TWOSECS / 20) + 1)))
         {
             unsigned char mleft, mdown, mright, mup;
-            mleft = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
-            mdown = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
-            mright = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
-            mup = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
-            if (ISOPEN(mleft)
+            mleft = (unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
+            mdown = (unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
+            mright = (unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
+            mup = (unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
+            if (ISOPEN((unsigned) mleft)
                 &&
-                ISPELLET(mleft))
+                ISPELLET((unsigned) mleft))
             {
                 hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
-            else if (ISOPEN(mdown)
+            else if (ISOPEN((unsigned) mdown)
                      &&
-                     ISPELLET(mdown))
+                     ISPELLET((unsigned) mdown))
             {
                 hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
-            else if (ISOPEN(mright)
+            else if (ISOPEN((unsigned) mright)
                      &&
-                     ISPELLET(mright))
+                     ISPELLET((unsigned) mright))
             {
                 hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
-            else if (ISOPEN(mup)
+            else if (ISOPEN((unsigned) mup)
                      &&
-                     ISPELLET(mup))
+                     ISPELLET((unsigned) mup))
             {
                 hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
-            else if (ISOPEN(mup)
+            else if (ISOPEN((unsigned) mup)
                      &&
-                     ISDOT(mup))
+                     ISDOT((unsigned) mup))
             {
                 hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
-            else if (ISOPEN(mleft)
+            else if (ISOPEN((unsigned) mleft)
                      &&
-                     ISDOT(mleft))
+                     ISDOT((unsigned) mleft))
             {
                 hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
-            else if (ISOPEN(mdown)
+            else if (ISOPEN((unsigned) mdown)
                      &&
-                     ISDOT(mdown))
+                     ISDOT((unsigned) mdown))
             {
                 hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
-            else if (ISOPEN(mright)
+            else if (ISOPEN((unsigned) mright)
                      &&
-                     ISDOT(mright))
+                     ISDOT((unsigned) mright))
             {
                 hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
-            else if (ISOPEN(mleft)
+            else if (ISOPEN((unsigned) mleft)
                      &&
                      (hero_dir != MYMAN_RIGHT))
             {
                 hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
-            else if (ISOPEN(mup)
+            else if (ISOPEN((unsigned) mup)
                      &&
                      (hero_dir != MYMAN_DOWN))
             {
                 hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
-            else if (ISOPEN(mright)
+            else if (ISOPEN((unsigned) mright)
                      &&
                      (hero_dir != MYMAN_LEFT))
             {
                 hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
             }
-            else if (ISOPEN(mdown)
+            else if (ISOPEN((unsigned) mdown)
                      &&
                      (hero_dir != MYMAN_UP))
             {
                 hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
-            else if (! (ISOPEN(mleft)
+            else if (! (ISOPEN((unsigned) mleft)
                         ||
-                        ISOPEN(mright)
+                        ISOPEN((unsigned) mright)
                         ||
-                        ISOPEN(mdown)))
+                        ISOPEN((unsigned) mdown)))
             {
                 hero_dir = MYMAN_UP;
                 sprite_register[HERO] = SPRITE_HERO;
             }
-            else if (! (ISOPEN(mleft)
+            else if (! (ISOPEN((unsigned) mleft)
                         ||
-                        ISOPEN(mright)
+                        ISOPEN((unsigned) mright)
                         ||
-                        ISOPEN(mup)))
+                        ISOPEN((unsigned) mup)))
             {
                 hero_dir = MYMAN_DOWN;
                 sprite_register[HERO] = SPRITE_HERO + 16;
             }
-            else if (! (ISOPEN(mright)
+            else if (! (ISOPEN((unsigned) mright)
                         ||
-                        ISOPEN(mdown)
+                        ISOPEN((unsigned) mdown)
                         ||
-                        ISOPEN(mup)))
+                        ISOPEN((unsigned) mup)))
             {
                 hero_dir = MYMAN_LEFT;
                 sprite_register[HERO] = SPRITE_HERO + 4;
             }
-            else if (! (ISOPEN(mleft)
+            else if (! (ISOPEN((unsigned) mleft)
                         ||
-                        ISOPEN(mdown)
+                        ISOPEN((unsigned) mdown)
                         ||
-                        ISOPEN(mup)))
+                        ISOPEN((unsigned) mup)))
             {
                 hero_dir = MYMAN_RIGHT;
                 sprite_register[HERO] = SPRITE_HERO + 12;
@@ -3152,7 +3151,7 @@ gamelogic(void)
     if (ghost_eaten_timer && ! -- ghost_eaten_timer) {
         sprite_register_used[GHOST_SCORE] = 0;
         sprite_register_frame[GHOST_SCORE] ++;
-        if ((sprite_register[GHOST_SCORE] + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - sprite_register[GHOST_SCORE];
+        if ((((unsigned) sprite_register[GHOST_SCORE]) + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - ((unsigned) sprite_register[GHOST_SCORE]);
         if (sprite_register_used[HERO])
         {
             memcpy((void *) (maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
@@ -3383,7 +3382,7 @@ gamelogic(void)
                 earned ++;
             }
         }
-        if (ISPELLET((c = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))
+        if (ISPELLET((c = (long) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))
             || ISDOT(c)) {
             maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile] = ' ';
             sprite_register_frame[HERO] = 0;
@@ -3455,7 +3454,7 @@ gamelogic(void)
                 sprite_register_y[HERO] = (1 + 2 * ytile) * gfx_h / 2;
             else if (hero_dir)
                 sprite_register_x[HERO] = (1 + 2 * xtile) * gfx_w / 2;
-            if (ISZAPLEFT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+            if (ISZAPLEFT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
                 &&
                 (! YDIR(hero_dir))
                 &&
@@ -3464,14 +3463,14 @@ gamelogic(void)
 
                 for (ii = 1; ii < maze_w; ii ++)
                 {
-                    if (ISZAPRIGHT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - ii)]))
+                    if (ISZAPRIGHT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - ii)]))
                     {
                         break;
                     }
                 }
                 sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile - ii)) * gfx_w / 2;
             }
-            else if (ISZAPRIGHT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+            else if (ISZAPRIGHT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
                      &&
                      (! YDIR(hero_dir))
                      &&
@@ -3480,14 +3479,14 @@ gamelogic(void)
 
                 for (ii = 1; ii < maze_w; ii ++)
                 {
-                    if (ISZAPLEFT((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + ii)]))
+                    if (ISZAPLEFT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + ii)]))
                     {
                         break;
                     }
                 }
                 sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile + ii)) * gfx_w / 2;
             }
-            else if (ISZAPUP((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+            else if (ISZAPUP((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
                      &&
                      (! XDIR(hero_dir))
                      &&
@@ -3496,14 +3495,14 @@ gamelogic(void)
 
                 for (ii = 1; ii < maze_h; ii ++)
                 {
-                    if (ISZAPDOWN((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - ii)) * (maze_w + 1)+xtile]))
+                    if (ISZAPDOWN((unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - ii)) * (maze_w + 1)+xtile]))
                     {
                         break;
                     }
                 }
                 sprite_register_y[HERO] = (1 + 2 * YWRAP(ytile - ii)) * gfx_h / 2;
             }
-            else if (ISZAPDOWN((unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+            else if (ISZAPDOWN((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
                      &&
                      (! XDIR(hero_dir))
                      &&
@@ -3512,7 +3511,7 @@ gamelogic(void)
 
                 for (ii = 1; ii < maze_h; ii ++)
                 {
-                    if (ISZAPUP((unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + ii)) * (maze_w + 1)+xtile]))
+                    if (ISZAPUP((unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + ii)) * (maze_w + 1)+xtile]))
                     {
                         break;
                     }
@@ -3534,7 +3533,7 @@ gamelogic(void)
                          (maze_w + 1)
                          +
                          XWRAP(x3)];
-                if (ISOPEN(m3))
+                if (ISOPEN((unsigned) m3))
                 {
                     sprite_register_x[HERO] = XPIXWRAP(sprite_register_x[HERO] + XDIR(hero_dir) * ((MYMANSQUARE || gfx_reflect) ? (cycles & 1) : 1));
                     sprite_register_y[HERO] = YPIXWRAP(sprite_register_y[HERO] + YDIR(hero_dir) * ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 1)));
@@ -3587,7 +3586,7 @@ gamelogic(void)
                             for (j = j1; j <= j2; j ++)
                             {
                                 mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                                if (! ISOPEN(mcell))
+                                if (! ISOPEN((unsigned) mcell))
                                     break;
                             }
                             if (j > j2) {
@@ -3598,7 +3597,7 @@ gamelogic(void)
                             for (j = j2; j <= j1; j ++)
                             {
                                 mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                                if (! ISOPEN(mcell))
+                                if (! ISOPEN((unsigned) mcell))
                                     break;
                             }
                             if (j > j1) {
@@ -3609,7 +3608,7 @@ gamelogic(void)
                             for (i = i1; i <= i2; i ++)
                             {
                                 mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                                if (! ISOPEN(mcell))
+                                if (! ISOPEN((unsigned) mcell))
                                     break;
                             }
                             if (i > i2) {
@@ -3620,7 +3619,7 @@ gamelogic(void)
                             for (i = i2; i <= i1; i ++)
                             {
                                 mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                                if (! ISOPEN(mcell))
+                                if (! ISOPEN((unsigned) mcell))
                                     break;
                             }
                             if (i > i1) {
@@ -3629,11 +3628,11 @@ gamelogic(void)
                             }
                         }
                         mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                        o0 = ISOPEN(mcell);
+                        o0 = ISOPEN((unsigned) mcell);
                         mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                        o1 = ISOPEN(mcell);
+                        o1 = ISOPEN((unsigned) mcell);
                         mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                        o2 = ISOPEN(mcell);
+                        o2 = ISOPEN((unsigned) mcell);
                         if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
                             || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
                             if (o0 || o2) {
@@ -3667,7 +3666,7 @@ gamelogic(void)
                             sprite_register_x[blue] = XPIXWRAP(x + XDIR(dir1));
                         if ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 2))
                             sprite_register_y[blue] = YPIXWRAP(y + YDIR(dir1));
-                        if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])])
+                        if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])])
                             home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])] =
                                 DIRWRAP(dir1 + 2);
                     }
@@ -3687,7 +3686,7 @@ gamelogic(void)
                         for (j = j1; j <= j2; j ++)
                         {
                             mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                            if (! ISOPEN(mcell))
+                            if (! ISOPEN((unsigned) mcell))
                                 break;
                         }
                         if (j > j2) {
@@ -3698,7 +3697,7 @@ gamelogic(void)
                         for (j = j2; j <= j1; j ++)
                         {
                             mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                            if (! ISOPEN(mcell))
+                            if (! ISOPEN((unsigned) mcell))
                                 break;
                         }
                         if (j > j1) {
@@ -3709,7 +3708,7 @@ gamelogic(void)
                         for (i = i1; i <= i2; i ++)
                         {
                             mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                            if (! ISOPEN(mcell))
+                            if (! ISOPEN((unsigned) mcell))
                                 break;
                         }
                         if (i > i2) {
@@ -3720,7 +3719,7 @@ gamelogic(void)
                         for (i = i2; i <= i1; i ++)
                         {
                             mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                            if (! ISOPEN(mcell))
+                            if (! ISOPEN((unsigned) mcell))
                                 break;
                         }
                         if (i > i1) {
@@ -3729,21 +3728,21 @@ gamelogic(void)
                         }
                     }
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                    o0 = ISOPEN(mcell);
+                    o0 = ISOPEN((unsigned) mcell);
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    o1 = ISOPEN(mcell);
+                    o1 = ISOPEN((unsigned) mcell);
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                    o2 = ISOPEN(mcell);
+                    o2 = ISOPEN((unsigned) mcell);
                     d0 = d2 = 0;
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    d1 = ISDOOR(mcell);
+                    d1 = ISDOOR((unsigned) mcell);
                     mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i1];
-                    if (! ISDOOR(mcell))
+                    if (! ISDOOR((unsigned) mcell))
                     {
                         mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                        d0 = ISDOOR(mcell);
+                        d0 = ISDOOR((unsigned) mcell);
                         mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                        d2 = ISDOOR(mcell);
+                        d2 = ISDOOR((unsigned) mcell);
                     }
                     d0 = d0 && (dir0 !=
                                 find_home_dir(s,
@@ -3788,7 +3787,7 @@ gamelogic(void)
                         sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
                     if ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 1))
                         sprite_register_y[mean] = (sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1)));
-                    if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])])
+                    if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])])
                         home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])] =
                             DIRWRAP(dir1 + 2);
                 } else if (sprite_register_used[eyes]
@@ -3808,12 +3807,12 @@ gamelogic(void)
                     dx = (int) ((XGHOST - x) / gfx_w);
                     dy = (int) (((dx ? YTOP : YGHOST) - y) / gfx_h);
                     d = find_home_dir(s, j1, i1);
-                    if (d)
-                        d1 = DIRWRAP(find_home_dir(s, YWRAP(j1 + YDIR(d)), XWRAP(i1 + XDIR(d))) + 2);
-                    if (d &&
-                        (! (d1 &&
-                            (d1 == d))))
-                        ghost_mem[s] = d;
+                    if ((unsigned) d)
+                        d1 = (unsigned) DIRWRAP(find_home_dir(s, YWRAP(j1 + YDIR((unsigned) d)), XWRAP(i1 + XDIR((unsigned) d))) + 2);
+                    if (((unsigned) d) &&
+                        (! (((unsigned) d1) &&
+                            (((unsigned) d1) == (unsigned) d))))
+                        ghost_mem[s] = (unsigned) d;
                     else {
                         if (dx * dx > dy * dy) {
                             if (dx > 0)
@@ -3839,14 +3838,14 @@ gamelogic(void)
                         continue;
                     }
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                    o0 = ISOPEN(mcell)
-                        || ISDOOR(mcell);
+                    o0 = ISOPEN((unsigned) mcell)
+                        || ISDOOR((unsigned) mcell);
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    o1 = ISOPEN(mcell)
-                        || ISDOOR(mcell);
+                    o1 = ISOPEN((unsigned) mcell)
+                        || ISDOOR((unsigned) mcell);
                     mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                    o2 = ISOPEN(mcell)
-                        || ISDOOR(mcell);
+                    o2 = ISOPEN((unsigned) mcell)
+                        || ISDOOR((unsigned) mcell);
                     if (o2 && (dir2 == ghost_mem[s]))
                         dir1 = dir2;
                     else if (o1 && (dir1 == ghost_mem[s]))
@@ -3864,7 +3863,7 @@ gamelogic(void)
                     sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
                     sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1));
                     sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1));
-                    if (! home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])])
+                    if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])])
                         home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])] =
                             DIRWRAP(dir1 + 2);
                 }
@@ -4023,11 +4022,11 @@ int check_collision(int eyes, int mean, int blue)
 int
 find_home_dir(int s, int r, int c)
 {
-    return (home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)]
+    return (((unsigned) home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)])
             ?
-            home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)]
+            ((unsigned) home_dir[(WHOSE_HOME_DIR((r),(c)) % ghosts*maze_h+(r))*(maze_w+1)+(c)])
             :
-            home_dir[((s)*maze_h+(r))*(maze_w+1)+(c)]);
+            ((unsigned) home_dir[((s)*maze_h+(r))*(maze_w+1)+(c)]));
 }
 
 /* heuristic for rewriting maze tiles */

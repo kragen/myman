@@ -104,11 +104,11 @@ extern const char *DONEMESSAGE;
 #define ISOPEN(c) (((c) == ' ') || ISDOT(c) || ISPELLET(c) || ((c) == '!') || (((c) >= 'A') && ((c) <= 'Z')) || ((c) == 'l') || ((c) == '~') || ISZAPRIGHT(c) || ISZAPLEFT(c) || ISZAPUP(c) || ISZAPDOWN(c))
 #define ISDOOR(c) (((c) == '=') || (c == ':') || ((c) == 240) || (c == 255))
 
-#define ISWALLCENTER(c) ((((unsigned char) (char) (c)) == 0x07) || (((unsigned char) (char) (c)) == 0x12) || (((unsigned char) (char) (c)) == 0x1d) || (((unsigned char) (char) (c)) == 0x3c) || (((unsigned char) (char) (c)) == 0x3e) || (((unsigned char) (char) (c)) == 0x5e) || (((unsigned char) (char) (c)) == 0x76) || (((unsigned char) (char) (c)) == 0xae) || (((unsigned char) (char) (c)) == 0xaf))
-#define ISWALLUP(c) (udlr[(unsigned int) (unsigned char) (c)] & 0xc0)
-#define ISWALLDOWN(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x30)
-#define ISWALLLEFT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x0c)
-#define ISWALLRIGHT(c) (udlr[(unsigned int) (unsigned char) (c)] & 0x03)
+#define ISWALLCENTER(c) ((((unsigned) (unsigned char) (char) (c)) == 0x07) || (((unsigned) (unsigned char) (char) (c)) == 0x12) || (((unsigned) (unsigned char) (char) (c)) == 0x1d) || (((unsigned) (unsigned char) (char) (c)) == 0x3c) || (((unsigned) (unsigned char) (char) (c)) == 0x3e) || (((unsigned) (unsigned char) (char) (c)) == 0x5e) || (((unsigned) (unsigned char) (char) (c)) == 0x76) || (((unsigned) (unsigned char) (char) (c)) == 0xae) || (((unsigned) (unsigned char) (char) (c)) == 0xaf))
+#define ISWALLUP(c) (((unsigned) udlr[(unsigned int) (unsigned char) (c)]) & 0xc0)
+#define ISWALLDOWN(c) (((unsigned) udlr[(unsigned int) (unsigned char) (c)]) & 0x30)
+#define ISWALLLEFT(c) (((unsigned) udlr[(unsigned int) (unsigned char) (c)]) & 0x0c)
+#define ISWALLRIGHT(c) (((unsigned) udlr[(unsigned int) (unsigned char) (c)]) & 0x03)
 #define ISWALL(c) (ISWALLUP(c) || ISWALLDOWN(c) || ISWALLLEFT(c) || ISWALLRIGHT(c) || ISWALLCENTER(c))
 #define ISNONINVERTABLE(c) (ISPELLET(c) || ISDOT(c) || ISZAPLEFT(c) || ISZAPRIGHT(c) || ISZAPUP(c) || ISZAPDOWN(c) || ISDOOR(c))
 
@@ -347,7 +347,7 @@ extern int sprite_color[256];
 
 #define CLEAN_ALL() do { memset((void *)dirty_cell, 0, sizeof(dirty_cell)); all_dirty = 0; } while (0)
 #define DIRTY_ALL() do { all_dirty = 1; } while (0)
-#define IS_CELL_DIRTY(x,y) (all_dirty || ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h) && (dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]&(1<<((x)&7)))))
+#define IS_CELL_DIRTY(x,y) (all_dirty || ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h) && ((unsigned) dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]&(1<<((x)&7)))))
 
 extern void maze_erase(void);
 
@@ -695,10 +695,10 @@ extern long pellet_timer,
 
 #define ghosts ((GHOSTS > MAXGHOSTS) ? MAXGHOSTS : GHOSTS)
 
-#define WHOSE_HOME_DIR(r,c) (home_dir[(GHOST2 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST2 \
-: home_dir[(GHOST0 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST0 \
-: home_dir[(GHOST3 % ghosts*maze_h+(r))*(maze_w+1)+(c)] ? GHOST3 \
-: GHOST1)
+#define WHOSE_HOME_DIR(r,c) (((unsigned) home_dir[(GHOST2 % ghosts*maze_h+(r))*(maze_w+1)+(c)]) ? GHOST2 \
+                             : ((unsigned) home_dir[(GHOST0 % ghosts*maze_h+(r))*(maze_w+1)+(c)]) ? GHOST0 \
+                             : ((unsigned) home_dir[(GHOST3 % ghosts*maze_h+(r))*(maze_w+1)+(c)]) ? GHOST3 \
+                             : GHOST1)
 
 #define rmsg (RMSG % maze_h)
 #define cmsg (CMSG % maze_w)
@@ -951,7 +951,7 @@ extern int visible_frame;
 #define MORTAR_COLOR maze_MORTAR_COLORS[maze_level % maze_MORTAR_COLORS_len]
 #endif
 
-#define TRANSLATED_MORTAR_COLOR (((BICOLOR_WALLS) && (udlr[(unsigned char) (char) maze[(maze_level*maze_h+ytile)*(maze_w+1)+xtile]] & 0xAA)) ? (WALL_COLOR) : (MORTAR_COLOR))
+#define TRANSLATED_MORTAR_COLOR (((BICOLOR_WALLS) && (((unsigned) udlr[(unsigned) (unsigned char) (char) maze[(maze_level*maze_h+ytile)*(maze_w+1)+xtile]]) & 0xAA)) ? (WALL_COLOR) : (MORTAR_COLOR))
 
 #define TRANSLATED_WALL_COLOR ((BICOLOR_WALLS) ? TRANSLATED_MORTAR_COLOR : (WALL_COLOR))
 

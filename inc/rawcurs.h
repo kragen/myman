@@ -913,7 +913,11 @@ typedef int rawcurses_wchar_t;
 #undef chtype
 #define chtype rawcurses_chtype
 
+#if INT_MAX < 0x7ffffffL
 typedef long chtype;
+#else
+typedef int chtype;
+#endif
 
 #undef attr_t
 #define attr_t rawcurses_attr_t
@@ -5277,11 +5281,11 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             {
                 if (vmscon_tt_mode.vmscon_tt_mode_class == DC$_TERM)
                 {
-                    if (vmscon_tt_mode.vmscon_tt_mode_length)
+                    if ((int) (unsigned char) vmscon_tt_mode.vmscon_tt_mode_length)
                     {
                         rawcurses_h = vmscon_tt_mode.vmscon_tt_mode_length;
                     }
-                    if (vmscon_tt_mode.vmscon_tt_mode_width)
+                    if ((int) (unsigned short) vmscon_tt_mode.vmscon_tt_mode_width)
                     {
                         rawcurses_w = vmscon_tt_mode.vmscon_tt_mode_width;
                     }
@@ -6411,11 +6415,11 @@ static int rawcurses_getch(void)
                         switch (kcode)
                         {
                         case K_ESC:
-                            return (unsigned char) '\x1b';
+                            return (int) (unsigned char) '\x1b';
                         case K_RET:
-                            return (unsigned char) '\r';
+                            return (int) (unsigned char) '\r';
                         case K_DEL:
-                            return (unsigned char) '\x7f';
+                            return (int) (unsigned char) '\x7f';
                         case CURS_UP:
                             return KEY_UP;
                         case CURS_DN:
@@ -6425,41 +6429,41 @@ static int rawcurses_getch(void)
                         case CURS_LF:
                             return KEY_LEFT;
                         case KP_MINUS:
-                            return (unsigned char) '-';
+                            return (int) (unsigned char) '-';
                         case KP_PLUS:
-                            return (unsigned char) '+';
+                            return (int) (unsigned char) '+';
                         case KP_LP:
-                            return (unsigned char) '(';
+                            return (int) (unsigned char) '(';
                         case KP_RP:
-                            return (unsigned char) ')';
+                            return (int) (unsigned char) ')';
                         case KP_SLASH:
-                            return (unsigned char) '/';
+                            return (int) (unsigned char) '/';
                         case KP_STAR:
-                            return (unsigned char) '*';
+                            return (int) (unsigned char) '*';
                         case KP_0:
-                            return (unsigned char) '0';
+                            return (int) (unsigned char) '0';
                         case KP_1:
-                            return (unsigned char) '1';
+                            return (int) (unsigned char) '1';
                         case KP_2:
-                            return (unsigned char) '2';
+                            return (int) (unsigned char) '2';
                         case KP_3:
-                            return (unsigned char) '3';
+                            return (int) (unsigned char) '3';
                         case KP_4:
-                            return (unsigned char) '4';
+                            return (int) (unsigned char) '4';
                         case KP_5:
-                            return (unsigned char) '5';
+                            return (int) (unsigned char) '5';
                         case KP_6:
-                            return (unsigned char) '6';
+                            return (int) (unsigned char) '6';
                         case KP_7:
-                            return (unsigned char) '7';
+                            return (int) (unsigned char) '7';
                         case KP_8:
-                            return (unsigned char) '8';
+                            return (int) (unsigned char) '8';
                         case KP_9:
-                            return (unsigned char) '9';
+                            return (int) (unsigned char) '9';
                         case KP_DOT:
-                            return (unsigned char) '.';
+                            return (int) (unsigned char) '.';
                         case KP_ENTER:
-                            return (unsigned char) '\n';
+                            return (int) (unsigned char) '\n';
                         default:
                             ret = ERR;
                             soft_ERR = 1;
@@ -6491,7 +6495,7 @@ static int rawcurses_getch(void)
                              &vmscon_iosb, 0, 0,
                              &vmscon_retchr, sizeof(vmscon_retchr), 0, &vmscon_iotrm, 0, 0))
                 {
-                    if (! vmscon_iosb.iosb$w_bcnt) ret = ERR;
+                    if (! (int) (unsigned short) vmscon_iosb.iosb$w_bcnt) ret = ERR;
                     else ret = (int) (unsigned char) vmscon_retchr;
                 }
             }
@@ -7520,7 +7524,7 @@ static int wctoa(chtype ch)
             ||
             rawcurses_stdio_utf8
             ||
-            (ch == (chtype) (0xff & (unsigned char) ch)))
+            (ch == (chtype) (0xff & (int) (unsigned char) ch)))
 #endif
         {
             return ch;
@@ -7560,7 +7564,7 @@ static int wctoa(chtype ch)
     if (! rawcurses_stdio) return ch;
 #endif
 #else /* ! defined(UNICODE) */
-    ch = (unsigned char) (char) ch;
+    ch = (int) (unsigned char) (char) ch;
 #if USE_WINCONSOLE
     if ((! rawcurses_stdio) && (GetConsoleOutputCP() == 437)) return ch;
 #endif
@@ -7997,7 +8001,7 @@ static int addch(chtype ch) {
 #if USE_CONIO
             if (rawcurses_stdio_conio)
             {
-                if (ch != (chtype) (0xff & (unsigned char) ch))
+                if (ch != (chtype) (0xff & (int) (unsigned char) ch))
                 {
                     ch = RAWCURSES_ASCII_REPLACEMENT_CHARACTER;
                 }
@@ -8006,7 +8010,7 @@ static int addch(chtype ch) {
             }
             else
 #endif
-            if ((rawcurses_raw) && (ch != (chtype) (0x7f & (unsigned char) ch)))
+                if ((rawcurses_raw) && (ch != (chtype) (0x7f & (int) (unsigned char) ch)))
             {
 #ifdef UNICODE
                 if (rawcurses_stdio_utf8 && ! (switch_to_acs && rawcurses_stdio_cp437))
@@ -8029,7 +8033,7 @@ static int addch(chtype ch) {
                     }
                     else
                     {
-                        if (ch != (chtype) (0xff & (unsigned char) ch))
+                        if (ch != (chtype) (0xff & (int) (unsigned char) ch))
                         {
                             ch = RAWCURSES_ASCII_REPLACEMENT_CHARACTER;
                         }
@@ -8156,7 +8160,7 @@ static int clrtobot(void) {
 static int addstr(const char *s) {
     while (*s)
     {
-        addch((unsigned char) *s++);
+        addch((chtype) (int) (unsigned char) *s++);
     }
     return OK;
 }

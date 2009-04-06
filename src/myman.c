@@ -2625,9 +2625,9 @@ static unsigned short *inside_wall = NULL;
 #define INSIDE_WALL_NO 0x0040
 #define INSIDE_WALL_PHASE2 0x0080
 #define INSIDE_WALL_PHASE3 0x0100
-#define IS_INVERTED(x,y) (inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)] & INSIDE_WALL_INVERTED)
-#define IS_FULLY_INVERTED(x,y) (inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)] & INSIDE_WALL_FULLY_INVERTED)
-#define IS_FULLY_NON_INVERTED(x,y) (inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)] & INSIDE_WALL_FULLY_NON_INVERTED)
+#define IS_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_INVERTED)
+#define IS_FULLY_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_FULLY_INVERTED)
+#define IS_FULLY_NON_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_FULLY_NON_INVERTED)
 
 /*
 
@@ -2850,7 +2850,10 @@ init_pen(void)
             else
             {
                 pen[i] = COLOR_PAIR(i);
-                pair_allocated[i / 8] |= 1 << (i % 8);
+                pair_allocated[i / 8] =
+                    ((unsigned) (unsigned char) pair_allocated[i / 8])
+                    |
+                    (1U << (i % 8));
             }
         }
         nextpair = 16;
@@ -2871,7 +2874,10 @@ init_pen(void)
                     if (my_init_pair(nextpair, trans_dynamic_color[i % 16], trans_dynamic_color[i / 16]) != ERR)
                     {
                         pen[i] = COLOR_PAIR(nextpair);
-                        pair_allocated[i / 8] |= 1 << (i % 8);
+                        pair_allocated[i / 8] =
+                            ((unsigned) (unsigned char) pair_allocated[i / 8])
+                            |
+                            (1U << (i % 8));
                         nextpair++;
                     }
                 }
@@ -2888,7 +2894,10 @@ init_pen(void)
                 (my_init_pair(i, trans_color(i), COLOR_BLACK) != ERR))
             {
                 pen[i] = COLOR_PAIR(i);
-                pair_allocated[i / 8] |= 1 << (i % 8);
+                pair_allocated[i / 8] =
+                    ((unsigned) (unsigned char) pair_allocated[i / 8])
+                    |
+                    (1U << (i % 8));
                 pen[8 + i] = COLOR_PAIR(i) |
                     (use_dim_and_bright ? PEN_BRIGHT : 0);
             }
@@ -2978,7 +2987,10 @@ init_pen(void)
                     if ((bgansi > 7) && (my_init_pair(nextpair, trans_color(bgansi & 7), trans_color(fgansi & 7)) != ERR))
                     {
                         pen[i] = COLOR_PAIR(nextpair) | A_REVERSE;
-                        pair_allocated[i / 8] |= 1 << (i % 8);
+                        pair_allocated[i / 8] =
+                            ((unsigned) (unsigned char) pair_allocated[i / 8])
+                            |
+                            (1U << (i % 8));
                         if (bgansi > 7)
                         {
                             pen[i] |= (use_dim_and_bright ? ((bgansi == 8) ? PEN_DIM : PEN_BRIGHT) : 0);
@@ -2991,7 +3003,10 @@ init_pen(void)
                         if (my_init_pair(nextpair, trans_color(fgansi & 7), trans_color(bgansi & 7)) != ERR)
                         {
                             pen[i] = COLOR_PAIR(nextpair);
-                            pair_allocated[i / 8] |= 1 << (i % 8);
+                            pair_allocated[i / 8] =
+                                ((unsigned) (unsigned char) pair_allocated[i / 8])
+                                |
+                                (1U << (i % 8));
                             if (fgansi > 7)
                             {
                                 pen[i] |= (use_dim_and_bright ? ((fgansi == 8) ? PEN_DIM : PEN_BRIGHT) : 0);
@@ -3044,7 +3059,10 @@ init_pen(void)
                         if (my_init_pair(nextpair, trans_color(fgansi & 7) | (fgansi & 8), trans_color(bgansi & 7) | (bgansi & 8)) != ERR)
                         {
                             pen[i] = COLOR_PAIR(nextpair);
-                            pair_allocated[i / 8] |= 1 << (i % 8);
+                            pair_allocated[i / 8] =
+                                ((unsigned) (unsigned char) pair_allocated[i / 8])
+                                |
+                                (1U << (i % 8));
                             if (fgansi > 7)
                             {
                                 pen[i] |= (use_dim_and_bright ? ((fgansi == 8) ? PEN_DIM : PEN_BRIGHT) : 0);
@@ -3149,7 +3167,10 @@ init_pen(void)
                 if (my_init_pair(nextpair, fg, bg) != ERR)
                 {
                     pen[i] = COLOR_PAIR(nextpair);
-                    pair_allocated[i / 8] |= 1 << (i % 8);
+                    pair_allocated[i / 8] =
+                        ((unsigned) (unsigned char) pair_allocated[i / 8])
+                        |
+                        (1U << (i % 8));
                     nextpair ++;
                 }
             }
@@ -3691,7 +3712,7 @@ my_attrset(chtype attrs)
 
 /* add a cp437 string to the HTML snapshot */
 static void
-snapshot_addch(unsigned long inbyte)
+snapshot_addch(short inbyte)
 {
     if (snapshot || snapshot_txt)
     {
@@ -4344,7 +4365,7 @@ snapshot_addch(unsigned long inbyte)
                         ) ? uni_cp437_halfwidth[inbyte] : (ascii_cp437[inbyte] & MY_A_CHARTEXT);
                     break;
                 default:
-                    inbyte = (unsigned char)
+                    inbyte = (int) (unsigned char)
                         (ascii_cp437[inbyte] & MY_A_CHARTEXT);
                     codepoint = inbyte;
                 }
@@ -4352,7 +4373,7 @@ snapshot_addch(unsigned long inbyte)
         }
         else
         {
-            inbyte = (unsigned char)
+            inbyte = (int) (unsigned char)
                 (ascii_cp437[inbyte] & MY_A_CHARTEXT);
             codepoint = inbyte;
         }
@@ -4476,7 +4497,7 @@ my_addch(unsigned long b, chtype attrs)
         unsigned char rhs;
 
         rhs = cp437_fullwidth_rhs[b];
-        if (rhs)
+        if ((int) (unsigned char) rhs)
         {
             snapshot_addch(rhs);
         }
@@ -4500,9 +4521,9 @@ my_addch(unsigned long b, chtype attrs)
                 unsigned char rhs;
 
                 rhs = cp437_fullwidth_rhs[b];
-                if (rhs)
+                if ((int) (unsigned char) rhs)
                 {
-                    buf[0] = (char) (unsigned char) (rhs & 0xFF);
+                    buf[0] = (char) (unsigned char) (0xFFU & (unsigned) rhs);
                     addstr(buf);
                 }
             }
@@ -4534,11 +4555,11 @@ my_addch(unsigned long b, chtype attrs)
                             unsigned char rhs;
 
                             rhs = cp437_fullwidth_rhs[b];
-                            if (rhs)
+                            if ((int) (unsigned char) rhs)
                             {
                                 wchar_t wrhs;
 
-                                wrhs = ucs_to_wchar(uni_cp437_fullwidth[rhs]);
+                                wrhs = ucs_to_wchar(uni_cp437_fullwidth[(int) (unsigned char) rhs]);
                                 my_wcw += wrhs ? my_wcwidth(wrhs) : 0;
                                 if (my_wcw == 2)
                                 {
@@ -4641,20 +4662,20 @@ my_addch(unsigned long b, chtype attrs)
                         unsigned char rhs;
                         
                         rhs = cp437_fullwidth_rhs[b];
-                        if (rhs)
+                        if ((int) (unsigned char) rhs)
                         {
-                            if (altcharset_cp437[rhs])
+                            if (altcharset_cp437[(int) (unsigned char) rhs])
                             {
                                 my_len =
                                     getcchar(
-                                        MY_WACS_PTR altcharset_cp437[rhs],
+                                        MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
                                         NULL,
                                         &my_acs_attrs,
                                         &my_color_pair,
                                         NULL);
                                 if (my_len &&
                                     (getcchar(
-                                        MY_WACS_PTR altcharset_cp437[rhs],
+                                        MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
                                         my_wchbuf,
                                         &my_acs_attrs,
                                         &my_color_pair,
@@ -4668,7 +4689,7 @@ my_addch(unsigned long b, chtype attrs)
                             }
                             else
                             {
-                                addch(ascii_cp437[rhs]);
+                                addch(ascii_cp437[(int) (unsigned char) rhs]);
                             }
                         }
                     }
@@ -4705,9 +4726,9 @@ my_addch(unsigned long b, chtype attrs)
                             unsigned char rhs;
                     
                             rhs = cp437_fullwidth_rhs[b];
-                            if (rhs)
+                            if ((int) (unsigned char) rhs)
                             {
-                                c = uni_cp437[rhs];
+                                c = uni_cp437[(int) (unsigned char) rhs];
                                 my_wch = ucs_to_wchar(c);
                                 getyx(stdscr, old_y, old_x);
                                 if (my_wch && (my_wcwidth(my_wch) < 2))
@@ -4719,7 +4740,7 @@ my_addch(unsigned long b, chtype attrs)
                                         goto my_addch_done;
                                     }
                                 }
-                                c = altcharset_cp437[rhs];
+                                c = altcharset_cp437[(int) (unsigned char) rhs];
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
                                 if (c & ~A_CHARTEXT)
@@ -4752,7 +4773,7 @@ my_addch(unsigned long b, chtype attrs)
                                 {
                                     goto my_addch_done;
                                 }
-                                addch(ascii_cp437[rhs]);
+                                addch(ascii_cp437[(int) (unsigned char) rhs]);
                             }
                         }
                     }
@@ -4795,10 +4816,10 @@ my_addch(unsigned long b, chtype attrs)
                 {
                     unsigned char rhs;
                     
-                    rhs = cp437_fullwidth_rhs[b];
-                    if (rhs)
+                    rhs = (unsigned char) (unsigned) (chtype) cp437_fullwidth_rhs[b];
+                    if ((int) (unsigned char) rhs)
                     {
-                        c = altcharset_cp437[rhs];
+                        c = altcharset_cp437[(int) (unsigned char) rhs];
 #if USE_A_CHARTEXT
 #ifdef A_CHARTEXT
                         if (c & ~A_CHARTEXT)
@@ -4842,9 +4863,9 @@ my_addch(unsigned long b, chtype attrs)
         unsigned char rhs;
 
         rhs = cp437_fullwidth_rhs[b];
-        if (rhs)
+        if ((int) (unsigned char) rhs)
         {
-            addch(ascii_cp437[rhs]);
+            addch(ascii_cp437[(int) (unsigned char) rhs]);
         }
     }
   my_addch_done:
@@ -5892,7 +5913,7 @@ gamerender(void)
                                         }
                                     }
                                 }
-                                if (player_tile
+                                if (((unsigned) player_tile)
                                     &&
                                     ! ((! intermission_running)
                                        &&
@@ -5908,7 +5929,9 @@ gamerender(void)
                                 {
                                     player_tile = ' ';
                                 }
-                                if (player_tile && tile_used[player_tile])
+                                if (((unsigned) player_tile)
+                                    &&
+                                    tile_used[(unsigned) player_tile])
                                 {
                                     filler_tile = player_tile;
                                 }
@@ -5950,9 +5973,9 @@ gamerender(void)
                                 {
                                     score_tile = '0' + (tmp % 10);
                                 }
-                                if (tile_used[score_tile] && (score_tile != ' '))
+                                if (tile_used[(unsigned) score_tile] && (' ' != (unsigned) score_tile))
                                 {
-                                    filler_tile = score_tile;
+                                    filler_tile = (unsigned) score_tile;
                                 }
                             }
                         }
@@ -6005,20 +6028,20 @@ gamerender(void)
                     unsigned char score_tile;
 
                     score_tile = (tmp % 10) + '0';
-                    if (tile_used[score_tile])
+                    if (tile_used[(unsigned) score_tile])
                     {
                         chtype a;
 
                         a = 0;
 #if USE_COLOR
                         if (use_color) {
-                            a = tile_color[score_tile];
+                            a = tile_color[(unsigned) score_tile];
                             if (! a) a = TEXT_COLOR;
                             a = pen[a];
                         }
 #endif
                         my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
-                        my_addch((unsigned long) (unsigned char) tile[(score_tile * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
+                        my_addch((unsigned long) (unsigned char) tile[(((unsigned) score_tile) * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
 
                     }
                 }
@@ -6160,7 +6183,7 @@ gamerender(void)
                 pause_x = vcol + (reflect ? r_off : c_off) - ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2);
                 pause_y = vline + (reflect ? c_off : r_off) - ((LINES - tile_h + 1) / 2);
                 pause_tile = (unsigned long) (unsigned char) PAUSE[pause_x / tile_w];
-                if (tile_used[pause_tile])
+                if (tile_used[(unsigned) pause_tile])
                 {
                     c = (unsigned long) (unsigned char) tile[(PAUSE[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
                     if (! c)
@@ -6186,7 +6209,7 @@ gamerender(void)
             }
             if (IS_CELL_DIRTY(xtile, ytile)
                 ||
-                ISPELLET((unsigned char) (char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
+                ISPELLET((unsigned) (unsigned char) (char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
                 ||
                 winning)
             {
@@ -6195,7 +6218,7 @@ gamerender(void)
                     for (s = 0; s < SPRITE_REGISTERS; s ++) {
                         int t, x, y, iseyes;
 
-                        t = sprite_register[s] + ((sprite_register_frame[s] < 0) ? (-sprite_register_frame[s]) : sprite_register_frame[s]);
+                        t = ((unsigned) sprite_register[s]) + ((sprite_register_frame[s] < 0) ? (-sprite_register_frame[s]) : sprite_register_frame[s]);
                         iseyes = ((s == GHOSTEYES(UNGHOSTEYES(s)))
                                   &&
                                   (UNGHOSTEYES(s) >= 0)
@@ -6226,14 +6249,14 @@ gamerender(void)
                             {
 #if USE_ATTR
 #ifdef MY_A_BOLD
-                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                if ((s == HERO) || (((unsigned) sprite_register[s]) == SPRITE_WHITE) || iseyes)
                                 {
                                     a |= use_dim_and_bright ? MY_A_BOLD : 0;
                                     break;
                                 }
 #endif
 #ifdef MY_A_UNDERLINE
-                                if (sprite_register[s] == SPRITE_BLUE)
+                                if (((unsigned) sprite_register[s]) == SPRITE_BLUE)
                                 {
                                     a |= use_underline ? MY_A_UNDERLINE : 0;
                                     break;
@@ -6261,14 +6284,14 @@ gamerender(void)
                             {
 #if USE_ATTR
 #ifdef MY_A_BOLD
-                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                if ((s == HERO) || (((unsigned) sprite_register[s]) == SPRITE_WHITE) || iseyes)
                                 {
                                     a |= use_dim_and_bright ? MY_A_BOLD : 0;
                                     break;
                                 }
 #endif
 #ifdef MY_A_UNDERLINE
-                                if (sprite_register[s] == SPRITE_BLUE)
+                                if (((unsigned) sprite_register[s]) == SPRITE_BLUE)
                                 {
                                     a |= use_underline ? MY_A_UNDERLINE : 0;
                                     break;
@@ -6279,7 +6302,7 @@ gamerender(void)
                             break;
                         } else if (sprite_register_used[s]
                                    && (! sprite_used[t])
-                                   && cp437_sprite[t]
+                                   && ((unsigned) cp437_sprite[t])
                                    && tile_used[(unsigned long) (unsigned char) cp437_sprite[t]]
                                    && ((x = sprite_register_x[s] - gfx_w / 2) <= i)
                                    && ((x_off = i - x) < gfx_w)
@@ -6300,14 +6323,14 @@ gamerender(void)
                             {
 #if USE_ATTR
 #ifdef MY_A_BOLD
-                                if ((s == HERO) || (sprite_register[s] == SPRITE_WHITE) || iseyes)
+                                if ((s == HERO) || (((unsigned) sprite_register[s]) == SPRITE_WHITE) || iseyes)
                                 {
                                     a |= use_dim_and_bright ? MY_A_BOLD : 0;
                                     break;
                                 }
 #endif
 #ifdef MY_A_UNDERLINE
-                                if (sprite_register[s] == SPRITE_BLUE)
+                                if (((unsigned) sprite_register[s]) == SPRITE_BLUE)
                                 {
                                     a |= use_underline ? MY_A_UNDERLINE : 0;
                                     break;
@@ -6343,9 +6366,9 @@ gamerender(void)
                         }
                         while ((! tile_used[c_mapped])
                                &&
-                               (fallback_cp437[c_mapped] != c)
+                               (((unsigned) fallback_cp437[c_mapped]) != c)
                                &&
-                               (fallback_cp437[c_mapped] != c_mapped))
+                               (((unsigned) fallback_cp437[c_mapped]) != c_mapped))
                         {
                             c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
                         }
@@ -6403,18 +6426,18 @@ gamerender(void)
                                 unsigned char d;
                                             
                                 d = home_dir[(s % ghosts*maze_h+ytile)*(maze_w+1)+xtile];
-                                c = (d == MYMAN_UP) ? '^'
-                                    : (d == MYMAN_DOWN) ? 'v'
-                                    : (d == MYMAN_LEFT) ? '<'
-                                    : (d == MYMAN_RIGHT) ? '>'
+                                c = (((unsigned) d) == MYMAN_UP) ? '^'
+                                    : (((unsigned) d) == MYMAN_DOWN) ? 'v'
+                                    : (((unsigned) d) == MYMAN_LEFT) ? '<'
+                                    : (((unsigned) d) == MYMAN_RIGHT) ? '>'
                                     : ISDOT(c) ? ','
                                     : ISPELLET(c) ? ';'
                                     : ISOPEN(c) ? ' '
                                     : ISDOOR(c) ? 'X'
                                     : '@';
 #if USE_COLOR
-                                if (use_color && d) {
-                                    a = sprite_color[sprite_register[MEANGHOST(s)] + sprite_register_frame[MEANGHOST(s)]];
+                                if (use_color && ((unsigned) d)) {
+                                    a = sprite_color[((unsigned) sprite_register[MEANGHOST(s)]) + sprite_register_frame[MEANGHOST(s)]];
                                     if (! a)
                                         a = sprite_register_color[MEANGHOST(s)];
                                     a = pen[a];
@@ -7026,27 +7049,27 @@ gamecycle(void)
     m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
     m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
     hero_can_move_left =
-        ISOPEN(m1)
+        ISOPEN((unsigned) m1)
         ||
-        ISZAPLEFT(m2);
+        ISZAPLEFT((unsigned) m2);
     m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
     m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
     hero_can_move_right =
-        ISOPEN(m1)
+        ISOPEN((unsigned) m1)
         ||
-        ISZAPRIGHT(m2);
+        ISZAPRIGHT((unsigned) m2);
     m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
     m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
     hero_can_move_up =
-        ISOPEN(m1)
+        ISOPEN((unsigned) m1)
         ||
-        ISZAPUP(m2);
+        ISZAPUP((unsigned) m2);
     m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
     m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
     hero_can_move_down =
-        ISOPEN(m1)
+        ISOPEN((unsigned) m1)
         ||
-        ISZAPDOWN(m2);
+        ISZAPDOWN((unsigned) m2);
 #ifdef KEY_RESIZE
     if (k == KEY_RESIZE)
     {
@@ -7394,7 +7417,7 @@ gamecycle(void)
               ||
               ((sprite_register_used[HERO])
                &&
-               (sprite_register[HERO] == (SPRITE_HERO + 12))
+               (((unsigned) sprite_register[HERO]) == (SPRITE_HERO + 12))
                &&
                (XTILE(sprite_register_x[HERO]) >= maze_w))))
             ||
@@ -8673,70 +8696,70 @@ main(int argc, char *argv[]
                             }
                             if (ISNONINVERTABLE(c))
                             {
-                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_NON_INVERTABLE;
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NON_INVERTABLE;
                             }
                             break;
                         case 1:
-                            if ((! (inside_wall[(n*maze_h+i) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE))
+                            if ((! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
                                 &&
-                                (! udlr[c])
+                                (! ((unsigned) udlr[c]))
                                 &&
-                                ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                  ||
-                                 (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                 (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                  ||
-                                 (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                 (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                  ||
-                                 (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)))
+                                 (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)))
                             {
-                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_NON_INVERTABLE;
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NON_INVERTABLE;
                                 phase_done = 0;
                             }
                             break;
                         case 2:
                         case 3:
-                            if ((! (inside_wall[(n*maze_h+i) * (maze_w + 1)+j] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO | ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3))))
+                            if ((! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO | ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3))))
                                 &&
                                 ((phase == 3)
                                  ||
-                                 ((((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                 ((((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                     ^
-                                    (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE))
+                                    (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
                                    &&
-                                   ((udlr[c] & 0x05) == 0x05))
+                                   ((((unsigned) udlr[c]) & 0x05) == 0x05))
                                   ||
-                                  (((inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                  (((((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                     ^
-                                    (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                    (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                    &&
-                                   ((udlr[c] & 0x50) == 0x50)))))
+                                   ((((unsigned) udlr[c]) & 0x50) == 0x50)))))
                             {
                                 int painting_done;
 
-                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_PROVISIONAL;
-                                if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_PROVISIONAL;
+                                if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                     &&
-                                    ((udlr[c] & 0x05) == 0x05))
+                                    ((((unsigned) udlr[c]) & 0x05) == 0x05))
                                 {
-                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_NO;
-                                    if (! (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NO;
+                                    if (! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
                                     {
-                                        inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] |= (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
+                                        inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) | (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
                                     }
                                 }
-                                else if ((inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                else if ((((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                          &&
-                                         ((udlr[c] & 0x50) == 0x50))
+                                         ((((unsigned) udlr[c]) & 0x50) == 0x50))
                                 {
-                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_NO;
-                                    if (! (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NO;
+                                    if (! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
                                     {
-                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] |= (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
+                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) | (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
                                     }
                                 }
                                 else
                                 {
-                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_YES;
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_YES;
                                 }
                                 do
                                 {
@@ -8752,15 +8775,15 @@ main(int argc, char *argv[]
                                             c2 = maze_visual(n, i2, j2);
                                             if (! undo)
                                             {
-                                                if (((! (udlr[c2] & 0x04))
+                                                if (((! (((unsigned) udlr[c2]) & 0x04))
                                                      &&
-                                                     (inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] & INSIDE_WALL_YES))
+                                                     (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
                                                     ||
-                                                    ((! (udlr[c2] & 0x40))
+                                                    ((! (((unsigned) udlr[c2]) & 0x40))
                                                      &&
-                                                     (inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] & INSIDE_WALL_YES)))
+                                                     (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & INSIDE_WALL_YES)))
                                                 {
-                                                    if (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
                                                     {
                                                         undo = 1;
                                                         i2 = 0;
@@ -8769,22 +8792,22 @@ main(int argc, char *argv[]
                                                     }
                                                     else
                                                     {
-                                                        if (! (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_YES))
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
                                                         {
-                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] |= INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
                                                             painting_done = 0;
                                                         }
                                                     }
                                                 }
-                                                else if (((udlr[c2] & 0x04)
+                                                else if (((((unsigned) udlr[c2]) & 0x04)
                                                           &&
-                                                          ((inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_PROVISIONAL))))
+                                                          ((((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL))))
                                                          ||
-                                                         ((udlr[c2] & 0x40)
+                                                         ((((unsigned) udlr[c2]) & 0x40)
                                                           &&
-                                                          ((inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_PROVISIONAL)))))
+                                                          ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)))))
                                                 {
-                                                    if ((inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_YES) == INSIDE_WALL_YES)
+                                                    if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES) == INSIDE_WALL_YES)
                                                     {
                                                         undo = 1;
                                                         i2 = 0;
@@ -8795,11 +8818,11 @@ main(int argc, char *argv[]
                                             }
                                             if (! undo)
                                             {
-                                                if ((inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_YES)
+                                                if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES)
                                                     &&
-                                                    (! (udlr[c2] & 0x04)))
+                                                    (! (((unsigned) udlr[c2]) & 0x04)))
                                                 {
-                                                    if (inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    if (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
                                                     {
                                                         undo = 1;
                                                         i2 = 0;
@@ -8808,9 +8831,9 @@ main(int argc, char *argv[]
                                                     }
                                                     else
                                                     {
-                                                        if (! (inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] & INSIDE_WALL_YES))
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
                                                         {
-                                                            inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] |= INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
                                                             painting_done = 0;
                                                         }
                                                     }
@@ -8818,11 +8841,11 @@ main(int argc, char *argv[]
                                             }
                                             if (! undo)
                                             {
-                                                if ((inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_YES)
+                                                if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES)
                                                     &&
-                                                    (! (udlr[c2] & 0x40)))
+                                                    (! (((unsigned) udlr[c2]) & 0x40)))
                                                 {
-                                                    if (inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
                                                     {
                                                         undo = 1;
                                                         i2 = 0;
@@ -8831,9 +8854,9 @@ main(int argc, char *argv[]
                                                     }
                                                     else
                                                     {
-                                                        if (! (inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] & INSIDE_WALL_YES))
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & INSIDE_WALL_YES))
                                                         {
-                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] |= INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
                                                             painting_done = 0;
                                                         }
                                                     }
@@ -8841,9 +8864,9 @@ main(int argc, char *argv[]
                                             }
                                             if (undo)
                                             {
-                                                if (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_PROVISIONAL)
+                                                if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)
                                                 {
-                                                    inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] &= ~(INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO);
+                                                    inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & ~(INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO);
                                                 }
                                             }
                                         }
@@ -8855,177 +8878,177 @@ main(int argc, char *argv[]
                                     for (i2 = 0; i2 < maze_h; i2 ++)
                                         for (j2 = 0; j2 <= maze_w; j2 ++)
                                         {
-                                            if (inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] & INSIDE_WALL_PROVISIONAL)
+                                            if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)
                                             {
-                                                inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] &= ~INSIDE_WALL_PROVISIONAL;
+                                                inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & ~INSIDE_WALL_PROVISIONAL;
                                             }
                                         }
                                 }
                                 phase_done = 0;
-                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3);
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3);
                             }
                             break;
                         case 4:
-                            if (! (inside_wall[(n*maze_h+i) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE))
+                            if (! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
                             {
                                 int ul, ll, ur, lr;
 
-                                ul = !! (inside_wall[(n*maze_h+i) * (maze_w + 1)+j] & INSIDE_WALL_YES);
-                                ll = !! (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & INSIDE_WALL_YES);
-                                ur = !! (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_YES);
-                                lr = !! (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_YES);
+                                ul = !! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_YES);
+                                ll = !! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_YES);
+                                ur = !! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_YES);
+                                lr = !! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_YES);
                                 if ((ul + ll + ur + lr) == 0)
                                 {
-                                    if ((udlr[c] & 0x05) == 0x05)
+                                    if ((((unsigned) udlr[c]) & 0x05) == 0x05)
                                     {
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ll = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ur = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x50) == 0x50)
+                                    if ((((unsigned) udlr[c]) & 0x50) == 0x50)
                                     {
-                                        if (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ll = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ur = 1;
                                             lr = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x44)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x44)
                                     {
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ur = 1;
                                             ll = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x41)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x41)
                                     {
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ll = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ur = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x14)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x14)
                                     {
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ur = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ll = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x11)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x11)
                                     {
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ur = 1;
                                             ll = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             lr = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x15)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x15)
                                     {
-                                        if ((inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ul = 1;
                                             ur = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ll = 1;
                                             lr = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x45)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x45)
                                     {
-                                        if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ll = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ur = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x51)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x51)
                                     {
-                                        if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ul = 1;
                                             ll = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ur = 1;
                                             lr = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x54)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x54)
                                     {
-                                        if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ur = 1;
                                             lr = 1;
                                         }
-                                        if (inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                         {
                                             ul = 1;
                                             ll = 1;
                                         }
                                     }
-                                    if ((udlr[c] & 0x55) == 0x55)
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x55)
                                     {
-                                        if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ur = 1;
                                             ll = 1;
                                         }
-                                        if ((inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)] & INSIDE_WALL_NON_INVERTABLE)
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
                                             ||
-                                            (inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)] & INSIDE_WALL_NON_INVERTABLE))
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE))
                                         {
                                             ul = 1;
                                             lr = 1;
@@ -9037,7 +9060,7 @@ main(int argc, char *argv[]
                                         ur = 0;
                                         ll = 0;
                                         lr = 0;
-                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_FULLY_NON_INVERTED;
+                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_FULLY_NON_INVERTED;
                                     }
                                 }
                                 if (((ul + ll + ur + lr) > 2)
@@ -9046,19 +9069,19 @@ main(int argc, char *argv[]
                                      &&
                                      ul))
                                 {
-                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_INVERTED;
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_INVERTED;
                                 }
                                 if (((ul + ll + ur + lr) == 4)
                                     &&
-                                    (((!! (udlr[c] & 0x40))
+                                    (((!! (((unsigned) udlr[c]) & 0x40))
                                       +
-                                      (!! (udlr[c] & 0x10))
+                                      (!! (((unsigned) udlr[c]) & 0x10))
                                       +
-                                      (!! (udlr[c] & 0x04))
+                                      (!! (((unsigned) udlr[c]) & 0x04))
                                       +
-                                      (!! (udlr[c] & 0x01))) > 1))
+                                      (!! (((unsigned) udlr[c]) & 0x01))) > 1))
                                 {
-                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] |= INSIDE_WALL_FULLY_INVERTED;
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_FULLY_INVERTED;
                                 }
                             }
                             break;
@@ -9191,9 +9214,9 @@ main(int argc, char *argv[]
                &&
                (! tile_used[c_mapped])
                &&
-               (fallback_cp437[c_mapped] != c)
+               (((unsigned) fallback_cp437[c_mapped]) != c)
                &&
-               (fallback_cp437[c_mapped] != c_mapped))
+               (((unsigned) fallback_cp437[c_mapped]) != c_mapped))
         {
             c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
             cp437_sprite[i] = (unsigned char) c_mapped;
