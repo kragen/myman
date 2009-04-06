@@ -906,7 +906,7 @@ int fputc_utf8_cp437(int c, FILE *stream)
     {
         return EOF;
     }
-    u = (c & 0x100) ? uni_cp437_halfwidth[((unsigned char) c) & 0xff] : uni_cp437[c];
+    u = (c & 0x100) ? uni_cp437_halfwidth[((int) (unsigned char) c) & 0xff] : uni_cp437[c];
     if (fputc_utf8(u, stream) == EOF)
     {
         return EOF;
@@ -4034,9 +4034,9 @@ find_home_dir(int s, int r, int c)
 long
 maze_visual(int n, int i, int j)
 {
-    long c;
+    int c;
 
-    c = (unsigned char) maze[(n*maze_h+i) * (maze_w + 1)+j];
+    c = (int) (unsigned char) maze[(n*maze_h+i) * (maze_w + 1)+j];
     switch (c)
     {
     case 0xb5:
