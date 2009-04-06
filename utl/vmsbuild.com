@@ -41,6 +41,9 @@ $ if f$search("myman.exe") .nes. "" then delete myman.exe;*
 $ if f$search("myman_''f$getsyi("arch_name")'.exe") .nes. "" then delete myman_'f$getsyi("arch_name")'.exe;*
 $ write sys$output "$! compiling"
 $ cc -
+/decc-
+/standard=RELAXED_ANSI89-
+/warnings=ENABLE=PORTABLE-
 /include_directory=([.inc],[.mygetopt])-
  'p1' 'p2' 'p3' 'p4' 'p5' 'p6' 'p7' 'p8' -
 [.src]myman.c,-
