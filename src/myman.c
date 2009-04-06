@@ -274,6 +274,8 @@
 #include <smg$routines.h>
 #include <ssdef.h>
 
+#pragma __nostandard
+
 #ifndef OLDCURSES
 #define OLDCURSES 1
 #endif
@@ -338,6 +340,8 @@ vmscurses_getch(void)
 #ifndef curs_set
 #define curs_set(f) ((smg$set_cursor_mode(&(stdkb->_id),(f)?SMG$M_CURSOR_ON:SMG$M_CURSOR_OFF)&1)?1:-1)
 #endif
+
+#pragma __standard
 
 #endif
 
