@@ -1636,12 +1636,19 @@ static FILE *fopen_datafile(const char *path, const char *mode)
     if (progname && *progname && (! ret))
     {
 #ifdef VMS
+
+#pragma __nostandard
+
         const char *progname_posix = NULL;
 
         progname_posix = decc$translate_vms(progname);
         if (! progname_posix) progname_posix = progname;
+
 #undef progname
 #define progname progname_posix
+
+#pragma __standard
+
 #endif /* defined(VMS) */
         buf = (char *) malloc(strlen(progname) + 1 + strlen(path) + 1);
         if (buf)
