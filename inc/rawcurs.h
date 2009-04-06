@@ -707,12 +707,16 @@ rawcurses_usleep(unsigned long usecs)
 
 #ifdef __VAX
 
+#pragma __nostandard
+
 struct _iosb
 {
     unsigned short iosb$w_status;
     unsigned short iosb$w_bcnt;
     unsigned iosb$l_dev_depend;
 };
+
+#pragma __standard
 
 #else /* ! defined(__VAX) */
 
@@ -2194,6 +2198,9 @@ static const char *RAWCURSES_NOCIVIS =
     "\0\0";
 
 #if USE_VMSCONSOLE
+
+#pragma __nostandard
+
 static void rawcurses_stdio_vmscon_cleanup(void)
 {
     if (rawcurses_stdio_vmscon_stdin_assigned)
@@ -2207,6 +2214,9 @@ static void rawcurses_stdio_vmscon_cleanup(void)
         rawcurses_stdio_vmscon_stdout_assigned = 0;
     }
 }
+
+#pragma __standard
+
 #endif /* USE_VMSCONSOLE */
 
 /* The rawcurses_fput_* family return >0 on success, <=0 otherwise;
@@ -4364,12 +4374,18 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     const char *lines;
     const char *columns;
 #if USE_VMSCONSOLE
+
+#pragma __nostandard
+
     rawcurses_stdio_vmscon_tt_mode_t vmscon_tt_mode;
     struct _iosb vmscon_iosb;
     struct dsc$descriptor_s vmscon_stdin_dev;
     struct dsc$descriptor_s vmscon_stdout_dev;
     struct stat vmscon_stbuf;
-#endif
+
+#pragma __standard
+
+#endif /* USE_VMSCONSOLE */
 
     termType = rawcurses_term_type();
     rawcurses_stdio_tw52 = 0;
@@ -4995,6 +5011,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     if (rawcurses_nw && rawcurses_nh)
     {
 #if USE_VMSCONSOLE
+
+#pragma __nostandard
+
         {
             if ((! rawcurses_stdio_vmscon_stdout_assigned)
                 &&
@@ -5042,7 +5061,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 }
             }
         }
-#endif
+
+#pragma __standard
+
+#endif /* USE_VMSCONSOLE */
         rawcurses_w = rawcurses_nw;
         rawcurses_h = rawcurses_nh;
         w = rawcurses_w;
@@ -5223,6 +5245,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
 #endif /* USE_AROSCONSOLE */
 #if USE_VMSCONSOLE
+
+#pragma __nostandard
+
     {
         if ((! rawcurses_stdio_vmscon_stdin_assigned)
             &&
@@ -5293,6 +5318,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             }
         }
     }
+
+#pragma __standard
+
 #endif /* USE_VMSCONSOLE */
 #if USE_IOCTL
     if (! (rawcurses_w && rawcurses_h)) {
@@ -6475,6 +6503,9 @@ static int rawcurses_getch(void)
             else
 #endif /* USE_TOSCONSOLE */
 #if USE_VMSCONSOLE
+
+#pragma __nostandard
+
             if (rawcurses_stdio_vmscon_stdin_assigned)
             {
                 struct _iosb vmscon_iosb;
@@ -6500,6 +6531,9 @@ static int rawcurses_getch(void)
                 }
             }
             else
+
+#pragma __standard
+
 #endif /* USE_VMSCONSOLE */
             {
 #ifdef FIONREAD
