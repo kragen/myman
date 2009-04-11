@@ -2387,7 +2387,7 @@ static int rawcurses_fput_smcup(FILE *fh)
 {
 #if USE_SETVBUF
     fflush(fh);
-    setvbuf(fh, NULL, _IOFBF, (BUFSIZ > 32767) ? BUFSIZ : 32767);
+    setvbuf(fh, NULL, _IOFBF, (BUFSIZ > 8192) ? BUFSIZ : 8192);
 #endif
 #if USE_CONIO
     if (rawcurses_stdio_conio)
