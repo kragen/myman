@@ -6370,9 +6370,9 @@ gamerender(void)
                         }
                         while ((! tile_used[c_mapped])
                                &&
-                               (((unsigned) fallback_cp437[c_mapped]) != c)
+                               (((int) (unsigned) fallback_cp437[c_mapped]) != c)
                                &&
-                               (((unsigned) fallback_cp437[c_mapped]) != c_mapped))
+                               (((int) (unsigned) fallback_cp437[c_mapped]) != c_mapped))
                         {
                             c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
                         }
@@ -9218,9 +9218,9 @@ main(int argc, char *argv[]
                &&
                (! tile_used[c_mapped])
                &&
-               (((unsigned) fallback_cp437[c_mapped]) != c)
+               (((int) (unsigned) fallback_cp437[c_mapped]) != c)
                &&
-               (((unsigned) fallback_cp437[c_mapped]) != c_mapped))
+               (((int) (unsigned) fallback_cp437[c_mapped]) != c_mapped))
         {
             c_mapped = (unsigned long) (unsigned char) fallback_cp437[c_mapped];
             cp437_sprite[i] = (unsigned char) c_mapped;

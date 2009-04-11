@@ -1451,7 +1451,7 @@ long *strtollist_word(const char *from, const char **endp, size_t *lenp)
     if (word)
     {
         const char *list_end;
-        int i;
+        size_t i;
 
         for (i = 0; i < word_len; i ++)
         {
@@ -1481,7 +1481,7 @@ double *strtodlist_word(const char *from, const char **endp, size_t *lenp)
     if (word)
     {
         const char *list_end;
-        int i;
+        size_t i;
 
         for (i = 0; i < word_len; i ++)
         {
