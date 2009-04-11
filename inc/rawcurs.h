@@ -2375,6 +2375,8 @@ static int rawcurses_fput_cnorm(FILE *fh)
 
 static int rawcurses_fput_smcup(FILE *fh)
 {
+    fflush(fh);
+    setvbuf(fh, NULL, _IOFBF, (BUFSIZ > 32767) ? BUFSIZ : 32767);
 #if USE_CONIO
     if (rawcurses_stdio_conio)
     {
@@ -2390,6 +2392,8 @@ static int rawcurses_fput_smcup(FILE *fh)
 
 static int rawcurses_fput_rmcup(FILE *fh, int lines)
 {
+    fflush(fh);
+    setvbuf(fh, NULL, _IOLBF, BUFSIZ);
     rawcurses_fput_clear(fh);
 #if USE_CONIO
     if (rawcurses_stdio_conio)
