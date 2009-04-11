@@ -874,7 +874,7 @@ typedef int rawcurses_wchar_t;
 #define USE_IOCTL 0
 #endif
 
-#else
+#else /* ! USE_WINCONSOLE */
 
 #ifdef SIGWINCH
 #ifndef USE_SIGWINCH
@@ -890,7 +890,17 @@ typedef int rawcurses_wchar_t;
 #define USE_IOCTL 1
 #endif
 
+#endif /* ! USE_WINCONSOLE */
+
+#ifndef USE_SETVBUF
+#ifdef _IOFBF
+#define USE_SETVBUF 1
 #endif
+#endif /* ! defined(USE_SETVBUF) */
+
+#ifndef USE_SETVBUF
+#define USE_SETVBUF 0
+#endif /* ! defined(USE_SETVBUF) */
 
 #if USE_IOCTL
 #if HAVE_SYS_IOCTL_H
@@ -2375,8 +2385,10 @@ static int rawcurses_fput_cnorm(FILE *fh)
 
 static int rawcurses_fput_smcup(FILE *fh)
 {
+#if USE_SETVBUF
     fflush(fh);
     setvbuf(fh, NULL, _IOFBF, (BUFSIZ > 32767) ? BUFSIZ : 32767);
+#endif
 #if USE_CONIO
     if (rawcurses_stdio_conio)
     {
@@ -2392,9 +2404,11 @@ static int rawcurses_fput_smcup(FILE *fh)
 
 static int rawcurses_fput_rmcup(FILE *fh, int lines)
 {
+    rawcurses_fput_clear(fh);
+#if USE_SETVBUF
     fflush(fh);
     setvbuf(fh, NULL, _IOLBF, BUFSIZ);
-    rawcurses_fput_clear(fh);
+#endif
 #if USE_CONIO
     if (rawcurses_stdio_conio)
     {
