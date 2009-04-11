@@ -25,9 +25,9 @@ touch cpmfrotz/signal.h
 if [ :"$use_z88dk" = :yes ]
 then
     # z88dk gets a bit further at the moment...
-    zcc +cpm -Imygetopt -DMYGETOPT_H=getopt.h -DRAWCURSES -Iinc -Icpmfrotz -o smallman.com src/myman.c 2>&1 | sed 's/^\([a-z0-9]\+\):"\([^"]\+\)" L:\([0-9]\+\) \(Warning\|Error\):/\4: \2:\3: /;s/^Warning: /warning: /;s/^Error: //'
+    zcc +cpm -Imygetopt -DRAWCURSES -Iinc -Icpmfrotz -o smallman.com src/myman.c 2>&1 | sed 's/^\([a-z0-9]\+\):"\([^"]\+\)" L:\([0-9]\+\) \(Warning\|Error\):/\4: \2:\3: /;s/^Warning: /warning: /;s/^Error: //'
 else
     # poor old Hi-Tech C does not fare so well...
-    zxc -I$(pwd)/mygetopt/ -DMYGETOPT_H=getopt.h -DRAWCURSES -I$(pwd)/inc/ -I$(pwd)/cpmfrotz/ -I$(pwd)/cpmfrotz/sys/ -o smallman.com src/myman.c
+    zxc -I$(pwd)/mygetopt/ -DRAWCURSES -I$(pwd)/inc/ -I$(pwd)/cpmfrotz/ -I$(pwd)/cpmfrotz/sys/ -o smallman.com src/myman.c
 fi
 
