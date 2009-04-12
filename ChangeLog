@@ -1,3 +1,13 @@
+2009-04-11  bsittler  <bsittler@>
+
+	* it turns out there is a combination of flags which convinces
+	Digital Mars C/C++ to produce a working 8086 MS-DOS executable
+	using RAWCURSES:
+	$ configure --with-raw-cp437 --enable-sizes=no --host=x86-pc-msdos \
+	--enable-variants=no HOSTCC=dmc CFLAGS= \
+	HOSTCFLAGS="-o+space -GT128 -0 -NS -mld" \
+	objdir=. OBJ_SUFFIX=.obj
+
 2009-03-30  bsittler  <bsittler@>
 
 	* src/main.c: old BSD curses (-DOLDCURSES -D_BSD44_CURSES) is now
