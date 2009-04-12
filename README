@@ -565,12 +565,10 @@ TerminalColors (if installed) to set the MyMan color palette.
 
 If you're using the Darwin/Mac OS X console (this is a "text mode"
 with no GUI or windowing system and is very rarely used,) you may
-install mach_mypal to switch your console to an appropriate palette
-and mach_acs to enable alternate character set (line drawing) support:
-
-   http://xent.com/~bsittler/mach_mypal
-
-   http://xent.com/~bsittler/mach_acs
+install utl/mach_mypal to switch your console to an appropriate
+palette and utl/mach_acs to enable alternate character set (line
+drawing) support. These have only been tested in Mac OS X 10.4 "Tiger"
+so far.
 
 
 C. Window Size:
