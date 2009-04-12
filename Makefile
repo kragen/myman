@@ -3199,6 +3199,8 @@ utl/bitmap4.py \
 utl/cpmbuild.sh \
 utl/lsic.sh \
 utl/macbuild.txt \
+utl/mach_acs \
+utl/mach_mypal \
 utl/vmsbuild.com \
 utl/myman.ct \
 utl/pacificc.sh \

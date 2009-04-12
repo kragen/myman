@@ -1,0 +1,332 @@
+#!/bin/bash
+# $Id: mach_mypal,v 1.1 2009/04/12 23:45:14 bsittler Exp $
+#
+# WARNING: This script modifies your running operating system kernel.
+# This is potentially very risky, as the kernel is what allows everything
+# else to run. Although I have made every attempt to ensure it is safe
+# (and believe it is), I can't guarantee it or be held liable if things
+# go wrong. in particular:
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+# EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+# IN NO EVENT SHALL THE AUTHOR OR ANY OTHER CONTRIBUTOR BE LIABLE FOR
+# ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+# TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+#
+# If you're looking for a way to change the colors used by the
+# Terminal.app terminal emulator which runs under the Mac OS X Quartz
+# windowing system, see TerminalColors instead:
+#
+#    http://www.culater.net/software/TerminalColors/TerminalColors.php
+#
+# This script changes the Darwin/Mac OS X Console's color palette for
+# use with the MyMan video game. To run it, save this to a file called
+# 'mach_mypal' and type:
+#
+#    sudo /bin/bash mach_mypal --install
+#
+# On Intel and PowerPC platforms, Apple's Darwin operating system and
+# Mac OS X use a full-screen system console derived from a NetBSD
+# framebuffer console. It is an ANSI-style terminal, and is not really
+# VT100 compatible.
+#
+# Under Mac OS X (both PowerPC and Intel), this is the system console
+# driver used while in single-user mode [reachable by holding down
+# Command-S during the boot process] and when logged in using console
+# mode [reachable by typing ">console" at the graphical login prompt.]
+#
+# NOTE: Under Mac OS X version 10.4, you'll need to enable the
+# password dialog inside the System Preferences | Accounts | Login
+# Options panel by disabling the "Automatically log in as" option and
+# setting the "Display login window as" option to "Name and password"
+#
+# NOTE: This script requires access to kernel memory. By default it
+# enables the built-in /dev/kmem by adding the kmem=1 option to the
+# nvram boot-args -- however, it may be possible to use it with Amit
+# Singh's alternate implementation (not tested, though.) For more
+# information, see:
+#
+#    http://www.osxbook.com/book/bonus/chapter8/kma/
+#
+# NOTE: This script needs the 'nm' utility; get it from Xcode or
+# odcctools
+
+export KERNEL_FILE="/mach"
+
+export KERNEL_MEMORY="/dev/kmem"
+
+export KERNEL_CLUT_SYMBOL="_appleClut8"
+
+export KERNEL_FONT_SYMBOL="_iso_font"
+export KERNEL_FONT_SIZE=$((256 * 16))
+
+export KERNEL_PALETTE_SYMBOL="${KERNEL_FONT_SYMBOL}"
+export KERNEL_PALETTE_OFFSET=$((${KERNEL_FONT_SIZE} + $( [ :"$(/usr/bin/uname -p)" = :powerpc ] && echo 44 || echo 32) ))
+
+# format is R G B or R1 G1 B1  R2 G2 B2 (in the latter case the average
+# of the two triples will be used); scale is 0 ... 1000 (inclusive)
+
+export KERNEL_PALETTE_0="   0    0    0                "
+export KERNEL_PALETTE_1=" 860  580  270  1000    0    0"
+export KERNEL_PALETTE_2="   0  710    0   580 1000    0"
+export KERNEL_PALETTE_3="1000  710  270  1000 1000    0"
+export KERNEL_PALETTE_4="   0    0  860   120  120  860"
+export KERNEL_PALETTE_5="1000  120  580   980  700  840"
+export KERNEL_PALETTE_6="   0  860  860     0 1000  860"
+export KERNEL_PALETTE_7="1000  710  580   860  860  860"
+
+export PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+if test -r /etc/defaults/mach_console
+then
+    . /etc/defaults/mach_console
+fi
+
+test :"$(uname -s)" = :"Darwin" || {
+    echo "$0: this is not Darwin, exiting" >&2
+    exit 1
+}
+if test :"$*" = :"--uninstall"
+then
+    chmod 644 /usr/sbin/mach_mypal || exit $?
+    echo "" >&2
+    echo "After the next reboot your Darwin console should" >&2
+    echo "use the default color palette." >&2
+    echo "" >&2
+    echo "You may optionally remove the /usr/sbin/mach_mypal line from" >&2
+    echo "/etc/rc.local by hand." >&2
+    echo "" >&2
+    exit 0
+fi
+test -x "$(type -p nm 2>/dev/null || echo /usr/bin/nm)" || {
+    echo "$0: you need to install Xcode or odcctools, exiting" >&2
+    exit 1
+}
+if test :"$*" = :"--install"
+then
+    if test :"$0" != :/usr/sbin/mach_mypal; then
+        cp "$0" /usr/sbin/mach_mypal || exit $?
+    fi
+    chmod 755 /usr/sbin/mach_mypal || exit $?
+    nvram boot-args="$(echo "kmem=1 $(nvram boot-args 2>/dev/null | cut -f 2- | sed 's/^kmem=1$//;s/^kmem=1 //;s/ kmem=1 //;s/ kmem=1$//')" | sed '$ s/  *$//')" || exit $?
+    fgrep /usr/sbin/mach_mypal /etc/rc.local >/dev/null 2>&1 || echo "test -x /usr/sbin/mach_mypal && /usr/sbin/mach_mypal" >> /etc/rc.local || exit $?
+    echo "" >&2
+    echo "After the next reboot your Darwin console should" >&2
+    echo "use a custom color palette." >&2
+    if test -d /System/Library/CoreServices/loginwindow.app; then
+        echo "" >&2
+        echo "Type \">console\" at the Mac OS X login window to get to the Darwin console." >&2
+        echo "" >&2
+        echo "NOTE: Under Mac OS X version 10.4, you'll need to enable the" >&2
+        echo "password dialog inside the System Preferences | Accounts | Login" >&2
+        echo "Options panel by disabling the \"Automatically log in as\" option and" >&2
+        echo "setting the \"Display login window as\" option to \"Name and password\"" >&2
+    fi
+    echo "" >&2
+    echo "To uninstall, type the following command:" >&2
+    echo "   sudo /bin/bash /usr/sbin/mach_mypal --uninstall" >&2
+    echo "" >&2
+    exit 0
+fi
+if test :"$(echo -n $'\x43\x21' | od -h | head -1 | awk '{print $2}')" = :"4321"
+then
+    swab4 () {
+        echo -n "$1$2$3$4"
+    }
+else
+    swab4 () {
+        echo -n "$4$3$2$1"
+    }
+fi
+long () {
+    swab4 $(printf \\\\\%o\ \\\\\%o\ \\\\\%o\ \\\\\%o $(($1>>24)) $((($1>>16)&255)) $((($1>>8)&255)) $(($1&255)))
+}
+shortx2 () {
+    long $((($1*65536)+$1))
+}
+bytex4 () {
+    shortx2 $((($1*256)+$1))
+}
+rgb888 () {
+    long $(((($1*255/1000)*256+($2*255/1000))*256+($3*255/1000)))
+}
+rgb555 () {
+    shortx2 $(((($1*31/1000)*32+($2*31/1000))*32+($3*31/1000)))
+}
+rgb () {
+    rgb555 "$@"
+    rgb888 "$@"
+}
+pal () {
+    bytex4 "$@"
+}
+clut="$(
+clut=
+dd if="${KERNEL_MEMORY}" bs=1 skip=$(( 0x$(nm "${KERNEL_FILE}"  | grep ' '"${KERNEL_CLUT_SYMBOL}"'$' | awk '{print $1}') )) count=$((256*3)) 2>/dev/null |
+od -vtx1 |
+fgrep ' ' |
+sed 's/  */ /g' |
+cut -d ' ' -f 2- |
+tr ' a-f' '\nA-F'
+)"
+clut="${clut:-FF
+FF
+FF
+00
+00
+00}"
+rgbclut () {
+    echo "$clut" |
+    {
+        local i=0 distance r g b best_distance=$((1000*1000*3+1)) best=0
+        while read r && read g && read b
+        do
+          distance=$((($1*255/1000-0x$r)*($1*255/1000-0x$r)+($2*255/1000-0x$g)*($2*255/1000-0x$g)+($3*255/1000-0x$b)*($3*255/1000-0x$b)))
+          if test $distance -le $best_distance
+          then
+              best_distance=$distance
+              best=$i
+          fi
+          i=$(($i+1))
+        done
+        echo $best
+    }
+}
+rgbpal () {
+    pal $(rgbclut "$@")
+    rgb "$@"
+}
+blend () {
+    if test $# = 3
+    then
+        set "$@" "$@"
+    fi
+    rgbpal $((($1+$4)/2)) $((($2+$5)/2)) $((($3+$6)/2))
+}
+test $# = 0 &&
+cmp <(
+    printf \
+"$(pal 0xFF)""$(rgb    0    0    0)"\
+"$(pal 0x23)""$(rgb 1000    0    0)"\
+"$(pal 0xB9)""$(rgb    0 1000    0)"\
+"$(pal 0x05)""$(rgb 1000 1000    0)"\
+"$(pal 0xD2)""$(rgb    0    0 1000)"\
+"$(pal 0x18)""$(rgb 1000    0 1000)"\
+"$(pal 0xB4)""$(rgb    0 1000 1000)"\
+"$(pal 0x00)""$(rgb 1000 1000 1000)"\
+''
+) <(
+    dd if="${KERNEL_MEMORY}" bs=1 skip=$(( 0x$(nm "${KERNEL_FILE}"  | grep ' '"${KERNEL_PALETTE_SYMBOL}"'$' | awk '{print $1}') + ${KERNEL_PALETTE_OFFSET})) count=$((8*4*3)) 2>/dev/null
+) >/dev/null 2>&1 &&
+dd if=<(
+   printf \
+"$(blend ${KERNEL_PALETTE_0})"\
+"$(blend ${KERNEL_PALETTE_1})"\
+"$(blend ${KERNEL_PALETTE_2})"\
+"$(blend ${KERNEL_PALETTE_3})"\
+"$(blend ${KERNEL_PALETTE_4})"\
+"$(blend ${KERNEL_PALETTE_5})"\
+"$(blend ${KERNEL_PALETTE_6})"\
+"$(blend ${KERNEL_PALETTE_7})"\
+''
+) of="${KERNEL_MEMORY}" bs=1 seek=$(( 0x$(nm "${KERNEL_FILE}"  | grep ' '"${KERNEL_PALETTE_SYMBOL}"'$' | awk '{print $1}') + ${KERNEL_PALETTE_OFFSET})) count=$((8*4*3)) conv=notrunc || {
+    echo "To use this, type the following command:" >&2
+    echo "   sudo /bin/bash $0 --install" >&2
+    exit 1
+}
+exit 0
+
+#
+# $Log: mach_mypal,v $
+# Revision 1.1  2009/04/12 23:45:14  bsittler
+# add mach_acs and mach_mypal, which were previously distributed separately
+#
+# Revision 1.36  2008/03/01 20:20:31  bsittler
+# works on ppc now
+#
+# Revision 1.36  2008/03/01 20:19:08  bsittler
+# works on ppc now
+#
+# Revision 1.35  2008/01/24 04:30:57  bsittler
+# more whitespace
+#
+# Revision 1.34  2008/01/24 04:28:22  bsittler
+# linked to TerminalColors
+#
+# Revision 1.33  2008/01/17 01:07:20  bsittler
+# fix typo that overwrote the palette with random stuff
+#
+# Revision 1.32  2008/01/17 00:59:17  bsittler
+# extra uninstall note
+#
+# Revision 1.31  2008/01/17 00:57:09  bsittler
+# /mach rather than /mach_kernel
+#
+# Revision 1.30  2008/01/17 00:55:28  bsittler
+# palette can now be overridden in /etc/defaults/mach_console
+#
+# Revision 1.29  2008/01/17 00:46:48  bsittler
+# more parameterized
+#
+# Revision 1.28  2008/01/17 00:40:45  bsittler
+# stray arguments = do nothing
+#
+# Revision 1.27  2008/01/17 00:29:00  bsittler
+# allow overriding using /etc/defaults/mach_console; add a dumb monochrome fallback CLUT
+#
+# Revision 1.26  2008/01/17 00:10:53  bsittler
+# only read the clut once
+#
+# Revision 1.25  2008/01/17 00:00:14  bsittler
+# take the last best match rather than the first one
+#
+# Revision 1.24  2008/01/16 23:26:02  bsittler
+# oops! clut is stored as packed 24-bit rgb, not 32-bit words
+#
+# Revision 1.23  2008/01/16 19:49:56  bsittler
+# actually use the kernel's color lookup table for the 8-bit part
+#
+# Revision 1.22  2008/01/16 16:43:15  bsittler
+# the new palette is now calculated as the average of the bright and dim
+# entries; someday this should be a gamma-corrected average, but bash
+# makes that extremely painful to calculate
+#
+# Revision 1.21  2008/01/16 16:28:47  bsittler
+# now the palette is given in rgb + open firmware color palette indexes (i guess?)
+#
+# Revision 1.20  2008/01/12 20:54:01  bsittler
+# ascii
+#
+# Revision 1.19  2008/01/12 20:35:59  bsittler
+# oops
+#
+# Revision 1.18  2008/01/12 20:34:45  bsittler
+# big fat disclaimer
+#
+# Revision 1.17  2008/01/12 19:31:50  bsittler
+# *** empty log message ***
+#
+# Revision 1.16  2008/01/12 19:30:39  bsittler
+# *** empty log message ***
+#
+# Revision 1.15  2008/01/12 19:11:56  bsittler
+# added an install-time note on enabling the console
+#
+# Revision 1.14  2008/01/12 19:09:01  bsittler
+# added a note on Amit Singh's /dev/kmem
+#
+# Revision 1.13  2008/01/12 18:57:30  bsittler
+# explicit path to bash
+#
+# Revision 1.12  2008/01/12 18:55:57  bsittler
+# *** empty log message ***
+#
+# Revision 1.11  2008/01/12 18:44:09  bsittler
+# minor cleanup, and better permissions-tweaking logic
+#
+# Revision 1.10  2008/01/12 17:11:12  bsittler
+# *** empty log message ***
+#
+#
