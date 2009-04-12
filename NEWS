@@ -1,5 +1,5 @@
 ﻿NEWS - news about the MyMan video game
-Copyright 2003, 2006-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+Copyright 2003, 2006-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
@@ -12,7 +12,12 @@ Added preliminary drivers for "newt" (--with-newt) and GTK+
 (--with-gtk/--with-gtk2); added THANKS and AUTHORS files.
 
 Classic BSD curses now works, thanks to a the FIONREAD ioctl. Just
-configure --with-bsdcurses.
+configure --with-bsdcurses. MyMan has been ported to OpenVMS, thanks
+to the generous owners of http://deathrow.vistech.net/ and also to
+HP/Compaq whose hobby license made this possible, and to some kind and
+patient VMS experts on IRC who knew the ins and outs of QIO. See
+utl/vmsbuild.com or run "@[.utl]vmsbuild" (no quotes) if you're using
+DCL with no gnv.
 
 
 myman 0.7.0
