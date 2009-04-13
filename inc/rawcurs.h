@@ -2332,6 +2332,8 @@ static int rawcurses_fput_palette_reset(FILE *fh)
 
 static int rawcurses_fput_cup(FILE *fh, int y, int x);
 
+static int rawcurses_fput_relcup(FILE *fh, int dy, int dx);
+
 static int rawcurses_fput_clear(FILE *fh)
 {
     int ret;
@@ -2356,10 +2358,15 @@ static int rawcurses_fput_clear(FILE *fh)
 
         for (y = 0; y < rawcurses_h; y ++)
         {
-            rawcurses_fput_cup(fh, y, 0);
+            if (rawcurses_stdio_relcup)
+            {
+                if (y) rawcurses_fput_relcup(fh, 1, 0);
+            }
+            else rawcurses_fput_cup(fh, y, 0);
             fprintf(fh, ESCAPE("#6"));
         }
-        rawcurses_fput_cup(fh, 0, 0);
+        if (rawcurses_stdio_relcup) rawcurses_fput_relcup(fh, 1 - rawcurses_h, 0);
+        else rawcurses_fput_cup(fh, 0, 0);
     }
     return ret;
 }
