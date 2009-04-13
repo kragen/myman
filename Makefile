@@ -1937,7 +1937,8 @@ pac49 \
 pac188 \
 small188 \
 full188 \
-lim
+lim \
+jobman
 all_sizes = \
 small \
 big \
@@ -3473,6 +3474,8 @@ lvl/javapac.asc \
 lvl/javapac.txt \
 lvl/jellymon.asc \
 lvl/jellymon.txt \
+lvl/jobman.asc \
+lvl/jobman.txt \
 lvl/jrpac.asc \
 lvl/jrpac.txt \
 lvl/jrpac26.asc \
