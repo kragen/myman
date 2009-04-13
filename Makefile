@@ -1936,7 +1936,8 @@ misstiny \
 pac49 \
 pac188 \
 small188 \
-full188
+full188 \
+lim
 all_sizes = \
 small \
 big \
@@ -3492,6 +3493,8 @@ lvl/kcm.asc \
 lvl/kcm.txt \
 lvl/kpacman.asc \
 lvl/kpacman.txt \
+lvl/lim.asc \
+lvl/lim.txt \
 lvl/lives.asc \
 lvl/lives.txt \
 lvl/makman.asc \
