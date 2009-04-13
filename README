@@ -349,11 +349,26 @@ the underlying display libraries:
                                             stdio (ESC[11m)
                         RAWCURSES_ISO2022   Zero value disables use of ISO 2022
                                             character set selection sequences
+                        RAWCURSES_WIDE      Nonzero value forces use of the
+                                            VT100 double-width characters when
+                                            using stdio
                         RAWCURSES_H19       Nonzero value forces use of the
                                             H-19 alternate character set when
                                             using stdio
                         RAWCURSES_VT52      Nonzero value forces use of the
                                             VT52 escape sequences when
+                                            using stdio
+                        RAWCURSES_ST52      Nonzero value forces use of the
+                                            ST52 escape sequences when
+                                            using stdio
+                        RAWCURSES_VWMTERM   Nonzero value forces use of the
+                                            vwmterm escape sequences when
+                                            using stdio
+                        RAWCURSES_AMIGA     Nonzero value forces use of the
+                                            Amiga console escape sequences when
+                                            using stdio
+                        RAWCURSES_DECTERM   Nonzero value forces use of the
+                                            DECterm escape sequences when
                                             using stdio
                         RAWCURSES_ADM3A     Nonzero value forces use of the
                                             ADM3A escape sequences when
