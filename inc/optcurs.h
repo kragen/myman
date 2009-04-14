@@ -1433,6 +1433,8 @@ static int optcurses_refresh(void)
                                             optcurses__combine_bitmap(&chprev, &attrprev, chprev, attrprev, chprev1, attrprev1);
                                         }
                                         move(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1), x - i);
+                                        delch();
+                                        delch();
                                         if (insch(ch) != ERR)
                                         {
                                             if (attrprev != attr)

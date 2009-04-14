@@ -2268,6 +2268,41 @@ static int rawcurses_fput_ich(FILE *fh, int n)
     return (fprintf(fh, CSI("%d@"), n) > 0);
 }
 
+static int rawcurses_fput_dch(FILE *fh, int n)
+{
+#if USE_CONIO
+    if (rawcurses_stdio_conio)
+    {
+        rawcurses_y = wherey() - 1;
+        rawcurses_x = wherex() - 1;
+#ifdef __TINYC__
+        {
+            int i;
+
+            for (i = rawcurses_x + n; i < rawcurses_w; i ++)
+            {
+                char buf[4];
+
+                _conio_gettext(i + 1, rawcurses_y + 1,
+                               i + 1, rawcurses_y + 1,
+                               buf);
+                puttext(i + 1 - n, rawcurses_y + 1,
+                        i + 1 - n, rawcurses_y + 1,
+                        buf);
+            }
+        }
+#else /* ! defined(__TINYC__) */
+        movetext(rawcurses_x + 1, rawcurses_y + 1,
+                 rawcurses_w, rawcurses_y + 1,
+                 rawcurses_x + 1 + n, rawcurses_y + 1);
+#endif /* ! defined(__TINYC__) */
+        return 1;
+    }
+#endif /* USE_CONIO */
+    if (rawcurses_stdio_adm3a || rawcurses_stdio_vt52) return 0;
+    return (fprintf(fh, CSI("%dP"), n) > 0);
+}
+
 static int rawcurses_fput_request_palette(FILE *fh)
 {
     int i;
@@ -8175,6 +8210,22 @@ static int insch(chtype ch)
     return ERR;
 }
 
+#undef delch
+#define delch rawcurses_delch
+static int delch(void)
+{
+    /* FIXME: should implement this for WIN32 too */
+    /* FIXME: this may fail silently -- do not trust it */
+    if (rawcurses_stdio)
+    {
+        if (rawcurses_fput_dch(stdout, 1) > 0)
+        {
+            return OK;
+        }
+    }
+    return ERR;
+}
+
 #undef clrtoeol
 #define clrtoeol rawcurses_clrtoeol
 static int clrtoeol(void)
@@ -8205,6 +8256,7 @@ static int clrtoeol(void)
             (oy == (LINES - 1)))
         {
             move(oy, COLS - 2);
+            delch();
             insch(' ');
         }
         move(oy, ox);
