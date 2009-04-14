@@ -853,7 +853,7 @@ typedef int rawcurses_wchar_t;
 #endif
 
 #ifndef SWAPDOTS
-#define SWAPDOTS (! (rawcurses_stdio && rawcurses_stdio_acs && (rawcurses_stdio_acs_h19 || rawcurses_stdio_cp437 || rawcurses_stdio_noswapdots)))
+#define SWAPDOTS (! (rawcurses_stdio && rawcurses_stdio_acs && (rawcurses_stdio_acs_h19 || rawcurses_stdio_acs_wy60 || rawcurses_stdio_cp437 || rawcurses_stdio_noswapdots)))
 #endif
 
 #ifndef USE_RAW_UCS
@@ -1242,6 +1242,7 @@ RAWCURSES_GLOBAL(chtype rawcurses_stdio_utf8_state, = 0UL);
 RAWCURSES_GLOBAL(int rawcurses_stdio_utf8_remaining, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_h19, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_acs_wy60, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_noswapdots, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_cp437, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_nobullet, = 0);
@@ -1511,6 +1512,13 @@ static const char *RAWCURSES_VT52LIKE =
     "ztx" "\0"
     "ztx-1-a" "\0"
     "ztx11" "\0"
+    "\0\0";
+
+/* list of terminals for which we assume a Wyse 60-style alternate
+ * character set */
+static const char *RAWCURSES_WY60LIKE =
+    "wy60" "\0"
+    "wyse60" "\0"
     "\0\0";
 
 /* list of terminals for which we assume an H19-style alternate
@@ -2491,7 +2499,7 @@ static int rawcurses_fput_enacs(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_adm3a) return 0;
-    if (rawcurses_stdio_vt52 || rawcurses_stdio_acs_h19 || rawcurses_stdio_cp437) return 1;
+    if (rawcurses_stdio_vt52 || rawcurses_stdio_acs_h19 || rawcurses_stdio_acs_wy60 || rawcurses_stdio_cp437) return 1;
     if (! rawcurses_stdio_iso2022) return 1;
     return fputs(ESCAPE("(B") ESCAPE(")0"), fh) != EOF;
 }
@@ -2505,6 +2513,7 @@ static int rawcurses_fput_smacs(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("F"), fh) != EOF;
+    if (rawcurses_stdio_acs_wy60) return fputs(ESCAPE("H"), fh) != EOF;
     if (rawcurses_stdio_cp437 && ! rawcurses_stdio_adm3a)
     {
         if (rawcurses_stdio_utf8) return 1;
@@ -3129,6 +3138,51 @@ static chtype rawcurses_map_acs(chtype ch)
                 ch = 254;
                 break;
             }
+            ch = (chtype) ERR;
+        }
+        return ch;
+    }
+    if (rawcurses_stdio_acs_wy60)
+    {
+        switch (ch)
+        {
+        case ACS_BLOCK:
+            ch = '7';
+            break;
+        case ACS_LRCORNER:
+            ch = '5';
+            break;
+        case ACS_URCORNER:
+            ch = '3';
+            break;
+        case ACS_ULCORNER:
+            ch = '2';
+            break;
+        case ACS_LLCORNER:
+            ch = '1';
+            break;
+        case ACS_PLUS:
+            ch = '8';
+            break;
+        case ACS_HLINE:
+            ch = '<';
+            break;
+        case ACS_LTEE:
+            ch = '4';
+            break;
+        case ACS_RTEE:
+            ch = '9';
+            break;
+        case ACS_BTEE:
+            ch = '=';
+            break;
+        case ACS_TTEE:
+            ch = '0';
+            break;
+        case ACS_VLINE:
+            ch = '>';
+            break;
+        default:
             ch = (chtype) ERR;
         }
         return ch;
@@ -5025,6 +5079,25 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             h19like += strlen(h19like) + 1;
         }
     }
+    if (rawcurses_getenv_boolean("RAWCURSES_WY60"))
+    {
+        rawcurses_stdio_acs_wy60 = *(rawcurses_getenv_boolean("RAWCURSES_WY60")) ? 1 : 0;
+    }
+    else
+    {
+        const char *wy60like = RAWCURSES_WY60LIKE;
+
+        rawcurses_stdio_acs_wy60 = 0;
+        while (strlen(wy60like))
+        {
+            if (! strcmp(termType, wy60like))
+            {
+                rawcurses_stdio_acs_wy60 = 1;
+                break;
+            }
+            wy60like += strlen(wy60like) + 1;
+        }
+    }
     if (rawcurses_getenv_boolean("RAWCURSES_NOSWAPDOTS"))
     {
         rawcurses_stdio_noswapdots = *(rawcurses_getenv_boolean("RAWCURSES_NOSWAPDOTS")) ? 1 : 0;
@@ -5042,6 +5115,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         }
     }
     if (rawcurses_stdio_acs_h19 && ! rawcurses_getenv_boolean("RAWCURSES_ACS"))
+    {
+        rawcurses_stdio_acs = 1;
+    }
+    if (rawcurses_stdio_acs_wy60 && ! rawcurses_getenv_boolean("RAWCURSES_ACS"))
     {
         rawcurses_stdio_acs = 1;
     }
