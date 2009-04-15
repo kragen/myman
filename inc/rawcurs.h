@@ -1243,6 +1243,9 @@ RAWCURSES_GLOBAL(int rawcurses_stdio_utf8_remaining, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_h19, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_wy60, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_acs_kaypro2x, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_wy60, = 0);
+RAWCURSES_GLOBAL(int rawcurses_stdio_kaypro2x, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_noswapdots, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_cp437, = 0);
 RAWCURSES_GLOBAL(int rawcurses_stdio_acs_nobullet, = 0);
@@ -1514,11 +1517,61 @@ static const char *RAWCURSES_VT52LIKE =
     "ztx11" "\0"
     "\0\0";
 
-/* list of terminals for which we assume a Wyse 60-style alternate
- * character set */
+/* list of terminals for which we assume Wyse 60-style escape
+ * sequences */
 static const char *RAWCURSES_WY60LIKE =
     "wy60" "\0"
+    "wy60-25" "\0"
+    "wy60-25-w" "\0"
+    "wy60-2p" "\0"
+    "wy60-42" "\0"
+    "wy60-42-w" "\0"
+    "wy60-43" "\0"
+    "wy60-43-w" "\0"
+    "wy60-vb" "\0"
+    "wy60-w-vb" "\0"
+    "wy60-wvb" "\0"
+    "wy99gt" "\0"
+    "wy99gt-25" "\0"
+    "wy99gt-25-w" "\0"
+    "wy99gt-2p" "\0"
+    "wy99gt-vb" "\0"
+    "wy99gt-w" "\0"
+    "wy99gt-w-vb" "\0"
+    "wy99gt-wvb" "\0"
     "wyse60" "\0"
+    "wyse60-25" "\0"
+    "wyse60-25-w" "\0"
+    "wyse60-42" "\0"
+    "wyse60-42-w" "\0"
+    "wyse60-43" "\0"
+    "wyse60-43-w" "\0"
+    "wyse60-vb" "\0"
+    "wyse60-wvb" "\0"
+    "wyse99gt" "\0"
+    "wyse99gt-25" "\0"
+    "wyse99gt-25-w" "\0"
+    "wyse99gt-vb" "\0"
+    "wyse99gt-w" "\0"
+    "wyse99gt-wvb" "\0"
+    "\0\0";
+
+/* list of terminals for which we assume a Wyse 60-style alternate
+ * character set */
+#ifndef RAWCURSES_ACS_WY60LIKE
+#define RAWCURSES_ACS_WY60LIKE RAWCURSES_WY60LIKE
+#endif
+
+/* list of terminals for which we assume a Kaypro 2x-style alternate
+ * character set */
+static const char *RAWCURSES_ACS_KAYPRO2XLIKE =
+    "kaypro2x" "\0"
+    "\0\0";
+
+/* list of terminals for which we assume Kaypro 2x-style escape
+ * sequences */
+static const char *RAWCURSES_KAYPRO2XLIKE =
+    "kaypro2x" "\0"
     "\0\0";
 
 /* list of terminals for which we assume an H19-style alternate
@@ -1831,6 +1884,7 @@ static const char *RAWCURSES_ADM3ALIKE =
     "iq140" "\0"
     "kaypro" "\0"
     "kaypro2" "\0"
+    "kaypro2x" "\0"
     "kds6402" "\0"
     "kds7372" "\0"
     "kds7372-w" "\0"
@@ -2428,6 +2482,8 @@ static int rawcurses_fput_civis(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("f"), fh) != EOF;
+    if (rawcurses_stdio_wy60) return fputs(ESCAPE("`0"), fh) != EOF;
+    if (rawcurses_stdio_kaypro2x) return fputs(ESCAPE("C4"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_amiga) return fputs(CSI("0 p"), fh) != EOF;
     return fputs(CSI("\?25l"), fh) != EOF;
@@ -2447,6 +2503,8 @@ static int rawcurses_fput_cnorm(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_st52) return fputs(ESCAPE("e"), fh) != EOF;
+    if (rawcurses_stdio_wy60) return fputs(ESCAPE("`1"), fh) != EOF;
+    if (rawcurses_stdio_kaypro2x) return fputs(ESCAPE("B4"), fh) != EOF;
     if (rawcurses_stdio_vt52 || rawcurses_stdio_adm3a) return 0;
     if (rawcurses_stdio_amiga) return fputs(CSI(" p"), fh) != EOF;
     return fputs(CSI("\?25h"), fh) != EOF;
@@ -2499,7 +2557,7 @@ static int rawcurses_fput_enacs(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_adm3a) return 0;
-    if (rawcurses_stdio_vt52 || rawcurses_stdio_acs_h19 || rawcurses_stdio_acs_wy60 || rawcurses_stdio_cp437) return 1;
+    if (rawcurses_stdio_vt52 || rawcurses_stdio_acs_h19 || rawcurses_stdio_acs_wy60 || rawcurses_stdio_acs_kaypro2x || rawcurses_stdio_cp437) return 1;
     if (! rawcurses_stdio_iso2022) return 1;
     return fputs(ESCAPE("(B") ESCAPE(")0"), fh) != EOF;
 }
@@ -2513,7 +2571,8 @@ static int rawcurses_fput_smacs(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("F"), fh) != EOF;
-    if (rawcurses_stdio_acs_wy60) return fputs(ESCAPE("H"), fh) != EOF;
+    if (rawcurses_stdio_wy60 && rawcurses_stdio_acs_wy60) return fputs(ESCAPE("H"), fh) != EOF;
+    if (rawcurses_stdio_kaypro2x || rawcurses_stdio_acs_kaypro2x) return 1;
     if (rawcurses_stdio_cp437 && ! rawcurses_stdio_adm3a)
     {
         if (rawcurses_stdio_utf8) return 1;
@@ -2533,6 +2592,8 @@ static int rawcurses_fput_rmacs(FILE *fh)
     }
 #endif
     if (rawcurses_stdio_vt52) return fputs(ESCAPE("G"), fh) != EOF;
+    if (rawcurses_stdio_wy60 && rawcurses_stdio_acs_wy60) return 1;
+    if (rawcurses_stdio_kaypro2x || rawcurses_stdio_acs_kaypro2x) return 1;
     if (rawcurses_stdio_cp437 && ! rawcurses_stdio_adm3a)
     {
         if (rawcurses_stdio_utf8) return 1;
@@ -2943,6 +3004,24 @@ static int rawcurses_fput_sgr(FILE *fh, attr_t a, attr_t a_rgb)
         }
         return 1;
     }
+    if (rawcurses_stdio_kaypro2x)
+    {
+        fprintf(fh,
+                ESCAPE("%c0") ESCAPE("%c1") ESCAPE("%c3"),
+                (a & (A_REVERSE | A_STANDOUT)) ? 'B' : 'C',
+                (a & (A_DIM | A_STANDOUT)) ? 'B' : 'C',
+                (a & (A_UNDERLINE | A_STANDOUT)) ? 'B' : 'C');
+        return 1;
+    }
+    if (rawcurses_stdio_wy60)
+    {
+        fprintf(fh, ESCAPE("G0"));
+        if (a & A_BOLD) fprintf(fh, ESCAPE("Gt"));
+        if (a & A_DIM) fprintf(fh, ESCAPE("G7"));
+        if (a & A_UNDERLINE) fprintf(fh, ESCAPE("G8"));
+        if (a & (A_REVERSE | A_STANDOUT)) fprintf(fh, ESCAPE("G6"));
+        return 1;
+    }
     if (rawcurses_stdio_adm3a) return 0;
     fputs(CSI("0"), fh);
     if ((a_rgb & BACKGROUND_INTENSITY)
@@ -3183,6 +3262,55 @@ static chtype rawcurses_map_acs(chtype ch)
             ch = '>';
             break;
         default:
+            ch = (chtype) ERR;
+        }
+        return ch;
+    }
+    if (rawcurses_stdio_acs_kaypro2x)
+    {
+        switch (ch)
+        {
+        case ACS_BLOCK:
+            ch = 0x80 | A_REVERSE;
+            break;
+        case RAWCURSES__ACS_THALF:
+            ch = 0x8f;
+            break;
+        case RAWCURSES__ACS_BHALF:
+            ch = 0x8f | A_REVERSE;
+            break;
+        case RAWCURSES__ACS_LHALF:
+            ch = 0xd5 | A_REVERSE;
+            break;
+        case RAWCURSES__ACS_RHALF:
+            ch = 0xd5;
+            break;
+        default:
+#ifdef UNICODE
+            if ((ch >= 0x2800) && (ch <= 0x28ff))
+            {
+                /* UCS/Unicode Braille dot layout: */
+                /* 0 3 */
+                /* 1 4 */
+                /* 2 5 */
+                /* 6 7 */
+                /* Kaypro 2x cell layout: (reverse is used to fill the final cell) */
+                /* 1 0 */
+                /* 3 2 */
+                /* 5 4 */
+                /* - 6 */
+                ch = (0x80
+                      ^ ((ch & 0x40) ? (0x7f | A_REVERSE) : 0)
+                      ^ ((ch & 0x80) ? 0x40 : 0)
+                      ^ ((ch & 0x04) ? 0x20 : 0)
+                      ^ ((ch & 0x20) ? 0x10 : 0)
+                      ^ ((ch & 0x02) ? 0x08 : 0)
+                      ^ ((ch & 0x10) ? 0x04 : 0)
+                      ^ ((ch & 0x01) ? 0x02 : 0)
+                      ^ ((ch & 0x08) ? 0x01 : 0));
+                break;
+            }
+#endif /* UNICODE */
             ch = (chtype) ERR;
         }
         return ch;
@@ -5081,21 +5209,86 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
     if (rawcurses_getenv_boolean("RAWCURSES_WY60"))
     {
-        rawcurses_stdio_acs_wy60 = *(rawcurses_getenv_boolean("RAWCURSES_WY60")) ? 1 : 0;
+        rawcurses_stdio_wy60 = *(rawcurses_getenv_boolean("RAWCURSES_WY60")) ? 1 : 0;
     }
     else
     {
-        const char *wy60like = RAWCURSES_WY60LIKE;
+        const char *wyse60like = RAWCURSES_WY60LIKE;
 
-        rawcurses_stdio_acs_wy60 = 0;
-        while (strlen(wy60like))
+        rawcurses_stdio_wy60 = 0;
+        while (strlen(wyse60like))
         {
-            if (! strcmp(termType, wy60like))
+            if (! strcmp(termType, wyse60like))
+            {
+                rawcurses_stdio_wy60 = 1;
+                break;
+            }
+            wyse60like += strlen(wyse60like) + 1;
+        }
+    }
+    if (rawcurses_stdio_wy60 && ! rawcurses_getenv_boolean("RAWCURSES_ADM3A"))
+    {
+        rawcurses_stdio_adm3a = 1;
+    }
+    if (rawcurses_getenv_boolean("RAWCURSES_ACS_WY60"))
+    {
+        rawcurses_stdio_acs_wy60 = *(rawcurses_getenv_boolean("RAWCURSES_ACS_WY60")) ? 1 : 0;
+    }
+    else
+    {
+        const char *acs_wy60like = RAWCURSES_ACS_WY60LIKE;
+
+        rawcurses_stdio_acs_wy60 = rawcurses_stdio_wy60;
+        while (strlen(acs_wy60like))
+        {
+            if (! strcmp(termType, acs_wy60like))
             {
                 rawcurses_stdio_acs_wy60 = 1;
                 break;
             }
-            wy60like += strlen(wy60like) + 1;
+            acs_wy60like += strlen(acs_wy60like) + 1;
+        }
+    }
+    if (rawcurses_getenv_boolean("RAWCURSES_KAYPRO2X"))
+    {
+        rawcurses_stdio_kaypro2x = *(rawcurses_getenv_boolean("RAWCURSES_KAYPRO2X")) ? 1 : 0;
+    }
+    else
+    {
+        const char *wyse60like = RAWCURSES_KAYPRO2XLIKE;
+
+        rawcurses_stdio_kaypro2x = 0;
+        while (strlen(wyse60like))
+        {
+            if (! strcmp(termType, wyse60like))
+            {
+                rawcurses_stdio_kaypro2x = 1;
+                break;
+            }
+            wyse60like += strlen(wyse60like) + 1;
+        }
+    }
+    if (rawcurses_stdio_kaypro2x && ! rawcurses_getenv_boolean("RAWCURSES_ADM3A"))
+    {
+        rawcurses_stdio_adm3a = 1;
+    }
+    if (rawcurses_getenv_boolean("RAWCURSES_ACS_KAYPRO2X"))
+    {
+        rawcurses_stdio_acs_kaypro2x = *(rawcurses_getenv_boolean("RAWCURSES_ACS_KAYPRO2X")) ? 1 : 0;
+    }
+    else
+    {
+        const char *acs_kaypro2xlike = RAWCURSES_ACS_KAYPRO2XLIKE;
+
+        rawcurses_stdio_acs_kaypro2x = rawcurses_stdio_kaypro2x;
+        while (strlen(acs_kaypro2xlike))
+        {
+            if (! strcmp(termType, acs_kaypro2xlike))
+            {
+                rawcurses_stdio_acs_kaypro2x = 1;
+                break;
+            }
+            acs_kaypro2xlike += strlen(acs_kaypro2xlike) + 1;
         }
     }
     if (rawcurses_getenv_boolean("RAWCURSES_NOSWAPDOTS"))
@@ -5119,6 +5312,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         rawcurses_stdio_acs = 1;
     }
     if (rawcurses_stdio_acs_wy60 && ! rawcurses_getenv_boolean("RAWCURSES_ACS"))
+    {
+        rawcurses_stdio_acs = 1;
+    }
+    if (rawcurses_stdio_acs_kaypro2x && ! rawcurses_getenv_boolean("RAWCURSES_ACS"))
     {
         rawcurses_stdio_acs = 1;
     }
@@ -7746,6 +7943,21 @@ static int wctoa(chtype ch)
         case RAWCURSES__ACS_LHALF:
         case RAWCURSES__ACS_RHALF:
             return ch;
+        default:
+#ifdef UNICODE
+            if (rawcurses_stdio_acs
+                &&
+                rawcurses_stdio_acs_kaypro2x
+                &&
+                (! rawcurses_stdio_cp437)
+                &&
+                (! rawcurses_stdio_acs_wy60)
+                &&
+                (ch >= 0x2800) && (ch <= 0x28ff))
+            {
+                return ch;
+            }
+#endif /* UNICODE */
         }
         if ((ch == (chtype) ACS_BULLET)
             &&
@@ -7870,6 +8082,20 @@ static int rawcurses_wcwidth(wchar_t wc)
         }
         break;
     }
+#ifdef UNICODE
+    if (rawcurses_stdio_acs
+        &&
+        rawcurses_stdio_acs_kaypro2x
+        &&
+        (! rawcurses_stdio_cp437)
+        &&
+        (! rawcurses_stdio_acs_wy60)
+        &&
+        (wc >= 0x2800) && (wc <= 0x28ff))
+    {
+        defwidth = 1;
+    }
+#endif /* UNICODE */
     if (((chtype) wc) == (chtype) ACS_BULLET)
     {
         defwidth = 1;
@@ -8151,7 +8377,9 @@ static int addch(chtype ch) {
             chtype ch2 = ' ';
             int switch_to_acs = 0;
             int switch_to_reverse = 0;
+            attr_t oattr;
 
+            oattr = rawcurses_attr;
             switch (ch)
             {
             case ACS_ULCORNER:
@@ -8188,7 +8416,10 @@ static int addch(chtype ch) {
                     switch_to_reverse = (acsch & A_REVERSE) ? 1 : 0;
                 }
             }
-            if (switch_to_reverse) attrset(rawcurses_attr ^ A_REVERSE);
+            if (switch_to_reverse)
+            {
+                attrset(oattr ^ A_REVERSE);
+            }
             if (switch_to_acs)
             {
                 rawcurses_fput_smacs(stdout);
@@ -8243,7 +8474,7 @@ static int addch(chtype ch) {
                 wcw --;
             }
             if (switch_to_acs) rawcurses_fput_rmacs(stdout);
-            if (switch_to_reverse) attrset(rawcurses_attr);
+            if (switch_to_reverse) attrset(oattr);
             ch = ch2;
         }
         if (rawcurses_x >= rawcurses_w)
