@@ -3718,6 +3718,14 @@ my_attrset(chtype attrs)
 static void
 snapshot_addch(short inbyte)
 {
+
+#undef SNAPSHOT_ADDCH__NARROWC
+#if USE_WIDEC_SUPPORT
+#define SNAPSHOT_ADDCH__NARROWC(c) NULL
+#else
+#define SNAPSHOT_ADDCH__NARROWC(c) (c)
+#endif
+
     if (snapshot || snapshot_txt)
     {
         unsigned long codepoint;
@@ -3737,95 +3745,59 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[201] != altcharset_cp437[218])
                     {
                         codepoint = (altcharset_cp437[201] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[201]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[201])
                             ) ? uni_cp437_halfwidth[201] : (ascii_cp437[201] & MY_A_CHARTEXT);
                         break;
                     }
                 case 218:
                     codepoint = (altcharset_cp437[218] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[218]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[218])
                         ) ? uni_cp437_halfwidth[218] : (ascii_cp437[218] & MY_A_CHARTEXT);
                     break;
                 case 200:
                     if (altcharset_cp437[200] != altcharset_cp437[192])
                     {
                         codepoint = (altcharset_cp437[200] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[200]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[200])
                             ) ? uni_cp437_halfwidth[200] : (ascii_cp437[200] & MY_A_CHARTEXT);
                         break;
                     }
                 case 192:
                     codepoint = (altcharset_cp437[192] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[192]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[192])
                         ) ? uni_cp437_halfwidth[192] : (ascii_cp437[192] & MY_A_CHARTEXT);
                     break;
                 case 187:
                     if (altcharset_cp437[187] != altcharset_cp437[191])
                     {
                         codepoint = (altcharset_cp437[187] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[187]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[187])
                             ) ? uni_cp437_halfwidth[187] : (ascii_cp437[187] & MY_A_CHARTEXT);
                         break;
                     }
                 case 191:
                     codepoint = (altcharset_cp437[191] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[191]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[191])
                         ) ? uni_cp437_halfwidth[191] : (ascii_cp437[191] & MY_A_CHARTEXT);
                     break;
                 case 188:
                     if (altcharset_cp437[188] != altcharset_cp437[217])
                     {
                         codepoint = (altcharset_cp437[188] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[188]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[188])
                             ) ? uni_cp437_halfwidth[188] : (ascii_cp437[188] & MY_A_CHARTEXT);
                         break;
                     }
                 case 217:
                     codepoint = (altcharset_cp437[217] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[217]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[217])
                         ) ? uni_cp437_halfwidth[217] : (ascii_cp437[217] & MY_A_CHARTEXT);
                     break;
                 case 185:
                     if (altcharset_cp437[185] != altcharset_cp437[181])
                     {
                         codepoint = (altcharset_cp437[185] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[185]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[185])
                             ) ? uni_cp437_halfwidth[185] : (ascii_cp437[185] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3833,11 +3805,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[181] != altcharset_cp437[182])
                     {
                         codepoint = (altcharset_cp437[181] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[181]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[181])
                             ) ? uni_cp437_halfwidth[181] : (ascii_cp437[181] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3845,32 +3813,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[182] != altcharset_cp437[180])
                     {
                         codepoint = (altcharset_cp437[182] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[182]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[182])
                             ) ? uni_cp437_halfwidth[182] : (ascii_cp437[182] & MY_A_CHARTEXT);
                         break;
                     }
                 case 180:
                     codepoint = (altcharset_cp437[180] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[180]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[180])
                         ) ? uni_cp437_halfwidth[180] : (ascii_cp437[180] & MY_A_CHARTEXT);
                     break;
                 case 204:
                     if (altcharset_cp437[204] != altcharset_cp437[198])
                     {
                         codepoint = (altcharset_cp437[204] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[204]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[204])
                             ) ? uni_cp437_halfwidth[204] : (ascii_cp437[204] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3878,11 +3834,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[198] != altcharset_cp437[199])
                     {
                         codepoint = (altcharset_cp437[198] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[198]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[198])
                             ) ? uni_cp437_halfwidth[198] : (ascii_cp437[198] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3890,32 +3842,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[199] != altcharset_cp437[195])
                     {
                         codepoint = (altcharset_cp437[199] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[199]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[199])
                             ) ? uni_cp437_halfwidth[199] : (ascii_cp437[199] & MY_A_CHARTEXT);
                         break;
                     }
                 case 195:
                     codepoint = (altcharset_cp437[195] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[195]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[195])
                         ) ? uni_cp437_halfwidth[195] : (ascii_cp437[195] & MY_A_CHARTEXT);
                     break;
                 case 202:
                     if (altcharset_cp437[202] != altcharset_cp437[207])
                     {
                         codepoint = (altcharset_cp437[202] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[202]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[202])
                             ) ? uni_cp437_halfwidth[202] : (ascii_cp437[202] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3923,11 +3863,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[207] != altcharset_cp437[208])
                     {
                         codepoint = (altcharset_cp437[207] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[207]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[207])
                             ) ? uni_cp437_halfwidth[207] : (ascii_cp437[207] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3935,32 +3871,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[208] != altcharset_cp437[193])
                     {
                         codepoint = (altcharset_cp437[208] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[208]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[208])
                             ) ? uni_cp437_halfwidth[208] : (ascii_cp437[208] & MY_A_CHARTEXT);
                         break;
                     }
                 case 193:
                     codepoint = (altcharset_cp437[193] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[193]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[193])
                         ) ? uni_cp437_halfwidth[193] : (ascii_cp437[193] & MY_A_CHARTEXT);
                     break;
                 case 203:
                     if (altcharset_cp437[203] != altcharset_cp437[209])
                     {
                         codepoint = (altcharset_cp437[203] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[203]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[203])
                             ) ? uni_cp437_halfwidth[203] : (ascii_cp437[203] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3968,11 +3892,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[209] != altcharset_cp437[210])
                     {
                         codepoint = (altcharset_cp437[209] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[209]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[209])
                             ) ? uni_cp437_halfwidth[209] : (ascii_cp437[209] & MY_A_CHARTEXT);
                         break;
                     }
@@ -3980,146 +3900,86 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[210] != altcharset_cp437[194])
                     {
                         codepoint = (altcharset_cp437[210] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[210]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[210])
                             ) ? uni_cp437_halfwidth[210] : (ascii_cp437[210] & MY_A_CHARTEXT);
                         break;
                     }
                 case 194:
                     codepoint = (altcharset_cp437[194] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[194]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[194])
                         ) ? uni_cp437_halfwidth[194] : (ascii_cp437[194] & MY_A_CHARTEXT);
                     break;
                 case 213:
                     codepoint = (altcharset_cp437[194] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[194]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[194])
                         ) ? uni_cp437_halfwidth[194] : (ascii_cp437[194] & MY_A_CHARTEXT);
                     break;
                 case 214:
                     codepoint = (altcharset_cp437[195] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[195]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[195])
                         ) ? uni_cp437_halfwidth[195] : (ascii_cp437[195] & MY_A_CHARTEXT);
                     break;
                 case 212:
                     codepoint = (altcharset_cp437[193] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[193]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[193])
                         ) ? uni_cp437_halfwidth[193] : (ascii_cp437[193] & MY_A_CHARTEXT);
                     break;
                 case 211:
                     codepoint = (altcharset_cp437[195] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[195]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[195])
                         ) ? uni_cp437_halfwidth[195] : (ascii_cp437[195] & MY_A_CHARTEXT);
                     break;
                 case 184:
                     codepoint = (altcharset_cp437[194] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[194]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[194])
                         ) ? uni_cp437_halfwidth[194] : (ascii_cp437[194] & MY_A_CHARTEXT);
                     break;
                 case 183:
                     codepoint = (altcharset_cp437[180] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[180]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[180])
                         ) ? uni_cp437_halfwidth[180] : (ascii_cp437[180] & MY_A_CHARTEXT);
                     break;
                 case 190:
                     codepoint = (altcharset_cp437[193] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[193]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[193])
                         ) ? uni_cp437_halfwidth[193] : (ascii_cp437[193] & MY_A_CHARTEXT);
                     break;
                 case 189:
                     codepoint = (altcharset_cp437[180] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[180]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[180])
                         ) ? uni_cp437_halfwidth[180] : (ascii_cp437[180] & MY_A_CHARTEXT);
                     break;
                 case 205:
                     if (altcharset_cp437[205] != altcharset_cp437[196])
                     {
                         codepoint = (altcharset_cp437[205] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[205]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[205])
                             ) ? uni_cp437_halfwidth[205] : (ascii_cp437[205] & MY_A_CHARTEXT);
                         break;
                     }
                 case 196:
                     codepoint = (altcharset_cp437[196] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[196]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[196])
                         ) ? uni_cp437_halfwidth[196] : (ascii_cp437[196] & MY_A_CHARTEXT);
                     break;
                 case 186:
                     if (altcharset_cp437[186] != altcharset_cp437[179])
                     {
                         codepoint = (altcharset_cp437[186] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[186]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[186])
                             ) ? uni_cp437_halfwidth[186] : (ascii_cp437[186] & MY_A_CHARTEXT);
                         break;
                     }
                 case 179:
                     codepoint = (altcharset_cp437[179] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[179]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[179])
                         ) ? uni_cp437_halfwidth[179] : (ascii_cp437[179] & MY_A_CHARTEXT);
                     break;
                 case 206:
                     if (altcharset_cp437[206] != altcharset_cp437[215])
                     {
                         codepoint = (altcharset_cp437[206] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[206]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[206])
                             ) ? uni_cp437_halfwidth[206] : (ascii_cp437[206] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4127,11 +3987,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[215] != altcharset_cp437[216])
                     {
                         codepoint = (altcharset_cp437[215] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[215]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[215])
                             ) ? uni_cp437_halfwidth[215] : (ascii_cp437[215] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4139,32 +3995,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[216] != altcharset_cp437[197])
                     {
                         codepoint = (altcharset_cp437[216] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[216]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[216])
                             ) ? uni_cp437_halfwidth[216] : (ascii_cp437[216] & MY_A_CHARTEXT);
                         break;
                     }
                 case 197:
                     codepoint = (altcharset_cp437[197] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[197]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[197])
                         ) ? uni_cp437_halfwidth[197] : (ascii_cp437[197] & MY_A_CHARTEXT);
                     break;
                 case 15:
                     if (altcharset_cp437[15] != altcharset_cp437[176])
                     {
                         codepoint = (altcharset_cp437[15] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[15]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[15])
                             ) ? uni_cp437_halfwidth[15] : (ascii_cp437[15] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4172,11 +4016,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[176] != altcharset_cp437[177])
                     {
                         codepoint = (altcharset_cp437[176] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[176]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[176])
                             ) ? uni_cp437_halfwidth[176] : (ascii_cp437[176] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4184,11 +4024,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[177] != altcharset_cp437[178])
                     {
                         codepoint = (altcharset_cp437[177] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[177]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[177])
                             ) ? uni_cp437_halfwidth[177] : (ascii_cp437[177] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4196,11 +4032,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[178] != altcharset_cp437[10])
                     {
                         codepoint = (altcharset_cp437[178] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[178]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[178])
                             ) ? uni_cp437_halfwidth[178] : (ascii_cp437[178] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4208,32 +4040,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[10] != altcharset_cp437[219])
                     {
                         codepoint = (altcharset_cp437[10] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[10]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[10])
                             ) ? uni_cp437_halfwidth[10] : (ascii_cp437[10] & MY_A_CHARTEXT);
                         break;
                     }
                 case 219:
                     codepoint = (altcharset_cp437[219] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[219]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[219])
                         ) ? uni_cp437_halfwidth[219] : (ascii_cp437[219] & MY_A_CHARTEXT);
                     break;
                 case 27:
                     if (altcharset_cp437[27] != altcharset_cp437[17])
                     {
                         codepoint = (altcharset_cp437[27] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[27]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[27])
                             ) ? uni_cp437_halfwidth[27] : (ascii_cp437[27] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4241,11 +4061,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[17] != altcharset_cp437[174])
                     {
                         codepoint = (altcharset_cp437[17] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[17]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[17])
                             ) ? uni_cp437_halfwidth[17] : (ascii_cp437[17] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4253,32 +4069,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[174] != altcharset_cp437[243])
                     {
                         codepoint = (altcharset_cp437[174] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[174]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[174])
                             ) ? uni_cp437_halfwidth[174] : (ascii_cp437[174] & MY_A_CHARTEXT);
                         break;
                     }
                 case 243:
                     codepoint = (altcharset_cp437[243] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[243]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[243])
                         ) ? uni_cp437_halfwidth[243] : (ascii_cp437[243] & MY_A_CHARTEXT);
                     break;
                 case 26:
                     if (altcharset_cp437[26] != altcharset_cp437[16])
                     {
                         codepoint = (altcharset_cp437[26] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[26]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[26])
                             ) ? uni_cp437_halfwidth[26] : (ascii_cp437[26] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4286,11 +4090,7 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[16] != altcharset_cp437[175])
                     {
                         codepoint = (altcharset_cp437[16] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[16]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[16])
                             ) ? uni_cp437_halfwidth[16] : (ascii_cp437[16] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4298,32 +4098,20 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[175] != altcharset_cp437[242])
                     {
                         codepoint = (altcharset_cp437[175] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[175]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[175])
                             ) ? uni_cp437_halfwidth[175] : (ascii_cp437[175] & MY_A_CHARTEXT);
                         break;
                     }
                 case 242:
                     codepoint = (altcharset_cp437[242] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[242]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[242])
                         ) ? uni_cp437_halfwidth[242] : (ascii_cp437[242] & MY_A_CHARTEXT);
                     break;
                 case 7:
                     if (altcharset_cp437[7] != altcharset_cp437[9])
                     {
                         codepoint = (altcharset_cp437[7] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[7]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[7])
                             ) ? uni_cp437_halfwidth[7] : (ascii_cp437[7] & MY_A_CHARTEXT);
                         break;
                     }
@@ -4331,21 +4119,13 @@ snapshot_addch(short inbyte)
                     if (altcharset_cp437[9] != altcharset_cp437[254])
                     {
                         codepoint = (altcharset_cp437[9] !=
-#if USE_WIDEC_SUPPORT
-                                     NULL
-#else
-                                     ascii_cp437[9]
-#endif
+                                     SNAPSHOT_ADDCH__NARROWC(ascii_cp437[9])
                             ) ? uni_cp437_halfwidth[9] : (ascii_cp437[9] & MY_A_CHARTEXT);
                         break;
                     }
                 case 8:
                     codepoint = (altcharset_cp437[8] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[8]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[8])
                         ) ? uni_cp437_halfwidth[8] : (ascii_cp437[8] & MY_A_CHARTEXT);
                     break;
                 case 4:
@@ -4361,11 +4141,7 @@ snapshot_addch(short inbyte)
                 case 250:
                 case 254:
                     codepoint = (altcharset_cp437[inbyte] !=
-#if USE_WIDEC_SUPPORT
-                                 NULL
-#else
-                                 ascii_cp437[inbyte]
-#endif
+                                 SNAPSHOT_ADDCH__NARROWC(ascii_cp437[inbyte])
                         ) ? uni_cp437_halfwidth[inbyte] : (ascii_cp437[inbyte] & MY_A_CHARTEXT);
                     break;
                 default:
@@ -5895,7 +5671,9 @@ gamerender(void)
                                     player_tile = (player_col > 3) ? 0 : '0';
                                     if (player_col < 3)
                                     {
-                                        player_tile = "UP "[2 - player_col];
+                                        const char *msg_up_ = "UP ";
+
+                                        player_tile = msg_up_[2 - player_col];
                                     }
                                     else
                                     {
@@ -6182,14 +5960,15 @@ gamerender(void)
                 int pause_x;
                 int pause_y;
                 unsigned char pause_tile;
+                const char *msg_pause = PAUSE;
 
                 pause_shown = 1;
                 pause_x = vcol + (reflect ? r_off : c_off) - ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2);
                 pause_y = vline + (reflect ? c_off : r_off) - ((LINES - tile_h + 1) / 2);
-                pause_tile = (unsigned long) (unsigned char) PAUSE[pause_x / tile_w];
+                pause_tile = (unsigned long) (unsigned char) msg_pause[pause_x / tile_w];
                 if (tile_used[(unsigned) pause_tile])
                 {
-                    c = (unsigned long) (unsigned char) tile[(PAUSE[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
+                    c = (unsigned long) (unsigned char) tile[(msg_pause[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
                     if (! c)
                     {
                         c = ' ';
@@ -6235,7 +6014,9 @@ gamerender(void)
                         {
                             if (iseyes)
                             {
-                                c = (".^<v>")[ghost_mem[UNGHOSTEYES(s)]];
+                                const char *msg__uldr = ".^<v>";
+
+                                c = msg__uldr[ghost_mem[UNGHOSTEYES(s)]];
                             }
                             else
                             {
@@ -9130,6 +8911,7 @@ main(int argc, char *argv[]
 
     for (i = 0; i < MAXGHOSTS; i++) {
         int eyes, mean, blue;
+        const char *extra_ghost_colors = EXTRA_GHOST_COLORS;
 
         eyes = GHOSTEYES(i);
         mean = MEANGHOST(i);
@@ -9148,7 +8930,7 @@ main(int argc, char *argv[]
         ghost_man[i] = 0;
         sprite_register_color[eyes] = 0xF;
         sprite_register_color[blue] = 0x9;
-        sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(i % strlen(EXTRA_GHOST_COLORS))];
+        sprite_register_color[mean] = extra_ghost_colors[(i % strlen(extra_ghost_colors))];
     }
 
     if (GHOST0 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST0)] = 0xB;
@@ -9387,7 +9169,8 @@ main(int argc, char *argv[]
             }
         }
 #if USE_SIGWINCH
-        signal(SIGWINCH, old_sigwinch_handler ? old_sigwinch_handler : SIG_DFL);
+        if (old_sigwinch_handler) signal(SIGWINCH, old_sigwinch_handler);
+        else signal(SIGWINCH, SIG_DFL);
 #endif
         my_attrset(0);
 #if HAVE_CURS_SET
