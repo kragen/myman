@@ -2700,6 +2700,7 @@ gameintro(void)
             int mean;
             int blue;
             int ghost;
+            const char *extra_ghost_colors = EXTRA_GHOST_COLORS;
                             
             ghost = MAXGHOSTS - 4 + ((s == 0) ? GHOST1 : (s == 1) ? GHOST2 : (s == 2) ? GHOST0 : (s == 3) ? GHOST3 : s);
             if ((ghost < ghosts) || (ghost >= MAXGHOSTS)) continue;
@@ -2757,7 +2758,7 @@ gameintro(void)
             }
             sprite_register_color[eyes] = 0xF;
             sprite_register_color[blue] = 0x9;
-            sprite_register_color[mean] = (EXTRA_GHOST_COLORS)[(s % strlen(EXTRA_GHOST_COLORS))];
+            sprite_register_color[mean] = extra_ghost_colors[(s % strlen(extra_ghost_colors))];
             if (s == 2) sprite_register_color[mean] = 0xB;
             if (s == 0) sprite_register_color[mean] = 0xC;
             if (s == 1) sprite_register_color[mean] = 0xD;
