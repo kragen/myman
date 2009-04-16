@@ -1141,15 +1141,15 @@ typedef chtype attr_t;
 
 #define ACS_BULLET ((SWAPDOTS) ? 0xf9U : 0xfeU)
 
-#define ACS_BLOCK 0xdb
+#define ACS_BLOCK 0xdbU
 
-#define RAWCURSES__ACS_THALF 0xdf
+#define RAWCURSES__ACS_THALF 0xdfU
 
-#define RAWCURSES__ACS_BHALF 0xdc
+#define RAWCURSES__ACS_BHALF 0xdcU
 
-#define RAWCURSES__ACS_LHALF 0xdd
+#define RAWCURSES__ACS_LHALF 0xddU
 
-#define RAWCURSES__ACS_RHALF 0xde
+#define RAWCURSES__ACS_RHALF 0xdeU
 
 #endif
 
@@ -7976,77 +7976,84 @@ static int wctoa(chtype ch)
     if ((! rawcurses_stdio) && (GetConsoleOutputCP() == 437)) return ch;
 #endif
 #endif /* ! defined(UNICODE) */
-    switch (ch)
+    if (ch == ACS_BLOCK)
     {
-    case ACS_BLOCK:
         ch = '#';
-        break;
-    case RAWCURSES__ACS_THALF:
-        ch = '\"';
-        break;
-    case RAWCURSES__ACS_BHALF:
-        ch = ',';
-        break;
-    case RAWCURSES__ACS_LHALF:
-    case RAWCURSES__ACS_RHALF:
-        ch = '#';
-        break;
-    case ACS_ULCORNER:
-    case ACS_LLCORNER:
-    case ACS_PLUS:
-    case ACS_LTEE:
-    case ACS_BTEE:
-    case ACS_TTEE:
-    case ACS_LRCORNER:
-    case ACS_URCORNER:
-    case ACS_RTEE:
-        ch = '+';
-        break;
-    case ACS_HLINE:
-        ch = '-';
-        break;
-    case ACS_VLINE:
-        ch = '|';
-        break;
-#ifdef UNICODE
-    case 0x2022:
-    case 0x25a0:
-    case 0x25cb:
-    case 0x25cf:
-    case 0x25d8:
-        ch = 'o';
-        break;
-    case 0x30fb:
-    case 0x00b7:
-        ch = '.';
-        break;
-    case 0x3000:
-        ch = ' ';
-        break;
-    case 0x2018:
-    case 0x2019:
-        ch = '\'';
-        break;
-    case 0x201c:
-    case 0x201d:
-        ch = '\"';
-        break;
-#endif
-    default:
-        if (ch == (chtype) ACS_BULLET)
-        {
-            ch = ((SWAPDOTS) ? '.' : 'o');
-            break;
-        }
-#ifdef UNICODE
-        if ((ch >= 0xff01)
-            &&
-            (ch <= 0xff5e))
-        {
-            ch = ch - 0xff00 + ' ';
-        }
-#endif
     }
+    else if (ch == RAWCURSES__ACS_THALF)
+    {
+        ch = '\"';
+    }
+    else if (ch == RAWCURSES__ACS_BHALF)
+    {
+        ch = ',';
+    }
+    else if ((ch == RAWCURSES__ACS_LHALF)
+             || (ch == RAWCURSES__ACS_RHALF))
+    {
+        ch = '#';
+    }
+    else if ((ch == ACS_ULCORNER)
+             || (ch == ACS_LLCORNER)
+             || (ch == ACS_PLUS)
+             || (ch == ACS_LTEE)
+             || (ch == ACS_BTEE)
+             || (ch == ACS_TTEE)
+             || (ch == ACS_LRCORNER)
+             || (ch == ACS_URCORNER)
+             || (ch == ACS_RTEE))
+    {
+        ch = '+';
+    }
+    else if (ch == ACS_HLINE)
+    {
+        ch = '-';
+    }
+    else if (ch == ACS_VLINE)
+    {
+        ch = '|';
+    }
+#ifdef UNICODE
+    else if ((ch == 0x2022)
+             || (ch == 0x25a0)
+             || (ch == 0x25cb)
+             || (ch == 0x25cf)
+             || (ch == 0x25d8))
+    {
+        ch = 'o';
+    }
+    else if ((ch == 0x30fb)
+             || (ch == 0x00b7))
+    {
+        ch = '.';
+    }
+    else if (ch == 0x3000)
+    {
+        ch = ' ';
+    }
+    else if ((ch == 0x2018)
+             || (ch == 0x2019))
+    {
+        ch = '\'';
+    }
+    else if ((ch == 0x201c)
+             || (ch == 0x201d))
+    {
+        ch = '\"';
+    }
+#endif
+    else if (ch == (chtype) ACS_BULLET)
+    {
+        ch = ((SWAPDOTS) ? '.' : 'o');
+    }
+#ifdef UNICODE
+    else if ((ch >= 0xff01)
+             &&
+             (ch <= 0xff5e))
+    {
+        ch = ch - 0xff00 + ' ';
+    }
+#endif
     return ((ch == (ch & 0x7f)) ? ch : RAWCURSES_ASCII_REPLACEMENT_CHARACTER);
 }
 
