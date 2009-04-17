@@ -268,6 +268,10 @@
 #include <curses.h>
 #endif
 
+#ifdef OPTCURSES
+#include "optcurs.h"
+#endif
+
 /* work-arounds for old VMS curses */
 #if defined(_VMS_CURSES) || defined(__VMS_CURSES)
 
@@ -5186,6 +5190,7 @@ pager(void)
                         else if ((k == 'c') || (k == 'C'))
                         {
                             use_color = ! use_color;
+                            use_color_p = 1;
                             if (use_color)
                                 init_pen();
                             else
@@ -5197,6 +5202,24 @@ pager(void)
                             continue;
                         }
 #endif
+                        else if ((k == 'b') || (k == 'B'))
+                        {
+                            use_dim_and_bright =
+                                ! use_dim_and_bright;
+                            use_dim_and_bright_p = 1;
+#if USE_COLOR
+                            if (use_color)
+                            {
+                                destroy_pen();
+                                init_pen();
+                            }
+#endif
+                            my_attrset(0);
+                            my_clear();
+                            clearok(curscr, TRUE);
+                            pager = pager_remaining;
+                            continue;
+                        }
                         else if ((k == 'x') || (k == 'X'))
                         {
                             use_raw = ! use_raw;
@@ -5378,6 +5401,7 @@ pager(void)
                 else if ((k == 'c') || (k == 'C'))
                 {
                     use_color = ! use_color;
+                    use_color_p = 1;
                     if (use_color)
                         init_pen();
                     else
@@ -5387,6 +5411,22 @@ pager(void)
                     clearok(curscr, TRUE);
                 }
 #endif
+                else if ((k == 'b') || (k == 'B'))
+                {
+                    use_dim_and_bright =
+                        ! use_dim_and_bright;
+                    use_dim_and_bright_p = 1;
+#if USE_COLOR
+                    if (use_color)
+                    {
+                        destroy_pen();
+                        init_pen();
+                    }
+#endif
+                    my_attrset(0);
+                    my_clear();
+                    clearok(curscr, TRUE);
+                }
                 else if ((k == 'x') || (k == 'X'))
                 {
                     use_raw = ! use_raw;
@@ -6986,6 +7026,7 @@ gamecycle(void)
 #if USE_COLOR
     } else if ((k == 'c') || (k == 'C')) {
         use_color = ! use_color;
+        use_color_p = 1;
         if (use_color)
             init_pen();
         else
@@ -7001,6 +7042,7 @@ gamecycle(void)
     } else if ((k == 'b') || (k == 'B')) {
         use_dim_and_bright =
             ! use_dim_and_bright;
+        use_dim_and_bright_p = 1;
 #if USE_COLOR
         if (use_color)
         {
