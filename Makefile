@@ -3979,6 +3979,8 @@ utl/xquack.in \
 debian/changelog \
 debian/control \
 fink/myman.info \
+patches/bitmap.diff \
+patches/bitmap_libcaca.diff \
 ${website_files}
 
 website_files = \
@@ -4004,6 +4006,7 @@ sfx \
 gfx \
 debian \
 fink \
+patches \
 ${website_dirs}
 
 website_dirs = \
