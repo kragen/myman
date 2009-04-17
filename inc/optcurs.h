@@ -26,6 +26,10 @@
 #ifndef MYMAN_OPTCURS_H_INCLUDED
 #define MYMAN_OPTCURS_H_INCLUDED 1
 
+#ifdef WACS_ULCORNER
+#error "optcurs.h" does not yet work with a wide-character curses implementation
+#endif
+
 #ifndef wcwidth
 #include <wchar.h>
 #endif
@@ -696,7 +700,28 @@ static int optcurses__combine_bitmap_attr_ok(attr_t fgattr, attr_t bgattr)
 #ifdef CACA_API_VERSION_1
         if (has_colors())
         {
-            return (fgattr | bgattr) & ~(A_BOLD | A_STANDOUT | A_UNDERLINE);
+            int fg, bg;
+
+            fg = ((fgattr & (A_STANDOUT | A_REVERSE))
+                  ?
+                  cucul_attr_to_ansi_bg(fgattr)
+                  :
+                  cucul_attr_to_ansi_fg(fgattr))
+                |
+                ((fgattr & A_BOLD) ? 8 : 0);
+            bg = ((bgattr & (A_STANDOUT | A_REVERSE))
+                  ?
+                  cucul_attr_to_ansi_bg(bgattr)
+                  :
+                  cucul_attr_to_ansi_fg(bgattr))
+                |
+                ((bgattr & A_BOLD) ? 8 : 0);
+            if ((fg <= 0xf)
+                &&
+                (bg <= 0xf))
+            {
+                return 1;
+            }
         }
 #else
         return fgattr && bgattr;
@@ -871,16 +896,44 @@ static attr_t optcurses__combine_bitmap_attr(attr_t fgattr, attr_t bgattr)
         unsigned char fg, bg;
         unsigned long oattr;
 
-        fg = cucul_attr_to_ansi_fg(fgattr) | ((fgattr & A_BOLD) ? 8 : 0);
-        bg = cucul_attr_to_ansi_fg(bgattr) | ((bgattr & A_BOLD) ? 8 : 0);
+        fg = ((fgattr & (A_STANDOUT | A_REVERSE))
+              ?
+              cucul_attr_to_ansi_bg(fgattr)
+              :
+              cucul_attr_to_ansi_fg(fgattr))
+            |
+            ((fgattr & A_BOLD) ? 8 : 0);
+        bg = ((bgattr & (A_STANDOUT | A_REVERSE))
+              ?
+              cucul_attr_to_ansi_bg(bgattr)
+              :
+              cucul_attr_to_ansi_fg(bgattr))
+            |
+            ((bgattr & A_BOLD) ? 8 : 0);
+        if (fg == CACA_TRANSPARENT) fg = CACA_DEFAULT;
+        if (bg == CACA_DEFAULT) bg = CACA_TRANSPARENT;
+        if ((fg == 0xc) && ((bg == 0xf) || (bg == 0x7))
+            ||
+            (bg == 0xc) && ((fg == 0xf) || (fg == 0x7)))
+        {
+            fprintf(stderr, "%x|%x|%lx|%lx ", fg, bg, fgattr, bgattr);fflush(stderr);
+        }
         oattr = cucul_get_attr(cv, -1, -1);
-        cucul_set_attr(cv, fgattr);
+        cucul_set_attr(cv, fgattr & ~(A_STANDOUT | A_REVERSE));
         cucul_set_color_ansi(cv, fg, bg);
         if (can_change_color())
         {
             cucul_set_color_argb(cv,
-                                 0xf000u | cucul_attr_to_rgb12_fg(fgattr),
-                                 0xf000u | cucul_attr_to_rgb12_fg(bgattr));
+                                 0xf000u | ((fgattr & (A_STANDOUT | A_REVERSE))
+                                            ?
+                                            cucul_attr_to_rgb12_bg(fgattr)
+                                            :
+                                            cucul_attr_to_rgb12_fg(fgattr)),
+                                 0xf000u | ((bgattr & (A_STANDOUT | A_REVERSE))
+                                            ?
+                                            cucul_attr_to_rgb12_bg(bgattr)
+                                            :
+                                            cucul_attr_to_rgb12_fg(bgattr)));
         }
         fgattr = cucul_get_attr(cv, -1, -1);
         cucul_set_attr(cv, oattr);
