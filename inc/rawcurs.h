@@ -7958,12 +7958,12 @@ static int wctoa(chtype ch)
                 return ch;
             }
 #endif /* UNICODE */
-        }
-        if ((ch == (chtype) ACS_BULLET)
-            &&
-            ! rawcurses_stdio_acs_nobullet)
-        {
-            return ch;
+            if ((ch == (chtype) ACS_BULLET)
+                &&
+                ! rawcurses_stdio_acs_nobullet)
+            {
+                return ch;
+            }
         }
     }
 #ifdef UNICODE
