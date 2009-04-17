@@ -3589,6 +3589,11 @@ static int maccurses_insch(maccurses_chtype ch)
     return ERR;
 }
 
+static int maccurses_delch(void)
+{
+    return ERR;
+}
+
 static int maccurses_init_color(short i, short r, short g, short b)
 {
     int j;
@@ -3703,6 +3708,9 @@ static int maccurses_start_color(void)
 
 #undef insch
 #define insch(ch) maccurses_insch(ch)
+
+#undef delch
+#define delch(ch) maccurses_delch(ch)
 
 #undef move
 #define move(y,x) maccurses_move(y,x)

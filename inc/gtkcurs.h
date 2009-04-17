@@ -1242,6 +1242,11 @@ static int insch(const chtype ch)
     return ERR;
 }
 
+static int delch(void)
+{
+    return ERR;
+}
+
 static int addch(chtype ch)
 {
     char buf[GTKCURSES_MB_LEN_MAX];

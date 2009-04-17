@@ -317,6 +317,11 @@ static int insch(const chtype ch)
     return ERR;
 }
 
+static int delch(void)
+{
+    return ERR;
+}
+
 static int allegrocurses_wcwidth(const chtype ch) {
     return (ch < 0x20) ? 0 : 1;
 }

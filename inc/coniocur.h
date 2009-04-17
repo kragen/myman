@@ -1000,6 +1000,18 @@ static int insch(const coniocurses_chtype ch)
     return ret;
 }
 
+static int delch(void)
+{
+    int ret;
+    int oy, ox;
+
+    if (! coniocurses_ready) return ERR;
+    movetext(coniocurses_x + 1, coniocurses_y + 1,
+             coniocurses_w, coniocurses_y + 1,
+             coniocurses_x + 1 + 1, coniocurses_y + 1);
+    return OK;
+}
+
 static int init_pair(short i, short fg, short bg)
 {
     if (! coniocurses_ready) return ERR;

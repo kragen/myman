@@ -485,6 +485,11 @@ static int insch(const chtype ch)
     return ERR;
 }
 
+static int delch(void)
+{
+    return ERR;
+}
+
 static int init_color(short i, short r, short g, short b)
 {
     return ERR;

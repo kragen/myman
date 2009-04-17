@@ -540,6 +540,11 @@ static int insch(const dispcurses_chtype ch)
     return ERR;
 }
 
+static int delch(void)
+{
+    return ERR;
+}
+
 static int init_pair(short i, short fg, short bg)
 {
     if (! dispcurses_ready) return ERR;

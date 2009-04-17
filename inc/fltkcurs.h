@@ -991,6 +991,11 @@ static int insch(const chtype ch)
     return ERR;
 }
 
+static int delch(void)
+{
+    return ERR;
+}
+
 static int init_pair(short i, short fg, short bg)
 {
     if ((i < 0) || (i > COLOR_PAIRS)) return ERR;

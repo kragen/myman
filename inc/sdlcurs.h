@@ -253,11 +253,18 @@ static unsigned char sdlcurses_pairs[COLOR_PAIRS];
 
 #define INITSCR_WITH_HINTS
 
-static int insch(const chtype ch) {
+static int insch(const chtype ch)
+{
     return ERR;
 }
 
-static int addch(const chtype ch) {
+static int delch(void)
+{
+    return ERR;
+}
+
+static int addch(const chtype ch)
+{
     if ((! sdlcurses_clearok)
         &&
         (! sdlcurses_backing[sdlcurses_y * sdlcurses_w + sdlcurses_x].attr)

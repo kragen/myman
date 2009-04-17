@@ -842,7 +842,13 @@ static int move(y, x) {
     return OK;
 }
 
-static int insch(const chtype ch) {
+static int insch(const chtype ch)
+{
+    return ERR;
+}
+
+static int delch(void)
+{
     return ERR;
 }
 
@@ -1338,7 +1344,13 @@ static int move(y, x) {
     return OK;
 }
 
-static int insch(const chtype ch) {
+static int insch(const chtype ch)
+{
+    return ERR;
+}
+
+static int delch(void)
+{
     return ERR;
 }
 

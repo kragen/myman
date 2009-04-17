@@ -264,7 +264,13 @@ static unsigned char ggicurses_pairs[COLOR_PAIRS];
 
 #define INITSCR_WITH_HINTS
 
-static int insch(const chtype ch) {
+static int insch(const chtype ch)
+{
+    return ERR;
+}
+
+static int delch(void)
+{
     return ERR;
 }
 
