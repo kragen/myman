@@ -671,12 +671,19 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
 static void endwin(void)
 {
+    unsigned long ox, oy;
+
     coniocurses_ready = 0;
     textcolor(COLOR_WHITE);
     textbackground(COLOR_BLACK);
 #ifdef _NORMALCURSOR
     _setcursortype(_NORMALCURSOR);
 #endif
+    ox = wherex();
+    oy = wherey();
+    putch(' ');
+    gotoxy(ox, oy);
+    clrscr();
 }
 
 static int move(int y, int x);
