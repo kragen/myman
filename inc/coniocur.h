@@ -674,7 +674,6 @@ static void endwin(void)
     coniocurses_ready = 0;
     textcolor(COLOR_WHITE);
     textbackground(COLOR_BLACK);
-    textbackground(bg);
 #ifdef _NORMALCURSOR
     _setcursortype(_NORMALCURSOR);
 #endif
