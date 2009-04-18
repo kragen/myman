@@ -295,9 +295,9 @@ typedef coniocurses_chtype coniocurses_attr_t;
 #undef attr_t
 #define attr_t coniocurses_attr_t
 
-static unsigned long coniocurses_w = 0, coniocurses_h = 0;
+static int coniocurses_w = 0, coniocurses_h = 0;
 
-static unsigned long coniocurses_x = 0, coniocurses_y = 0;
+static int coniocurses_x = 0, coniocurses_y = 0;
 
 static coniocurses_attr_t coniocurses_attr = 0;
 
@@ -451,22 +451,28 @@ static int coniocurses_wcwidth(coniocurses_chtype ch)
 
 static int curs_set(x)
 {
+    int ret;
+
     if (! coniocurses_ready) return ERR;
     if (x)
     {
 #ifdef _NORMALCURSOR
         _setcursortype(_NORMALCURSOR);
-        return OK;
+        ret = OK;
+#else
+        ret = ERR;
 #endif
     }
     else
     {
 #ifdef _NOCURSOR
         _setcursortype(_NOCURSOR);
-        return OK;
+        ret = OK;
+#else
+        ret = ERR;
 #endif
     }
-    return ERR;
+    return ret;
 }
 
 static int attrset(coniocurses_attr_t a)
@@ -510,7 +516,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     coniocurses_color = 1;
     coniocurses_w = 80;
     coniocurses_h = 25;
-    if (1)
+    do
     {
         struct text_info screensize_info;
 
@@ -620,8 +626,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             coniocurses_h = screensize_info.screenheight;
         }
     }
+    while (0);
 #if ! defined(_CONIO2_H_)
-    if (1)
+    do
     {
         struct text_info color_info;
 
@@ -658,6 +665,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             coniocurses_color = 1;
         }
     }
+    while (0);
 #endif /* ! defined(_CONIO2_H_) */
     coniocurses_ready = 1;
     coniocurses_attr = -1;
@@ -671,7 +679,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
 static void endwin(void)
 {
-    unsigned long ox, oy;
+    int ox, oy;
 
     coniocurses_ready = 0;
     textcolor(COLOR_WHITE);
@@ -703,7 +711,7 @@ static int erase(void)
 static int resizeterm(int y, int x)
 {
     if (! coniocurses_ready) return ERR;
-    if (1)
+    do
     {
         struct text_info screensize_info;
 
@@ -813,6 +821,7 @@ static int resizeterm(int y, int x)
             coniocurses_h = screensize_info.screenheight;
         }
     }
+    while (0);
     return OK;
 }
 
@@ -821,7 +830,7 @@ static int coniocurses_getch(void) {
     int i, j;
 
     if (! coniocurses_ready) return (coniocurses_chtype) ERR;
-    if (1)
+    do
     {
         struct text_info screensize_info;
 
@@ -931,6 +940,7 @@ static int coniocurses_getch(void) {
             j = screensize_info.screenheight;
         }
     }
+    while (0);
     if ((i != coniocurses_w) || (j != coniocurses_h))
     {
         return KEY_RESIZE;
