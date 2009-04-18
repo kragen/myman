@@ -672,6 +672,12 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 static void endwin(void)
 {
     coniocurses_ready = 0;
+    textcolor(COLOR_WHITE);
+    textbackground(COLOR_BLACK);
+    textbackground(bg);
+#ifdef _NORMALCURSOR
+    _setcursortype(_NORMALCURSOR);
+#endif
 }
 
 static int move(int y, int x);
