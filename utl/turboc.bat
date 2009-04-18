@@ -47,6 +47,7 @@ cd ..
 
 %comspec% /c "obj\u2d < mygetopt\getopt.h > obj\crlf\mygetopt\getopt.h"
 %comspec% /c "obj\u2d < mygetopt\mygetopt.h > obj\crlf\mygetopt\mygetopt.h"
+%comspec% /c "obj\u2d < inc\guess.h > obj\crlf\inc\guess.h"
 %comspec% /c "obj\u2d < inc\utils.h > obj\crlf\inc\utils.h"
 %comspec% /c "obj\u2d < inc\coniocur.h > obj\crlf\inc\coniocur.h"
 %comspec% /c "obj\u2d < inc\rawcurs.h > obj\crlf\inc\rawcurs.h"
