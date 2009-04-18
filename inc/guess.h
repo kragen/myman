@@ -25,6 +25,17 @@
 #ifndef MYMAN_GUESS_H_INCLUDED
 #define MYMAN_GUESS_H_INCLUDED 1
 
+/* some Win32 C compilers do not define WIN32 */
+#if ! defined(WIN32)
+#ifdef _WIN32
+#define WIN32 _WIN32
+#else
+#ifdef __WIN32__
+#define WIN32 __WIN32__
+#endif
+#endif
+#endif
+
 #if ! defined(WIN32)
 #if defined(DOS) || defined(__TURBOC__)
 
