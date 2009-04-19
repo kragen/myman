@@ -3142,6 +3142,245 @@ gameintermission(void)
     }
 }
 
+static void
+ghost_eaten_timer_expired(void)
+{
+    sprite_register_used[GHOST_SCORE] = 0;
+    sprite_register_frame[GHOST_SCORE] ++;
+    if ((((unsigned) sprite_register[GHOST_SCORE]) + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - ((unsigned) sprite_register[GHOST_SCORE]);
+    if (sprite_register_used[HERO])
+    {
+        memcpy((void *) (maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
+               (void *) (blank_maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
+               MIN(msglen, maze_w - cmsg));
+        memcpy((void *) (maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
+               (void *) (blank_maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
+               MIN(msglen, maze_w - cmsg));
+        {
+            int dirty_i;
+            for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
+            {
+                mark_cell(cmsg + dirty_i, rmsg);
+            }
+        }
+        myman_sfx |= myman_sfx_siren0_up;
+    }
+    else
+    {
+        sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
+        sprite_register_used[munched] = (NET_LIVES || (munched != HERO)) ? 1 : 0;
+    }
+}
+
+static int
+check_level_transition(void)
+{
+    int reset = 0;
+    static int init = 0;
+    int i;
+
+    if (! need_reset)
+    {
+        if (dying && ! -- dying) {
+            reset = 1;
+            if (! myman_demo) ++ lives_used;
+        } else if ((! ghost_eaten_timer) && winning && ! -- winning) {
+            need_reset = 1;
+            if (INTERMISSION(level)
+                &&
+                (intermission < INTERMISSION_N))
+            {
+                intermission_running = (1 + INTERMISSION_TIME);
+                key_buffer = key_buffer_ERR;
+                return 1;
+            }
+        }
+    }
+    if (need_reset)
+    {
+        myman_sfx |= myman_sfx_start;
+        need_reset = 0;
+        reset = 1;
+        memcpy((void *)maze,
+               (void *)blank_maze,
+               (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
+        memcpy((void *)maze_color,
+               (void *)blank_maze_color,
+               (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
+        DIRTY_ALL();
+        ignore_delay = 1;
+        frameskip = 0;
+        dots = 0;
+        pellet_timer = 0;
+        pellet_time -= PELLET_ADJUST(7 * ONESEC);
+        if (level && (FLIP_ALWAYS ||
+                      INTERMISSION(level)))
+        {
+            ++ maze_level;
+            maze_level %= maze_n;
+            if (! maze_level)
+            {
+                maze_level = flip_to % maze_n;
+            }
+            if (FLIP_LOCK && ! maze_level)
+            {
+                maze_level = maze_n - 1;
+            }
+        }
+        if (INTERMISSION(level) &&
+            (intermission < INTERMISSION_N))
+        {
+            ++ intermission_shown;
+            if (intermission_shown >= INTERMISSION_REPEAT(intermission))
+            {
+                ++ intermission;
+                intermission_shown = 0;
+            }
+        }
+        ++ level;
+        sprite_register_frame[FRUIT] =
+            sprite_register_frame[FRUIT_SCORE] = BONUS(level);
+        pellet_time += PELLET_ADJUST(7 * ONESEC);
+        if (pellet_time > PELLET_ADJUST(ONESEC))
+            pellet_time -= PELLET_ADJUST(ONESEC);
+        else
+            pellet_time = 0;
+        if (! myman_demo)
+        {
+            if ((mymandelay > SPEEDUP)
+                &&
+                (mymandelay >= (mindelay + SPEEDUP)))
+            {
+                mymandelay -= SPEEDUP;
+            }
+        }
+    }
+    if ((! init) && (winning || reset)) {
+        init = 1;
+        if (sprite_register_used[FRUIT])
+        {
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+        }
+        sprite_register_used[FRUIT] =
+            sprite_register_used[FRUIT_SCORE] =
+            sprite_register_used[GHOST_SCORE] = 0;
+        for (i = 0; i < ghosts; i++) {
+            int eyes, mean, blue;
+
+            eyes = GHOSTEYES(i);
+            mean = MEANGHOST(i);
+            blue = BLUEGHOST(i);
+            sprite_register_used[eyes] =
+                sprite_register_used[mean] =
+                sprite_register_used[blue] = 0;
+        }
+        sprite_register_frame[HERO] = 0;
+    }
+    if (reset) {
+        memset((void *)home_dir, 0, sizeof(home_dir));
+        for (i = 0; i < ghosts; i++) {
+            int eyes, mean, blue;
+
+            eyes = GHOSTEYES(i);
+            mean = MEANGHOST(i);
+            blue = BLUEGHOST(i);
+            sprite_register_used[eyes] =
+                sprite_register_used[mean] =
+                sprite_register_used[blue] = 0;
+            sprite_register_frame[eyes] = (ghost_dir[i] = DIRWRAP(i + 1)) - 1;
+            ghost_mem[i] = 0;
+            ghost_timer[i] = TWOSECS;
+            ghost_man[i] = 0;
+            sprite_register_x[mean] =
+                (sprite_register_x[eyes] = (int) (XGHOST + COGHOST * gfx_w *
+                                                  ((i == GHOST3) - (i == GHOST0))));
+            sprite_register_y[mean] =
+                (sprite_register_y[eyes] = (int) (YGHOST - ROGHOST * gfx_h *
+                                                  (i == GHOST1)));
+        }
+        key_buffer = key_buffer_ERR;
+        init = 0;
+        cycles = 0;
+        sprite_register_used[HERO] = 0;
+        sprite_register_frame[HERO] = 0;
+        sprite_register_x[HERO] = (int) XHERO;
+        sprite_register_y[HERO] = (int) YHERO;
+        dead =
+            deadpan = (int) (YHERO - YGHOST);
+        if (dead < 0)
+            dead = -dead;
+        if (dead < 2)
+            dead = 2;
+        maze_putsn_nonblank(rmsg, cmsg, MSG_COLOR, (NET_LIVES && ! myman_demo) ? msg_READY : msg_GAMEOVER, msglen);
+        if (player != oldplayer)
+        {
+            oldplayer = player;
+            ghost_eaten_timer = myman_demo ? 0 : ONESEC;
+            munched = HERO;
+            if (! myman_demo)
+            {
+                maze_putsn_nonblank(rmsg2, cmsg2, MSG2_COLOR, PLAYER(player), msglen);
+            }
+        }
+    }
+    if (dying)
+        sprite_register_frame[HERO] = ((DEATHDELAY - dying) >> DEATHSHIFT) % 4;
+    return 0;
+}
+
+static void
+reset_hero(void)
+{
+    int i;
+
+    if (deadpan)
+        deadpan += (YHERO < YGHOST) - (YHERO > YGHOST);
+    if (! -- dead) {
+        for (i = 0; i < ghosts; i ++) {
+            int eyes, mean, blue;
+
+            eyes = GHOSTEYES(i);
+            mean = MEANGHOST(i);
+            blue = BLUEGHOST(i);
+            sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
+            sprite_register_used[mean] = NET_LIVES ? 1 : 0;
+        }
+        sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
+        ghost_eaten_timer = ONESEC;
+        munched = HERO;
+        if (! myman_demo)
+        {
+            memcpy((void *) (maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
+                   (void *) (blank_maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
+                   MIN(msglen, maze_w - cmsg2));
+            memcpy((void *) (maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
+                   (void *) (blank_maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
+                   MIN(msglen, maze_w - cmsg2));
+            {
+                int dirty_i;
+                for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
+                {
+                    mark_cell(cmsg2 + dirty_i, rmsg2);
+                }
+            }
+        }
+        hero_dir = dirhero;
+        sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
+        if (! use_color)
+            if (use_underline)
+            {
+                my_clear();
+                my_clearok(1);
+                DIRTY_ALL();
+                ignore_delay = 1;
+                frameskip = 0;
+                visible_frame = 1;
+            }
+    }
+}
+
 int
 gamelogic(void)
 {
@@ -3156,230 +3395,17 @@ gamelogic(void)
     ytile = YTILE(sprite_register_y[HERO]);
     x_off = sprite_register_x[HERO] % gfx_w;
     y_off = sprite_register_y[HERO] % gfx_h;
-    if (ghost_eaten_timer && ! -- ghost_eaten_timer) {
-        sprite_register_used[GHOST_SCORE] = 0;
-        sprite_register_frame[GHOST_SCORE] ++;
-        if ((((unsigned) sprite_register[GHOST_SCORE]) + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - ((unsigned) sprite_register[GHOST_SCORE]);
-        if (sprite_register_used[HERO])
-        {
-            memcpy((void *) (maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                   (void *) (blank_maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                   MIN(msglen, maze_w - cmsg));
-            memcpy((void *) (maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                   (void *) (blank_maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-                   MIN(msglen, maze_w - cmsg));
-            {
-                int dirty_i;
-                for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-                {
-                    mark_cell(cmsg + dirty_i, rmsg);
-                }
-            }
-            myman_sfx |= myman_sfx_siren0_up;
-        }
-        else
-        {
-            sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-            sprite_register_used[munched] = (NET_LIVES || (munched != HERO)) ? 1 : 0;
-        }
+    if (ghost_eaten_timer && ! -- ghost_eaten_timer)
+    {
+        ghost_eaten_timer_expired();
     }
-    if (winning || dying || need_reset) {
-        int reset = 0;
-        static int init = 0;
-
-        if (! need_reset)
-        {
-            if (dying && ! -- dying) {
-                reset = 1;
-                if (! myman_demo) ++ lives_used;
-            } else if ((! ghost_eaten_timer) && winning && ! -- winning) {
-                need_reset = 1;
-                if (INTERMISSION(level)
-                    &&
-                    (intermission < INTERMISSION_N))
-                {
-                    intermission_running = (1 + INTERMISSION_TIME);
-                    key_buffer = key_buffer_ERR;
-                    return 1;
-                }
-            }
-        }
-        if (need_reset)
-        {
-            myman_sfx |= myman_sfx_start;
-            need_reset = 0;
-            reset = 1;
-            memcpy((void *)maze,
-                   (void *)blank_maze,
-                   (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-            memcpy((void *)maze_color,
-                   (void *)blank_maze_color,
-                   (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-            DIRTY_ALL();
-            ignore_delay = 1;
-            frameskip = 0;
-            dots = 0;
-            pellet_timer = 0;
-            pellet_time -= PELLET_ADJUST(7 * ONESEC);
-            if (level && (FLIP_ALWAYS ||
-                          INTERMISSION(level)))
-            {
-                ++ maze_level;
-                maze_level %= maze_n;
-                if (! maze_level)
-                {
-                    maze_level = flip_to % maze_n;
-                }
-                if (FLIP_LOCK && ! maze_level)
-                {
-                    maze_level = maze_n - 1;
-                }
-            }
-            if (INTERMISSION(level) &&
-                (intermission < INTERMISSION_N))
-            {
-                ++ intermission_shown;
-                if (intermission_shown >= INTERMISSION_REPEAT(intermission))
-                {
-                    ++ intermission;
-                    intermission_shown = 0;
-                }
-            }
-            ++ level;
-            sprite_register_frame[FRUIT] =
-                sprite_register_frame[FRUIT_SCORE] = BONUS(level);
-            pellet_time += PELLET_ADJUST(7 * ONESEC);
-            if (pellet_time > PELLET_ADJUST(ONESEC))
-                pellet_time -= PELLET_ADJUST(ONESEC);
-            else
-                pellet_time = 0;
-            if (! myman_demo)
-            {
-                if ((mymandelay > SPEEDUP)
-                    &&
-                    (mymandelay >= (mindelay + SPEEDUP)))
-                {
-                    mymandelay -= SPEEDUP;
-                }
-            }
-        }
-        if ((! init) && (winning || reset)) {
-            init = 1;
-            if (sprite_register_used[FRUIT])
-            {
-                DIRTY_ALL();
-                ignore_delay = 1;
-                frameskip = 0;
-            }
-            sprite_register_used[FRUIT] =
-                sprite_register_used[FRUIT_SCORE] =
-                sprite_register_used[GHOST_SCORE] = 0;
-            for (i = 0; i < ghosts; i++) {
-                int eyes, mean, blue;
-
-                eyes = GHOSTEYES(i);
-                mean = MEANGHOST(i);
-                blue = BLUEGHOST(i);
-                sprite_register_used[eyes] =
-                    sprite_register_used[mean] =
-                    sprite_register_used[blue] = 0;
-            }
-            sprite_register_frame[HERO] = 0;
-        }
-        if (reset) {
-            memset((void *)home_dir, 0, sizeof(home_dir));
-            for (i = 0; i < ghosts; i++) {
-                int eyes, mean, blue;
-
-                eyes = GHOSTEYES(i);
-                mean = MEANGHOST(i);
-                blue = BLUEGHOST(i);
-                sprite_register_used[eyes] =
-                    sprite_register_used[mean] =
-                    sprite_register_used[blue] = 0;
-                sprite_register_frame[eyes] = (ghost_dir[i] = DIRWRAP(i + 1)) - 1;
-                ghost_mem[i] = 0;
-                ghost_timer[i] = TWOSECS;
-                ghost_man[i] = 0;
-                sprite_register_x[mean] =
-                    (sprite_register_x[eyes] = (int) (XGHOST + COGHOST * gfx_w *
-                                                      ((i == GHOST3) - (i == GHOST0))));
-                sprite_register_y[mean] =
-                    (sprite_register_y[eyes] = (int) (YGHOST - ROGHOST * gfx_h *
-                                                      (i == GHOST1)));
-            }
-            key_buffer = key_buffer_ERR;
-            init = 0;
-            cycles = 0;
-            sprite_register_used[HERO] = 0;
-            sprite_register_frame[HERO] = 0;
-            sprite_register_x[HERO] = (int) XHERO;
-            sprite_register_y[HERO] = (int) YHERO;
-            dead =
-                deadpan = (int) (YHERO - YGHOST);
-            if (dead < 0)
-                dead = -dead;
-            if (dead < 2)
-                dead = 2;
-            maze_putsn_nonblank(rmsg, cmsg, MSG_COLOR, (NET_LIVES && ! myman_demo) ? msg_READY : msg_GAMEOVER, msglen);
-            if (player != oldplayer)
-            {
-                oldplayer = player;
-                ghost_eaten_timer = myman_demo ? 0 : ONESEC;
-                munched = HERO;
-                if (! myman_demo)
-                {
-                    maze_putsn_nonblank(rmsg2, cmsg2, MSG2_COLOR, PLAYER(player), msglen);
-                }
-            }
-        }
-        if (dying)
-            sprite_register_frame[HERO] = ((DEATHDELAY - dying) >> DEATHSHIFT) % 4;
-    } else if (dead && ! ghost_eaten_timer) {
-        if (deadpan)
-            deadpan += (YHERO < YGHOST) - (YHERO > YGHOST);
-        if (! -- dead) {
-            for (i = 0; i < ghosts; i ++) {
-                int eyes, mean, blue;
-
-                eyes = GHOSTEYES(i);
-                mean = MEANGHOST(i);
-                blue = BLUEGHOST(i);
-                sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
-                sprite_register_used[mean] = NET_LIVES ? 1 : 0;
-            }
-            sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-            ghost_eaten_timer = ONESEC;
-            munched = HERO;
-            if (! myman_demo)
-            {
-                memcpy((void *) (maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                       (void *) (blank_maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                       MIN(msglen, maze_w - cmsg2));
-                memcpy((void *) (maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                       (void *) (blank_maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                       MIN(msglen, maze_w - cmsg2));
-                {
-                    int dirty_i;
-                    for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-                    {
-                        mark_cell(cmsg2 + dirty_i, rmsg2);
-                    }
-                }
-            }
-            hero_dir = dirhero;
-            sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
-            if (! use_color)
-                if (use_underline)
-                {
-                    my_clear();
-                    my_clearok(1);
-                    DIRTY_ALL();
-                    ignore_delay = 1;
-                    frameskip = 0;
-                    visible_frame = 1;
-                }
-        }
+    if (winning || dying || need_reset)
+    {
+        return check_level_transition();
+    }
+    else if (dead && ! ghost_eaten_timer)
+    {
+        reset_hero();
     }
     else
     {
