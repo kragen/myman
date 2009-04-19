@@ -2685,7 +2685,7 @@ pen[NPENS];
 static const short
 pen_pal[16][3] =
 {
-/*{ red,green, blue} */
+/*  { red,green, blue} */
     {   0,    0,    0}, /* 0: black */
     {   0,    0,  867}, /* 1: blue */
     {   0,  718,    0}, /* 2: green (peach stem) */
