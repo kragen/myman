@@ -601,61 +601,64 @@ static wchar_t ucs_to_wchar(unsigned long ucs)
     size_t obl;
     const char *my_locale;
 
-    if ((! (my_locale = setlocale(LC_CTYPE, "")))
-        ||
-        (! *my_locale)
-        ||
-        (! strcmp(my_locale, "C"))
-        ||
-        (! strcmp(my_locale, "POSIX")))
+    do
     {
+        if ((! (my_locale = setlocale(LC_CTYPE, "")))
+            ||
+            (! *my_locale)
+            ||
+            (! strcmp(my_locale, "C"))
+            ||
+            (! strcmp(my_locale, "POSIX")))
+        {
+            wcbuf[0] = 0;
+            break;
+        }
+        if ((cd_to_wchar == (iconv_t) -1)
+            &&
+            ((cd_to_wchar = iconv_open("wchar_t//IGNORE", "UCS-4-INTERNAL")) == (iconv_t) -1))
+        {
+            wcbuf[0] = 0;
+            break;
+        }
+        ucsbuf[0] = ucs;
+        ucsbuf[1] = 0;
         wcbuf[0] = 0;
-        goto done;
+        wcbuf[1] = 0;
+        ibuf = (char *) (void *) ucsbuf;
+        obuf = (char *) (void *) wcbuf;
+        ibl = sizeof(ucsbuf);
+        obl = sizeof(wcbuf);
+        if ((! iconv(cd_to_wchar, &ibuf, &ibl, &obuf, &obl))
+            ||
+            wcbuf[1]
+            ||
+            (! wcbuf[0]))
+        {
+            wcbuf[0] = 0;
+            break;
+        }
+        if (cd_to_uni == (iconv_t) -1)
+        {
+            cd_to_uni = iconv_open("UCS-4-INTERNAL//IGNORE", "wchar_t");
+        }
+        ucsbuf[0] = 0;
+        ibuf = (char *) (void *) wcbuf;
+        obuf = (char *) (void *) ucsbuf;
+        ibl = sizeof(wcbuf);
+        obl = sizeof(ucsbuf);
+        if ((cd_to_uni != (iconv_t) -1)
+            &&
+            (iconv(cd_to_uni, &ibuf, &ibl, &obuf, &obl))
+            &&
+            (ucsbuf[0] != ucs))
+        {
+            /* does not round-trip, probably a broken character */
+            wcbuf[0] = 0;
+            break;
+        }
     }
-    if ((cd_to_wchar == (iconv_t) -1)
-        &&
-        ((cd_to_wchar = iconv_open("wchar_t//IGNORE", "UCS-4-INTERNAL")) == (iconv_t) -1))
-    {
-        wcbuf[0] = 0;
-        goto done;
-    }
-    ucsbuf[0] = ucs;
-    ucsbuf[1] = 0;
-    wcbuf[0] = 0;
-    wcbuf[1] = 0;
-    ibuf = (char *) (void *) ucsbuf;
-    obuf = (char *) (void *) wcbuf;
-    ibl = sizeof(ucsbuf);
-    obl = sizeof(wcbuf);
-    if ((! iconv(cd_to_wchar, &ibuf, &ibl, &obuf, &obl))
-        ||
-        wcbuf[1]
-        ||
-        (! wcbuf[0]))
-    {
-        wcbuf[0] = 0;
-        goto done;
-    }
-    if (cd_to_uni == (iconv_t) -1)
-    {
-        cd_to_uni = iconv_open("UCS-4-INTERNAL//IGNORE", "wchar_t");
-    }
-    ucsbuf[0] = 0;
-    ibuf = (char *) (void *) wcbuf;
-    obuf = (char *) (void *) ucsbuf;
-    ibl = sizeof(wcbuf);
-    obl = sizeof(ucsbuf);
-    if ((cd_to_uni != (iconv_t) -1)
-        &&
-        (iconv(cd_to_uni, &ibuf, &ibl, &obuf, &obl))
-        &&
-        (ucsbuf[0] != ucs))
-    {
-        /* does not round-trip, probably a broken character */
-        wcbuf[0] = 0;
-        goto done;
-    }
-  done:
+    while (0);
     if (my_locale)
     {
         setlocale(LC_CTYPE, my_locale);
@@ -4291,368 +4294,371 @@ my_addch(unsigned long b, chtype attrs)
     my_real_attrset(my_attrs);
 #endif
 #endif /* USE_ATTR || USE_COLOR */
-    if (use_acs && use_raw && ! use_raw_ucs)
+    do
     {
-        char buf[2];
-        buf[0] = (char) (unsigned char) (b & 0xFF);
-        buf[1] = '\0';
-        ret = addstr(buf);
-        getyx(stdscr, new_y, new_x);
-        if ((old_x != new_x) || (old_y != new_y))
+        if (use_acs && use_raw && ! use_raw_ucs)
         {
-            if (CJK_MODE && ((new_x % COLS) != ((old_x + 2) % COLS)))
-            {
-                unsigned char rhs;
-
-                rhs = cp437_fullwidth_rhs[b];
-                if ((int) (unsigned char) rhs)
-                {
-                    buf[0] = (char) (unsigned char) (0xFFU & (unsigned) rhs);
-                    addstr(buf);
-                }
-            }
-            goto my_addch_done;
-        }
-    }
-    if (b <= 0xFF)
-    {
-        if (use_acs)
-        {
-#if USE_WIDEC_SUPPORT
-            if (use_raw && use_raw_ucs)
-            {
-                unsigned long my_ucs;
-                wchar_t my_wch;
-                int my_wcw;
-
-                my_ucs = uni_cp437[b];
-                my_wch = ucs_to_wchar(my_ucs);
-                my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
-                if ((my_wcw > 0) && (my_wcw <= ((CJK_MODE) ? 2 : 1)))
-                {
-                    ret = addnwstr(&my_wch, 1);
-                    getyx(stdscr, new_y, new_x);
-                    if ((old_x != new_x) || (old_y != new_y))
-                    {
-                        if (CJK_MODE && (my_wcw == 1))
-                        {
-                            unsigned char rhs;
-
-                            rhs = cp437_fullwidth_rhs[b];
-                            if ((int) (unsigned char) rhs)
-                            {
-                                wchar_t wrhs;
-
-                                wrhs = ucs_to_wchar(uni_cp437_fullwidth[(int) (unsigned char) rhs]);
-                                my_wcw += wrhs ? my_wcwidth(wrhs) : 0;
-                                if (my_wcw == 2)
-                                {
-                                    addnwstr(&wrhs, 1);
-                                }
-                            }
-                        }
-                        else if (CJK_MODE && (my_wcw == 2)
-                                 &&
-                                 (((old_x + 1) % COLS) == (new_x % COLS)))
-                        {
-                            location_is_suspect = 1;
-                            leaveok(stdscr, FALSE);
-                            move(0, 0);
-                            refresh();
-                            leaveok(stdscr, TRUE);
-                            move((old_y + ((old_x + 2) / COLS)) % LINES, (old_x + 2) % COLS);
-                        }
-                        goto my_addch_done;
-                    }
-                    /* U+30FB KATAKANA MIDDLE DOT -> 0xFF0E FULLWIDTH FULL STOP */
-                    if (my_ucs == 0x30fb)
-                    {
-                        my_wch = ucs_to_wchar(0xff0e);
-                        my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
-                        ret = addnwstr(&my_wch, 1);
-                        getyx(stdscr, new_y, new_x);
-                        if ((old_x != new_x) || (old_y != new_y))
-                        {
-                            if (CJK_MODE && (my_wcw == 2)
-                                &&
-                                (((old_x + 1) % COLS) == (new_x % COLS)))
-                            {
-                            }
-                            goto my_addch_done;
-                        }
-                    }
-                    /* U+301C WAVE DASH -> 0xFF5E FULLWIDTH TILDE */
-                    if (my_ucs == 0x301c)
-                    {
-                        my_wch = ucs_to_wchar(0xff5e);
-                        my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
-                        ret = addnwstr(&my_wch, 1);
-                        getyx(stdscr, new_y, new_x);
-                        if ((old_x != new_x) || (old_y != new_y))
-                        {
-                            if (CJK_MODE && (my_wcw == 2)
-                                &&
-                                (((old_x + 1) % COLS) == (new_x % COLS)))
-                            {
-                            }
-                            goto my_addch_done;
-                        }
-                    }
-                }
-            }
-            if (altcharset_cp437[b])
-            {
-                wchar_t my_wchbuf[CCHARW_MAX];
-                attr_t my_acs_attrs;
-                short my_color_pair;
-                attr_t my_current_attrs;
-                int my_len;
-
-                my_len =
-                    getcchar(
-                        MY_WACS_PTR altcharset_cp437[b],
-                        NULL,
-                        &my_acs_attrs,
-                        &my_color_pair,
-                        NULL);
-                if (my_len &&
-                    (getcchar(
-                        MY_WACS_PTR altcharset_cp437[b],
-                        my_wchbuf,
-                        &my_acs_attrs,
-                        &my_color_pair,
-                        NULL) != ERR) &&
-                    (my_wcswidth(my_wchbuf, my_len) == 1))
-                {
-#ifdef _XOPEN_SOURCE_EXTENDED
-                    attr_get(
-                        & my_current_attrs,
-                        & my_color_pair,
-                        NULL);
-                    attr_set(
-                        my_current_attrs | my_acs_attrs,
-                        my_color_pair,
-                        NULL);
-#else
-                    my_current_attrs = attr_get();
-                    attr_set(my_current_attrs | my_acs_attrs);
-#endif
-                    ret = addnwstr(
-                        my_wchbuf,
-                        my_len);
-                    getyx(stdscr, new_y, new_x);
-                    if (CJK_MODE && ((old_x != new_x) || (old_y != new_y)))
-                    {
-                        unsigned char rhs;
-                        
-                        rhs = cp437_fullwidth_rhs[b];
-                        if ((int) (unsigned char) rhs)
-                        {
-                            if (altcharset_cp437[(int) (unsigned char) rhs])
-                            {
-                                my_len =
-                                    getcchar(
-                                        MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
-                                        NULL,
-                                        &my_acs_attrs,
-                                        &my_color_pair,
-                                        NULL);
-                                if (my_len &&
-                                    (getcchar(
-                                        MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
-                                        my_wchbuf,
-                                        &my_acs_attrs,
-                                        &my_color_pair,
-                                        NULL) != ERR) &&
-                                    (my_wcswidth(my_wchbuf, my_len) == 1))
-                                {
-                                    addnwstr(
-                                        my_wchbuf,
-                                        my_len);
-                                }
-                            }
-                            else
-                            {
-                                addch(ascii_cp437[(int) (unsigned char) rhs]);
-                            }
-                        }
-                    }
-#ifdef _XOPEN_SOURCE_EXTENDED
-                    attr_set(
-                        my_current_attrs,
-                        my_color_pair,
-                        NULL);
-#else
-                    attr_set(my_current_attrs);
-#endif
-                    if ((old_x != new_x) || (old_y != new_y))
-                    {
-                        goto my_addch_done;
-                    }
-                }
-            }
-#else /* ! USE_WIDEC_SUPPORT */
-            if (use_raw && use_raw_ucs)
-            {
-                c = uni_cp437[b];
-                ret = addch(c);
-                getyx(stdscr, new_y, new_x);
-                if ((old_x != new_x) || (old_y != new_y))
-                {
-#if USE_WCWIDTH
-                    if (CJK_MODE)
-                    {
-                        wchar_t my_wch;
-
-                        my_wch = ucs_to_wchar(c);
-                        if (my_wch && (my_wcwidth(my_wch) < 2))
-                        {
-                            unsigned char rhs;
-                    
-                            rhs = cp437_fullwidth_rhs[b];
-                            if ((int) (unsigned char) rhs)
-                            {
-                                c = uni_cp437[(int) (unsigned char) rhs];
-                                my_wch = ucs_to_wchar(c);
-                                getyx(stdscr, old_y, old_x);
-                                if (my_wch && (my_wcwidth(my_wch) < 2))
-                                {
-                                    addch(c);
-                                    getyx(stdscr, new_y, new_x);
-                                    if ((old_x != new_x) || (old_y != new_y))
-                                    {
-                                        goto my_addch_done;
-                                    }
-                                }
-                                c = altcharset_cp437[(int) (unsigned char) rhs];
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-                                if (c & ~A_CHARTEXT)
-                                {
-                                    my_attrset(attrs);
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                                    my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-                                }
-#endif
-#endif
-                                addch(c);
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-                                if (c & ~A_CHARTEXT)
-                                {
-                                    my_attrset(attrs);
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                                    my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-                                }
-#endif
-#endif
-                                getyx(stdscr, new_y, new_x);
-                                if ((old_x != new_x) || (old_y != new_y))
-                                {
-                                    goto my_addch_done;
-                                }
-                                addch(ascii_cp437[(int) (unsigned char) rhs]);
-                            }
-                        }
-                    }
-#endif
-                    goto my_addch_done;
-                }
-            }
-            c = altcharset_cp437[b];
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-            if (c & ~A_CHARTEXT)
-            {
-                my_attrset(attrs | (c & ~A_CHARTEXT));
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-            }
-#endif
-#endif
-            ret = addch(c);
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-            if (c & ~A_CHARTEXT)
-            {
-                my_attrset(attrs);
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-            }
-#endif
-#endif
+            char buf[2];
+            buf[0] = (char) (unsigned char) (b & 0xFF);
+            buf[1] = '\0';
+            ret = addstr(buf);
             getyx(stdscr, new_y, new_x);
             if ((old_x != new_x) || (old_y != new_y))
             {
                 if (CJK_MODE && ((new_x % COLS) != ((old_x + 2) % COLS)))
                 {
                     unsigned char rhs;
-                    
-                    rhs = (unsigned char) (unsigned) (chtype) cp437_fullwidth_rhs[b];
+
+                    rhs = cp437_fullwidth_rhs[b];
                     if ((int) (unsigned char) rhs)
                     {
-                        c = altcharset_cp437[(int) (unsigned char) rhs];
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-                        if (c & ~A_CHARTEXT)
-                        {
-                            my_attrset(attrs | (c & ~A_CHARTEXT));
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                            my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-                        }
-#endif
-#endif
-                        addch(c);
-#if USE_A_CHARTEXT
-#ifdef A_CHARTEXT
-                        if (c & ~A_CHARTEXT)
-                        {
-                            my_attrset(attrs);
-#if USE_ATTR || USE_COLOR
-#if DANGEROUS_ATTRS
-                            my_real_attrset(my_attrs);
-#endif
-#endif /* USE_ATTR || USE_COLOR */
-                        }
-#endif
-#endif
+                        buf[0] = (char) (unsigned char) (0xFFU & (unsigned) rhs);
+                        addstr(buf);
                     }
                 }
-                goto my_addch_done;
+                break;
             }
-#endif /* ! USE_WIDEC_SUPPORT */
         }
-    }
-    c = ascii_cp437[b];
-    getyx(stdscr, old_y, old_x);
-    ret = addch(c);
-    getyx(stdscr, new_y, new_x);
-    if (CJK_MODE && ((new_x % COLS) != ((old_x + 2) % COLS)))
-    {
-        unsigned char rhs;
-
-        rhs = cp437_fullwidth_rhs[b];
-        if ((int) (unsigned char) rhs)
+        if (b <= 0xFF)
         {
-            addch(ascii_cp437[(int) (unsigned char) rhs]);
+            if (use_acs)
+            {
+#if USE_WIDEC_SUPPORT
+                if (use_raw && use_raw_ucs)
+                {
+                    unsigned long my_ucs;
+                    wchar_t my_wch;
+                    int my_wcw;
+
+                    my_ucs = uni_cp437[b];
+                    my_wch = ucs_to_wchar(my_ucs);
+                    my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
+                    if ((my_wcw > 0) && (my_wcw <= ((CJK_MODE) ? 2 : 1)))
+                    {
+                        ret = addnwstr(&my_wch, 1);
+                        getyx(stdscr, new_y, new_x);
+                        if ((old_x != new_x) || (old_y != new_y))
+                        {
+                            if (CJK_MODE && (my_wcw == 1))
+                            {
+                                unsigned char rhs;
+
+                                rhs = cp437_fullwidth_rhs[b];
+                                if ((int) (unsigned char) rhs)
+                                {
+                                    wchar_t wrhs;
+
+                                    wrhs = ucs_to_wchar(uni_cp437_fullwidth[(int) (unsigned char) rhs]);
+                                    my_wcw += wrhs ? my_wcwidth(wrhs) : 0;
+                                    if (my_wcw == 2)
+                                    {
+                                        addnwstr(&wrhs, 1);
+                                    }
+                                }
+                            }
+                            else if (CJK_MODE && (my_wcw == 2)
+                                     &&
+                                     (((old_x + 1) % COLS) == (new_x % COLS)))
+                            {
+                                location_is_suspect = 1;
+                                leaveok(stdscr, FALSE);
+                                move(0, 0);
+                                refresh();
+                                leaveok(stdscr, TRUE);
+                                move((old_y + ((old_x + 2) / COLS)) % LINES, (old_x + 2) % COLS);
+                            }
+                            break;
+                        }
+                        /* U+30FB KATAKANA MIDDLE DOT -> 0xFF0E FULLWIDTH FULL STOP */
+                        if (my_ucs == 0x30fb)
+                        {
+                            my_wch = ucs_to_wchar(0xff0e);
+                            my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
+                            ret = addnwstr(&my_wch, 1);
+                            getyx(stdscr, new_y, new_x);
+                            if ((old_x != new_x) || (old_y != new_y))
+                            {
+                                if (CJK_MODE && (my_wcw == 2)
+                                    &&
+                                    (((old_x + 1) % COLS) == (new_x % COLS)))
+                                {
+                                }
+                                break;
+                            }
+                        }
+                        /* U+301C WAVE DASH -> 0xFF5E FULLWIDTH TILDE */
+                        if (my_ucs == 0x301c)
+                        {
+                            my_wch = ucs_to_wchar(0xff5e);
+                            my_wcw = my_wch ? my_wcwidth(my_wch) : 0;
+                            ret = addnwstr(&my_wch, 1);
+                            getyx(stdscr, new_y, new_x);
+                            if ((old_x != new_x) || (old_y != new_y))
+                            {
+                                if (CJK_MODE && (my_wcw == 2)
+                                    &&
+                                    (((old_x + 1) % COLS) == (new_x % COLS)))
+                                {
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+                if (altcharset_cp437[b])
+                {
+                    wchar_t my_wchbuf[CCHARW_MAX];
+                    attr_t my_acs_attrs;
+                    short my_color_pair;
+                    attr_t my_current_attrs;
+                    int my_len;
+
+                    my_len =
+                        getcchar(
+                            MY_WACS_PTR altcharset_cp437[b],
+                            NULL,
+                            &my_acs_attrs,
+                            &my_color_pair,
+                            NULL);
+                    if (my_len &&
+                        (getcchar(
+                            MY_WACS_PTR altcharset_cp437[b],
+                            my_wchbuf,
+                            &my_acs_attrs,
+                            &my_color_pair,
+                            NULL) != ERR) &&
+                        (my_wcswidth(my_wchbuf, my_len) == 1))
+                    {
+#ifdef _XOPEN_SOURCE_EXTENDED
+                        attr_get(
+                            & my_current_attrs,
+                            & my_color_pair,
+                            NULL);
+                        attr_set(
+                            my_current_attrs | my_acs_attrs,
+                            my_color_pair,
+                            NULL);
+#else
+                        my_current_attrs = attr_get();
+                        attr_set(my_current_attrs | my_acs_attrs);
+#endif
+                        ret = addnwstr(
+                            my_wchbuf,
+                            my_len);
+                        getyx(stdscr, new_y, new_x);
+                        if (CJK_MODE && ((old_x != new_x) || (old_y != new_y)))
+                        {
+                            unsigned char rhs;
+                        
+                            rhs = cp437_fullwidth_rhs[b];
+                            if ((int) (unsigned char) rhs)
+                            {
+                                if (altcharset_cp437[(int) (unsigned char) rhs])
+                                {
+                                    my_len =
+                                        getcchar(
+                                            MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
+                                            NULL,
+                                            &my_acs_attrs,
+                                            &my_color_pair,
+                                            NULL);
+                                    if (my_len &&
+                                        (getcchar(
+                                            MY_WACS_PTR altcharset_cp437[(int) (unsigned char) rhs],
+                                            my_wchbuf,
+                                            &my_acs_attrs,
+                                            &my_color_pair,
+                                            NULL) != ERR) &&
+                                        (my_wcswidth(my_wchbuf, my_len) == 1))
+                                    {
+                                        addnwstr(
+                                            my_wchbuf,
+                                            my_len);
+                                    }
+                                }
+                                else
+                                {
+                                    addch(ascii_cp437[(int) (unsigned char) rhs]);
+                                }
+                            }
+                        }
+#ifdef _XOPEN_SOURCE_EXTENDED
+                        attr_set(
+                            my_current_attrs,
+                            my_color_pair,
+                            NULL);
+#else
+                        attr_set(my_current_attrs);
+#endif
+                        if ((old_x != new_x) || (old_y != new_y))
+                        {
+                            break;
+                        }
+                    }
+                }
+#else /* ! USE_WIDEC_SUPPORT */
+                if (use_raw && use_raw_ucs)
+                {
+                    c = uni_cp437[b];
+                    ret = addch(c);
+                    getyx(stdscr, new_y, new_x);
+                    if ((old_x != new_x) || (old_y != new_y))
+                    {
+#if USE_WCWIDTH
+                        if (CJK_MODE)
+                        {
+                            wchar_t my_wch;
+
+                            my_wch = ucs_to_wchar(c);
+                            if (my_wch && (my_wcwidth(my_wch) < 2))
+                            {
+                                unsigned char rhs;
+                    
+                                rhs = cp437_fullwidth_rhs[b];
+                                if ((int) (unsigned char) rhs)
+                                {
+                                    c = uni_cp437[(int) (unsigned char) rhs];
+                                    my_wch = ucs_to_wchar(c);
+                                    getyx(stdscr, old_y, old_x);
+                                    if (my_wch && (my_wcwidth(my_wch) < 2))
+                                    {
+                                        addch(c);
+                                        getyx(stdscr, new_y, new_x);
+                                        if ((old_x != new_x) || (old_y != new_y))
+                                        {
+                                            break;
+                                        }
+                                    }
+                                    c = altcharset_cp437[(int) (unsigned char) rhs];
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                                    if (c & ~A_CHARTEXT)
+                                    {
+                                        my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                        my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                                    }
+#endif
+#endif
+                                    addch(c);
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                                    if (c & ~A_CHARTEXT)
+                                    {
+                                        my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                        my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                                    }
+#endif
+#endif
+                                    getyx(stdscr, new_y, new_x);
+                                    if ((old_x != new_x) || (old_y != new_y))
+                                    {
+                                        break;
+                                    }
+                                    addch(ascii_cp437[(int) (unsigned char) rhs]);
+                                }
+                            }
+                        }
+#endif
+                        break;
+                    }
+                }
+                c = altcharset_cp437[b];
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                if (c & ~A_CHARTEXT)
+                {
+                    my_attrset(attrs | (c & ~A_CHARTEXT));
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                    my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                }
+#endif
+#endif
+                ret = addch(c);
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                if (c & ~A_CHARTEXT)
+                {
+                    my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                    my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                }
+#endif
+#endif
+                getyx(stdscr, new_y, new_x);
+                if ((old_x != new_x) || (old_y != new_y))
+                {
+                    if (CJK_MODE && ((new_x % COLS) != ((old_x + 2) % COLS)))
+                    {
+                        unsigned char rhs;
+                    
+                        rhs = (unsigned char) (unsigned) (chtype) cp437_fullwidth_rhs[b];
+                        if ((int) (unsigned char) rhs)
+                        {
+                            c = altcharset_cp437[(int) (unsigned char) rhs];
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                            if (c & ~A_CHARTEXT)
+                            {
+                                my_attrset(attrs | (c & ~A_CHARTEXT));
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                            }
+#endif
+#endif
+                            addch(c);
+#if USE_A_CHARTEXT
+#ifdef A_CHARTEXT
+                            if (c & ~A_CHARTEXT)
+                            {
+                                my_attrset(attrs);
+#if USE_ATTR || USE_COLOR
+#if DANGEROUS_ATTRS
+                                my_real_attrset(my_attrs);
+#endif
+#endif /* USE_ATTR || USE_COLOR */
+                            }
+#endif
+#endif
+                        }
+                    }
+                    break;
+                }
+#endif /* ! USE_WIDEC_SUPPORT */
+            }
+        }
+        c = ascii_cp437[b];
+        getyx(stdscr, old_y, old_x);
+        ret = addch(c);
+        getyx(stdscr, new_y, new_x);
+        if (CJK_MODE && ((new_x % COLS) != ((old_x + 2) % COLS)))
+        {
+            unsigned char rhs;
+
+            rhs = cp437_fullwidth_rhs[b];
+            if ((int) (unsigned char) rhs)
+            {
+                addch(ascii_cp437[(int) (unsigned char) rhs]);
+            }
         }
     }
-  my_addch_done:
+    while (0);
 #if USE_ATTR || USE_COLOR
 #if DANGEROUS_ATTRS
     if (my_attrs) my_real_attrset(0);
@@ -6662,15 +6668,414 @@ gamerender(void)
 }
 
 static int
-gamecycle(void)
+gameinput(void)
 {
     int k;
-    int s, xtile, ytile, x_off, y_off;
     int hero_can_move_left = 0;
     int hero_can_move_right = 0;
     int hero_can_move_up = 0;
     int hero_can_move_down = 0;
     unsigned char m1, m2;
+    int xtile, ytile, x_off, y_off;
+
+    x_off = sprite_register_x[HERO] % gfx_w;
+    y_off = sprite_register_y[HERO] % gfx_h;
+    xtile = XTILE(sprite_register_x[HERO]);
+    ytile = YTILE(sprite_register_y[HERO]);
+    while (1)
+    {
+        struct timeval tv_pre, tv_post;
+
+        tv_pre.tv_sec = 0;
+        tv_pre.tv_usec = 0;
+        myman_gettimeofday(&tv_pre, 0);
+        k = my_getch();
+        tv_post.tv_sec = 0;
+        tv_post.tv_usec = 0;
+        myman_gettimeofday(&tv_post, 0);
+        /* a very slow keypress is likely a sign of unmapping, suspending, or some similar mess */
+
+        /* TODO: treat job control signals similarly */
+        if (((1.0L * tv_post.tv_sec + 1e-6L * tv_post.tv_usec)
+             -
+             (1.0L * tv_pre.tv_sec + 1e-6L * tv_pre.tv_usec)) >= 1.0)
+        {
+            ignore_delay = 1;
+            frameskip = 0;
+        }
+        m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
+        m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+        hero_can_move_left =
+            ISOPEN((unsigned) m1)
+            ||
+            ISZAPLEFT((unsigned) m2);
+        m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
+        m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+        hero_can_move_right =
+            ISOPEN((unsigned) m1)
+            ||
+            ISZAPRIGHT((unsigned) m2);
+        m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
+        m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+        hero_can_move_up =
+            ISOPEN((unsigned) m1)
+            ||
+            ISZAPUP((unsigned) m2);
+        m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
+        m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
+        hero_can_move_down =
+            ISOPEN((unsigned) m1)
+            ||
+            ISZAPDOWN((unsigned) m2);
+#ifdef KEY_RESIZE
+        if (k == KEY_RESIZE)
+        {
+            k = '@';
+        }
+#endif
+        if ((k == 'q') || (k == 'Q') || (k == MYMANCTRL('C')) || quit_requested)
+        {
+            quit_requested = 0;
+            return 0;
+        }
+        else if ((k == MYMANCTRL('@')) && (k != ERR))
+        {
+            /* NUL - idle keepalive (iTerm, maybe others?) */
+            return 1;
+        }
+        else if (k == MYMANCTRL('S'))
+        {
+            xoff_received = 1;
+            return 1;
+        }
+        else if (k == MYMANCTRL('Q'))
+        {
+            xoff_received = 0;
+            return 1;
+        }
+        else if (k == '!')
+        {
+            if (maze_ABOUT || maze_FIXME || maze_NOTE
+                || tile_ABOUT || tile_FIXME || tile_NOTE
+                || sprite_ABOUT || sprite_FIXME || sprite_NOTE)
+            {
+                if (tmp_notice)
+                {
+                    free((void *) tmp_notice);
+                    tmp_notice = 0;
+                }
+                tmp_notice = (char *) malloc(
+                    ((maze_ABOUT ? ((maze_ABOUT_prefix ? strlen(maze_ABOUT_prefix) : 0) + strlen(maze_ABOUT)) : 0) + (maze_FIXME ? ((maze_FIXME_prefix ? strlen(maze_FIXME_prefix) : 0) + strlen(maze_FIXME)) : 0) + (maze_NOTE ? ((maze_NOTE_prefix ? strlen(maze_NOTE_prefix) : 0) + strlen(maze_NOTE)) : 0)
+                     + (tile_ABOUT ? ((tile_ABOUT_prefix ? strlen(tile_ABOUT_prefix) : 0) + strlen(tile_ABOUT)) : 0) + (tile_FIXME ? ((tile_FIXME_prefix ? strlen(tile_FIXME_prefix) : 0) + strlen(tile_FIXME)) : 0) + (tile_NOTE ? ((tile_NOTE_prefix ? strlen(tile_NOTE_prefix) : 0) + strlen(tile_NOTE)) : 0)
+                     + (sprite_ABOUT ? ((sprite_ABOUT_prefix ? strlen(sprite_ABOUT_prefix) : 0) + strlen(sprite_ABOUT)) : 0) + (sprite_FIXME ? ((sprite_FIXME_prefix ? strlen(sprite_FIXME_prefix) : 0) + strlen(sprite_FIXME)) : 0) + (sprite_NOTE ? ((sprite_NOTE_prefix ? strlen(sprite_NOTE_prefix) : 0) + strlen(sprite_NOTE)) : 0))
+                    + 1
+                    );
+                if (tmp_notice)
+                {
+                    *tmp_notice = '\0';
+                    if (maze_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_ABOUT_prefix ? maze_ABOUT_prefix : ""), maze_ABOUT);
+                    if (maze_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_FIXME_prefix ? maze_FIXME_prefix : ""), maze_FIXME);
+                    if (maze_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_NOTE_prefix ? maze_NOTE_prefix : ""), maze_NOTE);
+                    if (tile_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_ABOUT_prefix ? tile_ABOUT_prefix : ""), tile_ABOUT);
+                    if (tile_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_FIXME_prefix ? tile_FIXME_prefix : ""), tile_FIXME);
+                    if (tile_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_NOTE_prefix ? tile_NOTE_prefix : ""), tile_NOTE);
+                    if (sprite_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_ABOUT_prefix ? sprite_ABOUT_prefix : ""), sprite_ABOUT);
+                    if (sprite_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_FIXME_prefix ? sprite_FIXME_prefix : ""), sprite_FIXME);
+                    if (sprite_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_NOTE_prefix ? sprite_NOTE_prefix : ""), sprite_NOTE);
+                    pager_notice = tmp_notice;
+                    reinit_requested = 1;
+                }
+            }
+            return 0;
+        }
+        else if ((k == '\?') || (k == MYMANCTRL('H')))
+        {
+            if (MYMANKEYS
+                || maze_ABOUT || maze_FIXME || maze_NOTE
+                || tile_ABOUT || tile_FIXME || tile_NOTE
+                || sprite_ABOUT || sprite_FIXME || sprite_NOTE)
+            {
+                if (tmp_notice)
+                {
+                    free((void *) tmp_notice);
+                    tmp_notice = 0;
+                }
+                tmp_notice = (char *) malloc(
+                    ((MYMANKEYS ? ((MYMANKEYS_prefix ? strlen(MYMANKEYS_prefix) : 0) + strlen(MYMANKEYS)) : 0)
+                     + (maze_ABOUT ? ((maze_ABOUT_prefix ? strlen(maze_ABOUT_prefix) : 0) + strlen(maze_ABOUT)) : 0) + (maze_FIXME ? ((maze_FIXME_prefix ? strlen(maze_FIXME_prefix) : 0) + strlen(maze_FIXME)) : 0) + (maze_NOTE ? ((maze_NOTE_prefix ? strlen(maze_NOTE_prefix) : 0) + strlen(maze_NOTE)) : 0)
+                     + (tile_ABOUT ? ((tile_ABOUT_prefix ? strlen(tile_ABOUT_prefix) : 0) + strlen(tile_ABOUT)) : 0) + (tile_FIXME ? ((tile_FIXME_prefix ? strlen(tile_FIXME_prefix) : 0) + strlen(tile_FIXME)) : 0) + (tile_NOTE ? ((tile_NOTE_prefix ? strlen(tile_NOTE_prefix) : 0) + strlen(tile_NOTE)) : 0)
+                     + (sprite_ABOUT ? ((sprite_ABOUT_prefix ? strlen(sprite_ABOUT_prefix) : 0) + strlen(sprite_ABOUT)) : 0) + (sprite_FIXME ? ((sprite_FIXME_prefix ? strlen(sprite_FIXME_prefix) : 0) + strlen(sprite_FIXME)) : 0) + (sprite_NOTE ? ((sprite_NOTE_prefix ? strlen(sprite_NOTE_prefix) : 0) + strlen(sprite_NOTE)) : 0))
+                    + 1
+                    );
+                if (tmp_notice)
+                {
+                    *tmp_notice = '\0';
+                    if (MYMANKEYS) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (MYMANKEYS_prefix ? MYMANKEYS_prefix : ""), MYMANKEYS);
+                    if (maze_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_ABOUT_prefix ? maze_ABOUT_prefix : ""), maze_ABOUT);
+                    if (maze_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_FIXME_prefix ? maze_FIXME_prefix : ""), maze_FIXME);
+                    if (maze_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_NOTE_prefix ? maze_NOTE_prefix : ""), maze_NOTE);
+                    if (tile_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_ABOUT_prefix ? tile_ABOUT_prefix : ""), tile_ABOUT);
+                    if (tile_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_FIXME_prefix ? tile_FIXME_prefix : ""), tile_FIXME);
+                    if (tile_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_NOTE_prefix ? tile_NOTE_prefix : ""), tile_NOTE);
+                    if (sprite_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_ABOUT_prefix ? sprite_ABOUT_prefix : ""), sprite_ABOUT);
+                    if (sprite_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_FIXME_prefix ? sprite_FIXME_prefix : ""), sprite_FIXME);
+                    if (sprite_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_NOTE_prefix ? sprite_NOTE_prefix : ""), sprite_NOTE);
+                    pager_notice = tmp_notice;
+                    reinit_requested = 1;
+                }
+            }
+            return 0;
+        } else if ((k == '@') || (got_sigwinch && (k == ERR)))
+        {
+            if (got_sigwinch)
+            {
+                use_env(FALSE);
+            }
+            got_sigwinch = 0;
+            reinit_requested = 1;
+            return 0;
+        } else if ((k == 'r') || (k == 'R') || (k == MYMANCTRL('L')) || (k == MYMANCTRL('R'))) {
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            wrefresh(stdscr);
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+        } else if ((k == 'i') || (k == 'I'))
+        {
+            use_idlok = ! use_idlok;
+#ifndef DISABLE_IDLOK
+            if (use_idlok)
+            {
+                idlok(stdscr, TRUE);
+            }
+            else
+            {
+                idlok(stdscr, FALSE);
+            }
+#endif
+#if USE_COLOR
+        } else if ((k == 'c') || (k == 'C')) {
+            use_color = ! use_color;
+            use_color_p = 1;
+            if (use_color)
+                init_pen();
+            else
+                destroy_pen();
+            my_attrset(0);
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+#endif
+        } else if ((k == 'b') || (k == 'B')) {
+            use_dim_and_bright =
+                ! use_dim_and_bright;
+            use_dim_and_bright_p = 1;
+#if USE_COLOR
+            if (use_color)
+            {
+                destroy_pen();
+                init_pen();
+            }
+#endif
+            my_attrset(0);
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+#if USE_ATTR
+        } else if ((k == 'u') || (k == 'U')) {
+            use_underline = ! use_underline;
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+#endif
+        } else if ((k == 's') || (k == 'S')) {
+            use_sound = ! use_sound;
+            return 1;
+        } else if ((k == 'o') || (k == 'O') || (k == '0'))
+        {
+            use_bullet_for_dots = ! use_bullet_for_dots;
+            use_bullet_for_dots_p = 1;
+            init_trans(use_bullet_for_dots);
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+        } else if ((k == 'a') || (k == 'A'))
+        {
+            use_acs = ! use_acs;
+            use_acs_p = 1;
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+        } else if ((k == 'x') || (k == 'X'))
+        {
+            use_raw = ! use_raw;
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+        } else if ((k == '/') || (k == '\\'))
+        {
+            reflect = ! reflect;
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            if (IS_LEFT_ARROW(key_buffer)) key_buffer = KEY_UP;
+            else if (IS_UP_ARROW(key_buffer)) key_buffer = KEY_LEFT;
+            else if (IS_RIGHT_ARROW(key_buffer)) key_buffer = KEY_DOWN;
+            else if (IS_DOWN_ARROW(key_buffer)) key_buffer = KEY_RIGHT;
+            return 1;
+        } else if ((k == 'e') || (k == 'E'))
+        {
+            use_raw_ucs = ! use_raw_ucs;
+            my_clear();
+            clearok(curscr, TRUE);
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            return 1;
+        } else if ((k == 't') || (k == 'T'))
+        {
+            char buf[128];
+            char buf_txt[128];
+            unsigned int idx;
+
+            if ((! snapshot)
+                &&
+                (! snapshot_txt))
+            {
+                /* try to find a free slot */
+                for (idx = 0; idx <= 9999; idx ++)
+                {
+                    sprintf(buf,
+                            "snap%4.4u%s",
+                            idx, HTM_SUFFIX);
+                    sprintf(buf_txt,
+                            "snap%4.4u%s",
+                            idx, TXT_SUFFIX);
+                    if (access(buf, F_OK) && access(buf_txt, F_OK))
+                    {
+                        break;
+                    }
+                }
+                snapshot = fopen(buf, "wb");
+                snapshot_txt = fopen(buf_txt, "wb");
+                snapshot_use_color = use_color;
+            }
+            return 1;
+        } else if ((k == 'p') || (k == 'P') || (k == 27)) {
+            if (paused)
+            {
+                DIRTY_ALL();
+            }
+            paused = ! paused;
+            ignore_delay = 1;
+            frameskip = 0;
+            continue;
+        } else if ((k == ',') || (k == '<')) {
+            if (reflect ? (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)) : (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)))
+            {
+                if (reflect ? ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)) : ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)))
+                {
+                    key_buffer = ERR;
+                }
+            }
+        } else if ((k == '.') || (k == '>')) {
+            if (reflect ? (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)) : (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)))
+            {
+                if (reflect ? ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)) : ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)))
+                {
+                    key_buffer = ERR;
+                }
+            }
+        } else if ((k == 'w') || (k == 'W')) {
+            dots = total_dots[maze_level] - 1;
+            continue;
+        } else if ((k == 'd') || (k == 'D')) {
+            debug = ! debug;
+            DIRTY_ALL();
+            ignore_delay = 1;
+            frameskip = 0;
+            continue;
+        } else if ((reflect ? IS_UP_ARROW(((k == ERR) ? key_buffer : k)) : IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)))
+                   && hero_can_move_left)
+        {
+            if (! (winning || dying || (dead && ! ghost_eaten_timer)))
+            {
+                hero_dir = MYMAN_LEFT;
+                sprite_register[HERO] = SPRITE_HERO + 4;
+            }
+        } else if ((reflect ? IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)) : IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)))
+                   && hero_can_move_right)
+        {
+            if (! (winning || dying || (dead && ! ghost_eaten_timer)))
+            {
+                hero_dir = MYMAN_RIGHT;
+                sprite_register[HERO] = SPRITE_HERO + 12;
+            }
+        } else if ((reflect ? IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)) : IS_UP_ARROW(((k == ERR) ? key_buffer : k)))
+                   && hero_can_move_up)
+        {
+            if (! (winning || dying || (dead && ! ghost_eaten_timer)))
+            {
+                hero_dir = MYMAN_UP;
+                sprite_register[HERO] = SPRITE_HERO;
+            }
+        } else if ((reflect ? IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)) : IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)))
+                   && hero_can_move_down)
+        {
+            if (! (winning || dying || (dead && ! ghost_eaten_timer)))
+            {
+                hero_dir = MYMAN_DOWN;
+                sprite_register[HERO] = SPRITE_HERO + 16;
+            }
+        }
+        if (k == ERR)
+        {
+            k = key_buffer;
+        }
+        else if (! ignore_delay)
+        {
+            if (paused)
+            {
+                DIRTY_ALL();
+                ignore_delay = 1;
+                frameskip = 0;
+            }
+            paused = 0;
+            key_buffer = k;
+            continue;
+        }
+        break;
+    }
+    return (k == ERR) ? -1 : -2;
+}
+
+static int
+gamecycle(void)
+{
+    int s;
+    int ret;
 
     showlives = ((myman_intro || myman_start || myman_demo) ? 0 : NET_LIVES) - 1 + (((munched == HERO) && (! sprite_register_used[HERO])) ? 1 : 0);
     if ((old_lines != LINES)
@@ -6845,394 +7250,10 @@ gamecycle(void)
         }
     }
 #endif
-    x_off = sprite_register_x[HERO] % gfx_w;
-    y_off = sprite_register_y[HERO] % gfx_h;
-    xtile = XTILE(sprite_register_x[HERO]);
-    ytile = YTILE(sprite_register_y[HERO]);
-  nextkey:
+    ret = gameinput();
+    if (ret >= 0)
     {
-        struct timeval tv_pre, tv_post;
-
-        tv_pre.tv_sec = 0;
-        tv_pre.tv_usec = 0;
-        myman_gettimeofday(&tv_pre, 0);
-        k = my_getch();
-        tv_post.tv_sec = 0;
-        tv_post.tv_usec = 0;
-        myman_gettimeofday(&tv_post, 0);
-        /* a very slow keypress is likely a sign of unmapping, suspending, or some similar mess */
-
-        /* TODO: treat job control signals similarly */
-        if (((1.0L * tv_post.tv_sec + 1e-6L * tv_post.tv_usec)
-             -
-             (1.0L * tv_pre.tv_sec + 1e-6L * tv_pre.tv_usec)) >= 1.0)
-        {
-            ignore_delay = 1;
-            frameskip = 0;
-        }
-    }
-    m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - NOTRIGHT(x_off))];
-    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
-    hero_can_move_left =
-        ISOPEN((unsigned) m1)
-        ||
-        ISZAPLEFT((unsigned) m2);
-    m1 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + NOTLEFT(x_off))];
-    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
-    hero_can_move_right =
-        ISOPEN((unsigned) m1)
-        ||
-        ISZAPRIGHT((unsigned) m2);
-    m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - NOTBOTTOM(y_off))) * (maze_w + 1)+xtile];
-    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
-    hero_can_move_up =
-        ISOPEN((unsigned) m1)
-        ||
-        ISZAPUP((unsigned) m2);
-    m1 = (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + NOTTOP(y_off))) * (maze_w + 1)+xtile];
-    m2 = (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile];
-    hero_can_move_down =
-        ISOPEN((unsigned) m1)
-        ||
-        ISZAPDOWN((unsigned) m2);
-#ifdef KEY_RESIZE
-    if (k == KEY_RESIZE)
-    {
-        k = '@';
-    }
-#endif
-    if ((k == 'q') || (k == 'Q') || (k == MYMANCTRL('C')) || quit_requested)
-    {
-        quit_requested = 0;
-        return 0;
-    }
-    else if ((k == MYMANCTRL('@')) && (k != ERR))
-    {
-        /* NUL - idle keepalive (iTerm, maybe others?) */
-        return 1;
-    }
-    else if (k == MYMANCTRL('S'))
-    {
-        xoff_received = 1;
-        return 1;
-    }
-    else if (k == MYMANCTRL('Q'))
-    {
-        xoff_received = 0;
-        return 1;
-    }
-    else if (k == '!')
-    {
-        if (maze_ABOUT || maze_FIXME || maze_NOTE
-            || tile_ABOUT || tile_FIXME || tile_NOTE
-            || sprite_ABOUT || sprite_FIXME || sprite_NOTE)
-        {
-            if (tmp_notice)
-            {
-                free((void *) tmp_notice);
-                tmp_notice = 0;
-            }
-            tmp_notice = (char *) malloc(
-                ((maze_ABOUT ? ((maze_ABOUT_prefix ? strlen(maze_ABOUT_prefix) : 0) + strlen(maze_ABOUT)) : 0) + (maze_FIXME ? ((maze_FIXME_prefix ? strlen(maze_FIXME_prefix) : 0) + strlen(maze_FIXME)) : 0) + (maze_NOTE ? ((maze_NOTE_prefix ? strlen(maze_NOTE_prefix) : 0) + strlen(maze_NOTE)) : 0)
-                 + (tile_ABOUT ? ((tile_ABOUT_prefix ? strlen(tile_ABOUT_prefix) : 0) + strlen(tile_ABOUT)) : 0) + (tile_FIXME ? ((tile_FIXME_prefix ? strlen(tile_FIXME_prefix) : 0) + strlen(tile_FIXME)) : 0) + (tile_NOTE ? ((tile_NOTE_prefix ? strlen(tile_NOTE_prefix) : 0) + strlen(tile_NOTE)) : 0)
-                 + (sprite_ABOUT ? ((sprite_ABOUT_prefix ? strlen(sprite_ABOUT_prefix) : 0) + strlen(sprite_ABOUT)) : 0) + (sprite_FIXME ? ((sprite_FIXME_prefix ? strlen(sprite_FIXME_prefix) : 0) + strlen(sprite_FIXME)) : 0) + (sprite_NOTE ? ((sprite_NOTE_prefix ? strlen(sprite_NOTE_prefix) : 0) + strlen(sprite_NOTE)) : 0))
-                + 1
-                );
-            if (tmp_notice)
-            {
-                *tmp_notice = '\0';
-                if (maze_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_ABOUT_prefix ? maze_ABOUT_prefix : ""), maze_ABOUT);
-                if (maze_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_FIXME_prefix ? maze_FIXME_prefix : ""), maze_FIXME);
-                if (maze_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_NOTE_prefix ? maze_NOTE_prefix : ""), maze_NOTE);
-                if (tile_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_ABOUT_prefix ? tile_ABOUT_prefix : ""), tile_ABOUT);
-                if (tile_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_FIXME_prefix ? tile_FIXME_prefix : ""), tile_FIXME);
-                if (tile_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_NOTE_prefix ? tile_NOTE_prefix : ""), tile_NOTE);
-                if (sprite_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_ABOUT_prefix ? sprite_ABOUT_prefix : ""), sprite_ABOUT);
-                if (sprite_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_FIXME_prefix ? sprite_FIXME_prefix : ""), sprite_FIXME);
-                if (sprite_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_NOTE_prefix ? sprite_NOTE_prefix : ""), sprite_NOTE);
-                pager_notice = tmp_notice;
-                reinit_requested = 1;
-            }
-        }
-        return 0;
-    }
-    else if ((k == '\?') || (k == MYMANCTRL('H')))
-    {
-        if (MYMANKEYS
-            || maze_ABOUT || maze_FIXME || maze_NOTE
-            || tile_ABOUT || tile_FIXME || tile_NOTE
-            || sprite_ABOUT || sprite_FIXME || sprite_NOTE)
-        {
-            if (tmp_notice)
-            {
-                free((void *) tmp_notice);
-                tmp_notice = 0;
-            }
-            tmp_notice = (char *) malloc(
-                ((MYMANKEYS ? ((MYMANKEYS_prefix ? strlen(MYMANKEYS_prefix) : 0) + strlen(MYMANKEYS)) : 0)
-                 + (maze_ABOUT ? ((maze_ABOUT_prefix ? strlen(maze_ABOUT_prefix) : 0) + strlen(maze_ABOUT)) : 0) + (maze_FIXME ? ((maze_FIXME_prefix ? strlen(maze_FIXME_prefix) : 0) + strlen(maze_FIXME)) : 0) + (maze_NOTE ? ((maze_NOTE_prefix ? strlen(maze_NOTE_prefix) : 0) + strlen(maze_NOTE)) : 0)
-                 + (tile_ABOUT ? ((tile_ABOUT_prefix ? strlen(tile_ABOUT_prefix) : 0) + strlen(tile_ABOUT)) : 0) + (tile_FIXME ? ((tile_FIXME_prefix ? strlen(tile_FIXME_prefix) : 0) + strlen(tile_FIXME)) : 0) + (tile_NOTE ? ((tile_NOTE_prefix ? strlen(tile_NOTE_prefix) : 0) + strlen(tile_NOTE)) : 0)
-                 + (sprite_ABOUT ? ((sprite_ABOUT_prefix ? strlen(sprite_ABOUT_prefix) : 0) + strlen(sprite_ABOUT)) : 0) + (sprite_FIXME ? ((sprite_FIXME_prefix ? strlen(sprite_FIXME_prefix) : 0) + strlen(sprite_FIXME)) : 0) + (sprite_NOTE ? ((sprite_NOTE_prefix ? strlen(sprite_NOTE_prefix) : 0) + strlen(sprite_NOTE)) : 0))
-                + 1
-                );
-            if (tmp_notice)
-            {
-                *tmp_notice = '\0';
-                if (MYMANKEYS) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (MYMANKEYS_prefix ? MYMANKEYS_prefix : ""), MYMANKEYS);
-                if (maze_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_ABOUT_prefix ? maze_ABOUT_prefix : ""), maze_ABOUT);
-                if (maze_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_FIXME_prefix ? maze_FIXME_prefix : ""), maze_FIXME);
-                if (maze_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (maze_NOTE_prefix ? maze_NOTE_prefix : ""), maze_NOTE);
-                if (tile_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_ABOUT_prefix ? tile_ABOUT_prefix : ""), tile_ABOUT);
-                if (tile_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_FIXME_prefix ? tile_FIXME_prefix : ""), tile_FIXME);
-                if (tile_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (tile_NOTE_prefix ? tile_NOTE_prefix : ""), tile_NOTE);
-                if (sprite_ABOUT) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_ABOUT_prefix ? sprite_ABOUT_prefix : ""), sprite_ABOUT);
-                if (sprite_FIXME) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_FIXME_prefix ? sprite_FIXME_prefix : ""), sprite_FIXME);
-                if (sprite_NOTE) sprintf(tmp_notice + strlen(tmp_notice), "%s%s", (sprite_NOTE_prefix ? sprite_NOTE_prefix : ""), sprite_NOTE);
-                pager_notice = tmp_notice;
-                reinit_requested = 1;
-            }
-        }
-        return 0;
-    } else if ((k == '@') || (got_sigwinch && (k == ERR)))
-    {
-        if (got_sigwinch)
-        {
-            use_env(FALSE);
-        }
-        got_sigwinch = 0;
-        reinit_requested = 1;
-        return 0;
-    } else if ((k == 'r') || (k == 'R') || (k == MYMANCTRL('L')) || (k == MYMANCTRL('R'))) {
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        wrefresh(stdscr);
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-    } else if ((k == 'i') || (k == 'I'))
-    {
-        use_idlok = ! use_idlok;
-#ifndef DISABLE_IDLOK
-        if (use_idlok)
-        {
-            idlok(stdscr, TRUE);
-        }
-        else
-        {
-            idlok(stdscr, FALSE);
-        }
-#endif
-#if USE_COLOR
-    } else if ((k == 'c') || (k == 'C')) {
-        use_color = ! use_color;
-        use_color_p = 1;
-        if (use_color)
-            init_pen();
-        else
-            destroy_pen();
-        my_attrset(0);
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-#endif
-    } else if ((k == 'b') || (k == 'B')) {
-        use_dim_and_bright =
-            ! use_dim_and_bright;
-        use_dim_and_bright_p = 1;
-#if USE_COLOR
-        if (use_color)
-        {
-            destroy_pen();
-            init_pen();
-        }
-#endif
-        my_attrset(0);
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-#if USE_ATTR
-    } else if ((k == 'u') || (k == 'U')) {
-        use_underline = ! use_underline;
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-#endif
-    } else if ((k == 's') || (k == 'S')) {
-        use_sound = ! use_sound;
-        return 1;
-    } else if ((k == 'o') || (k == 'O') || (k == '0'))
-    {
-        use_bullet_for_dots = ! use_bullet_for_dots;
-        use_bullet_for_dots_p = 1;
-        init_trans(use_bullet_for_dots);
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-    } else if ((k == 'a') || (k == 'A'))
-    {
-        use_acs = ! use_acs;
-        use_acs_p = 1;
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-    } else if ((k == 'x') || (k == 'X'))
-    {
-        use_raw = ! use_raw;
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-    } else if ((k == '/') || (k == '\\'))
-    {
-        reflect = ! reflect;
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        if (IS_LEFT_ARROW(key_buffer)) key_buffer = KEY_UP;
-        else if (IS_UP_ARROW(key_buffer)) key_buffer = KEY_LEFT;
-        else if (IS_RIGHT_ARROW(key_buffer)) key_buffer = KEY_DOWN;
-        else if (IS_DOWN_ARROW(key_buffer)) key_buffer = KEY_RIGHT;
-        return 1;
-    } else if ((k == 'e') || (k == 'E'))
-    {
-        use_raw_ucs = ! use_raw_ucs;
-        my_clear();
-        clearok(curscr, TRUE);
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        return 1;
-    } else if ((k == 't') || (k == 'T'))
-    {
-        char buf[128];
-        char buf_txt[128];
-        unsigned int idx;
-
-        if ((! snapshot)
-            &&
-            (! snapshot_txt))
-        {
-            /* try to find a free slot */
-            for (idx = 0; idx <= 9999; idx ++)
-            {
-                sprintf(buf,
-                        "snap%4.4u%s",
-                        idx, HTM_SUFFIX);
-                sprintf(buf_txt,
-                        "snap%4.4u%s",
-                        idx, TXT_SUFFIX);
-                if (access(buf, F_OK) && access(buf_txt, F_OK))
-                {
-                    break;
-                }
-            }
-            snapshot = fopen(buf, "wb");
-            snapshot_txt = fopen(buf_txt, "wb");
-            snapshot_use_color = use_color;
-        }
-        return 1;
-    } else if ((k == 'p') || (k == 'P') || (k == 27)) {
-        if (paused)
-        {
-            DIRTY_ALL();
-        }
-        paused = ! paused;
-        ignore_delay = 1;
-        frameskip = 0;
-        goto nextkey;
-    } else if ((k == ',') || (k == '<')) {
-        if (reflect ? (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)) : (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)))
-        {
-            if (reflect ? ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)) : ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)))
-            {
-                key_buffer = ERR;
-            }
-        }
-    } else if ((k == '.') || (k == '>')) {
-        if (reflect ? (IS_UP_ARROW(key_buffer) || IS_DOWN_ARROW(key_buffer)) : (IS_LEFT_ARROW(key_buffer) || IS_RIGHT_ARROW(key_buffer)))
-        {
-            if (reflect ? ((hero_dir != MYMAN_UP) && (hero_dir != MYMAN_DOWN)) : ((hero_dir != MYMAN_LEFT) && (hero_dir != MYMAN_RIGHT)))
-            {
-                key_buffer = ERR;
-            }
-        }
-    } else if ((k == 'w') || (k == 'W')) {
-        dots = total_dots[maze_level] - 1;
-        goto nextkey;
-    } else if ((k == 'd') || (k == 'D')) {
-        debug = ! debug;
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        goto nextkey;
-    } else if ((reflect ? IS_UP_ARROW(((k == ERR) ? key_buffer : k)) : IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)))
-               && hero_can_move_left)
-    {
-        if (! (winning || dying || (dead && ! ghost_eaten_timer)))
-        {
-            hero_dir = MYMAN_LEFT;
-            sprite_register[HERO] = SPRITE_HERO + 4;
-        }
-    } else if ((reflect ? IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)) : IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)))
-               && hero_can_move_right)
-    {
-        if (! (winning || dying || (dead && ! ghost_eaten_timer)))
-        {
-            hero_dir = MYMAN_RIGHT;
-            sprite_register[HERO] = SPRITE_HERO + 12;
-        }
-    } else if ((reflect ? IS_LEFT_ARROW(((k == ERR) ? key_buffer : k)) : IS_UP_ARROW(((k == ERR) ? key_buffer : k)))
-               && hero_can_move_up)
-    {
-        if (! (winning || dying || (dead && ! ghost_eaten_timer)))
-        {
-            hero_dir = MYMAN_UP;
-            sprite_register[HERO] = SPRITE_HERO;
-        }
-    } else if ((reflect ? IS_RIGHT_ARROW(((k == ERR) ? key_buffer : k)) : IS_DOWN_ARROW(((k == ERR) ? key_buffer : k)))
-               && hero_can_move_down)
-    {
-        if (! (winning || dying || (dead && ! ghost_eaten_timer)))
-        {
-            hero_dir = MYMAN_DOWN;
-            sprite_register[HERO] = SPRITE_HERO + 16;
-        }
-    }
-    if (k == ERR)
-    {
-        k = key_buffer;
-    }
-    else if (! ignore_delay)
-    {
-        if (paused)
-        {
-            DIRTY_ALL();
-            ignore_delay = 1;
-            frameskip = 0;
-        }
-        paused = 0;
-        key_buffer = k;
-        goto nextkey;
+        return ret;
     }
     visible_frame = ! ((frames ++) % (frameskip ? frameskip : 1));
     if (myman_intro && ! (paused || snapshot || snapshot_txt))
@@ -7248,7 +7269,7 @@ gamecycle(void)
                &&
                (XTILE(sprite_register_x[HERO]) >= maze_w))))
             ||
-            (k != ERR))
+            (ret != -1))
         {
             myman_intro = 0;
             myman_demo = 1;
@@ -7259,13 +7280,13 @@ gamecycle(void)
         gamedemo();
         if ((myman_demo > (1 + (20UL * (maze_h * maze_w) * TWOSECS / (28 * 31)) / 2))
             ||
-            (k != ERR))
+            (ret != -1))
         {
             ghost_eaten_timer = 0;
             myman_demo = 0;
             myman_demo_setup = 0;
-            myman_intro = (k == ERR);
-            myman_start = (k != ERR) ? (30 * ONESEC) : 0;
+            myman_intro = (ret == -1);
+            myman_start = (ret != -1) ? (30 * ONESEC) : 0;
             if (myman_start)
             {
                 myman_sfx |= myman_sfx_credit;
@@ -7315,7 +7336,7 @@ gamecycle(void)
                 }
                 sprite_register_x[HERO] = maze_w * gfx_w / 2;
                 sprite_register_y[HERO] = r_off * gfx_h;
-                k = ERR;
+                ret = -1;
                 key_buffer = ERR;
             }
         }
@@ -7325,7 +7346,7 @@ gamecycle(void)
         myman_start --;
         if ((! myman_start)
             ||
-            (k != ERR))
+            (ret != -1))
         {
             gamestart();
         }
@@ -7333,9 +7354,9 @@ gamecycle(void)
     if (intermission_running && ! (paused || snapshot || snapshot_txt))
     {
         gameintermission();
-        if ((! intermission_running) || myman_demo || (k != ERR))
+        if ((! intermission_running) || myman_demo || (ret != -1))
         {
-            if (! myman_demo) k = ERR;
+            if (! myman_demo) ret = -1;
             intermission_running = 0;
             need_reset = 1;
             for (s = 0; s < SPRITE_REGISTERS; s ++)
