@@ -2685,23 +2685,23 @@ pen[NPENS];
 static const short
 pen_pal[16][3] =
 {
-/*  { red,green, blue} */
-    {   0,    0,    0}, /* 0: black */
-    {   0,    0,  867}, /* 1: blue */
-    {   0,  718,    0}, /* 2: green (peach stem) */
-    {   0,  867,  867}, /* 3: cyan */
-    { 867,  589,  277}, /* 4: brown (apple/cherry stem) */
-    {1000,  128,  589}, /* 5: magenta (mypal trim?) */
-    {1000,  718,  277}, /* 6: salmon (clyde, peach, PUSH START BUTTON) */
-    {1000,  718,  589}, /* 7: light yellow (dot, blue face, BONUS MYMAN FOR x Pts) */
-    { 400,  400,  400}, /* 8: grey */
-    { 128,  128,  867}, /* 9: light blue (wall, blue ghost) */
-    { 589, 1000,    0}, /* A: light green (mypal?, super dot?) */
-    {   0, 1000,  867}, /* B: light cyan (inky, key top, 1 PLAYER ONLY, ghost scores) */
-    {1000,    0,    0}, /* C: light red (blinky, apple/cherry, GAME  OVER) */
-    { 980,  701,  847}, /* D: pink (pinky, door, NEW MAN - X, fruit scores) */
-    {1000, 1000,    0}, /* E: yellow (myman, ship, READY!) */
-    { 867,  867,  867}, /* F: light grey (text, eye, apple/cherry shine, key, bell) */
+/*  {  red,green, blue } */
+    {    0,    0,    0 }, /* 0: black */
+    {    0,    0,  867 }, /* 1: blue */
+    {    0,  718,    0 }, /* 2: green (peach stem) */
+    {    0,  867,  867 }, /* 3: cyan */
+    {  867,  589,  277 }, /* 4: brown (apple/cherry stem) */
+    { 1000,  128,  589 }, /* 5: magenta (mypal trim?) */
+    { 1000,  718,  277 }, /* 6: salmon (clyde, peach, PUSH START BUTTON) */
+    { 1000,  718,  589 }, /* 7: light yellow (dot, blue face, BONUS MYMAN FOR x Pts) */
+    {  400,  400,  400 }, /* 8: grey */
+    {  128,  128,  867 }, /* 9: light blue (wall, blue ghost) */
+    {  589, 1000,    0 }, /* A: light green (mypal?, super dot?) */
+    {    0, 1000,  867 }, /* B: light cyan (inky, key top, 1 PLAYER ONLY, ghost scores) */
+    { 1000,    0,    0 }, /* C: light red (blinky, apple/cherry, GAME  OVER) */
+    {  980,  701,  847 }, /* D: pink (pinky, door, NEW MAN - X, fruit scores) */
+    { 1000, 1000,    0 }, /* E: yellow (myman, ship, READY!) */
+    {  867,  867,  867 }  /* F: light grey (text, eye, apple/cherry shine, key, bell) */
 };
 
 #if USE_COLOR
