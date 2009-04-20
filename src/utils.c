@@ -1,5 +1,5 @@
 /* utils.c - various utilities for the MyMan video game
- * Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+ * Copyright 1997-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
  *  obtaining a copy of this software and associated documentation
@@ -2098,6 +2098,158 @@ writefont(const char *file,
 }
 
 int
+parse_tile_args(const char *tilefile, const char *tile_args)
+{
+    const char *argp = tile_args;
+    int c;
+
+    while (1)
+    {
+        const char *endp;
+
+        c = *argp;
+        if (! c) break;
+        if (isspace(c))
+        {
+            argp ++;
+            continue;
+        }
+        else if ((endp = strchr(argp, '=')) != 0)
+        {
+            if (! strncmp(argp, "ABOUT", endp - argp))
+            {
+                argp = endp + 1;
+                tile_ABOUT = strword(argp, &endp, 0);
+                if (! tile_ABOUT)
+                {
+                    perror("ABOUT");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "NOTE", endp - argp))
+            {
+                argp = endp + 1;
+                tile_NOTE = strword(argp, &endp, 0);
+                if (! tile_NOTE)
+                {
+                    perror("NOTE");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "FIXME", endp - argp))
+            {
+                argp = endp + 1;
+                tile_FIXME = strword(argp, &endp, 0);
+                if (! tile_FIXME)
+                {
+                    perror("FIXME");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else
+            {
+                fprintf(stderr, "%s: unrecognized tile argument: ",
+                        tile);
+                fflush(stderr);
+                fwrite((void *) argp, 1, endp - argp, stderr);
+                fflush(stderr);
+                fprintf(stderr, "\n");
+                fflush(stderr);
+                return 1;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "%s: unrecognized tile arguments: %s\n",
+                    tilefile,
+                    argp);
+            fflush(stderr);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
+parse_sprite_args(const char *spritefile, const char *sprite_args)
+{
+    const char *argp = sprite_args;
+    int c;
+
+    while (1)
+    {
+        const char *endp;
+
+        c = *argp;
+        if (! c) break;
+        if (isspace(c))
+        {
+            argp ++;
+            continue;
+        }
+        else if ((endp = strchr(argp, '=')) != 0)
+        {
+            if (! strncmp(argp, "ABOUT", endp - argp))
+            {
+                argp = endp + 1;
+                sprite_ABOUT = strword(argp, &endp, 0);
+                if (! sprite_ABOUT)
+                {
+                    perror("ABOUT");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "NOTE", endp - argp))
+            {
+                argp = endp + 1;
+                sprite_NOTE = strword(argp, &endp, 0);
+                if (! sprite_NOTE)
+                {
+                    perror("NOTE");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "FIXME", endp - argp))
+            {
+                argp = endp + 1;
+                sprite_FIXME = strword(argp, &endp, 0);
+                if (! sprite_FIXME)
+                {
+                    perror("FIXME");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else
+            {
+                fprintf(stderr, "%s: unrecognized sprite argument: ",
+                        spritefile);
+                fflush(stderr);
+                fwrite((void *) argp, 1, endp - argp, stderr);
+                fflush(stderr);
+                fprintf(stderr, "\n");
+                fflush(stderr);
+                return 1;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "%s: unrecognized sprite arguments: %s\n",
+                    spritefile,
+                    argp);
+            fflush(stderr);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int
 readmaze(const char *mazefile,
          int *levels,
          int *w,
@@ -2304,6 +2456,447 @@ readmaze(const char *mazefile,
         }
     }
     fclose(infile);
+    return 0;
+}
+
+void
+writemaze(const char *mazefile)
+{
+    int n;
+    int i;
+
+    printf("int maze_n = %d;\n", maze_n);
+    printf("int maze_w = %d;\n", maze_w);
+    printf("int maze_h = %d;\n", maze_h);
+    printf("int maze_flags = %d;\n", maze_flags);
+    printf("const char *maze_args = ");
+    if (maze_args)
+    {
+        printf("\"");
+        mymanescape(maze_args, strlen(maze_args));
+        printf("\"");
+    }
+    else
+    {
+        printf("0");
+    }
+    printf(";\n");
+    printf("static const char builtin_mazefile_str[] = \"");
+    mymanescape(mazefile,
+                strlen(mazefile));
+    printf("\";\n");
+    printf("const char *builtin_mazefile = builtin_mazefile_str;\n");
+    printf("const char *maze_data = \n");
+    for (n = 0; n < maze_n; n ++)
+    {
+        printf("/* 0x%X */\n", n);
+        for (i = 0; i < maze_h; i ++) {
+            printf("  \"");
+            mymanescape(maze + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
+            printf("\"\n");
+        }
+    }
+    printf(";\n");
+    printf("const char *maze_color_data = \n");
+    for (n = 0; n < maze_n; n ++)
+    {
+        printf("/* 0x%X */\n", n);
+        for (i = 0; i < maze_h; i ++) {
+            printf("  \"");
+            mymanescape(maze_color + ((n * maze_h) + i) * (maze_w + 1), maze_w + 1);
+            printf("\"\n");
+        }
+    }
+    printf(";\n");
+}
+
+int
+parse_maze_args(const char *mazefile, const char *maze_args)
+{
+    const char *argp = maze_args;
+    int c;
+
+    while (1)
+    {
+        const char *endp;
+
+        c = *argp;
+        if (! c) break;
+        if (isspace(c))
+        {
+            argp ++;
+            continue;
+        }
+        else if ((endp = strchr(argp, '=')) != 0)
+        {
+            if (! strncmp(argp, "FLIP_TO", endp - argp))
+            {
+                argp = endp + 1;
+                flip_to = strtol(argp, (char **) &endp, 0);
+                if (endp == argp)
+                {
+                    perror("strtol: FLIP_TO");
+                    return 1;
+                }
+                if ((*endp) && ! isspace(*endp))
+                {
+                    fprintf(stderr, "%s: FLIP_TO: garbage after argument: %s\n",
+                            mazefile,
+                            endp);
+                    fflush(stderr);
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "GHOSTS", endp - argp))
+            {
+                long * tmp_ghosts = NULL;
+                size_t tmp_ghosts_len = 0;
+
+                argp = endp + 1;
+                tmp_ghosts = strtollist_word(argp, &endp, &tmp_ghosts_len);
+                if (! tmp_ghosts)
+                {
+                    perror("GHOSTS");
+                    return 1;
+                }
+                argp = endp;
+                if (! ghosts_p)
+                {
+                    maze_GHOSTS = tmp_ghosts;
+                    maze_GHOSTS_len = tmp_ghosts_len;
+                }
+                else
+                {
+                    free((void *) tmp_ghosts);
+                    tmp_ghosts = NULL;
+                    tmp_ghosts_len = 0;
+                }
+            }
+            else if (! strncmp(argp, "RGHOST", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RGHOST = strtodlist_word(argp, &endp, &maze_RGHOST_len);
+                if (! maze_RGHOST)
+                {
+                    perror("RGHOST");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "CGHOST", endp - argp))
+            {
+                argp = endp + 1;
+                maze_CGHOST = strtodlist_word(argp, &endp, &maze_CGHOST_len);
+                if (! maze_CGHOST)
+                {
+                    perror("CGHOST");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "ROGHOST", endp - argp))
+            {
+                argp = endp + 1;
+                maze_ROGHOST = strtodlist_word(argp, &endp, &maze_ROGHOST_len);
+                if (! maze_ROGHOST)
+                {
+                    perror("ROGHOST");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "COGHOST", endp - argp))
+            {
+                argp = endp + 1;
+                maze_COGHOST = strtodlist_word(argp, &endp, &maze_COGHOST_len);
+                if (! maze_COGHOST)
+                {
+                    perror("COGHOST");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "RFRUIT", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RFRUIT = strtodlist_word(argp, &endp, &maze_RFRUIT_len);
+                if (! maze_RFRUIT)
+                {
+                    perror("RFRUIT");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "CFRUIT", endp - argp))
+            {
+                argp = endp + 1;
+                maze_CFRUIT = strtodlist_word(argp, &endp, &maze_CFRUIT_len);
+                if (! maze_CFRUIT)
+                {
+                    perror("CFRUIT");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "RTOP", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RTOP = strtodlist_word(argp, &endp, &maze_RTOP_len);
+                if (! maze_RTOP)
+                {
+                    perror("RTOP");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "RHERO", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RHERO = strtodlist_word(argp, &endp, &maze_RHERO_len);
+                if (! maze_RHERO)
+                {
+                    perror("RHERO");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "CHERO", endp - argp))
+            {
+                argp = endp + 1;
+                maze_CHERO = strtodlist_word(argp, &endp, &maze_CHERO_len);
+                if (! maze_CHERO)
+                {
+                    perror("CHERO");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "RMSG", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RMSG = strtollist_word(argp, &endp, &maze_RMSG_len);
+                if (! maze_RMSG)
+                {
+                    perror("RMSG");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "CMSG", endp - argp))
+            {
+                argp = endp + 1;
+                maze_CMSG = strtollist_word(argp, &endp, &maze_CMSG_len);
+                if (! maze_CMSG)
+                {
+                    perror("CMSG");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "RMSG2", endp - argp))
+            {
+                argp = endp + 1;
+                maze_RMSG2 = strtollist_word(argp, &endp, &maze_RMSG2_len);
+                if (! maze_RMSG2)
+                {
+                    perror("RMSG2");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "CMSG2", endp - argp))
+            {
+                argp = endp + 1;
+                maze_CMSG2 = strtollist_word(argp, &endp, &maze_CMSG2_len);
+                if (! maze_CMSG2)
+                {
+                    perror("CMSG2");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "ABOUT", endp - argp))
+            {
+                argp = endp + 1;
+                maze_ABOUT = strword(argp, &endp, 0);
+                if (! maze_ABOUT)
+                {
+                    perror("ABOUT");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "NOTE", endp - argp))
+            {
+                argp = endp + 1;
+                maze_NOTE = strword(argp, &endp, 0);
+                if (! maze_NOTE)
+                {
+                    perror("NOTE");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "FIXME", endp - argp))
+            {
+                argp = endp + 1;
+                maze_FIXME = strword(argp, &endp, 0);
+                if (! maze_FIXME)
+                {
+                    perror("FIXME");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "DIRHERO", endp - argp))
+            {
+                char *dirhero_tmp = NULL;
+
+                argp = endp + 1;
+                dirhero_tmp = strword(argp, &endp, 0);
+                if (! dirhero_tmp)
+                {
+                    perror("DIRHERO");
+                    return 1;
+                }
+                argp = endp;
+                if (! strcmp(dirhero_tmp, "UP"))
+                {
+                    dirhero = MYMAN_UP;
+                }
+                else if (! strcmp(dirhero_tmp, "DOWN"))
+                {
+                    dirhero = MYMAN_DOWN;
+                }
+                else if (! strcmp(dirhero_tmp, "LEFT"))
+                {
+                    dirhero = MYMAN_LEFT;
+                }
+                else if (! strcmp(dirhero_tmp, "RIGHT"))
+                {
+                    dirhero = MYMAN_RIGHT;
+                }
+                else
+                {
+                    fprintf(stderr, "%s: DIRHERO: must be one of UP, DOWN, LEFT or RIGHT; got \"%s\" instead\n",
+                            mazefile,
+                            dirhero_tmp);
+                    fflush(stderr);
+                    return 1;
+                }
+                free((void *) dirhero_tmp);
+                dirhero_tmp = NULL;
+            }
+            else if (! strncmp(argp, "GAMEOVER", endp - argp))
+            {
+                argp = endp + 1;
+                msg_GAMEOVER = strword(argp, &endp, 0);
+                if (! msg_GAMEOVER)
+                {
+                    perror("GAMEOVER");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "PLAYER1", endp - argp))
+            {
+                argp = endp + 1;
+                msg_PLAYER1 = strword(argp, &endp, 0);
+                if (! msg_PLAYER1)
+                {
+                    perror("PLAYER1");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "PLAYER2", endp - argp))
+            {
+                argp = endp + 1;
+                msg_PLAYER2 = strword(argp, &endp, 0);
+                if (! msg_PLAYER2)
+                {
+                    perror("PLAYER2");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "READY", endp - argp))
+            {
+                argp = endp + 1;
+                msg_READY = strword(argp, &endp, 0);
+                if (! msg_READY)
+                {
+                    perror("READY");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "WALL_COLORS", endp - argp))
+            {
+                argp = endp + 1;
+                maze_WALL_COLORS = strword(argp, &endp, &maze_WALL_COLORS_len);
+                if (! maze_WALL_COLORS)
+                {
+                    perror("WALL_COLORS");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "DOT_COLORS", endp - argp))
+            {
+                argp = endp + 1;
+                maze_DOT_COLORS = strword(argp, &endp, &maze_DOT_COLORS_len);
+                if (! maze_MORTAR_COLORS)
+                {
+                    perror("DOT_COLORS");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "PELLET_COLORS", endp - argp))
+            {
+                argp = endp + 1;
+                maze_PELLET_COLORS = strword(argp, &endp, &maze_PELLET_COLORS_len);
+                if (! maze_MORTAR_COLORS)
+                {
+                    perror("PELLET_COLORS");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else if (! strncmp(argp, "MORTAR_COLORS", endp - argp))
+            {
+                argp = endp + 1;
+                maze_MORTAR_COLORS = strword(argp, &endp, &maze_MORTAR_COLORS_len);
+                if (! maze_MORTAR_COLORS)
+                {
+                    perror("MORTAR_COLORS");
+                    return 1;
+                }
+                argp = endp;
+            }
+            else
+            {
+                fprintf(stderr, "%s: unrecognized maze argument: ",
+                        mazefile);
+                fflush(stderr);
+                fwrite((void *) argp, 1, endp - argp, stderr);
+                fflush(stderr);
+                fprintf(stderr, "\n");
+                fflush(stderr);
+                return 1;
+            }
+        }
+        else
+        {
+            fprintf(stderr, "%s: unrecognized maze arguments: %s\n",
+                    mazefile,
+                    argp);
+            fflush(stderr);
+            return 1;
+        }
+    }
     return 0;
 }
 
@@ -2855,6 +3448,34 @@ gameintro(void)
 }
 
 void
+creditscreen(void)
+{
+    int s;
+    int r_off;
+
+    r_off = maze_h - 16;
+    if (r_off < 0)
+    {
+        r_off = 0;
+    }
+    maze_puts(r_off + 12, ((int) maze_w - (int) strlen(MYMANNOTICE)) / 2, 0xD, MYMANNOTICE);
+    maze_puts(r_off + 8, ((int) maze_w - (int) strlen(BONUSHEROTEXT)) / 2, 0x7, BONUSHEROTEXT);
+    maze_puts(r_off + 4, ((int) maze_w - (int) strlen(CREDIT(1))) / 2, MSG2_COLOR, CREDIT(1));
+    maze_puts(r_off, ((int) maze_w - (int) strlen(START)) / 2, 0x6, START);
+    if (debug)
+    {
+        for (s = 0; s < 256; s ++)
+        {
+            if ((s / 16) < maze_h)
+                if ((s % 16) < maze_w)
+                    maze_puts(maze_h - 1 - (s / 16), s % 16, s, "*");
+        }
+    }
+    sprite_register_x[HERO] = maze_w * gfx_w / 2;
+    sprite_register_y[HERO] = r_off * gfx_h;
+}
+
+void
 gamedemo(void)
 {
     int s;
@@ -3221,801 +3842,65 @@ gameintermission(void)
     }
 }
 
-static void
-ghost_eaten_timer_expired(void)
-{
-    sprite_register_used[GHOST_SCORE] = 0;
-    sprite_register_frame[GHOST_SCORE] ++;
-    if ((((unsigned) sprite_register[GHOST_SCORE]) + sprite_register_frame[GHOST_SCORE]) > SPRITE_1600) sprite_register_frame[GHOST_SCORE] = SPRITE_1600 - ((unsigned) sprite_register[GHOST_SCORE]);
-    if (sprite_register_used[HERO])
-    {
-        memcpy((void *) (maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-               (void *) (blank_maze + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-               MIN(msglen, maze_w - cmsg));
-        memcpy((void *) (maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-               (void *) (blank_maze_color + (maze_level * maze_h + rmsg) * (maze_w + 1) + cmsg),
-               MIN(msglen, maze_w - cmsg));
-        {
-            int dirty_i;
-            for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-            {
-                mark_cell(cmsg + dirty_i, rmsg);
-            }
-        }
-        myman_sfx |= myman_sfx_siren0_up;
-    }
-    else
-    {
-        sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-        sprite_register_used[munched] = (NET_LIVES || (munched != HERO)) ? 1 : 0;
-    }
-}
-
-static int
-check_level_transition(void)
-{
-    int reset = 0;
-    static int init = 0;
-    int i;
-
-    if (! need_reset)
-    {
-        if (dying && ! -- dying) {
-            reset = 1;
-            if (! myman_demo) ++ lives_used;
-        } else if ((! ghost_eaten_timer) && winning && ! -- winning) {
-            need_reset = 1;
-            if (INTERMISSION(level)
-                &&
-                (intermission < INTERMISSION_N))
-            {
-                intermission_running = (1 + INTERMISSION_TIME);
-                key_buffer = key_buffer_ERR;
-                return 1;
-            }
-        }
-    }
-    if (need_reset)
-    {
-        myman_sfx |= myman_sfx_start;
-        need_reset = 0;
-        reset = 1;
-        memcpy((void *)maze,
-               (void *)blank_maze,
-               (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-        memcpy((void *)maze_color,
-               (void *)blank_maze_color,
-               (maze_w + 1) * maze_h * maze_n * sizeof(unsigned char));
-        DIRTY_ALL();
-        ignore_delay = 1;
-        frameskip = 0;
-        dots = 0;
-        pellet_timer = 0;
-        pellet_time -= PELLET_ADJUST(7 * ONESEC);
-        if (level && (FLIP_ALWAYS ||
-                      INTERMISSION(level)))
-        {
-            ++ maze_level;
-            maze_level %= maze_n;
-            if (! maze_level)
-            {
-                maze_level = flip_to % maze_n;
-            }
-            if (FLIP_LOCK && ! maze_level)
-            {
-                maze_level = maze_n - 1;
-            }
-        }
-        if (INTERMISSION(level) &&
-            (intermission < INTERMISSION_N))
-        {
-            ++ intermission_shown;
-            if (intermission_shown >= INTERMISSION_REPEAT(intermission))
-            {
-                ++ intermission;
-                intermission_shown = 0;
-            }
-        }
-        ++ level;
-        sprite_register_frame[FRUIT] =
-            sprite_register_frame[FRUIT_SCORE] = BONUS(level);
-        pellet_time += PELLET_ADJUST(7 * ONESEC);
-        if (pellet_time > PELLET_ADJUST(ONESEC))
-            pellet_time -= PELLET_ADJUST(ONESEC);
-        else
-            pellet_time = 0;
-        if (! myman_demo)
-        {
-            if ((mymandelay > SPEEDUP)
-                &&
-                (mymandelay >= (mindelay + SPEEDUP)))
-            {
-                mymandelay -= SPEEDUP;
-            }
-        }
-    }
-    if ((! init) && (winning || reset)) {
-        init = 1;
-        if (sprite_register_used[FRUIT])
-        {
-            DIRTY_ALL();
-            ignore_delay = 1;
-            frameskip = 0;
-        }
-        sprite_register_used[FRUIT] =
-            sprite_register_used[FRUIT_SCORE] =
-            sprite_register_used[GHOST_SCORE] = 0;
-        for (i = 0; i < ghosts; i++) {
-            int eyes, mean, blue;
-
-            eyes = GHOSTEYES(i);
-            mean = MEANGHOST(i);
-            blue = BLUEGHOST(i);
-            sprite_register_used[eyes] =
-                sprite_register_used[mean] =
-                sprite_register_used[blue] = 0;
-        }
-        sprite_register_frame[HERO] = 0;
-    }
-    if (reset) {
-        memset((void *)home_dir, 0, sizeof(home_dir));
-        for (i = 0; i < ghosts; i++) {
-            int eyes, mean, blue;
-
-            eyes = GHOSTEYES(i);
-            mean = MEANGHOST(i);
-            blue = BLUEGHOST(i);
-            sprite_register_used[eyes] =
-                sprite_register_used[mean] =
-                sprite_register_used[blue] = 0;
-            sprite_register_frame[eyes] = (ghost_dir[i] = DIRWRAP(i + 1)) - 1;
-            ghost_mem[i] = 0;
-            ghost_timer[i] = TWOSECS;
-            ghost_man[i] = 0;
-            sprite_register_x[mean] =
-                (sprite_register_x[eyes] = (int) (XGHOST + COGHOST * gfx_w *
-                                                  ((i == GHOST3) - (i == GHOST0))));
-            sprite_register_y[mean] =
-                (sprite_register_y[eyes] = (int) (YGHOST - ROGHOST * gfx_h *
-                                                  (i == GHOST1)));
-        }
-        key_buffer = key_buffer_ERR;
-        init = 0;
-        cycles = 0;
-        sprite_register_used[HERO] = 0;
-        sprite_register_frame[HERO] = 0;
-        sprite_register_x[HERO] = (int) XHERO;
-        sprite_register_y[HERO] = (int) YHERO;
-        dead =
-            deadpan = (int) (YHERO - YGHOST);
-        if (dead < 0)
-            dead = -dead;
-        if (dead < 2)
-            dead = 2;
-        maze_putsn_nonblank(rmsg, cmsg, MSG_COLOR, (NET_LIVES && ! myman_demo) ? msg_READY : msg_GAMEOVER, msglen);
-        if (player != oldplayer)
-        {
-            oldplayer = player;
-            ghost_eaten_timer = myman_demo ? 0 : ONESEC;
-            munched = HERO;
-            if (! myman_demo)
-            {
-                maze_putsn_nonblank(rmsg2, cmsg2, MSG2_COLOR, PLAYER(player), msglen);
-            }
-        }
-    }
-    if (dying)
-        sprite_register_frame[HERO] = ((DEATHDELAY - dying) >> DEATHSHIFT) % 4;
-    return 0;
-}
-
-static void
-reset_hero(void)
+void
+gamereset(void)
 {
     int i;
 
-    if (deadpan)
-        deadpan += (YHERO < YGHOST) - (YHERO > YGHOST);
-    if (! -- dead) {
-        for (i = 0; i < ghosts; i ++) {
-            int eyes, mean, blue;
+    pellet_time = PELLET_ADJUST(7 * ONESEC);
+    sprite_register[FRUIT] = SPRITE_FRUIT;
+    sprite_register[FRUIT_SCORE] = SPRITE_FRUIT_SCORE;
+    sprite_register_frame[FRUIT] =
+        sprite_register_frame[FRUIT_SCORE] = BONUS(level);
+    sprite_register_x[FRUIT] =
+        sprite_register_x[FRUIT_SCORE] = (int) XFRUIT;
+    sprite_register_y[FRUIT] =
+        sprite_register_y[FRUIT_SCORE] = (int) YFRUIT;
 
-            eyes = GHOSTEYES(i);
-            mean = MEANGHOST(i);
-            blue = BLUEGHOST(i);
-            sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
-            sprite_register_used[mean] = NET_LIVES ? 1 : 0;
-        }
-        sprite_register_used[HERO] = NET_LIVES ? 1 : 0;
-        ghost_eaten_timer = ONESEC;
-        munched = HERO;
-        if (! myman_demo)
-        {
-            memcpy((void *) (maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                   (void *) (blank_maze + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                   MIN(msglen, maze_w - cmsg2));
-            memcpy((void *) (maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                   (void *) (blank_maze_color + (maze_level * maze_h + rmsg2) * (maze_w + 1) + cmsg2),
-                   MIN(msglen, maze_w - cmsg2));
-            {
-                int dirty_i;
-                for (dirty_i = 0; dirty_i < msglen; dirty_i ++)
-                {
-                    mark_cell(cmsg2 + dirty_i, rmsg2);
-                }
-            }
-        }
-        hero_dir = dirhero;
-        sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
-        if (! use_color)
-            if (use_underline)
-            {
-                my_clear();
-                my_clearok(1);
-                DIRTY_ALL();
-                ignore_delay = 1;
-                frameskip = 0;
-                visible_frame = 1;
-            }
+    sprite_register[GHOST_SCORE] = SPRITE_200;
+    sprite_register_frame[GHOST_SCORE] = 0;
+
+    hero_dir = dirhero;
+    sprite_register[HERO] = SPRITE_HERO + ((hero_dir == MYMAN_LEFT) ? 4 : (hero_dir == MYMAN_RIGHT) ? 12 : (hero_dir == MYMAN_DOWN) ? 16 : 0);
+    sprite_register_frame[HERO] = 0;
+    sprite_register_x[HERO] = (int) XHERO;
+    sprite_register_y[HERO] = (int) YHERO;
+    sprite_register_used[HERO] = 0;
+
+    sprite_register_color[HERO] = 0xE;
+    sprite_register_color[BIGHERO_UL] = 0xE;
+    sprite_register_color[BIGHERO_UR] = 0xE;
+    sprite_register_color[BIGHERO_LL] = 0xE;
+    sprite_register_color[BIGHERO_LR] = 0xE;
+
+    for (i = 0; i < MAXGHOSTS; i++) {
+        int eyes, mean, blue;
+        const char *extra_ghost_colors = EXTRA_GHOST_COLORS;
+
+        eyes = GHOSTEYES(i);
+        mean = MEANGHOST(i);
+        blue = BLUEGHOST(i);
+        sprite_register[eyes] = SPRITE_EYES;
+        sprite_register[mean] = SPRITE_MEAN;
+        sprite_register[blue] = SPRITE_BLUE;
+        sprite_register_used[eyes] =
+            sprite_register_used[mean] =
+            sprite_register_used[blue] = 0;
+        sprite_register_frame[eyes] =
+            sprite_register_frame[mean] =
+            sprite_register_frame[blue] = 0;
+        ghost_mem[i] = 0;
+        ghost_timer[i] = TWOSECS;
+        ghost_man[i] = 0;
+        sprite_register_color[eyes] = 0xF;
+        sprite_register_color[blue] = 0x9;
+        sprite_register_color[mean] = extra_ghost_colors[(i % strlen(extra_ghost_colors))];
     }
-}
 
-int
-gamelogic(void)
-{
-    int xtile, ytile;
-    int x_off, y_off;
-    long c = 0;
-    int i, j;
-    int s;
-    int collision_type = 0;
-
-    xtile = XTILE(sprite_register_x[HERO]);
-    ytile = YTILE(sprite_register_y[HERO]);
-    x_off = sprite_register_x[HERO] % gfx_w;
-    y_off = sprite_register_y[HERO] % gfx_h;
-    if (ghost_eaten_timer && ! -- ghost_eaten_timer)
-    {
-        ghost_eaten_timer_expired();
-    }
-    if (winning || dying || need_reset)
-    {
-        return check_level_transition();
-    }
-    else if (dead && ! ghost_eaten_timer)
-    {
-        reset_hero();
-    }
-    else
-    {
-        if ((BONUSHERO && (score >= BONUSHERO) && ! earned) ||
-            ((score >= BONUSHERO2) && (earned == (BONUSHERO ? 1 : 0)))) {
-            if (! myman_demo)
-            {
-                earned ++;
-            }
-        }
-        if (ISPELLET((c = (long) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile]))
-            || ISDOT(c)) {
-            maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile] = ' ';
-            sprite_register_frame[HERO] = 0;
-            if (! myman_demo) score += 10 + 40 * ISPELLET(c);
-            if (ISPELLET(c)) {
-                myman_sfx |= myman_sfx_pellet;
-                points = 200;
-                sprite_register_frame[GHOST_SCORE] = 0;
-                pellet_timer = pellet_time + 1;
-                for (s = 0; s < ghosts; s++) {
-                    int eyes, mean, blue;
-
-                    eyes = GHOSTEYES(s);
-                    blue = BLUEGHOST(s);
-                    mean = MEANGHOST(s);
-                    sprite_register_frame[blue] = 0;
-                    if (sprite_register_used[mean] || sprite_register_used[blue]) {
-                        if (sprite_register_used[mean]) {
-                            sprite_register_x[blue] = sprite_register_x[eyes];
-                            sprite_register_y[blue] = sprite_register_y[eyes];
-                        }
-                        sprite_register_used[eyes] = 0;
-                        sprite_register_used[mean] = 0;
-                        sprite_register_used[blue] = 1;
-                        sprite_register[blue] = SPRITE_BLUE;
-                        ghost_dir[s] = DIRWRAP(ghost_dir[s] + 2);
-                    }
-                }
-            }
-            else
-            {
-                myman_sfx |= myman_sfx_dot;
-            }
-#ifndef DOTS_FRUIT1
-#define DOTS_FRUIT1 (70 * total_dots[maze_level] / 244)
-#endif
-#ifndef DOTS_FRUIT2
-#define DOTS_FRUIT2 (170 * total_dots[maze_level] / 244)
-#endif
-            if ((++ dots == DOTS_FRUIT1) || (dots == DOTS_FRUIT2))
-            {
-                sprite_register_x[FRUIT] =
-                    sprite_register_x[FRUIT_SCORE] = (int) XFRUIT;
-                sprite_register_y[FRUIT] =
-                    sprite_register_y[FRUIT_SCORE] = (int) YFRUIT;
-                sprite_register_used[FRUIT] = 1;
-                sprite_register_timer[FRUIT] = FRUITLIFE;
-                myman_sfx |= myman_sfx_bonus;
-            } else if (dots == total_dots[maze_level]) {
-                munched = HERO;
-                winning = 2 * TWOSECS;
-                myman_sfx |= myman_sfx_level;
-            }
-        } else if (sprite_register_used[FRUIT] &&
-                   collide(HERO, FRUIT))
-        {
-            DIRTY_ALL();
-            ignore_delay = 1;
-            frameskip = 0;
-            sprite_register_used[FRUIT] = 0;
-            sprite_register_used[FRUIT_SCORE] = 1;
-            sprite_register_timer[FRUIT_SCORE] = TWOSECS;
-            if (! myman_demo) score += bonus_score[sprite_register_frame[FRUIT]];
-            sprite_register_frame[HERO] = 0;
-            myman_sfx |= myman_sfx_fruit;
-        }
-        if (! ghost_eaten_timer) {
-            if (XDIR(hero_dir))
-                sprite_register_y[HERO] = (1 + 2 * ytile) * gfx_h / 2;
-            else if (hero_dir)
-                sprite_register_x[HERO] = (1 + 2 * xtile) * gfx_w / 2;
-            if (ISZAPLEFT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                &&
-                (! YDIR(hero_dir))
-                &&
-                (hero_dir == MYMAN_LEFT)) {
-                int ii;
-
-                for (ii = 1; ii < maze_w; ii ++)
-                {
-                    if (ISZAPRIGHT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile - ii)]))
-                    {
-                        break;
-                    }
-                }
-                sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile - ii)) * gfx_w / 2;
-            }
-            else if (ISZAPRIGHT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                     &&
-                     (! YDIR(hero_dir))
-                     &&
-                     (hero_dir == MYMAN_RIGHT)) {
-                int ii;
-
-                for (ii = 1; ii < maze_w; ii ++)
-                {
-                    if (ISZAPLEFT((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+XWRAP(xtile + ii)]))
-                    {
-                        break;
-                    }
-                }
-                sprite_register_x[HERO] = (1 + 2 * XWRAP(xtile + ii)) * gfx_w / 2;
-            }
-            else if (ISZAPUP((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                     &&
-                     (! XDIR(hero_dir))
-                     &&
-                     (hero_dir == MYMAN_UP)) {
-                int ii;
-
-                for (ii = 1; ii < maze_h; ii ++)
-                {
-                    if (ISZAPDOWN((unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile - ii)) * (maze_w + 1)+xtile]))
-                    {
-                        break;
-                    }
-                }
-                sprite_register_y[HERO] = (1 + 2 * YWRAP(ytile - ii)) * gfx_h / 2;
-            }
-            else if (ISZAPDOWN((unsigned) (unsigned char) maze[(maze_level*maze_h+ytile) * (maze_w + 1)+xtile])
-                     &&
-                     (! XDIR(hero_dir))
-                     &&
-                     (hero_dir == MYMAN_DOWN)) {
-                int ii;
-
-                for (ii = 1; ii < maze_h; ii ++)
-                {
-                    if (ISZAPUP((unsigned) (unsigned char) maze[(maze_level*maze_h+YWRAP(ytile + ii)) * (maze_w + 1)+xtile]))
-                    {
-                        break;
-                    }
-                }
-                sprite_register_y[HERO] = (1 + 2 * YWRAP(ytile + ii)) * gfx_h / 2;
-            }
-            else
-            {
-                unsigned char m3;
-                int x3, y3;
-
-                x3 = xtile + XLEAVING(hero_dir, x_off + XDIR(hero_dir));
-                y3 = ytile + YLEAVING(hero_dir, y_off + YDIR(hero_dir));
-                m3 = (unsigned char)
-                    maze[(maze_level * maze_h
-                          +
-                          YWRAP(y3))
-                         *
-                         (maze_w + 1)
-                         +
-                         XWRAP(x3)];
-                if (ISOPEN((unsigned) m3))
-                {
-                    sprite_register_x[HERO] = XPIXWRAP(sprite_register_x[HERO] + XDIR(hero_dir) * ((MYMANSQUARE || gfx_reflect) ? (cycles & 1) : 1));
-                    sprite_register_y[HERO] = YPIXWRAP(sprite_register_y[HERO] + YDIR(hero_dir) * ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 1)));
-                    sprite_register_frame[HERO] = (cycles / (1 + (MYMANFIFTH / 2))) % 4;
-                }
-            }
-        }
-        for (s = 0; s < ghosts; s ++) {
-            int eyes, blue, mean;
-
-            eyes = GHOSTEYES(s);
-            blue = BLUEGHOST(s);
-            mean = MEANGHOST(s);
-            if ((! ghost_eaten_timer) || ((munched != eyes) && (munched != HERO)))
-                sprite_register_frame[blue] =
-                    (sprite_register_frame[mean] = ((cycles / MYMANFIFTH) & 1) ? 1 : 0);
-            if (dying || winning) {
-                sprite_register_used[eyes] =
-                    (sprite_register_used[blue] =
-                     (sprite_register_used[mean] = 0));
-            }
-            else if ((collision_type = check_collision(eyes, mean, blue)) != 0)
-            {
-                if (collision_type == COLLISION_TYPE_HERO)
-                {
-                    s = -1;
-                    continue;
-                }
-            }
-            else
-            {
-                int dir0, dir1, dir2, o0, o1, o2, x, y, i1, j1, i2, j2;
-                unsigned char mcell;
-
-                dir1 = DIRWRAP(ghost_dir[s]);
-                dir0 = DIRWRAP(dir1 + (s != GHOST2) - (s == GHOST2));
-                dir2 = DIRWRAP(dir1 - (s != GHOST2) + (s == GHOST2));
-                if (sprite_register_used[blue] && ! ghost_eaten_timer)
-                {
-                    /* runnin' scared */
-                    if (cycles & 1)
-                    {
-                        x = sprite_register_x[blue];
-                        y = sprite_register_y[blue];
-                        i1 = XTILE(x);
-                        j1 = YTILE(y);
-                        i2 = XTILE(sprite_register_x[HERO]);
-                        j2 = YTILE(sprite_register_y[HERO]);
-                        if ((i1 == i2) && (j1 <= j2)) {
-                            for (j = j1; j <= j2; j ++)
-                            {
-                                mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                                if (! ISOPEN((unsigned) mcell))
-                                    break;
-                            }
-                            if (j > j2) {
-                                ghost_mem[s] = hero_dir;
-                                ghost_timer[s] = (int) MEMDELAY(s);
-                            }
-                        } else if ((i1 == i2) && (j1 >= j2)) {
-                            for (j = j2; j <= j1; j ++)
-                            {
-                                mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                                if (! ISOPEN((unsigned) mcell))
-                                    break;
-                            }
-                            if (j > j1) {
-                                ghost_mem[s] = hero_dir;
-                                ghost_timer[s] = (int) MEMDELAY(s);
-                            }
-                        } else if ((j1 == j2) && (i1 <= i2)) {
-                            for (i = i1; i <= i2; i ++)
-                            {
-                                mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                                if (! ISOPEN((unsigned) mcell))
-                                    break;
-                            }
-                            if (i > i2) {
-                                ghost_mem[s] = hero_dir;
-                                ghost_timer[s] = (int) MEMDELAY(s);
-                            }
-                        } else if ((j1 == j2) && (i1 >= i2)) {
-                            for (i = i2; i <= i1; i ++)
-                            {
-                                mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                                if (! ISOPEN((unsigned) mcell))
-                                    break;
-                            }
-                            if (i > i1) {
-                                ghost_mem[s] = hero_dir;
-                                ghost_timer[s] = (int) MEMDELAY(s);
-                            }
-                        }
-                        mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                        o0 = ISOPEN((unsigned) mcell);
-                        mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                        o1 = ISOPEN((unsigned) mcell);
-                        mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                        o2 = ISOPEN((unsigned) mcell);
-                        if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
-                            || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
-                            if (o0 || o2) {
-                                if (! ghost_mem[s]) {
-                                    if (o2)
-                                        dir1 = dir2;
-                                    else if (! o1)
-                                        dir1 = dir0;
-                                }
-                                else
-                                {
-                                    if (o0 && (dir0 != ghost_mem[s]))
-                                        dir1 = dir0;
-                                    else if (o2 && (dir2 != ghost_mem[s]))
-                                        dir1 = dir2;
-                                    else if (o1 && (dir1 != ghost_mem[s]))
-                                        ;
-                                    else if (o0)
-                                        dir1 = dir0;
-                                    else
-                                        dir1 = dir2;
-                                }
-                            } else if (! o1)
-                                dir1 = DIRWRAP(dir1 + 2);
-                        }
-                        if (XDIR(dir1))
-                            y = (1 + 2 * j1) * gfx_h / 2;
-                        else if (dir1)
-                            x = (1 + 2 * i1) * gfx_w / 2;
-                        if ((MYMANSQUARE || gfx_reflect) ? (cycles & 2) : 1)
-                            sprite_register_x[blue] = XPIXWRAP(x + XDIR(dir1));
-                        if ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 2))
-                            sprite_register_y[blue] = YPIXWRAP(y + YDIR(dir1));
-                        if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])])
-                            home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[blue]))*(maze_w+1)+XTILE(sprite_register_x[blue])] =
-                                DIRWRAP(dir1 + 2);
-                    }
-                }
-                else if (sprite_register_used[mean] && ! ghost_eaten_timer)
-                {
-                    /* out huntin' */
-                    int d0, d1, d2;
-
-                    x = sprite_register_x[mean];
-                    y = sprite_register_y[mean];
-                    i1 = XTILE(x);
-                    j1 = YTILE(y);
-                    i2 = XTILE(sprite_register_x[HERO]);
-                    j2 = YTILE(sprite_register_y[HERO]);
-                    if ((i1 == i2) && (j1 <= j2)) {
-                        for (j = j1; j <= j2; j ++)
-                        {
-                            mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                            if (! ISOPEN((unsigned) mcell))
-                                break;
-                        }
-                        if (j > j2) {
-                            ghost_mem[s] = hero_dir;
-                            ghost_timer[s] = (int) MEMDELAY(s);
-                        }
-                    } else if ((i1 == i2) && (j1 >= j2)) {
-                        for (j = j2; j <= j1; j ++)
-                        {
-                            mcell = (unsigned char) maze[(maze_level*maze_h+j) * (maze_w + 1)+i1];
-                            if (! ISOPEN((unsigned) mcell))
-                                break;
-                        }
-                        if (j > j1) {
-                            ghost_mem[s] = hero_dir;
-                            ghost_timer[s] = (int) MEMDELAY(s);
-                        }
-                    } else if ((j1 == j2) && (i1 <= i2)) {
-                        for (i = i1; i <= i2; i ++)
-                        {
-                            mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                            if (! ISOPEN((unsigned) mcell))
-                                break;
-                        }
-                        if (i > i2) {
-                            ghost_mem[s] = hero_dir;
-                            ghost_timer[s] = (int) MEMDELAY(s);
-                        }
-                    } else if ((j1 == j2) && (i1 >= i2)) {
-                        for (i = i2; i <= i1; i ++)
-                        {
-                            mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i];
-                            if (! ISOPEN((unsigned) mcell))
-                                break;
-                        }
-                        if (i > i1) {
-                            ghost_mem[s] = hero_dir;
-                            ghost_timer[s] = (int) MEMDELAY(s);
-                        }
-                    }
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                    o0 = ISOPEN((unsigned) mcell);
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    o1 = ISOPEN((unsigned) mcell);
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                    o2 = ISOPEN((unsigned) mcell);
-                    d0 = d2 = 0;
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    d1 = ISDOOR((unsigned) mcell);
-                    mcell = (unsigned char) maze[(maze_level*maze_h+j1) * (maze_w + 1)+i1];
-                    if (! ISDOOR((unsigned) mcell))
-                    {
-                        mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                        d0 = ISDOOR((unsigned) mcell);
-                        mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                        d2 = ISDOOR((unsigned) mcell);
-                    }
-                    d0 = d0 && (dir0 !=
-                                find_home_dir(s,
-                                              YWRAP(j1 + YDIR(dir0)),
-                                              XWRAP(i1 + XDIR(dir0))))
-                        && dir0 != MYMAN_DOWN
-                        && dir0 != MYMAN_LEFT;
-                    d2 = d2 && (dir2 !=
-                                find_home_dir(s,
-                                              YWRAP(j1 + YDIR(dir2)),
-                                              XWRAP(i1 + XDIR(dir2))))
-                        && dir2 != MYMAN_DOWN
-                        && dir2 != MYMAN_LEFT;
-                    d1 = d1 && (dir1 !=
-                                find_home_dir(s,
-                                              YWRAP(j1 + YDIR(dir1)),
-                                              XWRAP(i1 + XDIR(dir1))))
-                        && dir1 != MYMAN_DOWN
-                        && dir1 != MYMAN_LEFT;
-                    if (((gfx_w / 2 == x % gfx_w) && XDIR(dir1))
-                        || ((gfx_h / 2 == y % gfx_h) && YDIR(dir1))) {
-                        if (d2 || (o2 && (dir2 == ghost_mem[s])))
-                            dir1 = dir2;
-                        else if (d1 || (o1 && (dir1 == ghost_mem[s])))
-                            ;
-                        else if (d0 || (o0 && (dir0 == ghost_mem[s])))
-                            dir1 = dir0;
-                        else if (o1)
-                            ;
-                        else if (o2)
-                            dir1 = dir2;
-                        else if (o0)
-                            dir1 = dir0;
-                        else
-                            dir1 = DIRWRAP(dir1 + 2);
-                    }
-                    if (XDIR(dir1))
-                        y = (1 + 2 * j1) * gfx_h / 2;
-                    else if (dir1)
-                        x = (1 + 2 * i1) * gfx_w / 2;
-                    if ((MYMANSQUARE || gfx_reflect) ? (cycles & 1) : 1)
-                        sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
-                    if ((gfx_reflect && ! MYMANSQUARE) ? 1 : (cycles & 1))
-                        sprite_register_y[mean] = (sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1)));
-                    if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])])
-                        home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[mean]))*(maze_w+1)+XTILE(sprite_register_x[mean])] =
-                            DIRWRAP(dir1 + 2);
-                } else if (sprite_register_used[eyes]
-                           &&
-                           ((munched != eyes) || (! ghost_eaten_timer))
-                           &&
-                           ((! ghost_eaten_timer) || ! sprite_register_used[MEANGHOST(s)])) {
-                    int dx, dy;
-                    unsigned char d, d1 = 0;
-
-                    /* goin' home */
-                    ghost_timer[s] = (int) MEMDELAY(s);
-                    x = sprite_register_x[eyes];
-                    y = sprite_register_y[eyes];
-                    i1 = XTILE(x);
-                    j1 = YTILE(y);
-                    dx = (int) ((XGHOST - x) / gfx_w);
-                    dy = (int) (((dx ? YTOP : YGHOST) - y) / gfx_h);
-                    d = find_home_dir(s, j1, i1);
-                    if ((unsigned) d)
-                        d1 = (unsigned) DIRWRAP(find_home_dir(s, YWRAP(j1 + YDIR((unsigned) d)), XWRAP(i1 + XDIR((unsigned) d))) + 2);
-                    if (((unsigned) d) &&
-                        (! (((unsigned) d1) &&
-                            (((unsigned) d1) == (unsigned) d))))
-                        ghost_mem[s] = (unsigned) d;
-                    else {
-                        if (dx * dx > dy * dy) {
-                            if (dx > 0)
-                                ghost_mem[s] = MYMAN_RIGHT;
-                            else
-                                ghost_mem[s] = MYMAN_LEFT;
-                        }
-                        else
-                        {
-                            if (dy < 0)
-                                ghost_mem[s] = MYMAN_UP;
-                            else
-                                ghost_mem[s] = MYMAN_DOWN;
-                        }
-                    }
-                    if (! (dx || dy)) {
-                        sprite_register_used[eyes] = NET_LIVES ? VISIBLE_EYES : 0;
-                        sprite_register_used[mean] = 1;
-                        sprite_register_x[mean] = x;
-                        sprite_register_y[mean] = y;
-                        sprite_register_frame[eyes] = (ghost_dir[s] = DIRWRAP(s + 1)) - 1;
-                        ghost_mem[s] = 0;
-                        continue;
-                    }
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir0))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir0))];
-                    o0 = ISOPEN((unsigned) mcell)
-                        || ISDOOR((unsigned) mcell);
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir1))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir1))];
-                    o1 = ISOPEN((unsigned) mcell)
-                        || ISDOOR((unsigned) mcell);
-                    mcell = (unsigned char) maze[(maze_level*maze_h+YWRAP(j1 + YDIR(dir2))) * (maze_w + 1)+XWRAP(i1 + XDIR(dir2))];
-                    o2 = ISOPEN((unsigned) mcell)
-                        || ISDOOR((unsigned) mcell);
-                    if (o2 && (dir2 == ghost_mem[s]))
-                        dir1 = dir2;
-                    else if (o1 && (dir1 == ghost_mem[s]))
-                        ;
-                    else if (o0 && (dir0 == ghost_mem[s]))
-                        dir1 = dir0;
-                    else if (o1)
-                        ;
-                    else if (o2)
-                        dir1 = dir2;
-                    else if (o0)
-                        dir1 = dir0;
-                    else
-                        dir1 = DIRWRAP(dir1 + 2);
-                    sprite_register_x[mean] = (sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1)));
-                    sprite_register_x[eyes] = XPIXWRAP(x + XDIR(dir1));
-                    sprite_register_y[eyes] = YPIXWRAP(y + YDIR(dir1));
-                    if (! (unsigned) home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])])
-                        home_dir[(s % ghosts*maze_h+YTILE(sprite_register_y[eyes]))*(maze_w+1)+XTILE(sprite_register_x[eyes])] =
-                            DIRWRAP(dir1 + 2);
-                }
-                if ((! ghost_eaten_timer) && ghost_timer[s] && ! -- ghost_timer[s]) {
-                    ghost_timer[s] = (int) MEMDELAY(s);
-                    if (ghost_mem[s]) {
-                        ghost_mem[s] = 0;
-                    }
-                    else
-                        dir1 = DIRWRAP(ghost_dir[s] + 2);
-                }
-                ghost_dir[s] = (sprite_register_frame[eyes] = dir1 - 1) + 1;
-                collision_type = check_collision(eyes, mean, blue);
-                if (collision_type)
-                {
-                    if (collision_type == COLLISION_TYPE_HERO)
-                    {
-                        s = -1;
-                        continue;
-                    }
-                }
-            }
-        }
-        if (! ghost_eaten_timer)
-            for (s = 0; s < SPRITE_REGISTERS; s ++) {
-                if (sprite_register_used[s] && sprite_register_timer[s])
-                    if (! -- sprite_register_timer[s])
-                    {
-                        sprite_register_used[s] = 0;
-                        if (s == FRUIT)
-                        {
-                            DIRTY_ALL();
-                            ignore_delay = 1;
-                            frameskip = 0;
-                        }
-                    }
-            }
-    }
-    return 0;
+    if (GHOST0 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST0)] = 0xB;
+    if (GHOST1 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST1)] = 0xC;
+    if (GHOST2 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST2)] = 0xD;
+    if (GHOST3 < MAXGHOSTS) sprite_register_color[MEANGHOST(GHOST3)] = 0x6;
 }
 
 char *tmp_notice = 0;
@@ -4199,4 +4084,773 @@ maze_visual(int n, int i, int j)
         break;
     }
     return c;
+}
+
+int
+gamecycle(int lines, int cols)
+{
+    int s;
+    int ret;
+
+    showlives = ((myman_intro || myman_start || myman_demo) ? 0 : NET_LIVES) - 1 + (((munched == HERO) && (! sprite_register_used[HERO])) ? 1 : 0);
+    if ((old_lines != lines)
+        ||
+        (old_cols != cols)
+        ||
+        (old_score > score)
+        ||
+        (old_showlives != showlives)
+        ||
+        (old_level != level))
+    {
+        DIRTY_ALL();
+        ignore_delay = 1;
+        frameskip = 0;
+        old_lines = lines;
+        old_cols = cols;
+        /* TODO: make some video memory for the status areas
+         * in order to avoid unnecessary full refreshes */
+        old_score = score;
+        old_showlives = showlives;
+        old_level = level;
+    }
+    gamesfx();
+    if (! (winning || NET_LIVES || dead || dying || ghost_eaten_timer || myman_intro || myman_demo || myman_start || intermission_running || need_reset))
+    {
+        key_buffer = key_buffer_ERR;
+        myman_intro = 1;
+        myman_start = 0;
+        myman_demo = 0;
+        myman_demo_setup = 0;
+        lives_used = 0;
+        earned = 0;
+        winning = 1;
+        ghost_eaten_timer = 0;
+        level = 0;
+        maze_level = 0;
+        intermission = 0;
+        intermission_shown = 0;
+        for (s = 0; s < SPRITE_REGISTERS; s ++)
+        {
+            sprite_register_used[s] = 0;
+            sprite_register_timer[s] = 0;
+            sprite_register_frame[s] = 0;
+        }
+        maze_erase();
+        oldplayer = 0;
+        player = 1;
+        pellet_timer = 0;
+        pellet_time = PELLET_ADJUST(7 * ONESEC);
+        cycles = 0;
+        dots = 0;
+        dead = 0;
+        deadpan = 0;
+        dying = 0;
+    }
+#if MYMANDELAY
+    if (mymandelay
+        &&
+        (! myman_demo_setup)
+        &&
+        ! ((frames + frameskip) % (frameskip ? frameskip : 1)))
+    {
+        double td2;
+        unsigned long actual_delay;
+
+        do
+        {
+            actual_delay = (myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1);
+            td2 = doubletime();
+            if (td == -1.0L)
+            {
+                td = 0.0L;
+                td2 = 0.0L;
+                frameskip = 0;
+            }
+            if (td == 0.0L)
+            {
+                td = td2 - (actual_delay * 1e-6L);
+            }
+            if ((td2 != 0.0L)
+                &&
+                (td != 0.0L))
+            {
+                if (td2 > td)
+                {
+                    unsigned long delta;
+                    double nframeskip;
+                    size_t kfr;
+                    int use_buffer;
+                    static double onframeskip[] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+
+                    nframeskip = onframeskip[0];
+                    for (kfr = 1; kfr < sizeof(onframeskip) / sizeof(*onframeskip); kfr ++)
+                    {
+                        nframeskip += onframeskip[kfr];
+                        onframeskip[kfr - 1] = onframeskip[kfr];
+                    }
+                    nframeskip /= kfr;
+                    use_buffer = (frameskip == (nframeskip + 0.5));
+                    delta = (unsigned long int) 1e6L * (td2 - td);
+                    nframeskip = ((frameskip ? frameskip : 1) * delta) / (actual_delay ? actual_delay : 1);
+                    if (nframeskip > MAXFRAMESKIP)
+                    {
+                        nframeskip = MAXFRAMESKIP;
+                    }
+                    onframeskip[kfr - 1] = nframeskip;
+                    if (use_buffer) nframeskip = 0.0;
+                    for (kfr = 0; kfr < sizeof(onframeskip) / sizeof(*onframeskip); kfr ++)
+                    {
+                        if (use_buffer)
+                            nframeskip += onframeskip[kfr];
+                        else
+                            onframeskip[kfr] = nframeskip;
+                    }
+                    if (use_buffer) nframeskip /= kfr;
+                    if (! ignore_delay)
+                    {
+                        frameskip = (unsigned long) (nframeskip + 0.5);
+                    }
+                    actual_delay = (myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1);
+                    if (delta <= actual_delay)
+                    {
+                        actual_delay -= delta;
+                    }
+                    else
+                    {
+                        actual_delay = 0;
+                    }
+                }
+            }
+            if (actual_delay)
+            {
+                unsigned long secs;
+
+                secs = actual_delay / 999999L;
+                while (secs --)
+                {
+                    my_usleep(999999UL);
+                    actual_delay -= 999999UL;
+                }
+                if (actual_delay % 999999UL)
+                {
+                    my_usleep(actual_delay % 999999UL);
+                }
+                if (actual_delay == ((myman_demo ? ((mymandelay + mindelay) / 2) : mymandelay) * (frameskip ? frameskip : 1)))
+                {
+                    break;
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+        while (1);
+        ignore_delay = 0;
+        td = doubletime();
+        if (td == -1.0L)
+        {
+            ignore_delay = 1;
+            frameskip = 0;
+        }
+    }
+#endif
+    ret = gameinput();
+    if (ret >= 0)
+    {
+        return ret;
+    }
+    visible_frame = ! ((frames ++) % (frameskip ? frameskip : 1));
+    if (myman_intro && ! (paused || snapshot || snapshot_txt))
+    {
+        gameintro();
+        if (((! ghost_eaten_timer)
+             &&
+             ((sprite_register_frame[GHOST_SCORE] == 3)
+              ||
+              ((sprite_register_used[HERO])
+               &&
+               (((unsigned) sprite_register[HERO]) == (SPRITE_HERO + 12))
+               &&
+               (XTILE(sprite_register_x[HERO]) >= maze_w))))
+            ||
+            (ret != -1))
+        {
+            myman_intro = 0;
+            myman_demo = 1;
+        }
+    }
+    if (myman_demo && ! (paused || snapshot || snapshot_txt))
+    {
+        gamedemo();
+        if ((myman_demo > (1 + (20UL * (maze_h * maze_w) * TWOSECS / (28 * 31)) / 2))
+            ||
+            (ret != -1))
+        {
+            ghost_eaten_timer = 0;
+            myman_demo = 0;
+            myman_demo_setup = 0;
+            myman_intro = (ret == -1);
+            myman_start = (ret != -1) ? (30 * ONESEC) : 0;
+            if (myman_start)
+            {
+                myman_sfx |= myman_sfx_credit;
+            }
+            winning = 1;
+            oldplayer = 0;
+            player = 1;
+            pellet_timer = 0;
+            pellet_time = PELLET_ADJUST(7 * ONESEC);
+            cycles = 0;
+            dots = 0;
+            dead = 0;
+            deadpan = 0;
+            dying = 0;
+            level = 0;
+            maze_level = 0;
+            intermission = 0;
+            intermission_shown = 0;
+            for (s = 0; s < SPRITE_REGISTERS; s ++)
+            {
+                sprite_register_used[s] = 0;
+                sprite_register_timer[s] = 0;
+                sprite_register_frame[s] = 0;
+            }
+            maze_erase();
+            if (myman_start)
+            {
+                creditscreen();
+                ret = -1;
+                key_buffer = key_buffer_ERR;
+            }
+        }
+    }
+    if (myman_start && ! (paused || snapshot || snapshot_txt))
+    {
+        myman_start --;
+        if ((! myman_start)
+            ||
+            (ret != -1))
+        {
+            gamestart();
+        }
+    }
+    if (intermission_running && ! (paused || snapshot || snapshot_txt))
+    {
+        gameintermission();
+        if ((! intermission_running) || myman_demo || (ret != -1))
+        {
+            if (! myman_demo) ret = -1;
+            intermission_running = 0;
+            need_reset = 1;
+            for (s = 0; s < SPRITE_REGISTERS; s ++)
+            {
+                sprite_register_used[s] = 0;
+            }
+        }
+    }
+    if (! (paused || snapshot || snapshot_txt || myman_intro || myman_start || intermission_running))
+    {
+        if (gamelogic())
+        {
+            return 1;
+        }
+    }
+    if (visible_frame && ! (xoff_received || myman_demo_setup))
+    {
+        gamerender();
+    }
+    if (! (paused || snapshot || snapshot_txt))
+    {
+        if (pellet_timer && (! ghost_eaten_timer)) {
+            int s, eyes, blue, mean;
+                
+            if (! -- pellet_timer) {
+                for (s = 0; s < ghosts; s ++)
+                    if (sprite_register_used[(blue = BLUEGHOST(s))]) {
+                        sprite_register_used[(mean = MEANGHOST(s))] = 1;
+                        sprite_register_used[blue] = 0;
+                        sprite_register_used[(eyes = GHOSTEYES(s))] = VISIBLE_EYES;
+                        sprite_register_x[eyes] =
+                            (sprite_register_x[mean] = sprite_register_x[blue]);
+                        sprite_register_y[eyes] =
+                            (sprite_register_y[mean] = sprite_register_y[blue]);
+                        sprite_register_frame[eyes] = (ghost_dir[s] = DIRWRAP(s + 1)) - 1;
+                    }
+            } else if (pellet_timer <= TWOSECS)
+                for (s = 0; s < ghosts; s ++)
+                    sprite_register[BLUEGHOST(s)] = ((2 * pellet_timer / ONESEC) & 1)
+                        ? SPRITE_BLUE
+                        : SPRITE_WHITE;
+        }
+        cycles ++;
+    }
+    return 1;
+}
+
+void
+paint_walls(int verbose)
+{
+    int n;
+    double tdt, tdt2 = 0.0L;
+    int tdt_used = 0;
+
+    memset((void *) inside_wall, '\0', sizeof(inside_wall));
+    tdt = doubletime();
+    tdt_used = 0;
+    for (n = 0; n < maze_n; n ++)
+    {
+        int phase;
+
+        total_dots[n] = 0;
+        pellets[n] = 0;
+        for (phase = 0; phase <= 4; phase ++)
+        {
+            int phase_done;
+
+            do
+            {
+                int i;
+
+                phase_done = 1;
+                for (i = 0; i < maze_h; i ++)
+                {
+                    int j;
+
+                    if ((! nogame) && verbose)
+                    {
+                        tdt2 = doubletime();
+                        if (floor(tdt2) != floor(td))
+                        {
+                            tdt = tdt2;
+                            tdt_used = 1;
+                            fprintf(stderr, "%3d%%\r",
+                                    (int) (((((float) n) * 5.0 + (float) phase) * maze_h + (float) i) * 100.0
+                                           /
+                                           (((float) maze_n) * 5.0 * ((float) maze_h))
+                                           +
+                                           0.5));
+                            fflush(stderr);
+                        }
+                    }
+                    for (j = 0; j <= maze_w; j ++)
+                    {
+                        long c;
+
+                        c = maze_visual(n, i, j);
+                        switch (phase)
+                        {
+                        case 0:
+                            if (ISPELLET(c) || ISDOT(c))
+                            {
+                                total_dots[n] ++;
+                                if (ISPELLET(c))
+                                {
+                                    pellets[n] ++;
+                                }
+                            }
+                            if (ISNONINVERTABLE(c))
+                            {
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NON_INVERTABLE;
+                            }
+                            break;
+                        case 1:
+                            if ((! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
+                                &&
+                                (! ((unsigned) udlr[c]))
+                                &&
+                                ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                 ||
+                                 (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                 ||
+                                 (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                 ||
+                                 (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)))
+                            {
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NON_INVERTABLE;
+                                phase_done = 0;
+                            }
+                            break;
+                        case 2:
+                        case 3:
+                            if ((! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO | ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3))))
+                                &&
+                                ((phase == 3)
+                                 ||
+                                 ((((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                    ^
+                                    (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
+                                   &&
+                                   ((((unsigned) udlr[c]) & 0x05) == 0x05))
+                                  ||
+                                  (((((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                    ^
+                                    (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                   &&
+                                   ((((unsigned) udlr[c]) & 0x50) == 0x50)))))
+                            {
+                                int painting_done;
+
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_PROVISIONAL;
+                                if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                    &&
+                                    ((((unsigned) udlr[c]) & 0x05) == 0x05))
+                                {
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NO;
+                                    if (! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
+                                    {
+                                        inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) | (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
+                                    }
+                                }
+                                else if ((((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                         &&
+                                         ((((unsigned) udlr[c]) & 0x50) == 0x50))
+                                {
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_NO;
+                                    if (! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO)))
+                                    {
+                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) | (INSIDE_WALL_YES | INSIDE_WALL_PROVISIONAL);
+                                    }
+                                }
+                                else
+                                {
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_YES;
+                                }
+                                do
+                                {
+                                    int i2, j2;
+                                    int undo = 0;
+
+                                    painting_done = 1;
+                                    for (i2 = 0; i2 < maze_h; i2 ++)
+                                        for (j2 = 0; j2 <= maze_w; j2 ++)
+                                        {
+                                            long c2;
+
+                                            c2 = maze_visual(n, i2, j2);
+                                            if (! undo)
+                                            {
+                                                if (((! (((unsigned) udlr[c2]) & 0x04))
+                                                     &&
+                                                     (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
+                                                    ||
+                                                    ((! (((unsigned) udlr[c2]) & 0x40))
+                                                     &&
+                                                     (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & INSIDE_WALL_YES)))
+                                                {
+                                                    if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    {
+                                                        undo = 1;
+                                                        i2 = 0;
+                                                        j2 = 0;
+                                                        painting_done = 1;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
+                                                        {
+                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            painting_done = 0;
+                                                        }
+                                                    }
+                                                }
+                                                else if (((((unsigned) udlr[c2]) & 0x04)
+                                                          &&
+                                                          ((((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL))))
+                                                         ||
+                                                         ((((unsigned) udlr[c2]) & 0x40)
+                                                          &&
+                                                          ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & (INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES)) == ((INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES) ^ (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)))))
+                                                {
+                                                    if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES) == INSIDE_WALL_YES)
+                                                    {
+                                                        undo = 1;
+                                                        i2 = 0;
+                                                        j2 = 0;
+                                                        painting_done = 1;
+                                                    }
+                                                }
+                                            }
+                                            if (! undo)
+                                            {
+                                                if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES)
+                                                    &&
+                                                    (! (((unsigned) udlr[c2]) & 0x04)))
+                                                {
+                                                    if (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    {
+                                                        undo = 1;
+                                                        i2 = 0;
+                                                        j2 = 0;
+                                                        painting_done = 1;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) & INSIDE_WALL_YES))
+                                                        {
+                                                            inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+YWRAP(i2 + 1)) * (maze_w + 1)+j2]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            painting_done = 0;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (! undo)
+                                            {
+                                                if ((((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_YES)
+                                                    &&
+                                                    (! (((unsigned) udlr[c2]) & 0x40)))
+                                                {
+                                                    if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & (INSIDE_WALL_NON_INVERTABLE | INSIDE_WALL_NO))
+                                                    {
+                                                        undo = 1;
+                                                        i2 = 0;
+                                                        j2 = 0;
+                                                        painting_done = 1;
+                                                    }
+                                                    else
+                                                    {
+                                                        if (! (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) & INSIDE_WALL_YES))
+                                                        {
+                                                            inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+XWRAP2(j2 + 1)]) | INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES;
+                                                            painting_done = 0;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            if (undo)
+                                            {
+                                                if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)
+                                                {
+                                                    inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & ~(INSIDE_WALL_PROVISIONAL | INSIDE_WALL_YES | INSIDE_WALL_NO);
+                                                }
+                                            }
+                                        }
+                                }
+                                while (! painting_done);
+                                {
+                                    int i2, j2;
+
+                                    for (i2 = 0; i2 < maze_h; i2 ++)
+                                        for (j2 = 0; j2 <= maze_w; j2 ++)
+                                        {
+                                            if (((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & INSIDE_WALL_PROVISIONAL)
+                                            {
+                                                inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2] = ((unsigned) inside_wall[(n*maze_h+i2) * (maze_w + 1)+j2]) & ~INSIDE_WALL_PROVISIONAL;
+                                            }
+                                        }
+                                }
+                                phase_done = 0;
+                                inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | ((phase == 2) ? INSIDE_WALL_PHASE2 : INSIDE_WALL_PHASE3);
+                            }
+                            break;
+                        case 4:
+                            if (! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE))
+                            {
+                                int ul, ll, ur, lr;
+
+                                ul = !! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) & INSIDE_WALL_YES);
+                                ll = !! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_YES);
+                                ur = !! (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_YES);
+                                lr = !! (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_YES);
+                                if ((ul + ll + ur + lr) == 0)
+                                {
+                                    if ((((unsigned) udlr[c]) & 0x05) == 0x05)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ll = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ur = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x50) == 0x50)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ll = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ur = 1;
+                                            lr = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x44)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ur = 1;
+                                            ll = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x41)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ll = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ur = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x14)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ur = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ll = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x11)
+                                    {
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ur = 1;
+                                            ll = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            lr = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x15)
+                                    {
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ul = 1;
+                                            ur = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ll = 1;
+                                            lr = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x45)
+                                    {
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ll = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+j]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ur = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x51)
+                                    {
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ul = 1;
+                                            ll = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ur = 1;
+                                            lr = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x54)
+                                    {
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ur = 1;
+                                            lr = 1;
+                                        }
+                                        if (((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                        {
+                                            ul = 1;
+                                            ll = 1;
+                                        }
+                                    }
+                                    if ((((unsigned) udlr[c]) & 0x55) == 0x55)
+                                    {
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ur = 1;
+                                            ll = 1;
+                                        }
+                                        if ((((unsigned) inside_wall[(n*maze_h+YWRAP(i - 1)) * (maze_w + 1)+XWRAP2(j + 1)]) & INSIDE_WALL_NON_INVERTABLE)
+                                            ||
+                                            (((unsigned) inside_wall[(n*maze_h+YWRAP(i + 1)) * (maze_w + 1)+XWRAP2(j - 1)]) & INSIDE_WALL_NON_INVERTABLE))
+                                        {
+                                            ul = 1;
+                                            lr = 1;
+                                        }
+                                    }
+                                    if ((ul + ur + ll + lr) == 4)
+                                    {
+                                        ul = 0;
+                                        ur = 0;
+                                        ll = 0;
+                                        lr = 0;
+                                        inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_FULLY_NON_INVERTED;
+                                    }
+                                }
+                                if (((ul + ll + ur + lr) > 2)
+                                    ||
+                                    (((ul + ll + ur + lr) == 2)
+                                     &&
+                                     ul))
+                                {
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_INVERTED;
+                                }
+                                if (((ul + ll + ur + lr) == 4)
+                                    &&
+                                    (((!! (((unsigned) udlr[c]) & 0x40))
+                                      +
+                                      (!! (((unsigned) udlr[c]) & 0x10))
+                                      +
+                                      (!! (((unsigned) udlr[c]) & 0x04))
+                                      +
+                                      (!! (((unsigned) udlr[c]) & 0x01))) > 1))
+                                {
+                                    inside_wall[(n*maze_h+i) * (maze_w + 1)+j] = ((unsigned) inside_wall[(n*maze_h+i) * (maze_w + 1)+j]) | INSIDE_WALL_FULLY_INVERTED;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            while (! phase_done);
+        }
+    }
+    if (tdt_used)
+    {
+        fprintf(stderr, "    \r"); fflush(stderr);
+        tdt_used = 0;
+    }
 }

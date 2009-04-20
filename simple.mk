@@ -1,5 +1,5 @@
 # simple.mk - simple build script for the MyMan video game
-# Copyright 2003, 2006 Benjamin Sittler <bsittler@gmail.com>
+# Copyright 2003, 2006, 2009 Benjamin Sittler <bsittler@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -58,6 +58,9 @@ MYGETOPTLIBS=${MYGETOPTDIR}/mygetopt.c
 # utility functions
 UTILSOBJS=src/utils.c
 
+# game logic
+LOGICOBJS=src/logic.c
+
 CINCLUDES=-Iinc -I${MYGETOPTDIR}
 
 all: hugeman bigman smallman squareman
@@ -73,8 +76,8 @@ clean:
 # "big" is the default size (large ASCII-art pictures)
 bigman=${big} ${myman}
 
-bigman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${bigman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+bigman: src/myman.c ${UTILSOBJS} ${LOGICOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${bigman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS} ${LOGICOBJS}
 
 # "huge" is the largest size (huge ASCII-art pictures)
 TILEFILE_huge=chr5x3.txt
@@ -84,8 +87,8 @@ hugesprites=-DSPRITEFILE=\"spr/${SPRITEFILE_huge}\"
 huge=-DMYMANSIZE=\"huge\" ${hugetiles} ${hugesprites}
 hugeman=${huge} ${myman}
 
-hugeman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${hugeman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+hugeman: src/myman.c ${UTILSOBJS} ${LOGICOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${hugeman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS} ${LOGICOBJS}
 
 # "small" uses a pair of character-cells to represent each tile and sprite
 TILEFILE_small=khr2h.txt
@@ -95,8 +98,8 @@ smallsprites=-DSPRITEFILE=\"spr/${SPRITEFILE_small}\"
 small=-DMYMANSIZE=\"small\" ${smalltiles} ${smallsprites}
 smallman=${small} ${myman}
 
-smallman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${smallman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+smallman: src/myman.c ${UTILSOBJS} ${LOGICOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${smallman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS} ${LOGICOBJS}
 
 # "square" uses one character-cell to represent each tile and sprite
 TILEFILE_square=khr1.txt
@@ -106,8 +109,8 @@ squaresprites=-DSPRITEFILE=\"spr/${SPRITEFILE_square}\"
 square=-DMYMANSIZE=\"square\" ${squaretiles} ${squaresprites}
 squareman=${square} ${myman}
 
-squareman: src/myman.c ${UTILSOBJS}
-	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${squareman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS}
+squareman: src/myman.c ${UTILSOBJS} ${LOGICOBJS}
+	${CC} ${CINCLUDES} ${CFLAGS} ${CURSOPTS} ${CURSESINCLUDE} ${MYGETOPTCPPFLAGS} ${squareman} -o $@ $< ${CURSESLIBS} ${MYGETOPTLIBS} ${UTILSOBJS} ${LOGICOBJS}
 
 .PHONY: all clean
 

@@ -1,5 +1,5 @@
 /* utils.h - various utilities for the MyMan video game
- * Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+ * Copyright 1997-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
  *  obtaining a copy of this software and associated documentation
@@ -234,6 +234,10 @@ extern void writefont(const char *file,
                       int *color,
                       const char *args);
 
+extern int parse_tile_args(const char *tilefile, const char *tile_args);
+
+extern int parse_sprite_args(const char *spritefile, const char *sprite_args);
+
 extern const char *progname;
 
 extern int readmaze(const char *mazefile,
@@ -244,6 +248,10 @@ extern int readmaze(const char *mazefile,
                     int *flags,
                     char **color,
                     const char **args);
+
+extern void writemaze(const char *mazefile);
+
+extern int parse_maze_args(const char *mazefile, const char *maze_args);
 
 extern char *mystrdup(const char *s);
 
@@ -479,12 +487,47 @@ extern int gfx_reflect;
 #define XGHOST (CGHOST * gfx_w)
 #define YTOP (RTOP * gfx_h)
 
+#define INSIDE_WALL_INVERTED 0x0001
+#define INSIDE_WALL_NON_INVERTABLE 0x0002
+#define INSIDE_WALL_FULLY_INVERTED 0x0004
+#define INSIDE_WALL_FULLY_NON_INVERTED 0x0008
+#define INSIDE_WALL_PROVISIONAL 0x0010
+#define INSIDE_WALL_YES 0x0020
+#define INSIDE_WALL_NO 0x0040
+#define INSIDE_WALL_PHASE2 0x0080
+#define INSIDE_WALL_PHASE3 0x0100
+#define IS_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_INVERTED)
+#define IS_FULLY_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_FULLY_INVERTED)
+#define IS_FULLY_NON_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_FULLY_NON_INVERTED)
+
+extern double doubletime(void);
+extern int my_usleep(long usecs);
+
 extern void gameintro(void);
 extern void gamedemo(void);
 extern void gamestart(void);
 extern void gameintermission(void);
+extern void gamehelp(void);
+extern void gameinfo(void);
 extern int gamelogic(void);
+extern void gamesfx(void);
+extern void gamereset(void);
+extern void gamerender(void);
+extern int gameinput(void);
+extern int gamecycle(int lines, int cols);
 
+extern void creditscreen(void);
+extern void paint_walls(int verbose);
+
+extern unsigned short *inside_wall;
+extern FILE *snapshot;
+extern FILE *snapshot_txt;
+extern int xoff_received;
+extern double td;
+extern const char * pager_notice;
+extern const char * pager_remaining;
+extern int pager_arrow_magic;
+extern int reinit_requested;
 extern long myman_intro;
 extern unsigned long myman_start;
 extern unsigned long myman_demo;

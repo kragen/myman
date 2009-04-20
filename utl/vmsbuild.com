@@ -37,6 +37,7 @@ $ write sys$output "$! cleaning"
 $ if f$search("myman.obj") .nes. "" then delete myman.obj;*
 $ if f$search("mygetopt.obj") .nes. "" then delete mygetopt.obj;*
 $ if f$search("utils.obj") .nes. "" then delete utils.obj;*
+$ if f$search("logic.obj") .nes. "" then delete logic.obj;*
 $ if f$search("myman.exe") .nes. "" then delete myman.exe;*
 $ if f$search("myman_''f$getsyi("arch_name")'.exe") .nes. "" then delete myman_'f$getsyi("arch_name")'.exe;*
 $ write sys$output "$! compiling"
@@ -48,9 +49,10 @@ $ cc -
  'p1' 'p2' 'p3' 'p4' 'p5' 'p6' 'p7' 'p8' -
 [.src]myman.c,-
 [.mygetopt]mygetopt.c,-
-[.src]utils.c
+[.src]utils.c,-
+[.src]logic.c
 $ write sys$output "$! linking"
-$ link myman.obj,utils.obj,mygetopt.obj
+$ link myman.obj,utils.obj,logic.obj,mygetopt.obj
 $ write sys$output "$! copying"
 $ copy myman.exe myman_'f$getsyi("arch_name")'.exe
 $ write sys$output "$! done"

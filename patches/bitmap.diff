@@ -1,0 +1,283 @@
+--- src/myman.c~	2009-04-17 07:59:33.000000000 -0700
++++ src/myman.c	2009-04-15 08:39:33.000000000 -0700
+@@ -2586,7 +2586,10 @@
+ 
+ static int use_sound = SOUND;
+ 
++static int use_bitmap = 0;
++
+ #define MY_COLS (COLS / (use_fullwidth ? 2 : 1))
++#define MY_LINES (LINES * (use_bitmap ? 2 : 1))
+ 
+ #ifdef BUILTIN_VARIANT
+ extern const char *builtin_variant;
+@@ -4925,7 +4928,7 @@
+ #define pager_tile_h (tile_h + 1)
+ #define pager_big ((((COLS / tile_w) * (LINES / pager_tile_h)) >= 80) && (tile_w >= 4) && ((tile_h >= 3) || ((tile_h) * 2 == tile_w)))
+ #define PAGER_COLS (pager_big ? (MY_COLS / tile_w) : MY_COLS)
+-#define PAGER_LINES (pager_big ? (LINES / pager_tile_h) : LINES)
++#define PAGER_LINES (pager_big ? (MY_LINES / pager_tile_h) : MY_LINES)
+ 
+ #if USE_ATTR
+ #ifdef MY_A_REVERSE
+@@ -4946,7 +4949,7 @@
+ static void
+ pager_move(int y, int x)
+ {
+-    my_move((pager_big ? ((y) * pager_tile_h) : y),
++    my_move(((pager_big ? ((y) * pager_tile_h) : y) / (use_bitmap ? 2 : 1)),
+             ((pager_big ? ((x) * tile_w) : x) * (use_fullwidth ? 2 : 1)));
+ }
+ 
+@@ -4998,7 +5001,7 @@
+             for (pager_addch__j = 0;
+                  pager_addch__j < (((pager_addch__y + 1) == PAGER_LINES)
+                                    ?
+-                                   (LINES - pager_addch__y * pager_tile_h)
++                                   (MY_LINES - pager_addch__y * pager_tile_h)
+                                    :
+                                    pager_tile_h);
+                  pager_addch__j ++)
+@@ -5007,7 +5010,7 @@
+                 {
+                     pager_addch__cc = (unsigned long) (unsigned char) ((pager_addch__j < tile_h) ? tile[(pager_addch__c * tile_h + pager_addch__j) * tile_w + pager_addch__i] : ' ');
+                     if (! pager_addch__cc) pager_addch__cc = (unsigned long) (unsigned char) ' ';
+-                    my_move(pager_addch__y * pager_tile_h + pager_addch__j,
++                    my_move((pager_addch__y * pager_tile_h + pager_addch__j) / (use_bitmap ? 2 : 1),
+                             (pager_addch__x * tile_w + pager_addch__i) * (use_fullwidth ? 2 : 1));
+                     my_addch(pager_addch__cc,
+                              (pager_addch__j < pager_tile_h)
+@@ -5024,7 +5027,7 @@
+                 {
+                     for (pager_addch__i = (pager_addch__x + 1) * tile_w; pager_addch__i < MY_COLS; pager_addch__i ++)
+                     {
+-                        my_move(pager_addch__y * pager_tile_h + pager_addch__j,
++                        my_move((pager_addch__y * pager_tile_h + pager_addch__j) / (use_bitmap ? 2 : 1),
+                                 pager_addch__i * (use_fullwidth ? 2 : 1));
+                         my_addch((unsigned long) (unsigned char) ' ',
+                                  (USE_COLOR && use_color)
+@@ -5818,9 +5821,9 @@
+         ignore_delay = 1;
+         frameskip = 0;
+     }
+-#define VLINES (reflect ? MY_COLS : LINES)
+-#define VCOLS (reflect ? LINES : MY_COLS)
+-#define vmove(y, x) (reflect ? my_move((x), (y) * (use_fullwidth ? 2 : 1)) :  my_move((y), (x) * (use_fullwidth ? 2 : 1)))
++#define VLINES (reflect ? MY_COLS : MY_LINES)
++#define VCOLS (reflect ? MY_LINES : MY_COLS)
++#define vmove(y, x) (reflect ? my_move((x) / (use_bitmap ? 2 : 1), (y) * (use_fullwidth ? 2 : 1)) :  my_move((y) / (use_bitmap ? 2 : 1), (x) * (use_fullwidth ? 2 : 1)))
+     x1 = sprite_register_x[HERO] - VCOLS / 2;
+     y1 = sprite_register_y[HERO] - VLINES / 2 - deadpan;
+     if (x1 + VCOLS - (reflect ? 1 : 0) > maze_w * gfx_w)
+@@ -5853,10 +5856,10 @@
+     attrset(0);
+ #endif
+ #endif
+-    for (vline = -(3 * tile_h); (vline < LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
++    for (vline = -(3 * tile_h); (vline < MY_LINES) && (vline < (sprite_h + ((reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))); vline++)
+     {
+         if ((vline + (reflect ? c_off : r_off)) < 0) continue;
+-        if ((vline + (reflect ? c_off : r_off)) >= LINES) continue;
++        if ((vline + (reflect ? c_off : r_off)) >= MY_LINES) continue;
+         if ((vline < 0) || (vline >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))))
+         {
+             for (vcol = 0; (vcol < MY_COLS) && (vcol < (reflect ? (gfx_h * maze_h) : (gfx_w * maze_w))); vcol++)
+@@ -5994,7 +5997,8 @@
+                         a = pen[a];
+                     }
+ #endif
+-                    my_move(vline + (reflect ? c_off : r_off), (vcol + (reflect ? r_off : c_off)) * (use_fullwidth ? 2 : 1));
++                    my_move((vline + (reflect ? c_off : r_off)) / (use_bitmap ? 2 : 1),
++                            (vcol + (reflect ? r_off : c_off)) * (use_fullwidth ? 2 : 1));
+                     my_addch((unsigned long) (unsigned char) tile[(filler_tile * tile_h + ((vline + (3 * tile_h)) % tile_h)) * tile_w + (vcol % tile_w)], a);
+                 }
+             }
+@@ -6044,7 +6048,8 @@
+                             a = pen[a];
+                         }
+ #endif
+-                        my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
++                        my_move((vline + (reflect ? c_off : r_off)) / (use_bitmap ? 2 : 1),
++                                col * (use_fullwidth ? 2 : 1));
+                         my_addch((unsigned long) (unsigned char) tile[(((unsigned) score_tile) * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
+ 
+                     }
+@@ -6055,18 +6060,18 @@
+                  &&
+                  (! intermission_running)
+                  &&
+-                 (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
++                 (MY_LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+                  &&
+-                 (LINES >= (tile_h + sprite_h))
++                 (MY_LINES >= (tile_h + sprite_h))
+                  &&
+-                 (((vline + sprite_h) >= LINES)
++                 (((vline + sprite_h) >= MY_LINES)
+                   ||
+                   ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
+         {
+             int hud_line;
+             int hud_life_anchor;
+ 
+-            hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
++            hud_line = vline + sprite_h - ((MY_LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : MY_LINES);
+             hud_life_anchor = showlives * sprite_w;
+             for (col = 0; col < hud_life_anchor; col ++)
+             {
+@@ -6105,7 +6110,7 @@
+                         }
+                         if ((col + (reflect ? r_off : c_off) - hud_life_anchor) >= 0)
+                         {
+-                            my_move(vline + (reflect ? c_off : r_off),
++                            my_move((vline + (reflect ? c_off : r_off)) / (use_bitmap ? 2 : 1),
+                                     (col + (reflect ? r_off : c_off) - hud_life_anchor) * (use_fullwidth ? 2 : 1));
+                             my_addch((unsigned long) (unsigned char) c, a);
+                         }
+@@ -6173,9 +6178,9 @@
+                 &&
+                 ((reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) >= tile_w * (int) strlen(PAUSE))
+                 &&
+-                ((vline + (reflect ? c_off : r_off)) >= (LINES - tile_h + 1) / 2)
++                ((vline + (reflect ? c_off : r_off)) >= (MY_LINES - tile_h + 1) / 2)
+                 &&
+-                ((vline + (reflect ? c_off : r_off)) < ((LINES - tile_h + 1) / 2 + tile_h))
++                ((vline + (reflect ? c_off : r_off)) < ((MY_LINES - tile_h + 1) / 2 + tile_h))
+                 &&
+                 ((reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) >= tile_h))
+             {
+@@ -6185,7 +6190,7 @@
+ 
+                 pause_shown = 1;
+                 pause_x = vcol + (reflect ? r_off : c_off) - ((MY_COLS - tile_w * (int) strlen(PAUSE) + 1) / 2);
+-                pause_y = vline + (reflect ? c_off : r_off) - ((LINES - tile_h + 1) / 2);
++                pause_y = vline + (reflect ? c_off : r_off) - ((MY_LINES - tile_h + 1) / 2);
+                 pause_tile = (unsigned long) (unsigned char) PAUSE[pause_x / tile_w];
+                 if (tile_used[(unsigned) pause_tile])
+                 {
+@@ -6592,11 +6597,11 @@
+         }
+         if (((MY_COLS - (reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w))) >= sprite_w)
+             &&
+-            (LINES >= (tile_h + sprite_h))
++            (MY_LINES >= (tile_h + sprite_h))
+             &&
+-            (LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
++            (MY_LINES < ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+             &&
+-            (((vline + sprite_h) >= LINES)
++            (((vline + sprite_h) >= MY_LINES)
+              ||
+              ((vline + sprite_h) >= (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)))))
+         {
+@@ -6604,7 +6609,7 @@
+             int hud_level_anchor;
+             int hud_level_anchor2;
+ 
+-            hud_line = vline + sprite_h - ((LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : LINES);
++            hud_line = vline + sprite_h - ((MY_LINES > (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h))) ? (reflect ? (gfx_w * maze_w) : (gfx_h * maze_h)) : MY_LINES);
+             hud_level_anchor = reflect ? (r_off + maze_h * gfx_h) : (c_off + maze_w * gfx_w);
+             hud_level_anchor2 = hud_level_anchor + sprite_w * ((level > 7) ? 7 : level) - 1;
+             if (hud_level_anchor2 >= MY_COLS)
+@@ -6636,7 +6641,8 @@
+                             a = pen[a];
+                         }
+ #endif
+-                        my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
++                        my_move((vline + (reflect ? c_off : r_off)) / (use_bitmap ? 2 : 1),
++                                col * (use_fullwidth ? 2 : 1));
+                         my_addch((unsigned long) (unsigned char) c, a);
+                         continue;
+                     }
+@@ -6644,7 +6650,7 @@
+             }
+         }
+     }
+-    if (LINES >= ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
++    if (MY_LINES >= ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + sprite_h))
+     {
+         int life_anchor;
+         int level_anchor;
+@@ -6677,7 +6683,9 @@
+                 {
+                     int life_sprite;
+ 
+-                    my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
++                    my_move((line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))
++                            / (use_bitmap ? 2 : 1),
++                            col * (use_fullwidth ? 2 : 1));
+                     life_sprite = SPRITE_LIFE;
+                     if (! sprite_used[life_sprite])
+                     {
+@@ -6720,7 +6728,9 @@
+                     int level_sprite;
+                     int level_x;
+ 
+-                    my_move(line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)), col * (use_fullwidth ? 2 : 1));
++                    my_move((line + (reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))
++                            / (use_bitmap ? 2 : 1),
++                            col * (use_fullwidth ? 2 : 1));
+                     level_x = col - level_anchor;
+                     level_sprite = SPRITE_FRUIT + BONUS(level - (level_x / sprite_w));
+                     if (sprite_used[level_sprite] && ! myman_demo)
+@@ -6765,7 +6775,7 @@
+             }
+         }
+     }
+-    if (sprite_register_used[FRUIT] && (LINES > 6) && ! use_sound) {
++    if (sprite_register_used[FRUIT] && (MY_LINES > 6) && ! use_sound) {
+         static char msg[8][12] = {" <  <N>  > ",
+                                   "<  <ONU>  >",
+                                   "  <BONUS>  ",
+@@ -6775,7 +6785,8 @@
+                                   "  >BONUS<  ",
+                                   ">  >ONU<  <"};
+ 
+-        my_move(LINES - 1, 1 * (use_fullwidth ? 2 : 1));
++        my_move((MY_LINES - 1) / (use_bitmap ? 2 : 1),
++                1 * (use_fullwidth ? 2 : 1));
+         my_addstr(msg[(cycles / MYMANFIFTH) & 7], 0);
+     }
+     if ((! myman_demo)
+@@ -6784,13 +6795,13 @@
+         &&
+         (! myman_start)
+         &&
+-        ((LINES > 6) && (MY_COLS > 46))
++        ((MY_LINES > 6) && (MY_COLS > 46))
+         &&
+         (((reflect ? c_off : r_off) < tile_h)
+          ||
+-         ((LINES - ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))) < sprite_h))
++         ((MY_LINES - ((reflect ? c_off : r_off) + (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)))) < sprite_h))
+         &&
+-        ((LINES < (tile_h + sprite_h))
++        ((MY_LINES < (tile_h + sprite_h))
+          ||
+          ((reflect ? r_off : c_off) < (5 * tile_w))
+          ||
+@@ -6803,13 +6814,14 @@
+         sprintf(buf,
+                 " Level: %-10u Lives: %d Score: %-10u ",
+                 level, NET_LIVES, score);
+-        my_move(LINES - 1, (MY_COLS - 46) * (use_fullwidth ? 2 : 1));
++        my_move((MY_LINES - 1) / (use_bitmap ? 2 : 1),
++                (MY_COLS - 46) * (use_fullwidth ? 2 : 1));
+         my_addstr(buf, 0);
+     }
+     if (paused && ! (snapshot || snapshot_txt || pause_shown))
+     {
+         standout();
+-        mvprintw(LINES / 2, ((COLS - (int) strlen(PAUSE)) & ~(use_fullwidth ? 1 : 0)) / 2, PAUSE);
++        mvprintw(MY_LINES / 2, ((COLS - (int) strlen(PAUSE)) & ~(use_fullwidth ? 1 : 0)) / 2, PAUSE);
+         standend();
+     }
+     {
+@@ -7581,6 +7593,7 @@
+     const char *defvariant = MYMANVARIANT;
+     const char *defsize = MYMANSIZE;
+ 
++    use_bitmap = getenv("MYMAN_BITMAP") ? (*(getenv("MYMAN_BITMAP")) && strcmp(getenv("MYMAN_BITMAP"), "0")) : 0;
+ #ifndef MAIN_NO_ENVP
+     if (envp)
+     {

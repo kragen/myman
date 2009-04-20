@@ -55,12 +55,14 @@ cd ..
 
 %comspec% /c "obj\u2d < mygetopt\mygetopt.c > obj\crlf\mygetopt\mygetopt.c"
 %comspec% /c "obj\u2d < src\utils.c > obj\crlf\src\utils.c"
+%comspec% /c "obj\u2d < src\logic.c > obj\crlf\src\logic.c"
 %comspec% /c "obj\u2d < src\myman.c > obj\crlf\src\myman.c"
 %comspec% /c "obj\u2d < src\main.c > obj\crlf\src\main.c"
 
 cd obj\crlf
 
-%CC% -DCONIOCURSES=1 -Imygetopt -Iinc -n..\..\obj -e..\myman.exe mygetopt\mygetopt.c src\utils.c src\myman.c
+rem %CC% -DCONIOCURSES=1 -Imygetopt -Iinc -n..\..\obj -e..\myman.exe src\utils.c src\logic.c src\myman.c mygetopt\*.c
+%CC% -DMY_CURSES_H="coniocur.h" -Imygetopt -Iinc -n..\..\obj -e..\myman src\utils src\logic src\myman mygetopt\*.c
 
 if errorlevel 1 goto croaked
 set ret=0

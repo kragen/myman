@@ -1,5 +1,5 @@
 # Makefile - build script for the MyMan video game
-# Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+# Copyright 1997-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -3918,6 +3918,7 @@ spr/spr8h.asc \
 spr/spr8h.txt \
 spr/spr8hb.asc \
 spr/spr8hb.txt \
+src/logic.c \
 src/main.c \
 src/mycurses.c \
 src/myman.man \
@@ -4024,6 +4025,10 @@ endif
 
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
 UTILS = $(call mw,${src}inc/guess.h) $(call mw,${src}inc/utils.h) $(call mw,${src}src/utils.c)
+endif
+
+ifeq ($(subst default,undefined,$(origin LOGIC)),undefined)
+LOGIC = $(call mw,${src}inc/guess.h) $(call mw,${src}inc/utils.h) $(call mw,${src}src/logic.c)
 endif
 
 .PHONY: push-website
@@ -5019,7 +5024,7 @@ ${obj}${hostprefix}mygetopt$o: $(call mw,${src})${MYGETOPTDIR}/mygetopt.c $(call
 
 endif
 
-${obj}${MYMAN}$o: $(call mw,${src})src/main.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT $(call mw,${MAKEFILE}) config.h ${UTILS}
+${obj}${MYMAN}$o: $(call mw,${src})src/main.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT $(call mw,${MAKEFILE}) config.h ${UTILS} ${LOGIC}
 	@${MKPARENTDIR}
 	@${HOSTCOMPILE} ${WRAPPERDEFS} ${BUILTINDEFS}
 
@@ -5035,13 +5040,25 @@ ${obj}${hostprefix}utils$o: $(call mw,${src})src/utils.c config.h $(call mw,${sr
 
 endif
 
-${MYMAN}$x: $(foreach variant,${MYMANVARIANTS},$(call mw,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call mw,$(call tilefile,${size})) $(call mw,$(call spritefile,${size}))) $(call mw,${src})src/myman.c $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS}
+${obj}logic$O: $(call mw,${src})src/logic.c config.h $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${LOGIC}
+	@${MKPARENTDIR}
+	@${COMPILE} ${WRAPPERDEFS}
+
+ifneq (${obj}logic$O,${obj}${hostprefix}logic$o)
+
+${obj}${hostprefix}logic$o: $(call mw,${src})src/logic.c config.h $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${LOGIC}
+	@${MKPARENTDIR}
+	@${HOSTCOMPILE} ${WRAPPERDEFS}
+
+endif
+
+${MYMAN}$x: $(foreach variant,${MYMANVARIANTS},$(call mw,$(call mazefile,${variant}))) $(foreach size,${MYMANSIZES},$(call mw,$(call tilefile,${size})) $(call mw,$(call spritefile,${size}))) $(call mw,${src})src/myman.c $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} ${LOGIC}
 
 ifneq (,$(findstring pdcurses,${CURSES_FLAVOR}))
 ${MYMAN}$x: $(call mw,pdcicon.bmp)
 endif
 
-MYMAN_objs = $(foreach size,${MYMANSIZES},$(call mymansize_data,${size})$o) $(foreach variant,${MYMANVARIANTS},$(call mymanvariant_data,${variant})$o) ${obj}${hostprefix}game$o ${obj}${hostprefix}mygetopt$o ${obj}${hostprefix}utils$o
+MYMAN_objs = $(foreach size,${MYMANSIZES},$(call mymansize_data,${size})$o) $(foreach variant,${MYMANVARIANTS},$(call mymanvariant_data,${variant})$o) ${obj}${hostprefix}game$o ${obj}${hostprefix}mygetopt$o ${obj}${hostprefix}utils$o ${obj}${hostprefix}logic$o
 
 ifeq (yes,${with_win_icon})
 
@@ -5159,17 +5176,17 @@ ${MYMAN}.dvi: ${MYMAN}${man6ext}
 ${MYMAN}${htm}: ${MYMAN}${man6ext}
 	@-${MANTOHTML}
 
-${obj}${hostprefix}${GAME}$o: $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} ${UTILS}
+${obj}${hostprefix}${GAME}$o: $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} ${UTILS} ${LOGIC}
 
-${obj}${hostprefix}${GAME}$o: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} config.h
+${obj}${hostprefix}${GAME}$o: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} ${LOGIC} config.h
 	@${MKPARENTDIR}
 	@${HOSTCOMPILE} ${CURSOPTS} ${EXTRACURSOPTS} ${ICONVOPTS} ${EXTRAICONVOPTS} ${CURSESINCLUDE} $(call gamedefs,${MYMANVARIANT},${MYMANSIZE}) ${WRAPPERDEFS} ${DATADEFS}
 
-${GAME}$X: $(call mw,${obj}mygetopt$O) $(call mw,${obj}utils$O)
+${GAME}$X: $(call mw,${obj}mygetopt$O) $(call mw,${obj}utils$O) $(call mw,${obj}logic$O)
 
 ifneq (${GAME}$X,${hostprefix}${GAME}$x)
 
-${hostprefix}${GAME}$x: $(call mw,${obj}${hostprefix}mygetopt$O) $(call mw,${obj}${hostprefix}utils$O)
+${hostprefix}${GAME}$x: $(call mw,${obj}${hostprefix}mygetopt$O) $(call mw,${obj}${hostprefix}utils$O) $(call mw,${obj}${hostprefix}logic$O)
 
 endif
 
@@ -5181,11 +5198,11 @@ ${obj}s2s%$o: $(call mw,${obj}s2s)%.c
 	@${MKPARENTDIR}
 	@${HOSTCOMPILE} ${DATADEFS} $(call datafiledefs,${MYMANVARIANT},$(word $(call s,$(call xq,${obj}s2s)%$(call xq,$o),%,$@),${all_sizes}))
 
-${BOOTSTRAP}$X: $(call mw,${BOOTSTRAP}$O) $(call mw,${obj}mygetopt$O) $(call mw,${obj}utils$O)
+${BOOTSTRAP}$X: $(call mw,${BOOTSTRAP}$O) $(call mw,${obj}mygetopt$O) $(call mw,${obj}utils$O) $(call mw,${obj}logic$O)
 	@${MKPARENTDIR}
-	${LINK} ${BUILDCURSESLIBS} ${BUILDICONVLIBS} $(call q,${obj}mygetopt$O) $(call mw,${obj}utils$O) ${LIBS}
+	${LINK} ${BUILDCURSESLIBS} ${BUILDICONVLIBS} $(call q,${obj}mygetopt$O) $(call mw,${obj}utils$O) $(call mw,${obj}logic$O) ${LIBS}
 
-${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} config.h
+${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} ${LOGIC} config.h
 	@${MKPARENTDIR}
 	@${COMPILE} ${BUILDCURSOPTS} ${EXTRABUILDCURSOPTS} ${BUILDICONVOPTS} ${BUILDCURSESINCLUDE} ${EXTRABUILDICONVOPTS} $(call gamedefs,${MYMANVARIANT},${MYMANSIZE}) ${WRAPPERDEFS}
 

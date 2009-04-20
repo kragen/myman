@@ -362,7 +362,7 @@ if {{buildMode}} != 0
     set MYMANCOPYRIGHT "``catenate "{{src}}"COPYRIGHT | :u2m``" &&
 
     # convert source and include file type codes to 'TEXT'
-    setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:guess.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h
+    setfile -t TEXT "{{src}}"inc:maccurs.h "{{src}}"inc:guess.h "{{src}}"inc:utils.h "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"src:logic.c "{{src}}"mygetopt:getopt.h "{{src}}"mygetopt:mygetopt.c "{{src}}"mygetopt:mygetopt.h "{{src}}"inc:optcurs.h
 
 end &&
 
@@ -494,6 +494,7 @@ for size in {all_sizes}
 
             delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
             delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
+            delete -i "{{obj}}"logic.c.o "{{obj}}"logic.c.x &&
             delete -i "{{obj}}"mygetopt.c.o "{{obj}}"mygetopt.c.x &&
             delete -i "{{obj}}{{hostsize}}".r &&
             delete -i "{{hostsize}}".NJ "{{hostsize}}".SYM "{{hostsize}}".xcoff "{{hostsize}}".68k.NJ "{{hostsize}}".68k.SYM "{{hostsize}}".ppc.xcoff "{{hostsize}}".68k "{{hostsize}}".ppc &&
@@ -598,7 +599,7 @@ for size in {all_sizes}
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
                 end &&
-                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"mygetopt:mygetopt.c "{{obj}}{{hostsize}}".r {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
+                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"src:logic.c "{{src}}"mygetopt:mygetopt.c "{{obj}}{{hostsize}}".r {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
 
                 # HACK: tweak CFM-68K builds to use the pure 32-bit model
                 if ":{{host}}" == ":cfm" or ":{{host}}" == ":cfm-68k"
@@ -611,6 +612,7 @@ for size in {all_sizes}
             if {{cleanMode}} != 0
                 delete -i "{{obj}}"myman.c.o "{{obj}}"myman.c.x &&
                 delete -i "{{obj}}"utils.c.o "{{obj}}"utils.c.x &&
+                delete -i "{{obj}}"logic.c.o "{{obj}}"logic.c.x &&
                 delete -i "{{obj}}"mygetopt.c.o "{{obj}}"mygetopt.c.x &&
                 delete -i "{{obj}}{{hostsize}}".r &&
                 delete -i "{{hostsize}}".NJ "{{hostsize}}".SYM "{{hostsize}}".xcoff "{{hostsize}}".68k.NJ "{{hostsize}}".68k.SYM "{{hostsize}}".ppc.xcoff "{{hostsize}}".68k "{{hostsize}}".ppc &&

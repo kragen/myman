@@ -79,7 +79,7 @@ try again.
          run myman.c directly using the Linux kernel's binfmt_c module and TinyCC;
          a simple TinyCC build-and-run may be achieved on Win32 with:
              tcc -DRAWCURSES -Iinc -Imygetopt \
-                 src/utils.c mygetopt/mygetopt.c \
+                 src/utils.c src/logic.c mygetopt/mygetopt.c \
                  -luser32 -ladvapi32 \
                  -run src/myman.c
   (c) a curses library, e.g. ncurses, old BSD curses, old VMS curses,
