@@ -3710,7 +3710,7 @@ static int maccurses_start_color(void)
 #define insch(ch) maccurses_insch(ch)
 
 #undef delch
-#define delch(ch) maccurses_delch(ch)
+#define delch() maccurses_delch()
 
 #undef move
 #define move(y,x) maccurses_move(y,x)
