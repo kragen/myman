@@ -503,14 +503,27 @@ for size in {all_sizes}
                 # C compiler flags, all architectures
                 set CFLAGS "-x -noMapCR -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
 
+                # Linker flags, all architectures
+                set LDFLAGS "" &&
+
                 # Extra flags for the 68k C compiler
                 set 68KCFLAGS "" &&
                 if {{debugMode}} != 0
+                    # -frames: Generate frame pointers in debug mode
                     set 68KCFLAGS "-frames"
                 end &&
+                set 68KCFLAGS "{{68KCFLAGS}}" &&
+
+                # Extra flags for the 68k linker
+
+                # -br on: Generate branch islands
+                set 68KLDFLAGS "-br on" &&
 
                 # Extra flags for the PowerPC C compiler
                 set PPCCFLAGS "" &&
+
+                # Extra flags for the PowerPC linker
+                set PPCLDFLAGS "" &&
 
                 # shared libraries for the non-Carbon builds
                 set LIBS "" &&
@@ -599,7 +612,7 @@ for size in {all_sizes}
                     echo "#host {{host}} not defined" > dev:stderr
                     exit 2
                 end &&
-                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"src:logic.c "{{src}}"mygetopt:mygetopt.c "{{obj}}{{hostsize}}".r {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -objdir "{{obj}}" &&
+                createmake "{{hostsize}}" -I "{{src}}"inc: -I "{{src}}"mygetopt: "{{src}}"src:myman.c "{{src}}"src:utils.c "{{src}}"src:logic.c "{{src}}"mygetopt:mygetopt.c "{{obj}}{{hostsize}}".r {HOSTFLAGS} -COptions "{{CFLAGS}} {{68KCFLAGS}}" -ppcCOptions "{{CFLAGS}} {{PPCCFLAGS}}" -LinkOptions "{{LDFLAGS}} {{68KLDFLAGS}}" -ppcLinkOptions "{{LDFLAGS}} {{PPCLDFLAGS}}" -objdir "{{obj}}" &&
 
                 # HACK: tweak CFM-68K builds to use the pure 32-bit model
                 if ":{{host}}" == ":cfm" or ":{{host}}" == ":cfm-68k"
