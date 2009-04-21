@@ -516,8 +516,8 @@ for size in {all_sizes}
 
                 # Extra flags for the 68k linker
 
-                # -br on: Generate branch islands
-                set 68KLDFLAGS "-br on" &&
+                # -br 68k: Generate branch islands (MC68000-compatible)
+                set 68KLDFLAGS "-br 68k" &&
 
                 # Extra flags for the PowerPC C compiler
                 set PPCCFLAGS "" &&
