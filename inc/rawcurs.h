@@ -562,7 +562,7 @@ int rawcurses_isatty(int fd)
 
 /* originally from http://wyw.dcweb.cn/sleep.h.txt by Wu Yongwei */
 
-#define usleep(t) Sleep((t) / 1000)
+#define usleep(t) (Sleep((t) / 1000), 0)
 
 #else /* ! defined(WIN32) */
 
