@@ -1,6 +1,6 @@
 #!/bin/sh --
 # configure - configuration script for the MyMan text-terminal video game
-# Copyright 2003, 2006-2007, Benjamin Sittler <bsittler@gmail.com>
+# Copyright 2003, 2006-2007, 2009, Benjamin Sittler <bsittler@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person
 # obtaining a copy of this software and associated documentation
@@ -414,6 +414,7 @@ do
           echoline "--with-fltk2       "use FLTK 2 \(requires CC\=g\+\+ or similar\)
           echoline "--with-fltk        "use FLTK \(requires CC\=g\+\+ or similar\)
           echoline "--with-conio       "use Borland-style CONIO
+          echoline "--with-graph       "use Open Watcom-style graph.h
           echoline "--with-disp        "use \<disp.h\> \(Digital Mars/Symantec/Zortech C/C\+\+\)
           echoline
           echoline Report bugs to \<bsittler@gmail.com\>.
