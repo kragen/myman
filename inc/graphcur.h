@@ -23,6 +23,11 @@
  *  DEALINGS IN THE SOFTWARE.
  */
 
+/* To build a 16-bit DOS executable I used these compiler flags:
+ *
+ * CC='owcc -bDOS -zm -mtune=i086 -O3 -mcmodel=h -DGRAPHCURSES'
+ */
+
 /* work-arounds for Open Watcom-style graph.h */
 #ifdef GRAPHCURSES_GRAPH_H
 #include GRAPHCURSES_GRAPH_H
