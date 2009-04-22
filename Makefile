@@ -2336,6 +2336,16 @@ endif
 CURSOPTS += -DCONIOCURSES ${DISPCFLAGS}
 
 else
+ifeq (yes,${with_graph})
+
+ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
+CURSES_FLAVOR = graph
+endif
+
+# Open Watcom-style graph.h
+CURSOPTS += -DGRAPHCURSES ${DISPCFLAGS}
+
+else
 ifeq (yes,${with_newt})
 
 ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
@@ -2630,6 +2640,7 @@ LIBTERMCAP =
 endif
 CURSESLIBS += $(LIBCURSES) $(LIBTERMCAP)
 
+endif
 endif
 endif
 endif
@@ -3323,6 +3334,7 @@ inc/aacurses.h \
 inc/allegcur.h \
 inc/cacacurs.h \
 inc/coniocur.h \
+inc/graphcur.h \
 inc/dispcurs.h \
 inc/fltkcurs.h \
 inc/ggicurs.h \
@@ -4020,7 +4032,7 @@ ${dist_program_files} \
 ${dist_data_files}
 
 ifeq ($(subst default,undefined,$(origin DRIVERS)),undefined)
-DRIVERS = $(call mw,${src}inc/sdlcurs.h) $(call mw,${src}inc/ggicurs.h) $(call mw,${src}inc/twcurses.h) $(call mw,${src}inc/aacurses.h) $(call mw,${src}inc/allegcur.h) $(call mw,${src}inc/cacacurs.h) $(call mw,${src}inc/rawcurs.h) $(call mw,${src}inc/maccurs.h) $(call mw,${src}inc/newtcurs.h) $(call mw,${src}inc/dispcurs.h) $(call mw,${src}inc/coniocur.h) $(call mw,${src}inc/fltkcurs.h) $(call mw,${src}inc/gtkcurs.h) $(call mw,${src}inc/optcurs.h)
+DRIVERS = $(call mw,${src}inc/sdlcurs.h) $(call mw,${src}inc/ggicurs.h) $(call mw,${src}inc/twcurses.h) $(call mw,${src}inc/aacurses.h) $(call mw,${src}inc/allegcur.h) $(call mw,${src}inc/cacacurs.h) $(call mw,${src}inc/rawcurs.h) $(call mw,${src}inc/maccurs.h) $(call mw,${src}inc/newtcurs.h) $(call mw,${src}inc/dispcurs.h) $(call mw,${src}inc/coniocur.h) $(call mw,${src}inc/graphcur.h) $(call mw,${src}inc/fltkcurs.h) $(call mw,${src}inc/gtkcurs.h) $(call mw,${src}inc/optcurs.h)
 endif
 
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
