@@ -264,6 +264,8 @@ typedef int graphcur_wchar_t;
 
 static int graphcurses_ready = 0;
 static int graphcurses_color = 0;
+static long graphcurses_orig_fg = 7;
+static long graphcurses_orig_bk = _BLACK;
 
 typedef unsigned long int graphcurses_chtype;
 
@@ -475,6 +477,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     int i;
     short a,b,c,d;
 
+    graphcurses_orig_fg = _gettextcolor();
+    graphcurses_orig_bk = _getbkcolor();
     graphcurses_color = 1;
     graphcurses_w = 80;
     graphcurses_h = 25;
@@ -485,14 +489,14 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         graphcurses_pairs[i].fg = i ? (i % COLORS) : COLOR_WHITE;
         graphcurses_pairs[i].bg = i / COLORS;
     }
-    _clearscreen(_GCLEARSCREEN);
     attrset(0);
 }
 
 static void endwin(void)
 {
     graphcurses_ready = 0;
-    _settextcolor((COLOR_WHITE) | ((COLOR_BLACK) << 4));
+    _settextcolor(graphcurses_orig_fg);
+    _setbkcolor(graphcurses_orig_bk);
     _displaycursor(_GCURSORON);
     _clearscreen(_GCLEARSCREEN);
 }
@@ -503,8 +507,17 @@ static int graphcurses_addch(graphcurses_chtype ch);
 
 static int erase(void)
 {
+    int fg;
+    long bk;
+
     if (! graphcurses_ready) return ERR;
+    fg = _gettextcolor();
+    bk = _getbkcolor();
+    _settextcolor(COLOR_WHITE);
+    _setbkcolor(_BLACK);
     _clearscreen(_GCLEARSCREEN);
+    _settextcolor(fg);
+    _setbkcolor(bk);
     _settextposition(1, 1);
     attrset(0);
     move(0, 0);
@@ -732,7 +745,24 @@ static int graphcurses_addch(graphcurses_chtype ch)
         graphcurses_y = graphcurses_h - 1;
     }
     _settextposition(graphcurses_y + 1, graphcurses_x + 1);
-    _settextcolor((fg) | ((bg) << 4));
+    _settextcolor(fg);
+    _setbkcolor((bg == COLOR_BLACK) ? _BLACK
+                : (bg == COLOR_BLUE) ? _BLUE
+                : (bg == COLOR_GREEN) ? _GREEN
+                : (bg == COLOR_CYAN) ? _CYAN
+                : (bg == COLOR_RED) ? _RED
+                : (bg == COLOR_MAGENTA) ? _MAGENTA
+                : (bg == COLOR_YELLOW) ? _BROWN
+                : (bg == COLOR_WHITE) ? _WHITE
+                : (bg == (PEN_BRIGHT | COLOR_BLACK)) ? _GRAY
+                : (bg == (PEN_BRIGHT | COLOR_BLUE)) ? _LIGHTBLUE
+                : (bg == (PEN_BRIGHT | COLOR_GREEN)) ? _LIGHTGREEN
+                : (bg == (PEN_BRIGHT | COLOR_CYAN)) ? _LIGHTCYAN
+                : (bg == (PEN_BRIGHT | COLOR_RED)) ? _LIGHTRED
+                : (bg == (PEN_BRIGHT | COLOR_MAGENTA)) ? _LIGHTMAGENTA
+                : (bg == (PEN_BRIGHT | COLOR_YELLOW)) ? _YELLOW
+                : (bg == (PEN_BRIGHT | COLOR_WHITE)) ? _BRIGHTWHITE
+                : _BLACK);
     if (((graphcurses_y + 1) < graphcurses_h)
         ||
         ((graphcurses_x + 1) < graphcurses_w))
