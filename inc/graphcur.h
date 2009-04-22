@@ -146,7 +146,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 /* originally from http://wyw.dcweb.cn/sleep.h.txt by Wu Yongwei */
 
-#define usleep(t) Sleep((t) / 1000)
+#define usleep(t) (Sleep((t) / 1000), 0)
 
 #else /* ! defined(WIN32) */
 
@@ -473,23 +473,11 @@ static int init_pair(short i, short fg, short bg);
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
     int i;
-    struct videoconfig vc;
+    short a,b,c,d;
 
     graphcurses_color = 1;
     graphcurses_w = 80;
     graphcurses_h = 25;
-    graphcurses_color = 1;
-    memset((void *) &vc, 0, sizeof(vc));
-    if (_getvideoconfig(&vc)
-        &&
-        vc.numtextcols
-        &&
-        vc.numtextrows)
-    {
-        graphcurses_w = vc.numtextcols;
-        graphcurses_h = vc.numtextrows;
-        graphcurses_color = vc.numcolors > 2;
-    }
     graphcurses_ready = 1;
     graphcurses_attr = -1;
     for (i = 0; i < COLOR_PAIRS; i ++)
@@ -497,6 +485,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         graphcurses_pairs[i].fg = i ? (i % COLORS) : COLOR_WHITE;
         graphcurses_pairs[i].bg = i / COLORS;
     }
+    _clearscreen(_GCLEARSCREEN);
     attrset(0);
 }
 
@@ -524,42 +513,14 @@ static int erase(void)
 
 static int resizeterm(int y, int x)
 {
-    struct videoconfig vc;
-
     if (! graphcurses_ready) return ERR;
-    memset((void *) &vc, 0, sizeof(vc));
-    if (_getvideoconfig(&vc)
-        &&
-        vc.numtextcols
-        &&
-        vc.numtextrows)
-    {
-        graphcurses_w = vc.numtextcols;
-        graphcurses_h = vc.numtextrows;
-    }
     return OK;
 }
 
 static int graphcurses_getch(void) {
-    struct videoconfig vc;
     int ret = ERR;
-    int i, j;
 
     if (! graphcurses_ready) return (graphcurses_chtype) ERR;
-    memset((void *) &vc, 0, sizeof(vc));
-    if (_getvideoconfig(&vc)
-        &&
-        vc.numtextcols
-        &&
-        vc.numtextrows)
-    {
-        i = vc.numtextcols;
-        j = vc.numtextrows;
-    }
-    if ((i != graphcurses_w) || (j != graphcurses_h))
-    {
-        return KEY_RESIZE;
-    }
     if (kbhit())
     {
         ret = getch();
