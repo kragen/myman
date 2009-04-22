@@ -202,6 +202,8 @@ mqw()
                 s/@/${char_commercial_at}/g;
                 s/'\\"${char_newline}"'/${char_newline}/g;
                 s/\\/${char_reverse_solidus}/g;
+                s/\([^ }]\)[$][{]char_space[}]\([^$ ]\)/\1 \2/g;
+                s/\([^ }]\)[$][{]char_space[}]\([^$ ]\)/\1 \2/g;
                 p;
             }
         '
