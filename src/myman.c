@@ -222,6 +222,13 @@
 #endif
 
 #ifndef MY_CURSES_H
+#ifdef GRAPHCURSES
+#include "graphcur.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
 #ifdef RAWCURSES
 #include "rawcurs.h"
 #define MY_CURSES_H "optcurs.h"
