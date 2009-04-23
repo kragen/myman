@@ -269,7 +269,7 @@ typedef int graphcur_wchar_t;
 
 static int graphcurses_ready = 0;
 static int graphcurses_color = 0;
-static long graphcurses_orig_fg = 7;
+static short graphcurses_orig_fg = 7;
 static long graphcurses_orig_bk = _BLACK;
 
 typedef unsigned long int graphcurses_chtype;
@@ -480,13 +480,40 @@ static int init_pair(short i, short fg, short bg);
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
     int i;
-    short a,b,c,d;
+    struct videoconfig vc;
 
+    if (getenv("GRAPHCURSES_MODE")
+        &&
+        *getenv("GRAPHCURSES_MODE"))
+    {
+        _setvideomode(atoi(getenv("GRAPHCURSES_MODE")));
+    }
     graphcurses_orig_fg = _gettextcolor();
     graphcurses_orig_bk = _getbkcolor();
     graphcurses_color = 1;
     graphcurses_w = 80;
     graphcurses_h = 25;
+    if (_getvideoconfig(&vc))
+    {
+        if (vc.numtextcols > 0) graphcurses_w = vc.numtextcols;
+        if (vc.numtextrows > 0) graphcurses_h = vc.numtextrows;
+        if (vc.numcolors > 0) graphcurses_color = (vc.numcolors >= 8);
+        if ((vc.adapter == _MDPA)
+            || (vc.adapter == _HERCMONO)
+            || (vc.monitor == _MONO)
+            || (vc.monitor == _ANALOGMONO)
+            || (vc.mode == _TEXTBW40)
+            || (vc.mode == _TEXTBW80)
+            || (vc.mode == _MRESNOCOLOR)
+            || (vc.mode == _HRESBW)
+            || (vc.mode == _TEXTMONO)
+            || (vc.mode == _HERCMONO)
+            || (vc.mode == _ERESNOCOLOR)
+            || (vc.mode == _VRES2COLOR))
+        {
+            graphcurses_color = 0;
+        }
+    }
     graphcurses_ready = 1;
     graphcurses_attr = -1;
     for (i = 0; i < COLOR_PAIRS; i ++)
@@ -500,6 +527,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 static void endwin(void)
 {
     graphcurses_ready = 0;
+    _setvideomode(_DEFAULTMODE);
     _settextcolor(graphcurses_orig_fg);
     _setbkcolor(graphcurses_orig_bk);
     _displaycursor(_GCURSORON);
@@ -512,7 +540,7 @@ static int graphcurses_addch(graphcurses_chtype ch);
 
 static int erase(void)
 {
-    int fg;
+    short fg;
     long bk;
 
     if (! graphcurses_ready) return ERR;
