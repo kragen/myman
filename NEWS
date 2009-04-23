@@ -9,7 +9,10 @@ notice and this notice are preserved.
 myman 0.7.1
 
 Added preliminary drivers for "newt" (--with-newt) and GTK+
-(--with-gtk/--with-gtk2); added THANKS and AUTHORS files.
+(--with-gtk/--with-gtk2); added THANKS and AUTHORS files.  Added a
+driver for Borland-style CONIO (--with-conio), a driver for Digital
+Mars-style <disp.h> (--with-disp), and a driver for Open Watcom-style
+graph.h (--with-graph).
 
 Classic BSD curses now works, thanks to a the FIONREAD ioctl. Just
 configure --with-bsdcurses. MyMan has been ported to OpenVMS, thanks
