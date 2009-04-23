@@ -514,6 +514,22 @@ the underlying display libraries:
                                             Nonzero value forces use of
                                             Braille pseudo-bitmap characters
                                             on a Unicode display
+ Open Watcom-style graph.h
+                        GRAPHCURSES_MODE    Display mode number
+                        OPTCURSES_DIRECT    Nonzero value disables redraw
+                                            optimization layer
+                        OPTCURSES_INTERLACE Nonzero value renders by
+                                            interleaving half-screens
+                        OPTCURSES_BITMAP    Nonzero value causes use of
+                                            pseudo-bitmap characters
+                        OPTCURSES_BITMAP_FORCE
+                                            Nonzero value allows use of
+                                            inverse video when using
+                                            ASCII pseudo-bitmap characters
+                        OPTCURSES_BITMAP_BRAILLE
+                                            Nonzero value forces use of
+                                            Braille pseudo-bitmap characters
+                                            on a Unicode display
  <disp.h>               DISPCURSES_USEBIOS  Nonzero value forces use of
                                             BIOS routines for display I/O
                                             (DOS)
