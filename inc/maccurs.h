@@ -3478,7 +3478,9 @@ static int maccurses_addch(maccurses_chtype ch)
         {
             DrawString(si);
         }
+#ifdef UNICODE
       done:
+#endif /* defined(UNICODE) */
         if (maccurses_world && maccurses_pixmap)
         {
             SetGWorld(oldPort, oldDevice);
