@@ -1185,8 +1185,7 @@ endif
 ifeq ($(subst default,undefined,$(origin set_mac_icon)),undefined)
 set_mac_icon = set_mac_icon() { \
         test -r $(call q,$1) && \
-            ${ECHOLINE} $(call q,read 'icns' ${char_left_parenthesis}-16455${char_right_parenthesis} "$(call cq,$1)";) | \
-            ${REZ} -o "$$1" && \
+            eval $(call q,${REZ} -o "$$1" <<.${char_newline}read 'icns' ${char_left_parenthesis}-16455${char_right_parenthesis} "$(call cq,$1)";${char_newline}.${char_newline}) && \
             ${SETFILE} -a C "$$1" && \
             ( ${PROD_FINDER} "$$1" ); }; set_mac_icon
 endif
