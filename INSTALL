@@ -162,6 +162,8 @@ GTK/GTK+       http://www.gtk.org/
 CONIO          http://conio.sourceforge.net/
 FLTK           http://www.fltk.org/
 "TurboC CONIO" http://www.sandroid.org/TurboC/
+graph.h        http://www.openwatcom.org/
+newt           https://fedorahosted.org/newt/
 
 For optional extras:
 
