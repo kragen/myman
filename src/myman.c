@@ -4851,7 +4851,7 @@ pager_addstr(const char *s, chtype a)
 void
 my_usleep(long usecs)
 {
-    return usleep(usecs);
+    usleep(usecs);
 }
 
 double
