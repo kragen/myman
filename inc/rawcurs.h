@@ -162,6 +162,10 @@
 #include <ioctl.h>
 #endif
 
+#if defined(WIN16)
+#include <windows.h>
+#endif
+
 #if defined(WIN32)
 
 #include <windows.h>
@@ -373,7 +377,7 @@
 #endif
 
 #ifndef USE_TERMIOS
-#ifdef macintosh
+#if defined(macintosh) || defined(WIN16)
 #define USE_TERMIOS 0
 #else
 #define USE_TERMIOS 1
@@ -396,7 +400,7 @@
 #endif
 
 #ifndef HAVE_STRUCT_TIMEVAL
-#ifdef macintosh
+#if defined(macintosh) || defined(WIN16)
 #define HAVE_STRUCT_TIMEVAL 0
 #else
 #define HAVE_STRUCT_TIMEVAL 1
@@ -422,11 +426,11 @@ struct timeval
 #endif
 
 #ifndef HAVE_GETTIMEOFDAY
-#ifdef macintosh
+#if defined(macintosh) || defined(WIN16)
 #define HAVE_GETTIMEOFDAY 0
-#else /* ! defined(macintosh) */
+#else /* ! (defined(macintosh) || defined(WIN16)) */
 #define HAVE_GETTIMEOFDAY 1
-#endif /* ! defined(macintosh) */
+#endif /* ! (defined(macintosh) || defined(WIN16)) */
 #endif /* ! defined(HAVE_GETTIMEOFDAY) */
 
 #if ! HAVE_GETTIMEOFDAY
@@ -439,7 +443,9 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
     if (tv)
     {
-#if defined(WIN32)
+#if defined(WIN32) || defined(WIN16)
+
+#ifdef WIN32
 
 /* originally from http://curl.haxx.se/mail/lib-2005-01/0089.html by Gisle Vanem */
         union {
@@ -451,6 +457,17 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
         tv->tv_sec = (long) ((now.ns100 - LIT64(116444736000000000)) / LIT64(10000000));
 
 #else /* ! defined(WIN32) */
+
+        /* horrible hack for win16 */
+        DWORD tickCount;
+
+        tickCount = GetTickCount();
+        tv->tv_sec = tickCount / 1000;
+        tv->tv_usec = (tickCount % 1000) * 1000;
+
+#endif /* ! defined(WIN32) */
+
+#else /* ! (defined(WIN32) || defined(WIN16)) */
 
 #if defined(__MSDOS__)
 
@@ -491,7 +508,7 @@ static int rawcurses_gettimeofday(struct timeval *tv, void *tz)
 
 #endif /* ! defined(__MSDOS__) */
 
-#endif /* ! defined(WIN32) */
+#endif /* ! (defined(WIN32) || defined(WIN16)) */
 
     }
     return 0;
@@ -547,7 +564,7 @@ int rawcurses_isatty(int fd)
 #endif
 
 #ifndef HAVE_USLEEP
-#ifdef macintosh
+#if defined(macintosh) || defined(WIN16)
 #define HAVE_USLEEP 0
 #else
 #define HAVE_USLEEP 1

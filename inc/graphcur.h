@@ -52,6 +52,10 @@
 #define HAVE_USLEEP 0
 #endif
 
+#endif /* defined(WIN32) */
+
+#if HAVE_WINSOCK_H
+#include <winsock.h>
 #endif
 
 #if defined(__MSDOS__)
@@ -145,7 +149,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 #if ! HAVE_USLEEP
 
-#if defined(WIN32)
+#if defined(WIN32) || defined(WIN16)
 
 #undef usleep
 
@@ -153,7 +157,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 #define usleep(t) (Sleep((t) / 1000), 0)
 
-#else /* ! defined(WIN32) */
+#else /* ! (defined(WIN32) || defined(WIN16)) */
 
 #undef usleep
 #define usleep graphcurses_usleep
@@ -191,7 +195,7 @@ static int usleep(unsigned long usecs)
     return 0;
 }
 
-#endif /* ! defined(WIN32) */
+#endif /* ! (defined(WIN32) || defined(WIN16)) */
 
 #endif
 

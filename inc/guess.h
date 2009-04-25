@@ -29,14 +29,45 @@
 #if ! defined(WIN32)
 #ifdef _WIN32
 #define WIN32 _WIN32
-#else
+#endif
+#endif
+
+#if ! defined(WIN32)
+#ifdef _WIN32_
+#define WIN32 _WIN32_
+#endif
+#endif
+
+#if ! defined(WIN32)
+#ifdef _WIN32_
+#define WIN32 _WIN32_
+#endif
+#endif
+
+#if ! defined(WIN32)
 #ifdef __WIN32__
 #define WIN32 __WIN32__
+#endif
+#endif
+
+/* We use WIN16 as a marker for 16-bit windows */
+#ifndef WIN32
+#ifndef WIN16
+#ifdef __WINDOWS__
+#define WIN16 __WINDOWS__
+#else
+#ifdef _WINDOWS_
+#define WIN16 _WINDOWS_
+#ifdef WINDOWS
+#define WIN16 WINDOWS
+#endif
+#endif
 #endif
 #endif
 #endif
 
 #if ! defined(WIN32)
+#ifndef WIN16
 #if defined(DOS) || defined(__TURBOC__)
 
 /* some DOS C compilers do not define __MSDOS__ */
@@ -44,8 +75,21 @@
 #define __MSDOS__ 1
 #endif
 
+#endif /* defined(DOS) || defined(__TURBOC__) */
+#endif /* ! defined(WIN16) */
+#endif /* ! defined(WIN32) */
+
+/* Do we have <winsock.h>? */
+#ifndef HAVE_WINSOCK_H
+#if defined(WIN16) || defined(WIN32)
+#define HAVE_WINSOCK_H 1
 #endif
 #endif
+
+#ifndef HAVE_WINSOCK_H
+#define HAVE_WINSOCK_H 0
+#endif
+
 
 /* HAVE_FCNTL_H: do we have <fcntl.h>? */
 
