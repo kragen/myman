@@ -501,7 +501,7 @@ extern int gfx_reflect;
 #define IS_FULLY_NON_INVERTED(x,y) (((unsigned) inside_wall[(maze_level*maze_h+(y)) * (maze_w + 1)+(x)]) & INSIDE_WALL_FULLY_NON_INVERTED)
 
 extern double doubletime(void);
-extern int my_usleep(long usecs);
+extern void my_usleep(long usecs);
 
 extern void gameintro(void);
 extern void gamedemo(void);
