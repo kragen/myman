@@ -198,7 +198,7 @@ AFROS          http://aranym.org/afros.html
 EmuTOS         http://emutos.sourceforge.net/
 ARAnyM         http://aranym.org/
 Hatari         http://hatari.sourceforge.net/
-PML (i.e. -lm) http://vincent.riviere.free.fr/soft/m68k-atari-mint/
+PML (-lm)      http://vincent.riviere.free.fr/soft/m68k-atari-mint/
 
 For AROS hosting:
 
