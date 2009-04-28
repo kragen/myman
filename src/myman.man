@@ -27,6 +27,7 @@
 [\-d
 .I num
 ]
+.RI [\-D " name" [= value "] ... ]"
 [\-g
 .I num
 ]
@@ -399,6 +400,9 @@ use bullet for power pellets and `.' for dots
 delay
 .I num
 microseconds/refresh
+.TP
+.BI \-D " name" \fR[\fP= "value" \fR]\fP
+define environment variable (default value is 1 if omitted)
 .TP
 .BI \-g " num"
 play against

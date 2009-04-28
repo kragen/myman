@@ -1225,15 +1225,15 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     int fg, bg, depth, maxw, maxh;
 
     allegrocurses_title = title;
-    allegrocurses_bitmap = getenv("ALLEGROCURSES_BITMAP");
+    allegrocurses_bitmap = myman_getenv("ALLEGROCURSES_BITMAP");
     if (allegrocurses_bitmap && ! *allegrocurses_bitmap) allegrocurses_bitmap = NULL;
-    allegrocurses_swaprb = getenv("ALLEGROCURSES_SWAPRB");
+    allegrocurses_swaprb = myman_getenv("ALLEGROCURSES_SWAPRB");
     if (allegrocurses_swaprb && ! *allegrocurses_swaprb) allegrocurses_swaprb = NULL;
-    allegrocurses_fixedpal = getenv("ALLEGROCURSES_FIXEDPAL");
+    allegrocurses_fixedpal = myman_getenv("ALLEGROCURSES_FIXEDPAL");
     if (allegrocurses_fixedpal && ! *allegrocurses_fixedpal) allegrocurses_fixedpal = NULL;
-    allegrocurses_bitmap_double = getenv("ALLEGROCURSES_BITMAP_DOUBLE");
+    allegrocurses_bitmap_double = myman_getenv("ALLEGROCURSES_BITMAP_DOUBLE");
     if (allegrocurses_bitmap_double && ! *allegrocurses_bitmap_double) allegrocurses_bitmap_double = NULL;
-    allegrocurses_bitmap_doubleheight = getenv("ALLEGROCURSES_BITMAP_DOUBLEHEIGHT");
+    allegrocurses_bitmap_doubleheight = myman_getenv("ALLEGROCURSES_BITMAP_DOUBLEHEIGHT");
     if (allegrocurses_bitmap_doubleheight && ! *allegrocurses_bitmap_doubleheight) allegrocurses_bitmap_doubleheight = NULL;
     if (! allegrocurses_init_done)
     {
@@ -1252,21 +1252,21 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         set_color_depth(depth);
     }
     allegrocurses_font = font;
-    if (getenv("ALLEGROCURSES_TXT_FONT") && *(getenv("ALLEGROCURSES_TXT_FONT")))
+    if (myman_getenv("ALLEGROCURSES_TXT_FONT") && *(myman_getenv("ALLEGROCURSES_TXT_FONT")))
     {
-        allegrocurses_font = load_txt_font(getenv("ALLEGROCURSES_TXT_FONT"), NULL, NULL);
+        allegrocurses_font = load_txt_font(myman_getenv("ALLEGROCURSES_TXT_FONT"), NULL, NULL);
         if (! allegrocurses_font)
         {
-            allegro_message("%s: load_txt_font failed: %s\n", getenv("ALLEGROCURSES_TXT_FONT"), allegro_error);
+            allegro_message("%s: load_txt_font failed: %s\n", myman_getenv("ALLEGROCURSES_TXT_FONT"), allegro_error);
             exit(1);
         }
     }
-    else if (getenv("ALLEGROCURSES_FONT") && *(getenv("ALLEGROCURSES_FONT")))
+    else if (myman_getenv("ALLEGROCURSES_FONT") && *(myman_getenv("ALLEGROCURSES_FONT")))
     {
-        allegrocurses_font = load_font(getenv("ALLEGROCURSES_FONT"), NULL, NULL);
+        allegrocurses_font = load_font(myman_getenv("ALLEGROCURSES_FONT"), NULL, NULL);
         if (! allegrocurses_font)
         {
-            allegro_message("%s: load_font failed: %s\n", getenv("ALLEGROCURSES_FONT"), allegro_error);
+            allegro_message("%s: load_font failed: %s\n", myman_getenv("ALLEGROCURSES_FONT"), allegro_error);
             exit(1);
         }
     }

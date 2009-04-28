@@ -4472,7 +4472,7 @@ static const char *rawcurses_getenv_boolean(const char *var)
 {
     const char *val;
 
-    val = getenv(var);
+    val = myman_getenv(var);
     if (val)
     {
         if (! strcmp(val, "0")) val = "";
@@ -4491,14 +4491,14 @@ static const char *rawcurses_term_type(void)
     const char *termProgramVersion;
     const char *xEnvironment;
 
-    termType = getenv("TERM");
-    x11display = getenv("DISPLAY");
-    colorTermType = getenv("COLORTERM");
-    mlterm = getenv("MLTERM");
-    konsoleDcop = getenv("KONSOLE_DCOP");
-    termProgram = getenv("TERM_PROGRAM");
-    termProgramVersion = getenv("TERM_PROGRAM_VERSION");
-    xEnvironment = getenv("XENVIRONMENT");
+    termType = myman_getenv("TERM");
+    x11display = myman_getenv("DISPLAY");
+    colorTermType = myman_getenv("COLORTERM");
+    mlterm = myman_getenv("MLTERM");
+    konsoleDcop = myman_getenv("KONSOLE_DCOP");
+    termProgram = myman_getenv("TERM_PROGRAM");
+    termProgramVersion = myman_getenv("TERM_PROGRAM_VERSION");
+    xEnvironment = myman_getenv("XENVIRONMENT");
     /* attempt to infer actual terminal type */
     if (termType
         &&
@@ -4677,8 +4677,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
          * mode */
         rawcurses_stdio_tw52 = 1;
     }
-    lines = getenv("LINES");
-    columns = getenv("COLUMNS");
+    lines = myman_getenv("LINES");
+    columns = myman_getenv("COLUMNS");
     if (rawcurses_getenv_boolean("RAWCURSES_LINES"))
     {
         lines = rawcurses_getenv_boolean("RAWCURSES_LINES");
@@ -4884,9 +4884,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     if (rawcurses_getenv_boolean("RAWCURSES_WCWIDTH"))
     {
         rawcurses_builtin_wcwidth = *(rawcurses_getenv_boolean("RAWCURSES_WCWIDTH")) ? -1 : 0;
-        if (getenv("RAWCURSES_WCWIDTH") && (atoi(getenv("RAWCURSES_WCWIDTH")) > 0))
+        if (myman_getenv("RAWCURSES_WCWIDTH") && (atoi(myman_getenv("RAWCURSES_WCWIDTH")) > 0))
         {
-            rawcurses_builtin_wcwidth = atoi(getenv("RAWCURSES_WCWIDTH"));
+            rawcurses_builtin_wcwidth = atoi(myman_getenv("RAWCURSES_WCWIDTH"));
         }
     }
     else

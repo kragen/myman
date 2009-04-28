@@ -451,13 +451,13 @@ static int cacacurses_rotate;
 
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
-    cacacurses_bitmap = getenv("CACACURSES_BITMAP");
+    cacacurses_bitmap = myman_getenv("CACACURSES_BITMAP");
     if (cacacurses_bitmap && ! *cacacurses_bitmap) cacacurses_bitmap = NULL;
-    cacacurses_fixedpal = getenv("CACACURSES_FIXEDPAL");
+    cacacurses_fixedpal = myman_getenv("CACACURSES_FIXEDPAL");
     if (cacacurses_fixedpal && ! *cacacurses_fixedpal) cacacurses_fixedpal = NULL;
-    cacacurses_bitmap_double = getenv("CACACURSES_BITMAP_DOUBLE");
+    cacacurses_bitmap_double = myman_getenv("CACACURSES_BITMAP_DOUBLE");
     if (cacacurses_bitmap_double && ! *cacacurses_bitmap_double) cacacurses_bitmap_double = NULL;
-    cacacurses_bitmap_doubleheight = getenv("CACACURSES_BITMAP_DOUBLEHEIGHT");
+    cacacurses_bitmap_doubleheight = myman_getenv("CACACURSES_BITMAP_DOUBLEHEIGHT");
     if (cacacurses_bitmap_doubleheight && ! *cacacurses_bitmap_doubleheight) cacacurses_bitmap_doubleheight = NULL;
     if (cacacurses_bitmap)
     {
@@ -465,10 +465,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         cacacurses_h = h * (cacacurses_bitmap ? ((cacacurses_bitmap_double ? 2 : 1) * (cacacurses_bitmap_doubleheight ? 2 : 1)) : 1);
     }
     cacacurses_rotate = 0;
-    if ((! getenv("CACA_DRIVER"))
-        || strcasecmp(getenv("CACA_DRIVER"), "x11")
-        || (! getenv("CACA_FONT"))
-        || strcasecmp(getenv("CACA_FONT"), "nil2"))
+    if ((! myman_getenv("CACA_DRIVER"))
+        || strcasecmp(myman_getenv("CACA_DRIVER"), "x11")
+        || (! myman_getenv("CACA_FONT"))
+        || strcasecmp(myman_getenv("CACA_FONT"), "nil2"))
     {
         if (w > 128) w = 128;
         if (h > 50) h = 50;
@@ -540,9 +540,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             cucul_free_canvas(cv);
             exit(1);
         }
-        if (getenv("CACACURSES_BITMAP_BRIGHTNESS"))
+        if (myman_getenv("CACACURSES_BITMAP_BRIGHTNESS"))
         {
-            if (cucul_set_dither_brightness(cacacurses_dither, atof(getenv("CACACURSES_BITMAP_BRIGHTNESS"))))
+            if (cucul_set_dither_brightness(cacacurses_dither, atof(myman_getenv("CACACURSES_BITMAP_BRIGHTNESS"))))
             {
                 perror("cucul_set_dither_brightness: CACACURSES_BITMAP_BRIGHTNESS");
                 fflush(stderr);
@@ -552,9 +552,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_GAMMA"))
+        if (myman_getenv("CACACURSES_BITMAP_GAMMA"))
         {
-            if (cucul_set_dither_gamma(cacacurses_dither, atof(getenv("CACACURSES_BITMAP_GAMMA"))))
+            if (cucul_set_dither_gamma(cacacurses_dither, atof(myman_getenv("CACACURSES_BITMAP_GAMMA"))))
             {
                 perror("cucul_set_dither_gamma: CACACURSES_BITMAP_GAMMA");
                 fflush(stderr);
@@ -564,9 +564,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_CONTRAST"))
+        if (myman_getenv("CACACURSES_BITMAP_CONTRAST"))
         {
-            if (cucul_set_dither_contrast(cacacurses_dither, atof(getenv("CACACURSES_BITMAP_CONTRAST"))))
+            if (cucul_set_dither_contrast(cacacurses_dither, atof(myman_getenv("CACACURSES_BITMAP_CONTRAST"))))
             {
                 perror("cucul_set_dither_contrast: CACACURSES_BITMAP_CONTRAST");
                 fflush(stderr);
@@ -576,9 +576,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_ANTIALIAS"))
+        if (myman_getenv("CACACURSES_BITMAP_ANTIALIAS"))
         {
-            if (cucul_set_dither_antialias(cacacurses_dither, getenv("CACACURSES_BITMAP_ANTIALIAS")))
+            if (cucul_set_dither_antialias(cacacurses_dither, myman_getenv("CACACURSES_BITMAP_ANTIALIAS")))
             {
                 perror("cucul_set_dither_antialias: CACACURSES_BITMAP_ANTIALIAS");
                 {
@@ -602,9 +602,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_COLOR"))
+        if (myman_getenv("CACACURSES_BITMAP_COLOR"))
         {
-            if (cucul_set_dither_color(cacacurses_dither, getenv("CACACURSES_BITMAP_COLOR")))
+            if (cucul_set_dither_color(cacacurses_dither, myman_getenv("CACACURSES_BITMAP_COLOR")))
             {
                 perror("cucul_set_dither_color: CACACURSES_BITMAP_COLOR");
                 {
@@ -628,9 +628,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_CHARSET"))
+        if (myman_getenv("CACACURSES_BITMAP_CHARSET"))
         {
-            if (cucul_set_dither_charset(cacacurses_dither, getenv("CACACURSES_BITMAP_CHARSET")))
+            if (cucul_set_dither_charset(cacacurses_dither, myman_getenv("CACACURSES_BITMAP_CHARSET")))
             {
                 perror("cucul_set_dither_charset: CACACURSES_BITMAP_CHARSET");
                 {
@@ -654,9 +654,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 exit(1);
             }
         }
-        if (getenv("CACACURSES_BITMAP_ALGORITHM"))
+        if (myman_getenv("CACACURSES_BITMAP_ALGORITHM"))
         {
-            if (cucul_set_dither_algorithm(cacacurses_dither, getenv("CACACURSES_BITMAP_ALGORITHM")))
+            if (cucul_set_dither_algorithm(cacacurses_dither, myman_getenv("CACACURSES_BITMAP_ALGORITHM")))
             {
                 perror("cucul_set_dither_algorithm: CACACURSES_BITMAP_ALGORITHM");
                 {
@@ -1271,25 +1271,28 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 {
     char g[80];
 
-    if ((! getenv("CACA_DRIVER"))
-        || strcasecmp(getenv("CACA_DRIVER"), "x11")
-        || (! getenv("CACA_FONT"))
-        || strcasecmp(getenv("CACA_FONT"), "nil2"))
+    if ((! myman_getenv("CACA_DRIVER"))
+        || strcasecmp(myman_getenv("CACA_DRIVER"), "x11")
+        || (! myman_getenv("CACA_FONT"))
+        || strcasecmp(myman_getenv("CACA_FONT"), "nil2"))
     {
         if (w > 128) w = 128;
         if (h > 50) h = 50;
     }
-    sprintf(g, "CACA_GEOMETRY=%dx%d", w, h);
-    if ((! getenv("CACA_GEOMETRY")) || ! *(getenv("CACA_GEOMETRY"))) putenv(g);
+    sprintf(g, "%dx%d", w, h);
+    if ((! myman_getenv("CACA_GEOMETRY")) || ! *(myman_getenv("CACA_GEOMETRY")))
+    {
+        myman_setenv("CACA_GEOMETRY", g);
+    }
     if (caca_init())
     {
         fprintf(stderr, "caca_init() failed\n");
         fflush(stderr);
         exit(1);
     }
-    if (getenv("CACACURSES_ACS"))
+    if (myman_getenv("CACACURSES_ACS"))
     {
-        cacacurses_use_acs = *(getenv("CACACURSES_ACS")) && strcmp(getenv("CACACURSES_ACS"), "0");
+        cacacurses_use_acs = *(myman_getenv("CACACURSES_ACS")) && strcmp(myman_getenv("CACACURSES_ACS"), "0");
     }
     else
     {

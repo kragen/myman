@@ -693,20 +693,20 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #endif
     }
 #endif
-    if (getenv("FLTKCURSES_FONT") && *(getenv("FLTKCURSES_FONT")))
+    if (myman_getenv("FLTKCURSES_FONT") && *(myman_getenv("FLTKCURSES_FONT")))
     {
 #ifdef FLTK2CURSES
         Fl_Font oldface = face;
 
-        face = fltk::font(getenv("FLTKCURSES_FONT"));
+        face = fltk::font(myman_getenv("FLTKCURSES_FONT"));
         if (! face) face = oldface;
 #else
-        Fl::set_font(face, getenv("FLTKCURSES_FONT"));
+        Fl::set_font(face, myman_getenv("FLTKCURSES_FONT"));
 #endif
     }
-    if (getenv("FLTKCURSES_FONTSIZE") && atoi(getenv("FLTKCURSES_FONTSIZE")))
+    if (myman_getenv("FLTKCURSES_FONTSIZE") && atoi(myman_getenv("FLTKCURSES_FONTSIZE")))
     {
-        fontsize = atoi(getenv("FLTKCURSES_FONTSIZE"));
+        fontsize = atoi(myman_getenv("FLTKCURSES_FONTSIZE"));
     }
     fl_font(face, fontsize);
     fltkcurses_charh = fl_height();

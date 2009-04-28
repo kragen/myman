@@ -963,12 +963,12 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     {
         goto gtkcurses_handle_resize;
     }
-    icon = getenv("GTKCURSES_ICON");
+    icon = myman_getenv("GTKCURSES_ICON");
     if (icon && ! *icon) icon = NULL;
-    font = getenv("GTKCURSES_FONT");
+    font = myman_getenv("GTKCURSES_FONT");
     if (font && ! *font) font = NULL;
     if (font && ! *font) font = NULL;
-    gtkcurses_bitmap = (getenv("GTKCURSES_BITMAP") && *getenv("GTKCURSES_BITMAP")) ? (strcmp("0", getenv("GTKCURSES_BITMAP"))) : 0;
+    gtkcurses_bitmap = (myman_getenv("GTKCURSES_BITMAP") && *myman_getenv("GTKCURSES_BITMAP")) ? (strcmp("0", myman_getenv("GTKCURSES_BITMAP"))) : 0;
     if (! h) h = 25;
     if (! w) w = 80;
     for (i = 0; i < (sizeof(gtkcurses_getch_buffer)/sizeof(*gtkcurses_getch_buffer)); i ++)

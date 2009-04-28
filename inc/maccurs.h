@@ -1713,13 +1713,13 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
 #ifdef MACCURSES_FONTSIZE
     if (MACCURSES_FONTSIZE) maccurses_fontsize = MACCURSES_FONTSIZE;
 #endif
-    if (getenv("MACCURSES_FONTSIZE")
+    if (myman_getenv("MACCURSES_FONTSIZE")
         &&
-        *getenv("MACCURSES_FONTSIZE")
+        *myman_getenv("MACCURSES_FONTSIZE")
         &&
-        atoi(getenv("MACCURSES_FONTSIZE")))
+        atoi(myman_getenv("MACCURSES_FONTSIZE")))
     {
-        maccurses_fontsize = atoi(getenv("MACCURSES_FONTSIZE"));
+        maccurses_fontsize = atoi(myman_getenv("MACCURSES_FONTSIZE"));
         if (maccurses_fontsize < 1) maccurses_fontsize = 1;
         if (maccurses_fontsize > 72) maccurses_fontsize = 72;
     }
@@ -1774,14 +1774,14 @@ static void maccurses_initscrWithHints(int h, int w, const char *title, const ch
         maccurses_port = GetWindowPort(maccurses_hwnd);
         SetPort((GrafPtr) maccurses_port);
     }
-    encoding_name = getenv("MACCURSES_FONTENCODING");
+    encoding_name = myman_getenv("MACCURSES_FONTENCODING");
 #ifdef MACCURSES_FONTENCODING
     if (! encoding_name) encoding_name = MACCURSES_FONTENCODING;
 #endif
     maccurses_fontfamily = maccurses_custom_fontfamily;
     font_pascal[0] = 0;
     font = 0;
-    font = getenv("MACCURSES_FONT");
+    font = myman_getenv("MACCURSES_FONT");
 #ifdef MACCURSES_FONT
     if (! font) font = MACCURSES_FONT;
 #endif

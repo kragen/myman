@@ -65,7 +65,7 @@ static struct aa_renderparams aacurses_renderparams;
 
 static unsigned long aacurses_x, aacurses_y;
 
-enum aa_attribute aacurses_attr;
+static enum aa_attribute aacurses_attr;
 
 #ifndef OK
 #define OK (0)
@@ -129,29 +129,29 @@ enum aa_attribute aacurses_attr;
 
 #define A_STANDOUT 0x40000000
 
-#define ACS_LRCORNER ('j' - '_')
+#define ACS_LRCORNER 0x2518
 
-#define ACS_URCORNER ('k' - '_')
+#define ACS_URCORNER 0x2510
 
-#define ACS_ULCORNER ('l' - '_')
+#define ACS_ULCORNER 0x250c
 
-#define ACS_LLCORNER ('m' - '_')
+#define ACS_LLCORNER 0x2514
 
-#define ACS_PLUS ('n' - '_')
+#define ACS_PLUS 0x253c
 
-#define ACS_HLINE ('q' - '_')
+#define ACS_HLINE 0x2500
 
-#define ACS_LTEE ('t' - '_')
+#define ACS_LTEE 0x251c
 
-#define ACS_RTEE ('u' - '_')
+#define ACS_RTEE 0x2524
 
-#define ACS_BTEE ('v' - '_')
+#define ACS_BTEE 0x2534
 
-#define ACS_TTEE ('w' - '_')
+#define ACS_TTEE 0x252c
 
-#define ACS_VLINE ('x' - '_')
+#define ACS_VLINE 0x2502
 
-#define ACS_BULLET ('~' - '_')
+#define ACS_BULLET 0x00b7
 
 static int aacurses_use_acs = 1;
 
@@ -161,7 +161,7 @@ static int aacurses_swapdots = 1;
 
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
-    aacurses_bitmap = getenv("AACURSES_BITMAP");
+    aacurses_bitmap = myman_getenv("AACURSES_BITMAP");
     if (aacurses_bitmap && ! *aacurses_bitmap) aacurses_bitmap = NULL;
     if (aacurses_bitmap)
     {
@@ -178,7 +178,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     if (aacurses_hwparams.minheight && (h > aacurses_hwparams.maxheight)) h = aacurses_hwparams.maxheight;
     if (h < aacurses_hwparams.minheight) h = aacurses_hwparams.minheight;
     if (aacurses_hwparams.recheight) h = aacurses_hwparams.recheight;
-    if (getenv("DISPLAY") && *getenv("DISPLAY") && (! getenv("AAOPTS")))
+    if (myman_getenv("DISPLAY") && *myman_getenv("DISPLAY") && (! myman_getenv("AAOPTS")))
     {
         if (! aacurses_bitmap)
         {
@@ -289,7 +289,7 @@ static int attrset(int a)
     return OK;
 }
 
-static void move(y, x) {
+static void move(int y, int x) {
     aacurses_y = y;
     aacurses_x = x;
 }

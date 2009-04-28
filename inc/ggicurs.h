@@ -1076,19 +1076,19 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     int auto_x, auto_y;
 
     ggicurses_title = title;
-    ggicurses_bitmap = getenv("GGICURSES_BITMAP");
+    ggicurses_bitmap = myman_getenv("GGICURSES_BITMAP");
     if (ggicurses_bitmap && ! *ggicurses_bitmap) ggicurses_bitmap = NULL;
-    ggicurses_swaprb = getenv("GGICURSES_SWAPRB");
+    ggicurses_swaprb = myman_getenv("GGICURSES_SWAPRB");
     if (ggicurses_swaprb && ! *ggicurses_swaprb) ggicurses_swaprb = NULL;
-    ggicurses_ascii = getenv("GGICURSES_ASCII");
+    ggicurses_ascii = myman_getenv("GGICURSES_ASCII");
     if (ggicurses_ascii && ! *ggicurses_ascii) ggicurses_ascii = NULL;
-    ggicurses_flushall = getenv("GGICURSES_FLUSHALL");
+    ggicurses_flushall = myman_getenv("GGICURSES_FLUSHALL");
     if (ggicurses_flushall && ! *ggicurses_flushall) ggicurses_flushall = NULL;
-    ggicurses_fixedpal = getenv("GGICURSES_FIXEDPAL");
+    ggicurses_fixedpal = myman_getenv("GGICURSES_FIXEDPAL");
     if (ggicurses_fixedpal && ! *ggicurses_fixedpal) ggicurses_fixedpal = NULL;
-    ggicurses_bitmap_double = getenv("GGICURSES_BITMAP_DOUBLE");
+    ggicurses_bitmap_double = myman_getenv("GGICURSES_BITMAP_DOUBLE");
     if (ggicurses_bitmap_double && ! *ggicurses_bitmap_double) ggicurses_bitmap_double = NULL;
-    ggicurses_bitmap_doubleheight = getenv("GGICURSES_BITMAP_DOUBLEHEIGHT");
+    ggicurses_bitmap_doubleheight = myman_getenv("GGICURSES_BITMAP_DOUBLEHEIGHT");
     if (ggicurses_bitmap_doubleheight && ! *ggicurses_bitmap_doubleheight) ggicurses_bitmap_doubleheight = NULL;
     if (! ggicurses_bitmap)
     {
@@ -1318,9 +1318,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 {
                     ggicurses_reverse_endian = 0x12;
                     ggicurses_reverse_endian = (*((unsigned char *)(void *)(& ggicurses_reverse_endian)) == ggicurses_reverse_endian);
-                    if (getenv("GGICURSES_DIRECT")
+                    if (myman_getenv("GGICURSES_DIRECT")
                         &&
-                        *(getenv("GGICURSES_DIRECT")))
+                        *(myman_getenv("GGICURSES_DIRECT")))
                     {
                         ggicurses_direct = 1;
                     }

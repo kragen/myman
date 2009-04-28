@@ -1048,19 +1048,19 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     int auto_x, auto_y;
 
     sdlcurses_title = title;
-    sdlcurses_bitmap = getenv("SDLCURSES_BITMAP");
+    sdlcurses_bitmap = myman_getenv("SDLCURSES_BITMAP");
     if (sdlcurses_bitmap && ! *sdlcurses_bitmap) sdlcurses_bitmap = NULL;
-    sdlcurses_swaprb = getenv("SDLCURSES_SWAPRB");
+    sdlcurses_swaprb = myman_getenv("SDLCURSES_SWAPRB");
     if (sdlcurses_swaprb && ! *sdlcurses_swaprb) sdlcurses_swaprb = NULL;
-    sdlcurses_ascii = getenv("SDLCURSES_ASCII");
+    sdlcurses_ascii = myman_getenv("SDLCURSES_ASCII");
     if (sdlcurses_ascii && ! *sdlcurses_ascii) sdlcurses_ascii = NULL;
-    sdlcurses_flushall = getenv("SDLCURSES_FLUSHALL");
+    sdlcurses_flushall = myman_getenv("SDLCURSES_FLUSHALL");
     if (sdlcurses_flushall && ! *sdlcurses_flushall) sdlcurses_flushall = NULL;
-    sdlcurses_fixedpal = getenv("SDLCURSES_FIXEDPAL");
+    sdlcurses_fixedpal = myman_getenv("SDLCURSES_FIXEDPAL");
     if (sdlcurses_fixedpal && ! *sdlcurses_fixedpal) sdlcurses_fixedpal = NULL;
-    sdlcurses_bitmap_double = getenv("SDLCURSES_BITMAP_DOUBLE");
+    sdlcurses_bitmap_double = myman_getenv("SDLCURSES_BITMAP_DOUBLE");
     if (sdlcurses_bitmap_double && ! *sdlcurses_bitmap_double) sdlcurses_bitmap_double = NULL;
-    sdlcurses_bitmap_doubleheight = getenv("SDLCURSES_BITMAP_DOUBLEHEIGHT");
+    sdlcurses_bitmap_doubleheight = myman_getenv("SDLCURSES_BITMAP_DOUBLEHEIGHT");
     if (sdlcurses_bitmap_doubleheight && ! *sdlcurses_bitmap_doubleheight) sdlcurses_bitmap_doubleheight = NULL;
     if (! sdlcurses_bitmap)
     {
@@ -1240,9 +1240,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
                 {
                     sdlcurses_reverse_endian = 0x12;
                     sdlcurses_reverse_endian = (*((unsigned char *)(void *)(& sdlcurses_reverse_endian)) == sdlcurses_reverse_endian);
-                    if (getenv("SDLCURSES_DIRECT")
+                    if (myman_getenv("SDLCURSES_DIRECT")
                         &&
-                        *(getenv("SDLCURSES_DIRECT")))
+                        *(myman_getenv("SDLCURSES_DIRECT")))
                     {
                         sdlcurses_direct = 1;
                     }

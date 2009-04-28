@@ -855,9 +855,9 @@ static int locale_is_utf8(void)
 #endif /* defined(LC_CTYPE) */
     /* for broken systems that do not yet support UTF-8 locales
      * (Cygwin comes to mind) */
-    my_locale = getenv("LC_CTYPE");
-    if (! my_locale) my_locale = getenv("LC_ALL");
-    if (! my_locale) my_locale = getenv("LANG");
+    my_locale = myman_getenv("LC_CTYPE");
+    if (! my_locale) my_locale = myman_getenv("LC_ALL");
+    if (! my_locale) my_locale = myman_getenv("LANG");
     if (my_locale)
     {
         my_locale_lower = strdup(my_locale);
@@ -7040,13 +7040,9 @@ myman(void)
         if (! myman_lines) myman_lines = (reflect ? (maze_w * gfx_w) : (maze_h * gfx_h)) + (3 * tile_h + sprite_h);
         if (! myman_columns) myman_columns = (reflect ? (maze_h * gfx_h) : (maze_w * gfx_w)) * (use_fullwidth ? 2 : 1);
 #ifdef GTKCURSES
-        if (((! getenv("GTKCURSES_ICON")) || ! *(getenv("GTKCURSES_ICON"))) && MYMANICONPNG && *MYMANICONPNG)
+        if (((! myman_getenv("GTKCURSES_ICON")) || ! *(myman_getenv("GTKCURSES_ICON"))) && MYMANICONPNG && *MYMANICONPNG)
         {
-#if defined(WIN32)
-            SetEnvironmentVariableA("GTKCURSES_ICON", MYMANICONPNG);
-#else
-            setenv("GTKCURSES_ICON", MYMANICONPNG, 1);
-#endif
+            myman_setenv("GTKCURSES_ICON", MYMANICONPNG);
         }
 #endif
 #ifdef INITSCR_WITH_HINTS
@@ -7230,10 +7226,10 @@ myman(void)
                 {
                     static char buf[32];
 
-                    sprintf(buf, "LINES=%d", myman_lines);
-                    putenv(buf);
-                    sprintf(buf, "COLUMNS=%d", myman_columns);
-                    putenv(buf);
+                    sprintf(buf, "%d", myman_lines);
+                    myman_setenv("LINES", buf);
+                    sprintf(buf, "%d", myman_columns);
+                    myman_setenv("COLUMNS", buf);
                 }
 #endif
             }
@@ -7280,6 +7276,8 @@ usage(const char *mazefile, const char *spritefile, const char *tilefile)
 #else
     puts("-d NUM \tdelay NUM microseconds/refresh (must recompile first)");
 #endif
+    puts("-D NAME \tdefine environment variable NAME with value 1");
+    puts("-D NAME=VALUE \tdefine environment variable NAME with value VALUE");
     puts("-g NUM \tplay against NUM monsters");
     puts("-l NUM \tstart with NUM lives");
 #if USE_ATTR
@@ -7436,6 +7434,43 @@ parse_myman_args(int argc, char **argv)
             mindelay = mymandelay / 2;
             break;
         }
+        case 'D':
+        {
+            char *name;
+            const char *value;
+
+            value = "1";
+            name = strdup(optarg);
+            if (! name)
+            {
+                perror("strdup");
+                fflush(stderr), exit(1);
+            }
+            if (strchr(name, '='))
+            {
+                *(strchr(name, '=')) = '\0';
+                value = name + strlen(name) + 1;
+            }
+            if (myman_setenv(name, value))
+            {
+                perror("setenv");
+                fflush(stderr), exit(1);
+            }
+            {
+                const char *check_value;
+
+                check_value = myman_getenv(name);
+                if ((! check_value) || strcmp(check_value, value))
+                {
+                    fprintf(stderr, "setenv: did not preserve value, %s=%s vs %s=%s\n",
+                            name, value,
+                            name, check_value ? check_value : "(null)");
+                    fflush(stderr), exit(1);
+                }
+            }
+            free((void *) name);
+            break;
+        }
         case 'g':
         {
             const char *tmp_ghosts_endp = NULL;
@@ -7585,6 +7620,11 @@ parse_myman_args(int argc, char **argv)
             fprintf(stderr, SUMMARY(progname));
             fflush(stderr), exit(2);
         }
+    if (myman_getenv("MYMAN_DEBUG") && *(myman_getenv("MYMAN_DEBUG")) && strcmp(myman_getenv("MYMAN_DEBUG"), "0"))
+    {
+        debug = atoi(myman_getenv("MYMAN_DEBUG"));
+        debug = debug ? debug : 1;
+    }
 #ifdef XCURSES
     argv[optind - 1] = progname;
     argc -= optind;
@@ -7834,11 +7874,6 @@ main(int argc, char *argv[]
 #endif /* defined(__CARBON__) */
 #endif /* defined(MACCURSES) */
     progname = (progname && *progname) ? progname : MYMAN;
-    if (getenv("MYMAN_DEBUG") && *(getenv("MYMAN_DEBUG")) && strcmp(getenv("MYMAN_DEBUG"), "0"))
-    {
-        debug = atoi(getenv("MYMAN_DEBUG"));
-        debug = debug ? debug : 1;
-    }
     td = 0.0L;
     for (i = 0; i < SPRITE_REGISTERS; i ++) {
         sprite_register_used[i] = 0;

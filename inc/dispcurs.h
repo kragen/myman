@@ -407,9 +407,9 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 
     disp_open();
 
-    if (getenv("DISPCURSES_USEBIOS") && *getenv("DISPCURSES_USEBIOS"))
+    if (myman_getenv("DISPCURSES_USEBIOS") && *myman_getenv("DISPCURSES_USEBIOS"))
     {
-        if (strcmp(getenv("DISPCURSES_USEBIOS"), "0"))
+        if (strcmp(myman_getenv("DISPCURSES_USEBIOS"), "0"))
         {
 #if ! defined(WIN32)
             disp_usebios();

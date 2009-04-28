@@ -29,6 +29,11 @@
 #endif
 #endif
 
+/* feature guessing */
+#ifndef MYMAN_GUESS_H_INCLUDED
+#include "guess.h"
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
@@ -203,7 +208,7 @@ const char *MOREMESSAGE = "[Space: more, Q: quit]";
 
 const char *DONEMESSAGE = "[Space: OK, Q: quit]";
 
-const char *short_options = "Vv:z:bcd:g:l:Lhkm:noprqs:t:uUMRSTf:F:aAeEBNiI12xX";
+const char *short_options = "Vv:z:bcd:D:g:l:Lhkm:noprqs:t:uUMRSTf:F:aAeEBNiI12xX";
 static struct option long_options_static[] =
 {
     {"version", 0, 0, 'V'},
@@ -4853,4 +4858,93 @@ paint_walls(int verbose)
         fprintf(stderr, "    \r"); fflush(stderr);
         tdt_used = 0;
     }
+}
+
+static struct myman_environ_ent {
+    const char *name;
+    const char *value;
+    struct myman_environ_ent *next;
+} *myman_environ = NULL;
+
+int myman_setenv(const char *name, const char *value)
+{
+    int ret = 1;
+
+#if HAVE_SETENV
+#ifdef WIN32
+    ret = SetEnvironmentVariableA(name, value) ? 0 : 1;
+#else /* ! defined(WIN32) */
+#ifdef macintosh
+    ret = setenv(name, value);
+#else /* ! defined(macintosh) */
+    ret = setenv(name, value, 1);
+#endif /* ! defined(macintosh) */
+#endif /* ! defined(WIN32) */
+#endif /* HAVE_SETENV */
+    if (ret)
+    {
+        const char *value_copy;
+
+        value_copy = strdup(value);
+        if (value_copy)
+        {
+            struct myman_environ_ent *ent;
+
+            for (ent = myman_environ; ent; ent = ent->next)
+            {
+                if (! strcmp(name, ent->name))
+                {
+                    free((void *) ent->value);
+                    ent->value = value_copy;
+                    ret = 0;
+                    break;
+                }
+            }
+            if (! ent)
+            {
+                ent = (struct myman_environ_ent *) malloc(sizeof(struct myman_environ_ent));
+                if (ent)
+                {
+                    ent->name = strdup(name);
+                    if (ent->name)
+                    {
+                        ent->value = value_copy;
+                        ent->next = myman_environ;
+                        myman_environ = ent;
+                        ret = 0;
+                    }
+                    if (ret)
+                    {
+                        free((void *) ent);
+                    }
+                }
+            }
+            if (ret)
+            {
+                free((void*) value_copy);
+            }
+        }
+    }
+    return ret;
+}
+
+const char *myman_getenv(const char *name)
+{
+    const char *ret;
+
+    ret = getenv(name);
+    if (! ret)
+    {
+        struct myman_environ_ent *ent;
+
+        for (ent = myman_environ; ent; ent = ent->next)
+        {
+            if (! strcmp(name, ent->name))
+            {
+                ret = ent->value;
+                break;
+            }
+        }
+    }
+    return ret;
 }

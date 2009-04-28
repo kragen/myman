@@ -486,11 +486,11 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     int i;
     struct videoconfig vc;
 
-    if (getenv("GRAPHCURSES_MODE")
+    if (myman_getenv("GRAPHCURSES_MODE")
         &&
-        *getenv("GRAPHCURSES_MODE"))
+        *myman_getenv("GRAPHCURSES_MODE"))
     {
-        _setvideomode(atoi(getenv("GRAPHCURSES_MODE")));
+        _setvideomode(atoi(myman_getenv("GRAPHCURSES_MODE")));
     }
     graphcurses_orig_fg = _gettextcolor();
     graphcurses_orig_bk = _getbkcolor();

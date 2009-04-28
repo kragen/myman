@@ -102,31 +102,31 @@ static void optcurses_init(void) {
     {
         if (! optcurses_direct)
         {
-            optcurses_direct = getenv("OPTCURSES_DIRECT");
+            optcurses_direct = myman_getenv("OPTCURSES_DIRECT");
             if (! optcurses_direct) optcurses_direct = "";
             if (! strcmp(optcurses_direct, "0")) optcurses_direct = "";
         }
         if (! optcurses_interlace)
         {
-            optcurses_interlace = getenv("OPTCURSES_INTERLACE");
+            optcurses_interlace = myman_getenv("OPTCURSES_INTERLACE");
             if (! optcurses_interlace) optcurses_interlace = "";
             if (! strcmp(optcurses_interlace, "0")) optcurses_interlace = "";
         }
         if (! optcurses_bitmap)
         {
-            optcurses_bitmap = getenv("OPTCURSES_BITMAP");
+            optcurses_bitmap = myman_getenv("OPTCURSES_BITMAP");
             if (! optcurses_bitmap) optcurses_bitmap = "";
             if (! strcmp(optcurses_bitmap, "0")) optcurses_bitmap = "";
         }
         if (! optcurses_bitmap_force)
         {
-            optcurses_bitmap_force = getenv("OPTCURSES_BITMAP_FORCE");
+            optcurses_bitmap_force = myman_getenv("OPTCURSES_BITMAP_FORCE");
             if (! optcurses_bitmap_force) optcurses_bitmap_force = "";
             if (! strcmp(optcurses_bitmap_force, "0")) optcurses_bitmap_force = "";
         }
         if (! optcurses_bitmap_braille)
         {
-            optcurses_bitmap_braille = getenv("OPTCURSES_BITMAP_BRAILLE");
+            optcurses_bitmap_braille = myman_getenv("OPTCURSES_BITMAP_BRAILLE");
             if (! optcurses_bitmap_braille) optcurses_bitmap_braille = "";
             if (! strcmp(optcurses_bitmap_braille, "0")) optcurses_bitmap_braille = "";
         }
@@ -501,7 +501,7 @@ static void optcurses_initscrWithHints(int h, int w, const char *title, const ch
     }
     if (! optcurses_direct)
     {
-        optcurses_direct = getenv("OPTCURSES_DIRECT");
+        optcurses_direct = myman_getenv("OPTCURSES_DIRECT");
         if (! optcurses_direct) optcurses_direct = "";
         if (! strcmp(optcurses_direct, "0")) optcurses_direct = "";
     }
@@ -510,7 +510,7 @@ static void optcurses_initscrWithHints(int h, int w, const char *title, const ch
     {
         if (! optcurses_bitmap)
         {
-            optcurses_bitmap = getenv("OPTCURSES_BITMAP");
+            optcurses_bitmap = myman_getenv("OPTCURSES_BITMAP");
             if (! optcurses_bitmap) optcurses_bitmap = "";
             if (! strcmp(optcurses_bitmap, "0")) optcurses_bitmap = "";
         }
@@ -541,7 +541,7 @@ static WINDOW *optcurses_initscr(void)
     }
     if (! optcurses_direct)
     {
-        optcurses_direct = getenv("OPTCURSES_DIRECT");
+        optcurses_direct = myman_getenv("OPTCURSES_DIRECT");
         if (! optcurses_direct) optcurses_direct = "";
         if (! strcmp(optcurses_direct, "0")) optcurses_direct = "";
     }
@@ -550,7 +550,7 @@ static WINDOW *optcurses_initscr(void)
     {
         if (! optcurses_bitmap)
         {
-            optcurses_bitmap = getenv("OPTCURSES_BITMAP");
+            optcurses_bitmap = myman_getenv("OPTCURSES_BITMAP");
             if (! optcurses_bitmap) optcurses_bitmap = "";
             if (! strcmp(optcurses_bitmap, "0")) optcurses_bitmap = "";
         }

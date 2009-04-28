@@ -321,15 +321,37 @@
 #define HAVE_WCHAR_H 0
 #endif
 
-/* HAVE_OLD_GETTIMEOFDAY: de we have a one-argument version of gettimeofday(2)? */
+/* HAVE_OLD_GETTIMEOFDAY: do we have a one-argument version of gettimeofday(2)? */
 #ifndef HAVE_OLD_GETTIMEOFDAY
 #define HAVE_OLD_GETTIMEOFDAY 0
 #endif
 
 #if HAVE_OLD_GETTIMEOFDAY
-#define myman_gettimeofday(tv,tz) gettimeofday(tv)
+#define myman_gettimeofday(tv,tz) gettimeofday((tv))
 #else
-#define myman_gettimeofday(tv,tz) gettimeofday(tv,tz)
+#define myman_gettimeofday(tv,tz) gettimeofday((tv),(tz))
+#endif
+
+/* HAVE_SETENV: do we have a setenv() call or something equivalent? */
+
+#ifdef macintosh
+
+#if defined (__useAppleExts__) || ((defined (applec) && ! defined (__STDC__)) || (defined (__PPCC__) && __STDC__ == 0))
+#if CALL_NOT_IN_CARBON || __MPWINTERNAL__
+#ifndef HAVE_SETENV
+#define HAVE_SETENV 1
+#endif
+#endif
+#endif
+
+#ifndef HAVE_SETENV
+#define HAVE_SETENV 0
+#endif
+
+#endif /* defined(macintosh) */
+
+#ifndef HAVE_SETENV
+#define HAVE_SETENV 1
 #endif
 
 #endif /* ! defined(MYMAN_GUESS_H_INCLUDED) */

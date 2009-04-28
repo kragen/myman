@@ -1055,4 +1055,8 @@ extern int find_home_dir(int s, int r, int c);
 /* heuristic for rewriting maze tiles */
 extern long maze_visual(int n, int i, int j);
 
+extern int myman_setenv(const char *name, const char *value);
+
+extern const char *myman_getenv(const char *name);
+
 #endif /* ! defined(MYMAN_UTILS_H_INCLUDED) */
