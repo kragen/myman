@@ -4861,12 +4861,12 @@ paint_walls(int verbose)
 }
 
 static struct myman_environ_ent {
-    char *name;
+    const char *name;
     char *value;
     struct myman_environ_ent *next;
 } *myman_environ = NULL;
 
-int myman_setenv(char *name, char *value)
+int myman_setenv(const char *name, const char *value)
 {
     int ret = 1;
 
@@ -4928,7 +4928,7 @@ int myman_setenv(char *name, char *value)
     return ret;
 }
 
-char *myman_getenv(char *name)
+char *myman_getenv(const char *name)
 {
     char *ret;
 
