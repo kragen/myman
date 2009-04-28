@@ -4861,12 +4861,12 @@ paint_walls(int verbose)
 }
 
 static struct myman_environ_ent {
-    const char *name;
-    const char *value;
+    char *name;
+    char *value;
     struct myman_environ_ent *next;
 } *myman_environ = NULL;
 
-int myman_setenv(const char *name, const char *value)
+int myman_setenv(char *name, char *value)
 {
     int ret = 1;
 
@@ -4883,7 +4883,7 @@ int myman_setenv(const char *name, const char *value)
 #endif /* HAVE_SETENV */
     if (ret)
     {
-        const char *value_copy;
+        char *value_copy;
 
         value_copy = strdup(value);
         if (value_copy)
@@ -4928,9 +4928,9 @@ int myman_setenv(const char *name, const char *value)
     return ret;
 }
 
-const char *myman_getenv(const char *name)
+char *myman_getenv(char *name)
 {
-    const char *ret;
+    char *ret;
 
     ret = getenv(name);
     if (! ret)
