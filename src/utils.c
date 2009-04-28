@@ -4870,17 +4870,37 @@ int myman_setenv(const char *name, const char *value)
 {
     int ret = 1;
 
-#if HAVE_SETENV
 #ifdef WIN32
     ret = SetEnvironmentVariableA(name, value) ? 0 : 1;
 #else /* ! defined(WIN32) */
+#if HAVE_SETENV
 #ifdef macintosh
     ret = setenv(name, value);
 #else /* ! defined(macintosh) */
     ret = setenv(name, value, 1);
 #endif /* ! defined(macintosh) */
+#else /* ! HAVE_SETENV */
+#if HAVE_PUTENV
+    {
+        char *pair;
+        size_t name_len, value_len;
+
+        name_len = strlen(name);
+        value_len = strlen(value);
+        pair = malloc(name_len + 1 + value_len + 1);
+        if (pair)
+        {
+            memcpy((void *) pair, (void *) name, name_len);
+            pair[name_len] = '=';
+            memcpy((void *) (pair + name_len + 1), (void *) value, value_len);
+            pair[name_len + 1 + value_len] = '\0';
+            ret = putenv(pair);
+            free((void *) pair);
+        }
+    }
+#endif /* HAVE_PUTENV */
+#endif /* ! HAVE_SETENV */
 #endif /* ! defined(WIN32) */
-#endif /* HAVE_SETENV */
     if (ret)
     {
         char *value_copy;

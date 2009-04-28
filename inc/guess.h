@@ -332,10 +332,27 @@
 #define myman_gettimeofday(tv,tz) gettimeofday((tv),(tz))
 #endif
 
-/* HAVE_SETENV: do we have a setenv() call or something equivalent? */
+/* HAVE_PUTENV: do we have a putenv() call? */
+
+#ifdef __MSDOS__
+#ifndef HAVE_PUTENV
+#define HAVE_PUTENV 1
+#endif
+#endif
+
+#if defined(WIN32) || defined(macintosh)
+#ifndef HAVE_PUTENV
+#define HAVE_PUTENV 0
+#endif
+#endif
+
+#ifndef HAVE_PUTENV
+#define HAVE_PUTENV 1
+#endif
+
+/* HAVE_SETENV: do we have a setenv() call? */
 
 #ifdef macintosh
-
 #if defined (__useAppleExts__) || ((defined (applec) && ! defined (__STDC__)) || (defined (__PPCC__) && __STDC__ == 0))
 #if CALL_NOT_IN_CARBON || __MPWINTERNAL__
 #ifndef HAVE_SETENV
@@ -343,12 +360,13 @@
 #endif
 #endif
 #endif
+#endif /* defined(macintosh) */
 
+#if defined(WIN32) || defined(__MSDOS__) || defined(__DMC__) || defined(macintosh)
 #ifndef HAVE_SETENV
 #define HAVE_SETENV 0
 #endif
-
-#endif /* defined(macintosh) */
+#endif
 
 #ifndef HAVE_SETENV
 #define HAVE_SETENV 1
