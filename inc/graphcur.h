@@ -361,7 +361,7 @@ static graphcurses_attr_t graphcurses_attr = 0;
 
 #define GRAPHCURSES_MAXCOLORS 16
 
-#define COLORS (graphcurses_colors)
+#define COLORS 16
 
 #define COLOR_BLACK 0
 
@@ -737,13 +737,13 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
     if (graphcurses_ccc)
     {
-        graphcurses_ccc = has_colors() && (COLORS >= 8);
+        graphcurses_ccc = has_colors() && (graphcurses_colors >= 8);
     }
     for (i = 0; i < GRAPHCURSES_MAXCOLORS; i ++)
     {
         graphcurses_orig_rgb[i] = -1;
         graphcurses_rgb[i] = GRAPHCURSES_COLOR_TO_RGB(i);
-        if (can_change_color() && (i < COLORS))
+        if (can_change_color() && (i < graphcurses_colors))
         {
             graphcurses_orig_rgb[i] = _remappalette(i, graphcurses_rgb[i]);
             if (graphcurses_orig_rgb[i] == -1)
@@ -782,7 +782,7 @@ static void endwin(void)
     for (i = 0; i < GRAPHCURSES_MAXCOLORS; i ++)
     {
         graphcurses_rgb[i] = GRAPHCURSES_COLOR_TO_RGB(i);
-        if (can_change_color() && (i < COLORS)) _remappalette(i, graphcurses_orig_rgb[i]);
+        if (can_change_color() && (i < graphcurses_colors)) _remappalette(i, graphcurses_orig_rgb[i]);
     }
     if (graphcurses_whichpalette != -1)
     {
@@ -947,7 +947,7 @@ static int init_color(short i, short r, short g, short b)
     if (! graphcurses_ready) return ERR;
     if (! has_colors()) return ERR;
     if (! can_change_color()) return ERR;
-    if ((i < 0) || (i > COLORS)) return ERR;
+    if ((i < 0) || (i > graphcurses_colors)) return ERR;
     graphcurses_rgb[i] = (0x3fL * r / 1000L) + ((0x3fL * g / 1000L) << 8) + ((0x3fL * b / 1000L) << 16);
     _remappalette(i, graphcurses_rgb[i]);
     return ERR;
@@ -958,7 +958,7 @@ static int color_content(short i, short *r, short *g, short *b)
     if (! graphcurses_ready) return ERR;
     if (! has_colors()) return ERR;
     if (! can_change_color()) return ERR;
-    if ((i < 0) || (i > COLORS)) return ERR;
+    if ((i < 0) || (i > graphcurses_colors)) return ERR;
     *r = (short) (1000L * (graphcurses_rgb[i] & 0x3fL) / 0x3fL);
     *g = (short) (1000L * ((graphcurses_rgb[i] >> 8) & 0x3fL) / 0x3fL);
     *b = (short) (1000L * ((graphcurses_rgb[i] >> 16) & 0x3fL) / 0x3fL);
@@ -1104,27 +1104,36 @@ static int graphcurses_addch(graphcurses_chtype ch)
     {
         switch (ch)
         {
-        case 0:
-        case ' ':
-        case 0xff:
-            ch = ACS_BLOCK;
+        case '#':
+        case ACS_BLOCK:
+            break;
+        default:
             fg = bg;
-            bg = COLOR_BLACK;
         }
-        if (bg && (ch != ACS_BLOCK) && (ch != '#'))
-        {
-            ch = ACS_BLOCK;
-            fg = bg;
-            bg = COLOR_BLACK;
-        }
+        ch = ACS_BLOCK;
+        bg = COLOR_BLACK;
     }
     if (graphcurses_mode == _TEXTMONO)
     {
+        if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
+        if (bg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) bg = COLOR_WHITE;
         if (fg) fg = (fg & GRAPHCURSES_COLOR_BRIGHT) ? (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT) : COLOR_YELLOW;
         if (bg) bg = (bg & GRAPHCURSES_COLOR_BRIGHT) ? (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT) : COLOR_YELLOW;
     }
+    else if ((graphcurses_mode == _MRES4COLOR)
+             || (graphcurses_mode == _MRESNOCOLOR))
+    {
+        if (fg && ! graphcurses_attr) fg = COLOR_MAGENTA;
+        if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
+        if (bg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) bg = COLOR_WHITE;
+        fg &= ~GRAPHCURSES_COLOR_BRIGHT;
+        bg &= ~GRAPHCURSES_COLOR_BRIGHT;
+        fg = (fg == COLOR_MAGENTA) ? 2 : (((fg >> 1) | (fg & 1)) % 4);
+        bg = (bg == COLOR_MAGENTA) ? 2 : (((bg >> 1) | (bg & 1)) % 4);
+    }
     if (fg >= graphcurses_colors)
     {
+        if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
         if (fg & GRAPHCURSES_COLOR_BRIGHT)
         {
             fg &= ~GRAPHCURSES_COLOR_BRIGHT;

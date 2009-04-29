@@ -533,7 +533,7 @@ the underlying display libraries:
                                              -1 current palette
                                               0 dark green/red/brown
                                               1 dark cyan/magenta/white
-                                              2 light green/red/brown
+                                              2 light green/red/yellow
                                               3 light cyan/magenta/white
                         GRAPHCURSES_BRIGHTBG
                                             Zero disables use of bright background
