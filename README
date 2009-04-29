@@ -515,7 +515,29 @@ the underlying display libraries:
                                             Braille pseudo-bitmap characters
                                             on a Unicode display
  Open Watcom-style graph.h
-                        GRAPHCURSES_MODE    Display mode number
+                        GRAPHCURSES_BITMAP  Nonzero value causes bitmap
+                                            rendering
+                        GRAPHCURSES_MODE    Display mode number:
+                                             -3 graphics, highest res
+                                             -2 graphics, most colors
+                                             -1 original mode
+                                            or any MDA/CGA/HGC/EGA/VGA/MCGA/VESA
+                                            mode number
+                        GRAPHCURSES_ROWS    Display height in text rows or:
+                                             -1 maximum height
+                                              0 default height for mode
+                        GRAPHCURSES_COLOR   Zero disables color
+                        GRAPHCURSES_CCC     Zero disables EGA/VGA/MCGA/SVGA/VESA
+                                            palette remapping
+                        GRAPHCURSES_PALETTE Select palette for CGA mode 4/5:
+                                             -1 current palette
+                                              0 dark green/red/brown
+                                              1 dark cyan/magenta/white
+                                              2 light green/red/brown
+                                              3 light cyan/magenta/white
+                        GRAPHCURSES_BRIGHTBG
+                                            Zero disables use of bright background
+                                            on CGA/EGA/VGA/MCGA/SVGA under MS-DOS
                         OPTCURSES_DIRECT    Nonzero value disables redraw
                                             optimization layer
                         OPTCURSES_INTERLACE Nonzero value renders by

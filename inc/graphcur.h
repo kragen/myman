@@ -60,6 +60,7 @@
 
 #if defined(__MSDOS__)
 #include <dos.h>
+#include <i86.h>
 
 #ifndef HAVE_STRUCT_TIMEVAL
 #define HAVE_STRUCT_TIMEVAL 0
@@ -271,11 +272,6 @@ typedef int graphcur_wchar_t;
 #undef wcwidth
 #define wcwidth(ch) graphcurses_wcwidth(ch)
 
-static int graphcurses_ready = 0;
-static int graphcurses_color = 0;
-static short graphcurses_orig_fg = 7;
-static long graphcurses_orig_bk = _BLACK;
-
 typedef unsigned long int graphcurses_chtype;
 
 #undef chtype
@@ -289,6 +285,8 @@ typedef graphcurses_chtype graphcurses_attr_t;
 static int graphcurses_w = 0, graphcurses_h = 0;
 
 static int graphcurses_x = 0, graphcurses_y = 0;
+
+static int graphcurses_bitmap = 0;
 
 static graphcurses_attr_t graphcurses_attr = 0;
 
@@ -322,7 +320,7 @@ static graphcurses_attr_t graphcurses_attr = 0;
 
 #define echo()
 
-#define can_change_color() (0)
+#define can_change_color() (graphcurses_ccc)
 
 #define keypad(stdscr, x)
 
@@ -361,7 +359,9 @@ static graphcurses_attr_t graphcurses_attr = 0;
 
 #define COLOR_PAIRS 256
 
-#define COLORS 16
+#define GRAPHCURSES_MAXCOLORS 16
+
+#define COLORS (graphcurses_colors)
 
 #define COLOR_BLACK 0
 
@@ -379,7 +379,9 @@ static graphcurses_attr_t graphcurses_attr = 0;
 
 #define COLOR_WHITE (COLOR_RED | COLOR_GREEN | COLOR_BLUE)
 
-#define PEN_BRIGHT 8
+#define GRAPHCURSES_COLOR_BRIGHT 8
+
+#define GRAPHCURSES_COLOR_BLINK 16
 
 #define _PAIR_SHIFT 24
 
@@ -415,7 +417,29 @@ static graphcurses_attr_t graphcurses_attr = 0;
 
 #define ACS_BLOCK 0xdbUL
 
+#define GRAPHCURSES_CGA_MODE_CONTROL_PORT 0x03d8
+#define GRAPHCURSES_CGA_MODE_BRIGHTBG (1 << 5)
+
+static int graphcurses_ready = 0;
+static int graphcurses_colors = GRAPHCURSES_MAXCOLORS;
+static int graphcurses_has_color = 1;
+static int graphcurses_ccc = 1;
+static int graphcurses_brightbg = 1;
+static int graphcurses_orig_rows = 0;
+static int graphcurses_mode = _DEFAULTMODE;
+static int graphcurses_orig_mode = _DEFAULTMODE;
+static int graphcurses_orig_cga_mode = -1;
+static short graphcurses_whichpalette = -1;
+static short graphcurses_orig_whichpalette = -1;
+static int graphcurses_use_bk = 1;
+static short graphcurses_orig_text_fg = COLOR_WHITE;
+static short graphcurses_orig_fg = _WHITE;
+static long graphcurses_orig_bk = _BLACK;
+
 static struct { short fg, bg; } graphcurses_pairs[COLOR_PAIRS];
+
+static long graphcurses_rgb[GRAPHCURSES_MAXCOLORS];
+static long graphcurses_orig_rgb[GRAPHCURSES_MAXCOLORS];
 
 static int graphcurses_wcwidth(graphcurses_chtype ch)
 {
@@ -467,7 +491,7 @@ static int standend(void)
 static int has_colors(void)
 {
     if (! graphcurses_ready) return ERR;
-    return graphcurses_color;
+    return (graphcurses_has_color && (graphcurses_colors > 2));
 }
 
 static int start_color(void)
@@ -479,44 +503,230 @@ static int start_color(void)
 
 static int init_pair(short i, short fg, short bg);
 
+#define GRAPHCURSES_COLOR_TO_RGB(c) \
+           (((c) == COLOR_BLACK) ? _BLACK \
+            : ((c) == COLOR_BLUE) ? _BLUE \
+            : ((c) == COLOR_GREEN) ? _GREEN \
+            : ((c) == COLOR_CYAN) ? _CYAN \
+            : ((c) == COLOR_RED) ? _RED \
+            : ((c) == COLOR_MAGENTA) ? _MAGENTA \
+            : ((c) == COLOR_YELLOW) ? _BROWN \
+            : ((c) == COLOR_WHITE) ? _WHITE \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) ? _GRAY \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLUE)) ? _LIGHTBLUE \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_GREEN)) ? _LIGHTGREEN \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_CYAN)) ? _LIGHTCYAN \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_RED)) ? _LIGHTRED \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_MAGENTA)) ? _LIGHTMAGENTA \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_YELLOW)) ? _YELLOW \
+            : ((c) == (GRAPHCURSES_COLOR_BRIGHT | COLOR_WHITE)) ? _BRIGHTWHITE \
+            : _WHITE)
+
 #define INITSCR_WITH_HINTS
 
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
     int i;
     struct videoconfig vc;
+    short rows;
+    char *ignored;
 
+    graphcurses_mode = _DEFAULTMODE;
+    rows = 0;
+    _getvideoconfig(&vc);
+    graphcurses_orig_rows = 0;
+    graphcurses_orig_mode = _DEFAULTMODE;
+    if (_grstatus() == _GROK)
+    {
+        graphcurses_orig_mode = vc.mode;
+        if (vc.numtextrows > 0)
+        {
+            graphcurses_orig_rows = vc.numtextrows;
+            rows = vc.numtextrows;
+        }
+    }
+    graphcurses_whichpalette = -1;
+    graphcurses_orig_whichpalette = -1;
+    graphcurses_bitmap = 0;
+    if (myman_getenv("GRAPHCURSES_BITMAP")
+        &&
+        *myman_getenv("GRAPHCURSES_BITMAP"))
+    {
+        graphcurses_bitmap = strcmp(myman_getenv("GRAPHCURSES_BITMAP"), "0");
+        graphcurses_mode = _MAXCOLORMODE;
+    }
     if (myman_getenv("GRAPHCURSES_MODE")
         &&
         *myman_getenv("GRAPHCURSES_MODE"))
     {
-        _setvideomode(atoi(myman_getenv("GRAPHCURSES_MODE")));
+        graphcurses_mode = (short) strtol(myman_getenv("GRAPHCURSES_MODE"), &ignored, 0);
     }
-    graphcurses_orig_fg = _gettextcolor();
+    if (myman_getenv("GRAPHCURSES_ROWS")
+        &&
+        *myman_getenv("GRAPHCURSES_ROWS"))
+    {
+        rows = (short) strtol(myman_getenv("GRAPHCURSES_ROWS"), &ignored, 0);
+    }
+    if (myman_getenv("GRAPHCURSES_PALETTE")
+        &&
+        *myman_getenv("GRAPHCURSES_PALETTE"))
+    {
+        graphcurses_whichpalette = (short) strtol(myman_getenv("GRAPHCURSES_PALETTE"), &ignored, 0);
+    }
+    graphcurses_ccc = 1;
+    if (myman_getenv("GRAPHCURSES_CCC")
+        &&
+        *myman_getenv("GRAPHCURSES_CCC"))
+    {
+        graphcurses_ccc = (short) strtol(myman_getenv("GRAPHCURSES_CCC"), &ignored, 0);
+    }
+    graphcurses_brightbg = 1;
+    if (myman_getenv("GRAPHCURSES_BRIGHTBG")
+        &&
+        *myman_getenv("GRAPHCURSES_BRIGHTBG"))
+    {
+        graphcurses_brightbg = strcmp(myman_getenv("GRAPHCURSES_BRIGHTBG"), "0");
+    }
+    graphcurses_has_color = 1;
+    if (myman_getenv("GRAPHCURSES_COLOR")
+        &&
+        *myman_getenv("GRAPHCURSES_COLOR"))
+    {
+        graphcurses_has_color = strcmp(myman_getenv("GRAPHCURSES_CCC"), "0");
+    }
+    graphcurses_orig_text_fg = _gettextcolor();
+    graphcurses_orig_fg = _getcolor();
     graphcurses_orig_bk = _getbkcolor();
-    graphcurses_color = 1;
+    graphcurses_colors = 16;
+    graphcurses_use_bk = 1;
     graphcurses_w = 80;
     graphcurses_h = 25;
-    if (_getvideoconfig(&vc))
+    if (rows)
     {
-        if (vc.numtextcols > 0) graphcurses_w = vc.numtextcols;
-        if (vc.numtextrows > 0) graphcurses_h = vc.numtextrows;
-        if (vc.numcolors > 0) graphcurses_color = (vc.numcolors >= 8);
-        if ((vc.adapter == _MDPA)
-            || (vc.adapter == _HERCMONO)
-            || (vc.monitor == _MONO)
-            || (vc.monitor == _ANALOGMONO)
-            || (vc.mode == _TEXTBW40)
-            || (vc.mode == _TEXTBW80)
-            || (vc.mode == _MRESNOCOLOR)
-            || (vc.mode == _HRESBW)
-            || (vc.mode == _TEXTMONO)
-            || (vc.mode == _HERCMONO)
-            || (vc.mode == _ERESNOCOLOR)
-            || (vc.mode == _VRES2COLOR))
+        graphcurses_h = _setvideomoderows(graphcurses_mode, rows);
+        if (! graphcurses_h)
         {
-            graphcurses_color = 0;
+            _setvideomode(graphcurses_mode);
+            graphcurses_h = _settextrows(rows);
+            if (! graphcurses_h)
+            {
+                graphcurses_h = 25;
+                _setvideomode(graphcurses_mode);
+            }
         }
+    }
+    else
+    {
+        _setvideomode(graphcurses_mode);
+    }
+    if (_grstatus() != _GROK)
+    {
+        graphcurses_mode = _DEFAULTMODE;
+        graphcurses_h = 25;
+        if (rows)
+        {
+            _settextrows(rows);
+            if (_grstatus() == _GROK)
+            {
+                graphcurses_h = rows;
+            }
+        }
+    }
+    else if (rows)
+    {
+        graphcurses_h = rows;
+    }
+    memset((void *) &vc, 0, sizeof(vc));
+    vc.numtextcols = graphcurses_w;
+    vc.numtextrows = graphcurses_h;
+    vc.numcolors = graphcurses_colors;
+    vc.mode = graphcurses_mode;
+    vc.adapter = _UNKNOWN;
+    vc.monitor = _UNKNOWN;
+    vc.numxpixels = 0;
+    vc.numypixels = 0;
+    _getvideoconfig(&vc);
+    graphcurses_mode = vc.mode;
+    if (vc.numtextcols > 0) graphcurses_w = vc.numtextcols;
+    if (vc.numtextrows > 0) graphcurses_h = vc.numtextrows;
+    if (vc.numcolors > 0) graphcurses_colors = vc.numcolors;
+    if (graphcurses_colors > GRAPHCURSES_MAXCOLORS) graphcurses_colors = GRAPHCURSES_MAXCOLORS;
+    if ((vc.adapter == _MDPA)
+        || (vc.adapter == _HERCULES)
+        || (vc.monitor == _MONO)
+        || (vc.monitor == _ANALOGMONO)
+        || (graphcurses_mode == _TEXTBW40)
+        || (graphcurses_mode == _TEXTBW80)
+        || (graphcurses_mode == _MRESNOCOLOR)
+        || (graphcurses_mode == _HRESBW)
+        || (graphcurses_mode == _TEXTMONO)
+        || (graphcurses_mode == _HERCMONO)
+        || (graphcurses_mode == _ERESNOCOLOR)
+        || (graphcurses_mode == _VRES2COLOR))
+    {
+        graphcurses_has_color = 0;
+        graphcurses_brightbg = 0;
+    }
+    graphcurses_orig_cga_mode = -1;
+    if (vc.numxpixels && vc.numypixels)
+    {
+        graphcurses_use_bk = 0;
+        graphcurses_brightbg = 0;
+        if (graphcurses_bitmap)
+        {
+            graphcurses_w = vc.numxpixels;
+            graphcurses_h = vc.numypixels;
+        }
+    }
+    else
+    {
+#ifdef __MSDOS__
+        if (graphcurses_brightbg
+            &&
+            (vc.adapter == _CGA)
+            &&
+            ((vc.numcolors == 16)
+             ||
+             (vc.numcolors == 32))
+            &&
+            graphcurses_has_color)
+        {
+            graphcurses_orig_cga_mode = (((vc.numtextcols != 40) ? 1 : 0) | (1 << 2));
+            outp(GRAPHCURSES_CGA_MODE_CONTROL_PORT,
+                 graphcurses_orig_cga_mode
+                 | GRAPHCURSES_CGA_MODE_BRIGHTBG);
+        }
+        else if (graphcurses_brightbg
+                 &&
+                 ((vc.adapter == _EGA)
+                  || (vc.adapter == _VGA)
+                  || (vc.adapter == _MCGA)
+                  || (vc.adapter == _SVGA))
+                 &&
+                 ((vc.numcolors == 16)
+                  ||
+                  (vc.numcolors == 32))
+                 &&
+                 graphcurses_has_color)
+        {
+            union REGPACK regs;
+
+            memset((void *) &regs, 0, sizeof(regs));
+            regs.h.ah = 0x10; /* Function 10h: Select Colors in EGA/VGA */
+            regs.h.al = 3; /* Subfunction 3h: BL = enable/disable blinking */
+            regs.h.bl = 0; /* BL: 0 = bright background, 1 = blinking */
+            intr(0x10, &regs);
+        }
+        else
+#endif /* defined(__MSDOS__) */
+        {
+            graphcurses_brightbg = 0;
+        }
+        graphcurses_bitmap = 0;
+    }
+    if (graphcurses_whichpalette != -1)
+    {
+        graphcurses_orig_whichpalette = _selectpalette(graphcurses_whichpalette);
     }
     graphcurses_ready = 1;
     graphcurses_attr = -1;
@@ -525,15 +735,77 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         graphcurses_pairs[i].fg = i ? (i % COLORS) : COLOR_WHITE;
         graphcurses_pairs[i].bg = i / COLORS;
     }
+    if (graphcurses_ccc)
+    {
+        graphcurses_ccc = has_colors() && (COLORS >= 8);
+    }
+    for (i = 0; i < GRAPHCURSES_MAXCOLORS; i ++)
+    {
+        graphcurses_orig_rgb[i] = -1;
+        graphcurses_rgb[i] = GRAPHCURSES_COLOR_TO_RGB(i);
+        if (can_change_color() && (i < COLORS))
+        {
+            graphcurses_orig_rgb[i] = _remappalette(i, graphcurses_rgb[i]);
+            if (graphcurses_orig_rgb[i] == -1)
+            {
+                graphcurses_ccc = 0;
+            }
+        }
+    }
     attrset(0);
+    _setcolor(COLOR_WHITE);
+    _setbkcolor(_BLACK);
+    _settextcolor(COLOR_WHITE);
 }
 
 static void endwin(void)
 {
+    int i;
+
+#ifdef __MSDOS__
+    if (graphcurses_brightbg && (graphcurses_orig_cga_mode != -1))
+    {
+        outp(GRAPHCURSES_CGA_MODE_CONTROL_PORT,
+             graphcurses_orig_cga_mode);
+    }
+    else if (graphcurses_brightbg)
+    {
+        union REGPACK regs;
+
+        memset((void *) &regs, 0, sizeof(regs));
+        regs.h.ah = 0x10; /* Select Colors in EGA/VGA */
+        regs.h.al = 0x03; /* BL = enable/disable blinking */
+        regs.h.bl = 1; /* 0 = bright background, 1 = blinking */
+        intr(0x10, &regs);
+    }
+#endif /* defined(__MSDOS__) */
+    for (i = 0; i < GRAPHCURSES_MAXCOLORS; i ++)
+    {
+        graphcurses_rgb[i] = GRAPHCURSES_COLOR_TO_RGB(i);
+        if (can_change_color() && (i < COLORS)) _remappalette(i, graphcurses_orig_rgb[i]);
+    }
+    if (graphcurses_whichpalette != -1)
+    {
+        _selectpalette(graphcurses_orig_whichpalette);
+    }
+    graphcurses_whichpalette = 0;
+    graphcurses_bitmap = 0;
     graphcurses_ready = 0;
-    _setvideomode(_DEFAULTMODE);
-    _settextcolor(graphcurses_orig_fg);
+    if (graphcurses_orig_rows)
+    {
+        if (! _setvideomoderows(graphcurses_orig_mode, graphcurses_orig_rows))
+        {
+            _setvideomode(graphcurses_orig_mode);
+            _settextrows(graphcurses_orig_rows);
+        }
+    }
+    else
+    {
+        _setvideomode(_DEFAULTMODE);
+    }
+    _setcolor(graphcurses_orig_fg);
     _setbkcolor(graphcurses_orig_bk);
+    _settextcolor(graphcurses_orig_text_fg);
     _displaycursor(_GCURSORON);
     _clearscreen(_GCLEARSCREEN);
 }
@@ -544,17 +816,20 @@ static int graphcurses_addch(graphcurses_chtype ch);
 
 static int erase(void)
 {
-    short fg;
-    long bk;
+    short text_fg;
+    long fg, bk;
 
     if (! graphcurses_ready) return ERR;
-    fg = _gettextcolor();
+    text_fg = _gettextcolor();
+    fg = _getcolor();
     bk = _getbkcolor();
-    _settextcolor(COLOR_WHITE);
+    _setcolor(COLOR_WHITE);
     _setbkcolor(_BLACK);
+    _settextcolor(COLOR_WHITE);
     _clearscreen(_GCLEARSCREEN);
-    _settextcolor(fg);
+    _setcolor(fg);
     _setbkcolor(bk);
+    _settextcolor(text_fg);
     _settextposition(1, 1);
     attrset(0);
     move(0, 0);
@@ -667,11 +942,26 @@ static int pair_content(short i, short *fg, short *bg)
 
 static int init_color(short i, short r, short g, short b)
 {
+    long pal;
+
+    if (! graphcurses_ready) return ERR;
+    if (! has_colors()) return ERR;
+    if (! can_change_color()) return ERR;
+    if ((i < 0) || (i > COLORS)) return ERR;
+    graphcurses_rgb[i] = (0x3fL * r / 1000L) + ((0x3fL * g / 1000L) << 8) + ((0x3fL * b / 1000L) << 16);
+    _remappalette(i, graphcurses_rgb[i]);
     return ERR;
 }
 
 static int color_content(short i, short *r, short *g, short *b)
 {
+    if (! graphcurses_ready) return ERR;
+    if (! has_colors()) return ERR;
+    if (! can_change_color()) return ERR;
+    if ((i < 0) || (i > COLORS)) return ERR;
+    *r = (short) (1000L * (graphcurses_rgb[i] & 0x3fL) / 0x3fL);
+    *g = (short) (1000L * ((graphcurses_rgb[i] >> 8) & 0x3fL) / 0x3fL);
+    *b = (short) (1000L * ((graphcurses_rgb[i] >> 16) & 0x3fL) / 0x3fL);
     return ERR;
 }
 
@@ -751,7 +1041,7 @@ static int graphcurses_addch(graphcurses_chtype ch)
     }
     else if ((graphcurses_attr & A_BOLD) && has_colors())
     {
-        fg = COLOR_YELLOW | PEN_BRIGHT;
+        fg = COLOR_YELLOW | GRAPHCURSES_COLOR_BRIGHT;
         bg = COLOR_BLACK;
     }
     if (has_colors() && PAIR_NUMBER(graphcurses_attr))
@@ -760,7 +1050,7 @@ static int graphcurses_addch(graphcurses_chtype ch)
     }
     if (graphcurses_attr & A_BOLD)
     {
-        fg |= PEN_BRIGHT;
+        fg |= GRAPHCURSES_COLOR_BRIGHT;
     }
     if (graphcurses_attr & (A_STANDOUT | A_REVERSE))
     {
@@ -781,34 +1071,96 @@ static int graphcurses_addch(graphcurses_chtype ch)
     {
         graphcurses_y = graphcurses_h - 1;
     }
+    if (bg && (! graphcurses_use_bk) && (! graphcurses_bitmap) && (ch != ACS_BLOCK) && (ch != '#'))
+    {
+        switch (ch)
+        {
+        case 0:
+        case ' ':
+        case 0xff:
+            ch = ACS_BLOCK;
+            break;
+        case 0xdc:
+            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdf;
+            else if (fg) ch = ACS_BLOCK;
+            break;
+        case 0xdf:
+            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdc;
+            else if (fg) ch = ACS_BLOCK;
+            break;
+        case 0xdd:
+            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xde;
+            else if (fg) ch = ACS_BLOCK;
+            break;
+        case 0xde:
+            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdf;
+            else if (fg) ch = ACS_BLOCK;
+            break;
+        }
+        fg = (fg > bg) ? fg : bg;
+        bg = COLOR_BLACK;
+    }
+    if (graphcurses_bitmap)
+    {
+        switch (ch)
+        {
+        case 0:
+        case ' ':
+        case 0xff:
+            ch = ACS_BLOCK;
+            fg = bg;
+            bg = COLOR_BLACK;
+        }
+        if (bg && (ch != ACS_BLOCK) && (ch != '#'))
+        {
+            ch = ACS_BLOCK;
+            fg = bg;
+            bg = COLOR_BLACK;
+        }
+    }
+    if (graphcurses_mode == _TEXTMONO)
+    {
+        if (fg) fg = (fg & GRAPHCURSES_COLOR_BRIGHT) ? (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT) : COLOR_YELLOW;
+        if (bg) bg = (bg & GRAPHCURSES_COLOR_BRIGHT) ? (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT) : COLOR_YELLOW;
+    }
+    if (fg >= graphcurses_colors)
+    {
+        if (fg & GRAPHCURSES_COLOR_BRIGHT)
+        {
+            fg &= ~GRAPHCURSES_COLOR_BRIGHT;
+        }
+    }
+    if (fg >= graphcurses_colors)
+    {
+        fg = (fg == COLOR_WHITE) ? (graphcurses_colors - 1) : fg ? ((fg - 1) % (graphcurses_colors - 1) + 1) : COLOR_BLACK;
+    }
     _settextposition(graphcurses_y + 1, graphcurses_x + 1);
+    _setcolor(fg);
+    if (graphcurses_use_bk && graphcurses_brightbg && (graphcurses_colors == 16) && (bg & GRAPHCURSES_COLOR_BRIGHT))
+    {
+        fg |= GRAPHCURSES_COLOR_BLINK;
+    }
     _settextcolor(fg);
-    _setbkcolor((bg == COLOR_BLACK) ? _BLACK
-                : (bg == COLOR_BLUE) ? _BLUE
-                : (bg == COLOR_GREEN) ? _GREEN
-                : (bg == COLOR_CYAN) ? _CYAN
-                : (bg == COLOR_RED) ? _RED
-                : (bg == COLOR_MAGENTA) ? _MAGENTA
-                : (bg == COLOR_YELLOW) ? _BROWN
-                : (bg == COLOR_WHITE) ? _WHITE
-                : (bg == (PEN_BRIGHT | COLOR_BLACK)) ? _GRAY
-                : (bg == (PEN_BRIGHT | COLOR_BLUE)) ? _LIGHTBLUE
-                : (bg == (PEN_BRIGHT | COLOR_GREEN)) ? _LIGHTGREEN
-                : (bg == (PEN_BRIGHT | COLOR_CYAN)) ? _LIGHTCYAN
-                : (bg == (PEN_BRIGHT | COLOR_RED)) ? _LIGHTRED
-                : (bg == (PEN_BRIGHT | COLOR_MAGENTA)) ? _LIGHTMAGENTA
-                : (bg == (PEN_BRIGHT | COLOR_YELLOW)) ? _YELLOW
-                : (bg == (PEN_BRIGHT | COLOR_WHITE)) ? _BRIGHTWHITE
-                : _BLACK);
+    if (graphcurses_use_bk)
+    {
+        _setbkcolor(GRAPHCURSES_COLOR_TO_RGB(bg));
+    }
     if (((graphcurses_y + 1) < graphcurses_h)
         ||
         ((graphcurses_x + 1) < graphcurses_w))
     {
-        char buf[2];
+        if (graphcurses_bitmap)
+        {
+            _setpixel(graphcurses_x, graphcurses_y);
+        }
+        else
+        {
+            char buf[2];
 
-        buf[0] = ch;
-        buf[1] = '\0';
-        _outtext(buf);
+            buf[0] = ch;
+            buf[1] = '\0';
+            _outmem(buf, 1);
+        }
     }
     else
     {
