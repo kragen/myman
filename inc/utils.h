@@ -121,7 +121,7 @@ extern const char *DONEMESSAGE;
 
 /* copyright information for the program as a whole */
 #ifndef MYMANCOPYRIGHT
-#define MYMANCOPYRIGHT "Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>"
+#define MYMANCOPYRIGHT "Copyright 1997-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>"
 #endif
 
 /* package version number */
