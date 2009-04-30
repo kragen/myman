@@ -1137,6 +1137,13 @@ static int graphcurses_addch(graphcurses_chtype ch)
         fg = (fg == COLOR_MAGENTA) ? 2 : (((fg >> 1) | (fg & 1)) % 4);
         bg = (bg == COLOR_MAGENTA) ? 2 : (((bg >> 1) | (bg & 1)) % 4);
     }
+    else if (graphcurses_use_bk && (! graphcurses_brightbg) && (graphcurses_colors == 16))
+    {
+        if (bg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK))
+        {
+            bg = COLOR_WHITE;
+        }
+    }
     if (fg >= graphcurses_colors)
     {
         if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
@@ -1148,6 +1155,10 @@ static int graphcurses_addch(graphcurses_chtype ch)
     if (fg >= graphcurses_colors)
     {
         fg = (fg == COLOR_WHITE) ? (graphcurses_colors - 1) : fg ? ((fg - 1) % (graphcurses_colors - 1) + 1) : COLOR_BLACK;
+    }
+    if (fg == bg)
+    {
+        fg = bg ? COLOR_BLACK : (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT);
     }
     _settextposition(graphcurses_y + 1, graphcurses_x + 1);
     _setcolor(fg);
