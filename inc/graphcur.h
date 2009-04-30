@@ -418,7 +418,12 @@ static graphcurses_attr_t graphcurses_attr = 0;
 #define ACS_BLOCK 0xdbUL
 
 #define GRAPHCURSES_CGA_MODE_CONTROL_PORT 0x03d8
-#define GRAPHCURSES_CGA_MODE_BRIGHTBG (1 << 5)
+#define GRAPHCURSES_CGA_MODE_BLINK (1 << 5)
+#define GRAPHCURSES_CGA_MODE_HIGHRESGFX (1 << 4)
+#define GRAPHCURSES_CGA_MODE_ENABLED (1 << 3)
+#define GRAPHCURSES_CGA_MODE_RGB (1 << 2)
+#define GRAPHCURSES_CGA_MODE_BITMAPGFX (1 << 1)
+#define GRAPHCURSES_CGA_MODE_HIGHRES 1
 
 static int graphcurses_ready = 0;
 static int graphcurses_colors = GRAPHCURSES_MAXCOLORS;
@@ -691,10 +696,11 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             &&
             graphcurses_has_color)
         {
-            graphcurses_orig_cga_mode = (((vc.numtextcols != 40) ? 1 : 0) | (1 << 2));
+            graphcurses_orig_cga_mode = (((vc.numtextcols != 40) ? GRAPHCURSES_CGA_MODE_HIGHRES : 0)
+                                         | GRAPHCURSES_CGA_MODE_BLINK);
             outp(GRAPHCURSES_CGA_MODE_CONTROL_PORT,
                  graphcurses_orig_cga_mode
-                 | GRAPHCURSES_CGA_MODE_BRIGHTBG);
+                 & ~GRAPHCURSES_CGA_MODE_BLINK);
         }
         else if (graphcurses_brightbg
                  &&
