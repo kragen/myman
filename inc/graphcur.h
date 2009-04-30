@@ -660,8 +660,6 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
         || (vc.adapter == _HERCULES)
         || (vc.monitor == _MONO)
         || (vc.monitor == _ANALOGMONO)
-        || (graphcurses_mode == _TEXTBW40)
-        || (graphcurses_mode == _TEXTBW80)
         || (graphcurses_mode == _MRESNOCOLOR)
         || (graphcurses_mode == _HRESBW)
         || (graphcurses_mode == _TEXTMONO)
@@ -697,6 +695,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
             graphcurses_has_color)
         {
             graphcurses_orig_cga_mode = (((vc.numtextcols != 40) ? GRAPHCURSES_CGA_MODE_HIGHRES : 0)
+                                         | (((vc.mode == _TEXTBW40) || (vc.mode == _TEXTBW80)) ? GRAPHCURSES_CGA_MODE_RGB : 0)
                                          | GRAPHCURSES_CGA_MODE_BLINK);
             outp(GRAPHCURSES_CGA_MODE_CONTROL_PORT,
                  graphcurses_orig_cga_mode
