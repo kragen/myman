@@ -440,6 +440,8 @@ static int graphcurses_textmode = 1;
 static short graphcurses_orig_text_fg = COLOR_WHITE;
 static short graphcurses_orig_fg = _WHITE;
 static long graphcurses_orig_bk = _BLACK;
+static short graphcurses_fg = -1;
+static short graphcurses_bg = -1;
 
 static struct { short fg, bg; } graphcurses_pairs[COLOR_PAIRS];
 
@@ -735,6 +737,8 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
     graphcurses_ready = 1;
     graphcurses_attr = -1;
+    graphcurses_fg = -1;
+    graphcurses_bg = -1;
     for (i = 0; i < COLOR_PAIRS; i ++)
     {
         graphcurses_pairs[i].fg = i ? (i % COLORS) : COLOR_WHITE;
@@ -1076,33 +1080,19 @@ static int graphcurses_addch(graphcurses_chtype ch)
     {
         graphcurses_y = graphcurses_h - 1;
     }
-    if (bg && (! graphcurses_textmode) && (! graphcurses_bitmap) && (ch != ACS_BLOCK) && (ch != '#'))
+    if (bg && (! graphcurses_textmode) && (! graphcurses_bitmap))
     {
         switch (ch)
         {
         case 0:
         case ' ':
         case 0xff:
-            ch = ACS_BLOCK;
-            break;
-        case 0xdc:
-            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdf;
-            else if (fg) ch = ACS_BLOCK;
-            break;
-        case 0xdf:
-            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdc;
-            else if (fg) ch = ACS_BLOCK;
-            break;
-        case 0xdd:
-            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xde;
-            else if (fg) ch = ACS_BLOCK;
-            break;
-        case 0xde:
-            if (fg <= bg) ch = bg ? ACS_BLOCK : 0xdf;
-            else if (fg) ch = ACS_BLOCK;
-            break;
+            if (bg)
+            {
+                fg = bg;
+                ch = ACS_BLOCK;
+            }
         }
-        fg = (fg > bg) ? fg : bg;
         bg = COLOR_BLACK;
     }
     if (graphcurses_bitmap)
@@ -1116,6 +1106,9 @@ static int graphcurses_addch(graphcurses_chtype ch)
             fg = bg;
         }
         ch = ACS_BLOCK;
+    }
+    if (ch == ACS_BLOCK)
+    {
         bg = COLOR_BLACK;
     }
     if (graphcurses_mode == _TEXTMONO)
@@ -1128,7 +1121,7 @@ static int graphcurses_addch(graphcurses_chtype ch)
     else if ((graphcurses_mode == _MRES4COLOR)
              || (graphcurses_mode == _MRESNOCOLOR))
     {
-        if (fg && ! graphcurses_attr) fg = COLOR_MAGENTA;
+        if (fg == COLOR_WHITE) fg = COLOR_MAGENTA;
         if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
         if (bg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) bg = COLOR_WHITE;
         fg &= ~GRAPHCURSES_COLOR_BRIGHT;
@@ -1157,12 +1150,25 @@ static int graphcurses_addch(graphcurses_chtype ch)
     }
     if (fg == bg)
     {
-        fg = bg ? COLOR_BLACK : (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT);
+        switch (ch)
+        {
+        case 0:
+        case ' ':
+        case 0xff:
+        case ACS_BLOCK:
+            break;
+        default:
+            fg = bg ? COLOR_BLACK : (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT);
+        }
     }
     _settextposition(graphcurses_y + 1, graphcurses_x + 1);
     if (graphcurses_bitmap)
     {
-        _setcolor(fg);
+        if (graphcurses_fg != fg)
+        {
+            _setcolor(fg);
+            graphcurses_fg = fg;
+        }
     }
     else
     {
@@ -1170,11 +1176,19 @@ static int graphcurses_addch(graphcurses_chtype ch)
         {
             fg |= GRAPHCURSES_COLOR_BLINK;
         }
-        _settextcolor(fg);
+        if (graphcurses_fg != fg)
+        {
+            _settextcolor(fg);
+            graphcurses_fg = fg;
+        }
     }
     if (graphcurses_textmode)
     {
-        _setbkcolor(GRAPHCURSES_COLOR_TO_RGB(bg));
+        if (graphcurses_bg != bg)
+        {
+            _setbkcolor(GRAPHCURSES_COLOR_TO_RGB(bg));
+            graphcurses_bg = bg;
+        }
     }
     if (((graphcurses_y + 1) < graphcurses_h)
         ||
