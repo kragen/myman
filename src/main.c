@@ -289,7 +289,7 @@ main(int argc, char *argv[]
         if (! strcmp(defsize, # size)) \
         { \
             extern char *builtin_tilefile_ ## size; \
-            extern char *tile_ ## size; \
+            extern char *tile_ ## size [256]; \
             extern int tile_used_ ## size [256]; \
             extern int tile_color_ ## size [256]; \
             extern int tile_w_ ## size; \
@@ -297,7 +297,7 @@ main(int argc, char *argv[]
             extern int tile_flags_ ## size; \
             extern const char *tile_args_ ## size; \
             extern char *builtin_spritefile_ ## size; \
-            extern char *sprite_ ## size; \
+            extern char *sprite_ ## size [256]; \
             extern int sprite_used_ ## size [256]; \
             extern int sprite_color_ ## size [256]; \
             extern int sprite_w_ ## size; \
@@ -305,7 +305,7 @@ main(int argc, char *argv[]
             extern int sprite_flags_ ## size; \
             extern const char *sprite_args_ ## size; \
             builtin_tilefile = builtin_tilefile_ ## size; \
-            tile = tile_ ## size; \
+            memcpy((void *) tile, (void *)tile_ ## size, sizeof(tile)); \
             memcpy((void *) tile_used, (void *) tile_used_ ## size, sizeof(tile_used)); \
             memcpy((void *) tile_color, (void *) tile_color_ ## size, sizeof(tile_color)); \
             tile_w = tile_w_ ## size; \
@@ -313,7 +313,7 @@ main(int argc, char *argv[]
             tile_flags = tile_flags_ ## size; \
             tile_args = tile_args_ ## size; \
             builtin_spritefile = builtin_spritefile_ ## size; \
-            sprite = sprite_ ## size; \
+            memcpy((void *) sprite, (void *)sprite_ ## size, sizeof(sprite)); \
             memcpy((void *) sprite_used, (void *) sprite_used_ ## size, sizeof(sprite_used)); \
             memcpy((void *) sprite_color, (void *) sprite_color_ ## size, sizeof(sprite_color)); \
             sprite_w = sprite_w_ ## size; \

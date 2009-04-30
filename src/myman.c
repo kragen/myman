@@ -4786,7 +4786,7 @@ pager_addch(unsigned long c, chtype a)
             {
                 for (pager_addch__i = 0; pager_addch__i < tile_w; pager_addch__i ++)
                 {
-                    pager_addch__cc = (unsigned long) (unsigned char) ((pager_addch__j < tile_h) ? tile[(pager_addch__c * tile_h + pager_addch__j) * tile_w + pager_addch__i] : ' ');
+                    pager_addch__cc = (unsigned long) (unsigned char) ((pager_addch__j < tile_h) ? tile[pager_addch__c][pager_addch__j * tile_w + pager_addch__i] : ' ');
                     if (! pager_addch__cc) pager_addch__cc = (unsigned long) (unsigned char) ' ';
                     my_move(pager_addch__y * pager_tile_h + pager_addch__j,
                             (pager_addch__x * tile_w + pager_addch__i) * (use_fullwidth ? 2 : 1));
@@ -5833,7 +5833,7 @@ gamerender(void)
                     }
 #endif
                     my_move(vline + (reflect ? c_off : r_off), (vcol + (reflect ? r_off : c_off)) * (use_fullwidth ? 2 : 1));
-                    my_addch((unsigned long) (unsigned char) tile[(filler_tile * tile_h + ((vline + (3 * tile_h)) % tile_h)) * tile_w + (vcol % tile_w)], a);
+                    my_addch((unsigned long) (unsigned char) tile[filler_tile][((vline + (3 * tile_h)) % tile_h) * tile_w + (vcol % tile_w)], a);
                 }
             }
             continue;
@@ -5883,7 +5883,7 @@ gamerender(void)
                         }
 #endif
                         my_move(vline + (reflect ? c_off : r_off), col * (use_fullwidth ? 2 : 1));
-                        my_addch((unsigned long) (unsigned char) tile[(((unsigned) score_tile) * tile_h + vline) * tile_w + tile_w - 1 - (score_x % tile_w)], a);
+                        my_addch((unsigned long) (unsigned char) tile[(unsigned) score_tile][vline * tile_w + tile_w - 1 - (score_x % tile_w)], a);
 
                     }
                 }
@@ -5919,7 +5919,7 @@ gamerender(void)
                 {
                     chtype a;
 
-                    c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + hud_line) * sprite_w + (col % sprite_w)];
+                    c = (unsigned long) (unsigned char) sprite[life_sprite][hud_line * sprite_w + (col % sprite_w)];
                     if (c)
                     {
                         a = 0;
@@ -6028,7 +6028,7 @@ gamerender(void)
                 pause_tile = (unsigned long) (unsigned char) msg_pause[pause_x / tile_w];
                 if (tile_used[(unsigned) pause_tile])
                 {
-                    c = (unsigned long) (unsigned char) tile[(msg_pause[pause_x / tile_w] * tile_h + pause_y) * tile_w + (pause_x % tile_w)];
+                    c = (unsigned long) (unsigned char) tile[(unsigned long) (unsigned char) msg_pause[pause_x / tile_w]][pause_y * tile_w + (pause_x % tile_w)];
                     if (! c)
                     {
                         c = ' ';
@@ -6463,7 +6463,7 @@ gamerender(void)
                 {
                     chtype a;
 
-                    c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + hud_line) * sprite_w + (level_x % sprite_w)];
+                    c = (unsigned long) (unsigned char) sprite[level_sprite][hud_line * sprite_w + (level_x % sprite_w)];
                     if (c)
                     {
                         a = 0;
@@ -6528,7 +6528,7 @@ gamerender(void)
                     {
                         chtype a;
 
-                        c = (unsigned long) (unsigned char) sprite[(life_sprite * sprite_h + line) * sprite_w + ((col - (reflect ? r_off : c_off) - 2 * tile_w) % sprite_w)];
+                        c = (unsigned long) (unsigned char) sprite[life_sprite][line * sprite_w + ((col - (reflect ? r_off : c_off) - 2 * tile_w) % sprite_w)];
                         if (c)
                         {
                             a = 0;
@@ -6568,7 +6568,7 @@ gamerender(void)
                     {
                         chtype a;
 
-                        c = (unsigned long) (unsigned char) sprite[(level_sprite * sprite_h + line) * sprite_w + (level_x % sprite_w)];
+                        c = (unsigned long) (unsigned char) sprite[level_sprite][line * sprite_w + (level_x % sprite_w)];
                         if (c)
                         {
                             a = 0;
@@ -7460,7 +7460,7 @@ parse_myman_args(int argc, char **argv)
                 const char *check_value;
 
                 check_value = myman_getenv(name);
-                if ((! check_value) || strcmp(check_value, value))
+                if (check_value ? strcmp(check_value, value) : *value)
                 {
                     fprintf(stderr, "setenv: did not preserve value, %s=%s vs %s=%s\n",
                             name, value,
@@ -7673,8 +7673,8 @@ parse_myman_args(int argc, char **argv)
         fflush(stderr), exit(1);
     }
 #endif
-    if ((tilefile && readfont(tilefile, &tile_w, &tile_h, &tile, tile_used, &tile_flags, tile_color, &tile_args)) ||
-        (spritefile && readfont(spritefile, &sprite_w, &sprite_h, &sprite, sprite_used, &sprite_flags, sprite_color, &sprite_args)))
+    if ((tilefile && readfont(tilefile, &tile_w, &tile_h, tile, tile_used, &tile_flags, tile_color, &tile_args)) ||
+        (spritefile && readfont(spritefile, &sprite_w, &sprite_h, sprite, sprite_used, &sprite_flags, sprite_color, &sprite_args)))
         exit(1);
 
     if (tile_args)

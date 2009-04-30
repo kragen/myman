@@ -228,7 +228,7 @@ extern int readfont(const char *fontfile,
 extern void writefont(const char *file,
                       const char *prefix,
                       int w, int h,
-                      const char *font,
+                      const char **font,
                       int *used,
                       int flags,
                       int *color,
@@ -309,7 +309,7 @@ extern int tile_w;
 extern int tile_h;
 extern int tile_flags;
 extern const char *tile_args;
-extern const char *tile;
+extern const char *tile[256];
 extern int tile_used[256];
 extern int tile_color[256];
 
@@ -317,7 +317,7 @@ extern int sprite_w;
 extern int sprite_h;
 extern int sprite_flags;
 extern const char *sprite_args;
-extern const char *sprite;
+extern const char *sprite[256];
 extern int sprite_used[256];
 extern int sprite_color[256];
 
@@ -446,17 +446,17 @@ mark_sprite_register(int s);
 
 extern unsigned char gfx2(unsigned char c);
 
-extern size_t gfx1(unsigned char c, int y, int x, int w, int h);
+extern size_t gfx1(const char **font, unsigned char c, int y, int x, int w);
 
 extern unsigned char gfx0(unsigned char c, unsigned char *m);
 
 #define gfx_w (gfx_reflect ? tile_h : tile_w)
 #define gfx_h (gfx_reflect ? tile_w : tile_h)
-#define gfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) tile[gfx1((unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_cp437)), (y) % gfx_h, (x) % gfx_w, tile_w, tile_h)]))
+#define gfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) gfx1(tile, (unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_cp437)), (y) % gfx_h, (x) % gfx_w, tile_w)))
 
 #define sgfx_w (gfx_reflect ? sprite_h : sprite_w)
 #define sgfx_h (gfx_reflect ? sprite_w : sprite_h)
-#define sgfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) sprite[gfx1((unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_sprite)), (y) % sgfx_h, (x) % sgfx_w, sprite_w, sprite_h)]))
+#define sgfx(c,y,x) ((unsigned long) (unsigned char) gfx2((unsigned long) (unsigned char) gfx1(sprite, (unsigned long) (unsigned char) gfx0(((unsigned long) (unsigned char) (c)), (reflect_sprite)), (y) % sgfx_h, (x) % sgfx_w, sprite_w)))
 
 extern int reflect;
 extern int gfx_reflect;

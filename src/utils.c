@@ -1793,7 +1793,7 @@ readfont(const char *fontfile,
     int c, i, j, k;
     int rw, rh;
     char X;
-    char *font_dynamic;
+    char *font_dynamic[256];
 
     *args = NULL;
     *flags = 0;
@@ -1815,12 +1815,24 @@ readfont(const char *fontfile,
     }
     *w = rw;
     *h = rh;
-    *font = font_dynamic = (char *) malloc(256 * rh * rw);
-    if (! font_dynamic)
+    for (i = 0; i <256; i ++)
     {
-        perror("malloc");
-        return 1;
+        font[i] = NULL;
     }
+    for (i = 0; i <256; i ++)
+    {
+        font_dynamic[i] = (char *) malloc(rh * rw);
+        if (! font_dynamic[i])
+        {
+            perror("malloc");
+            for (j = 0; j < i; j ++)
+            {
+                free((void *) font_dynamic[j]);
+            }
+            return 1;
+        }
+    }
+    memcpy((void *) font, (void *) font_dynamic, sizeof(font_dynamic));
     if (! feof(infile))
     {
         c = fgetc_cp437_utf8(infile);
@@ -1983,7 +1995,7 @@ readfont(const char *fontfile,
             ungetc_cp437_utf8(c, infile);
         for (j = 0; j < rh; j ++)
             for (k = 0; k < rw; k ++)
-                font_dynamic[(i * rh + j) * rw + k] = ' ';
+                font_dynamic[i][j * rw + k] = ' ';
         for (j = 0; j < rh; j ++)
         {
             while ((c = fgetc_cp437_utf8(infile)) != ':')
@@ -2008,7 +2020,7 @@ readfont(const char *fontfile,
                      (c != '\n') && (c != '\r') && ! feof(infile);
                  k ++)
             {
-                font_dynamic[(i * rh + j) * rw + k] = c;
+                font_dynamic[i][j * rw + k] = c;
                 if ((c = fgetc_cp437_utf8(infile)) == EOF) {
                     if (feof(infile))
                         continue;
@@ -2036,7 +2048,7 @@ extern void
 writefont(const char *file,
           const char *prefix,
           int w, int h,
-          const char *font,
+          const char **font,
           int *used,
           int flags,
           int *color,
@@ -2063,25 +2075,34 @@ writefont(const char *file,
         printf("0");
     }
     printf(";\n");
-    printf("static const char builtin_%s_data[256 * %d * %d] = {", prefix, h, w);
-    for (c = 0; c < 256; c ++) {
-        printf("\n/* 0x%2.2X */", c);
-        for (i = 0; i < h; i ++) {
+    for (c = 0; c < 256; c ++)
+    {
+        printf("static const char builtin_%s_data_%d[%d * %d] = {", prefix, c, h, w);
+        for (i = 0; i < h; i ++)
+        {
             printf("\n ");
-            for (j = 0; j < w; j ++) {
+            for (j = 0; j < w; j ++)
+            {
                 char k;
 
                 printf(" \'");
-                k = font[(c * h + i) * w + j];
+                k = font[c][i * w + j];
                 mymanescape(&k, 1);
                 printf("\'");
-                if (((c + 1) < 256) || ((i + 1) < h) || ((j + 1) < w))
+                if (((i + 1) < h) || ((j + 1) < w))
                     printf(",");
             }
         }
+        printf("};\n");
+    }
+    printf("const char *%s[256] = {", prefix);
+    for (c = 0; c < 256; c ++)
+    {
+        printf("\n ");
+        printf("builtin_%s_data_%d", prefix, c);
+        if ((c + 1) < 256) printf(",");
     }
     printf("};\n");
-    printf("const char *%s = builtin_%s_data;", prefix, prefix);
     printf("int %s_used[256] = {\n", prefix);
     for (c = 0; c < 256; c ++) {
         if (c && ! (c & 3))
@@ -2939,7 +2960,24 @@ int tile_w;
 int tile_h;
 int tile_flags;
 const char *tile_args = NULL;
-const char *tile = NULL;
+const char *tile[256] = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
 int tile_used[256];
 int tile_color[256];
 
@@ -2947,7 +2985,24 @@ int sprite_w;
 int sprite_h;
 int sprite_flags;
 const char *sprite_args = NULL;
-const char *sprite = NULL;
+const char *sprite[256] = {
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+    NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+};
 int sprite_used[256];
 int sprite_color[256];
 
@@ -3050,9 +3105,11 @@ gfx2(unsigned char c)
 }
 
 size_t
-gfx1(unsigned char c, int y, int x, int w, int h)
+gfx1(const char **font, unsigned char c, int y, int x, int w)
 {
-    return (reflect ^ ((reflect ^ gfx_reflect) && ! REFLECT_LARGE)) ? ((((unsigned long) (unsigned char) (c)) * (h) + (x)) * (w) + (y)) : ((((unsigned long) (unsigned char) (c)) * (h) + (y)) * (w) + (x));
+    return (reflect ^ ((reflect ^ gfx_reflect) && ! REFLECT_LARGE)) ?
+        font[(unsigned) (unsigned char) c][x * w + y] :
+        font[(unsigned) (unsigned char) c][y * w + x];
 }
 
 unsigned char
@@ -4426,7 +4483,7 @@ paint_walls(int verbose)
                     if ((! nogame) && verbose)
                     {
                         tdt2 = doubletime();
-                        if (floor(tdt2) != floor(td))
+                        if ((tdt2 - td) >= 1.0)
                         {
                             tdt = tdt2;
                             tdt_used = 1;
