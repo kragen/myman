@@ -2178,7 +2178,7 @@ parse_tile_args(const char *tilefile, const char *tile_args)
             else
             {
                 fprintf(stderr, "%s: unrecognized tile argument: ",
-                        tile);
+                        tilefile);
                 fflush(stderr);
                 fwrite((void *) argp, 1, endp - argp, stderr);
                 fflush(stderr);
