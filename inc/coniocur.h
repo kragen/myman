@@ -166,7 +166,7 @@ static int gettimeofday(struct timeval *tv, void *tz)
 
 /* originally from http://wyw.dcweb.cn/sleep.h.txt by Wu Yongwei */
 
-#define usleep(t) (Sleep((t) / 1000), 0)
+#define usleep(t) Sleep((t) / 1000)
 
 #else /* ! defined(WIN32) */
 

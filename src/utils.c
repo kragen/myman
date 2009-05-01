@@ -75,6 +75,10 @@
 #include "utils.h"
 #endif
 
+#if defined(WIN32)
+#include <windows.h>
+#endif
+
 /* command-line argument parser */
 #ifdef MYGETOPT_H
 #include MYGETOPT_H
@@ -4253,7 +4257,7 @@ gamecycle(int lines, int cols)
                     }
                     nframeskip /= kfr;
                     use_buffer = (frameskip == (nframeskip + 0.5));
-                    delta = (unsigned long int) 1e6L * (td2 - td);
+                    delta = (unsigned long int) (1e6L * (td2 - td));
                     nframeskip = ((frameskip ? frameskip : 1) * delta) / (actual_delay ? actual_delay : 1);
                     if (nframeskip > MAXFRAMESKIP)
                     {

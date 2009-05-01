@@ -579,7 +579,7 @@ int rawcurses_isatty(int fd)
 
 /* originally from http://wyw.dcweb.cn/sleep.h.txt by Wu Yongwei */
 
-#define usleep(t) (Sleep((t) / 1000), 0)
+#define usleep(t) Sleep((t) / 1000)
 
 #else /* ! defined(WIN32) */
 
@@ -3598,7 +3598,7 @@ static HWND rawcurses_win32_get_console_window(void)
 static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void *out, DWORD *size)
 {
     HKEY keys[2];
-    int i;
+    unsigned int i;
     int read;
     HANDLE hConsoleWindow;
     TCHAR texenamebuf[MAX_PATH + 1];
@@ -3632,7 +3632,7 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
     }
     hConsoleWindow = rawcurses_win32_get_console_window();
     read = 0;
-    for (i = 0; i < sizeof(keys) / sizeof(*keys); i ++) keys[i] = INVALID_HANDLE_VALUE;
+    for (i = 0; i < sizeof(keys) / sizeof(*keys); i ++) keys[i] = (HKEY) INVALID_HANDLE_VALUE;
     path = pathbuf;
     tpath = tpathbuf;
     if (lstrlen(rawcurses_old_title))
@@ -3649,11 +3649,11 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                 *ts = ((*ts2 == (TEXT("\\"))[0]) ? (TEXT("_"))[0] : *ts2);
             }
             *ts = (TEXT(""))[0];
-            if (keys[0] == INVALID_HANDLE_VALUE)
+            if (keys[0] == (HKEY) INVALID_HANDLE_VALUE)
             {
                 if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_CURRENT_USER, tpath, 0, KEY_READ, keys + 0))
                 {
-                    keys[0] = INVALID_HANDLE_VALUE;
+                    keys[0] = (HKEY) INVALID_HANDLE_VALUE;
                 }
             }
         }
@@ -3678,11 +3678,11 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
             tpath)
         {
             tpath[lstrlen(tpath) - lstrlen(texename) - lstrlen(RAWCURSES_WIN32_CAPTION_DELIMITER)] = (TEXT(""))[0];
-            if (keys[0] == INVALID_HANDLE_VALUE)
+            if (keys[0] == (HKEY) INVALID_HANDLE_VALUE)
             {
                 if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_CURRENT_USER, tpath, 0, KEY_READ, keys + 0))
                 {
-                    keys[0] = INVALID_HANDLE_VALUE;
+                    keys[0] = (HKEY) INVALID_HANDLE_VALUE;
                 }
             }
         }
@@ -3695,7 +3695,7 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
     {
         DWORD tty_pid;
 
-        if (GetWindowThreadProcessId(hConsoleWindow, &tty_pid))
+        if (GetWindowThreadProcessId((HWND) hConsoleWindow, &tty_pid))
         {
             HANDLE hConsoleProcess;
 
@@ -3838,11 +3838,11 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                 *ts = ((*ts2 == (TEXT("\\"))[0]) ? (TEXT("_"))[0] : *ts2);
             }
             *ts = (TEXT(""))[0];
-            if (keys[0] == INVALID_HANDLE_VALUE)
+            if (keys[0] == (HKEY) INVALID_HANDLE_VALUE)
             {
                 if (ERROR_SUCCESS != RegOpenKeyEx(HKEY_CURRENT_USER, tpath, 0, KEY_READ, keys + 0))
                 {
-                    keys[0] = INVALID_HANDLE_VALUE;
+                    keys[0] = (HKEY) INVALID_HANDLE_VALUE;
                 }
             }
         }
@@ -3872,26 +3872,26 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                 *s = ((*s2 == '\\') ? '_' : *s2);
             }
             *s = '\0';
-            if (keys[0] == INVALID_HANDLE_VALUE)
+            if (keys[0] == (HKEY) INVALID_HANDLE_VALUE)
             {
                 if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_CURRENT_USER, path, 0, KEY_READ, keys + 0))
                 {
-                    keys[0] = INVALID_HANDLE_VALUE;
+                    keys[0] = (HKEY) INVALID_HANDLE_VALUE;
                 }
             }
         }
     }
     strcpy(path, "Console");
-    if (keys[1] == INVALID_HANDLE_VALUE)
+    if (keys[1] == (HKEY) INVALID_HANDLE_VALUE)
     {
         if (ERROR_SUCCESS != RegOpenKeyExA(HKEY_CURRENT_USER, path, 0, KEY_READ, keys + 1))
         {
-            keys[1] = INVALID_HANDLE_VALUE;
+            keys[1] = (HKEY) INVALID_HANDLE_VALUE;
         }
     }
     for (i = 0; i < sizeof(keys) / sizeof(*keys); i ++)
     {
-        if (keys[i] != INVALID_HANDLE_VALUE)
+        if (keys[i] != (HKEY) INVALID_HANDLE_VALUE)
         {
             DWORD otype;
             DWORD osize;
@@ -3906,7 +3906,7 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                 (osize <= *size)
                 &&
                 /* FIXME: race condition: if type changes here, we lose a bit... oh well! */
-                (RegQueryValueExW(keys[i], name, 0, &otype, out, &osize) == ERROR_SUCCESS))
+                (RegQueryValueExW(keys[i], name, 0, &otype, (BYTE *) out, &osize) == ERROR_SUCCESS))
             {
                 *size = osize;
                 read = 1;
@@ -3916,9 +3916,9 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
     }
     for (i = 0; i < sizeof(keys) / sizeof(*keys); i ++)
     {
-        if (keys[i] != INVALID_HANDLE_VALUE) RegCloseKey(keys[i]);
+        if (keys[i] != (HKEY) INVALID_HANDLE_VALUE) RegCloseKey(keys[i]);
     }
-    if ((hConsoleWindow != INVALID_HANDLE_VALUE)
+    if ((hConsoleWindow != (HKEY) INVALID_HANDLE_VALUE)
         &&
         hConsoleWindow)
     {
