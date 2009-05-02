@@ -4487,7 +4487,7 @@ paint_walls(int verbose)
                     if ((! nogame) && verbose)
                     {
                         tdt2 = doubletime();
-                        if ((tdt2 - td) >= 1.0)
+                        if ((tdt2 - tdt) >= 1.0)
                         {
                             tdt = tdt2;
                             tdt_used = 1;
