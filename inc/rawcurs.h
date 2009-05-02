@@ -3795,7 +3795,7 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                             me.dwSize = sizeof(me);
                             if (Module32First(hSnapshot, &me))
                             {
-#if defined(Module32First)
+#ifdef Module32First
                                 texename = texenamebuf;
                                 memcpy((void *) texename, (void *) me.szExePath,
                                        sizeof(me.szExePath) / sizeof(*(me.szExePath)));
