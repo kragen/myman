@@ -3602,6 +3602,9 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
     int read;
     HANDLE hConsoleWindow;
     TCHAR texenamebuf[MAX_PATH + 1];
+#ifndef Module32First
+    char exenamebuf[MAX_PATH + 1];
+#endif /* ! defined(Module32First) */
     TCHAR *texename;
     TCHAR tpathbuf[MAX_PATH + 1];
     TCHAR *tpath;
@@ -3792,11 +3795,19 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
                             me.dwSize = sizeof(me);
                             if (Module32First(hSnapshot, &me))
                             {
+#if defined(Module32First)
                                 texename = texenamebuf;
                                 memcpy((void *) texename, (void *) me.szExePath,
                                        sizeof(me.szExePath) / sizeof(*(me.szExePath)));
                                 texename[MAX_PATH] = (TEXT(""))[0];
                                 if (! lstrlen(texename)) texename = NULL;
+#else /* ! defined(Module32First) */
+                                exename = exenamebuf;
+                                memcpy((void *) exename, (void *) me.szExePath,
+                                       sizeof(me.szExePath) / sizeof(*(me.szExePath)));
+                                exename[MAX_PATH] = ("")[0];
+                                if (! strlen(exename)) exename = NULL;
+#endif /* ! defined(Module32First) */
                             }
                             CloseHandle(hSnapshot);
                         }
