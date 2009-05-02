@@ -51,6 +51,19 @@
 #define LIT64(lit) lit##LL
 #endif
 
+/* some Win32 bits use _UNICODE, others use UNICODE */
+#ifdef UNICODE
+#ifndef _UNICODE
+#define _UNICODE UNICODE
+#endif /* ! defined(_UNICODE) */
+#endif /* ! defined(UNICODE) */
+
+#ifdef _UNICODE
+#ifndef UNICODE
+#define UNICODE _UNICODE
+#endif /* ! defined(UNICODE) */
+#endif /* ! defined(_UNICODE) */
+
 #ifdef MACCURSES
 /* needed for the argv[0] trick */
 #ifdef macintosh
