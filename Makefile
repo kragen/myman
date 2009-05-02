@@ -840,7 +840,8 @@ endif
 # 'getopt.h' file from ${MYGETOPTDIR} from a source file inside the
 # ${src}src directory. MYGETOPTCPPFLAGS includes preprocessor options
 # needed for this arrangement and MYGETOPTCINCLUDES adds the
-# needed include path entry or entries.
+# needed include path entry or entries. Defining MYGETOPT without
+# MYGETOPT_H uses the default value of "getopt.h".
 ifeq ($(subst default,undefined,$(origin MYGETOPTCPPFLAGS)),undefined)
 MYGETOPTCPPFLAGS =
 endif

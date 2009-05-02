@@ -112,6 +112,9 @@
 #endif
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_IO_H
+#include <io.h>
+#endif
 #include <stdio.h>
 #if HAVE_UNIXIO_H
 #include <unixio.h>
@@ -579,6 +582,12 @@ vmscurses_getch(void)
 #endif
 
 /* command-line argument parser */
+#ifndef MYGETOPT_H
+#ifdef MYGETOPT
+#define MYGETOPT_H "getopt.h"
+#endif
+#endif
+
 #ifdef MYGETOPT_H
 #include MYGETOPT_H
 #else

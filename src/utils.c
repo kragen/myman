@@ -80,6 +80,12 @@
 #endif
 
 /* command-line argument parser */
+#ifndef MYGETOPT_H
+#ifdef MYGETOPT
+#define MYGETOPT_H "getopt.h"
+#endif
+#endif
+
 #ifdef MYGETOPT_H
 #include MYGETOPT_H
 #else
@@ -4952,19 +4958,29 @@ int myman_setenv(const char *name, const char *value)
             pair[name_len] = '=';
             memcpy((void *) (pair + name_len + 1), (void *) value, value_len);
             pair[name_len + 1 + value_len] = '\0';
-#ifdef WIN32
-            ret = _putenv(pair);
-#else /* ! defined(WIN32) */
+#if HAVE_PUTENV
             ret = putenv(pair);
-#endif /* ! defined(WIN32) */
+#else /* ! HAVE_PUTENV */
+            ret = _putenv(pair);
+#endif /* ! HAVE_PUTENV */
             free((void *) pair);
         }
 #ifdef WIN32
-        ret = (SetEnvironmentVariableA(name, value) ? 0 : 1) || ret;
+        ret = SetEnvironmentVariableA(name, value) ? ret : 1;
 #endif /* ! defined(WIN32) */
     }
 #endif /* HAVE_PUTENV || defined(WIN32) */
 #endif /* ! HAVE_SETENV */
+    if (! ret)
+    {
+        const char *value_check;
+
+        value_check = getenv(name);
+        if (value ? ((! value_check) || strcmp(value_check, value)) : (value_check && *value_check))
+        {
+            ret = 1;
+        }
+    }
     if (ret)
     {
         char *value_copy;

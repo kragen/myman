@@ -3816,12 +3816,12 @@ static int rawcurses_win32_console_reg_copy(const WCHAR *name, DWORD type, void 
 #endif /* ! defined(__TINYC__) */
                 CloseHandle(hConsoleProcess);
             }
-#if ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__))
+#if HAVE__PGMPTR
             if (tty_pid == GetCurrentProcessId())
             {
                 exename = _pgmptr;
             }
-#endif /* ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__)) */
+#endif /* HAVE__PGMPTR */
         }
     }
     if (texename && lstrlen(texename))

@@ -106,6 +106,12 @@
 #endif
 
 #ifndef HAVE_IO_H
+#ifdef __BORLANDC__
+#define HAVE_IO_H 1
+#endif
+#endif
+
+#ifndef HAVE_IO_H
 #define HAVE_IO_H 0
 #endif
 
@@ -246,7 +252,7 @@
 /* HAVE_SYS_TIME_H: do we have <sys/time.h>? */
 
 #ifndef HAVE_SYS_TIME_H
-#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__))
+#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__) || defined(__POCC__))
 #define HAVE_SYS_TIME_H 1
 #endif
 #endif
@@ -334,7 +340,7 @@
 
 /* HAVE_PUTENV: do we have a putenv() call? */
 
-#ifdef __MSDOS__
+#if defined(__MSDOS__) || defined(__BORLANDC__)
 #ifndef HAVE_PUTENV
 #define HAVE_PUTENV 1
 #endif
@@ -370,6 +376,28 @@
 
 #ifndef HAVE_SETENV
 #define HAVE_SETENV 1
+#endif
+
+/* HAVE__PGMPTR: do we have _pgmptr ? */
+
+#ifdef WIN32
+#if ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__) || defined(__POCC__))
+#ifndef HAVE__PGMPTR
+#define HAVE__PGMPTR 1
+#endif /* ! defined(HAVE__PGMPTR) */
+#endif /* ! (defined(__WINE__) || defined(__WATCOMC__) || defined(__BORLANDC__) || defined(__POCC__)) */
+#endif /* defined(WIN32) */
+
+#ifndef HAVE__PGMPTR
+#define HAVE__PGMPTR 0
+#endif /* ! defined(HAVE__PGMPTR) */
+
+/* MAIN_NO_ENVP: define only if main() should not accept a third argument */
+
+#ifndef MAIN_NO_ENVP
+#ifdef __POCC__
+#define MAIN_NO_ENVP 1
+#endif
 #endif
 
 #endif /* ! defined(MYMAN_GUESS_H_INCLUDED) */

@@ -76,6 +76,12 @@
 #endif
 
 /* command-line argument parser */
+#ifndef MYGETOPT_H
+#ifdef MYGETOPT
+#define MYGETOPT_H "getopt.h"
+#endif
+#endif
+
 #ifdef MYGETOPT_H
 #include MYGETOPT_H
 #else

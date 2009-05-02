@@ -501,7 +501,7 @@ for size in {all_sizes}
             delete -i "{{hostsize}}" "{{hostsize}}".make "{{hostsize}}".makeout &&
             if {{buildMode}} != 0
                 # C compiler flags, all architectures
-                set CFLAGS "-x -noMapCR -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT_H={{char_quotation_mark}}getopt.h{{char_quotation_mark}} -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
+                set CFLAGS "-x -noMapCR -D PRIVATEDATADIR={{char_quotation_mark}}``echo -n "{{srcdir}}" | qcq``{{char_quotation_mark}} -D MACCURSES=1 -D MYGETOPT=1 -D MYMANVERSION={{char_quotation_mark}}``echo -n "{{MYMANVERSION}}" | qcq``{{char_quotation_mark}} -D MYMANCOPYRIGHT={{char_quotation_mark}}``echo -n "{{MYMANCOPYRIGHT}}" | qcq``{{char_quotation_mark}} {{DEFS}}" &&
 
                 # Linker flags, all architectures
                 set LDFLAGS "" &&

@@ -52,7 +52,7 @@ CURSOPTS=
 
 # getopt library
 MYGETOPTDIR=mygetopt
-MYGETOPTCPPFLAGS=-DMYGETOPT_H=\"getopt.h\"
+MYGETOPTCPPFLAGS=-DMYGETOPT
 MYGETOPTLIBS=${MYGETOPTDIR}/mygetopt.c
 
 # utility functions
