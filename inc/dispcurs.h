@@ -1,6 +1,6 @@
 /*
  * dispcurs.h - <disp.h> driver for the MyMan video game
- * Copyright 2007-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+ * Copyright 2007-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
  *  obtaining a copy of this software and associated documentation
@@ -209,6 +209,10 @@ static unsigned long dispcurses_x = 0, dispcurses_y = 0;
 
 static dispcurses_attr_t dispcurses_attr = 0;
 
+static int dispcurses_mode = -1;
+
+static int dispcurses_orig_mode = -1;
+
 #define clear erase
 
 #define cbreak()
@@ -404,6 +408,30 @@ static int init_pair(short i, short fg, short bg);
 static void initscrWithHints(int h, int w, const char *title, const char *shortname)
 {
     int i;
+    char *ignored = NULL;
+
+    dispcurses_mode = -1;
+
+    if (myman_getenv("DISPCURSES_MODE") && *myman_getenv("DISPCURSES_MODE"))
+    {
+        dispcurses_mode = (int) strtol(myman_getenv("DISPCURSES_MODE"), &ignored, 0);
+    }
+
+    dispcurses_orig_mode = disp_getmode();
+
+#if ! defined(WIN32)
+    if (dispcurses_mode != -1) disp_setmode(dispcurses_mode);
+#endif
+
+    if (myman_getenv("DISPCURSES_43LINES") && *myman_getenv("DISPCURSES_43LINES"))
+    {
+        if (strcmp(myman_getenv("DISPCURSES_43LINES"), "0"))
+        {
+#if ! defined(WIN32)
+            disp_set43();
+#endif
+        }
+    }
 
     disp_open();
 
@@ -437,6 +465,20 @@ static void endwin(void)
 {
     dispcurses_ready = 0;
     disp_close();
+
+    if (myman_getenv("DISPCURSES_43LINES") && *myman_getenv("DISPCURSES_43LINES"))
+    {
+        if (strcmp(myman_getenv("DISPCURSES_43LINES"), "0"))
+        {
+#if ! defined(WIN32)
+            disp_reset43();
+#endif
+        }
+    }
+
+#if ! defined(WIN32)
+    if (dispcurses_orig_mode != -1) disp_setmode(dispcurses_orig_mode);
+#endif
 }
 
 static int move(int y, int x);
