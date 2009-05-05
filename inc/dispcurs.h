@@ -725,12 +725,102 @@ static int dispcurses_addch(dispcurses_chtype ch)
     {
         dispcurses_y = dispcurses_h - 1;
     }
+    /* a graphical mode, so no background colors */
+    if ((disp_mode == 4)
+        || (disp_mode == 5)
+        || (disp_mode == 6)
+        || (disp_mode == 11)
+        || (disp_mode == 13)
+        || (disp_mode == 14)
+        || (disp_mode == 15)
+        || (disp_mode == 16)
+        || (disp_mode == 17)
+        || (disp_mode == 18)
+        || (disp_mode == 19))
+    {
+        switch (ch)
+        {
+        case 0:
+        case ' ':
+        case 0xff:
+            if (bg != COLOR_BLACK)
+            {
+                fg = bg;
+                ch = ACS_BLOCK;
+            }
+            break;
+        default:
+            if (fg == COLOR_BLACK)
+            {
+                fg = bg;
+                switch (ch)
+                {
+                case 0xdf:
+                    ch = 0xdc;
+                    break;
+                case 0xdc:
+                    ch = 0xdf;
+                    break;
+                case 0xdd:
+                    ch = 0xde;
+                    break;
+                case 0xde:
+                    ch = 0xdd;
+                    break;
+                case ACS_BLOCK:
+                    ch = ' ';
+                    break;
+                }
+            }
+        }
+        bg = COLOR_BLACK;
+    }
+    if (ch == ACS_BLOCK)
+    {
+        bg = COLOR_BLACK;
+    }
+    /* monochrome text */
+    if (disp_mode == 7)
+    {
+        if (fg == (DISP_INTENSITY | COLOR_BLACK)) fg = COLOR_WHITE;
+        if (bg == (DISP_INTENSITY | COLOR_BLACK)) bg = COLOR_WHITE;
+        if (fg) fg = (fg & DISP_INTENSITY) ? (COLOR_WHITE | DISP_INTENSITY) : COLOR_YELLOW;
+        if (bg) bg = (bg & DISP_INTENSITY) ? (COLOR_WHITE | DISP_INTENSITY) : COLOR_YELLOW;
+    }
+    /* CGA 4-color modes */
+    if ((disp_mode == 4) || (disp_mode == 5))
+    {
+        if ((fg != COLOR_BLACK)
+            && (ch == ACS_BLOCK)
+            && ((fg == (DISP_INTENSITY | COLOR_BLACK))
+                || (! (fg & DISP_INTENSITY)))) ch = 0xb1;
+        if (((fg & ~DISP_INTENSITY) == COLOR_RED)
+            ||
+            ((fg & ~DISP_INTENSITY) == COLOR_GREEN)
+            ||
+            ((fg & ~DISP_INTENSITY) == COLOR_BLUE)
+            ||
+            (fg == (DISP_INTENSITY | COLOR_YELLOW))
+            ||
+            (fg == (DISP_INTENSITY | COLOR_BLACK)))
+        {
+            if (ch == ACS_BLOCK) ch = 0xb2;
+            else if (ch == 0xb1) ch = 0xb0;
+        }
+        if (fg == COLOR_WHITE) fg = COLOR_MAGENTA;
+        if (fg == (DISP_INTENSITY | COLOR_BLACK)) fg = COLOR_WHITE;
+        if (bg == (DISP_INTENSITY | COLOR_BLACK)) bg = COLOR_WHITE;
+        fg &= ~DISP_INTENSITY;
+        bg &= ~DISP_INTENSITY;
+        fg = (fg == COLOR_MAGENTA) ? 2 : (((fg >> 1) | (fg & 1)) % 4);
+        bg = (bg == COLOR_MAGENTA) ? 2 : (((bg >> 1) | (bg & 1)) % 4);
+    }
 #ifndef WIN32
     /* Win32 console defaults to BRIGHTBG, DOS defaults to BLINK */
-    if (bg == 8) bg = 7;
-    bg = bg & 7;
+    if (bg == (DISP_INTENSITY | COLOR_BLACK)) bg = COLOR_WHITE;
+    bg = bg & ~DISP_INTENSITY;
 #endif
-    if (fg == bg) fg = bg ? 0 : 7;
+    if (fg == bg) fg = (bg != COLOR_BLACK) ? COLOR_BLACK : COLOR_WHITE;
     disp_pokew(dispcurses_y, dispcurses_x, (ch & 0xff) | ((bg & 0xf) << 12) | ((fg & 0xf) << 8));
     dispcurses_x ++;
     return OK;
