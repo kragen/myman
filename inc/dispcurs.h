@@ -725,7 +725,13 @@ static int dispcurses_addch(dispcurses_chtype ch)
     {
         dispcurses_y = dispcurses_h - 1;
     }
-    disp_pokew(dispcurses_y, dispcurses_x, (ch & 0xff) | ((bg & 0x7) << 12) | ((fg & 0xf) << 8));
+#ifndef WIN32
+    /* Win32 console defaults to BRIGHTBG, DOS defaults to BLINK */
+    if (bg == 8) bg = 7;
+    bg = bg & 7;
+#endif
+    if (fg == bg) fg = bg ? 0 : 7;
+    disp_pokew(dispcurses_y, dispcurses_x, (ch & 0xff) | ((bg & 0xf) << 12) | ((fg & 0xf) << 8));
     dispcurses_x ++;
     return OK;
 }
