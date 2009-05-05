@@ -1093,6 +1093,7 @@ static int graphcurses_addch(graphcurses_chtype ch)
                 ch = ACS_BLOCK;
             }
         }
+        if (fg == COLOR_BLACK) fg = bg;
         bg = COLOR_BLACK;
     }
     if (graphcurses_bitmap)
