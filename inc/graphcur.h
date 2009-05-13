@@ -1080,7 +1080,11 @@ static int graphcurses_addch(graphcurses_chtype ch)
     {
         graphcurses_y = graphcurses_h - 1;
     }
-    if (bg && (! graphcurses_textmode) && (! graphcurses_bitmap))
+    if (ch == ACS_BLOCK)
+    {
+        bg = COLOR_BLACK;
+    }
+    if ((bg != COLOR_BLACK) && (! graphcurses_textmode) && (! graphcurses_bitmap))
     {
         switch (ch)
         {
@@ -1100,11 +1104,16 @@ static int graphcurses_addch(graphcurses_chtype ch)
     {
         switch (ch)
         {
+        case 0:
+        case ' ':
+        case 0xff:
+            fg = bg;
+            break;
         case '#':
         case ACS_BLOCK:
             break;
         default:
-            fg = bg;
+            if (bg != COLOR_BLACK) fg = bg;
         }
         ch = ACS_BLOCK;
     }
@@ -1122,6 +1131,23 @@ static int graphcurses_addch(graphcurses_chtype ch)
     else if ((graphcurses_mode == _MRES4COLOR)
              || (graphcurses_mode == _MRESNOCOLOR))
     {
+        if ((fg != COLOR_BLACK)
+            && (ch == ACS_BLOCK)
+            && ((fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK))
+                || (! (fg & GRAPHCURSES_COLOR_BRIGHT)))) ch = 0xb1;
+        if (((fg & ~GRAPHCURSES_COLOR_BRIGHT) == COLOR_RED)
+            ||
+            ((fg & ~GRAPHCURSES_COLOR_BRIGHT) == COLOR_GREEN)
+            ||
+            ((fg & ~GRAPHCURSES_COLOR_BRIGHT) == COLOR_BLUE)
+            ||
+            (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_YELLOW))
+            ||
+            (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)))
+        {
+            if (ch == ACS_BLOCK) ch = 0xb2;
+            else if (ch == 0xb1) ch = 0xb0;
+        }
         if (fg == COLOR_WHITE) fg = COLOR_MAGENTA;
         if (fg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) fg = COLOR_WHITE;
         if (bg == (GRAPHCURSES_COLOR_BRIGHT | COLOR_BLACK)) bg = COLOR_WHITE;
@@ -1162,7 +1188,10 @@ static int graphcurses_addch(graphcurses_chtype ch)
             fg = bg ? COLOR_BLACK : (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT);
         }
     }
-    _settextposition(graphcurses_y + 1, graphcurses_x + 1);
+    if (! graphcurses_bitmap)
+    {
+        _settextposition(graphcurses_y + 1, graphcurses_x + 1);
+    }
     if (graphcurses_bitmap)
     {
         if (graphcurses_fg != fg)
