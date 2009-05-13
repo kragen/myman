@@ -933,6 +933,14 @@ typedef int rawcurses_wchar_t;
 #endif
 #endif
 
+/* Win32 does not have select() in any meaningful sense for regular,
+ * non-socket fds */
+#ifndef HAVE_SELECT
+#ifdef WIN32
+#define HAVE_SELECT 0
+#endif
+#endif
+
 #ifndef HAVE_SELECT
 #ifdef FD_SET
 #define HAVE_SELECT 1
@@ -5603,7 +5611,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
 #else /* ! USE_WINCONSOLE */
 #if USE_TOSCONSOLE
     {
-        char *stdindev;
+        const char *stdindev;
 
         stdindev = ttyname(fileno(stdin));
         if (stdindev
@@ -5818,7 +5826,7 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     }
 #endif /* USE_CONIO */
     {
-        char *stdindev;
+        const char *stdindev;
 
         stdindev = ttyname(fileno(stdin));
 #if USE_CONIO_INPUT
@@ -6605,6 +6613,10 @@ static int rawcurses_getch(void)
     soft_ERR = 0;
     do
     {
+        unsigned char buf[2];
+        int avail;
+
+        avail = -1;
         if (rawcurses_ungetch_buffer != ERR)
         {
             ret = rawcurses_ungetch_buffer;
@@ -6617,6 +6629,7 @@ static int rawcurses_getch(void)
 
             if (GetNumberOfConsoleInputEvents(rawcurses_stdin, &nevents))
             {
+                avail = 0;
                 if (nevents)
                 {
                     INPUT_RECORD irec;
@@ -6683,29 +6696,9 @@ static int rawcurses_getch(void)
                     }
                 }
             }
-            else
-            {
-                unsigned char buf[2];
-                DWORD nbytes;
-                struct stat st;
-
-                st.st_size = 0;
-                if ((! rawcurses_stdio) || (fstat(fileno(stdin), &st) || st.st_size))
-                {
-                    if (ReadFile(rawcurses_stdin, (LPVOID) buf, 1, &nbytes, NULL))
-                    {
-                        if (nbytes) ret = buf[0];
-                        else ret = ERR;
-                    }
-                }
-            }
         }
-#else /* ! USE_WINCONSOLE */
+#endif /* ! USE_WINCONSOLE */
         {
-            unsigned char buf[2];
-            int avail;
-
-            avail = -1;
 #if USE_CONIO_INPUT
             if ((avail == -1) && rawcurses_stdio_conio_input)
             {
@@ -6922,16 +6915,35 @@ static int rawcurses_getch(void)
 
 #endif /* USE_VMSCONSOLE */
             {
+#if USE_IOCTL
 #ifdef FIONREAD
                 if (! avail) ioctl(fileno(stdin), FIONREAD, &avail);
 #endif /* defined(FIONREAD) */
+#endif /* USE_IOCTL */
+#if USE_WINCONSOLE
+                if (avail == -1)
+                {
+                    DWORD nbytes;
+                    struct stat st;
+
+                    st.st_size = 0;
+                    if ((! rawcurses_stdio) || (fstat(fileno(stdin), &st) || st.st_size))
+                    {
+                        avail = 0;
+                        if (ReadFile(rawcurses_stdin, (LPVOID) buf, 1, &nbytes, NULL))
+                        {
+                            if (nbytes) ret = buf[0];
+                            else ret = ERR;
+                        }
+                    }
+                }
+#endif /* ! USE_WINCONSOLE */
                 if (avail && (read(fileno(stdin), (void *) buf, 1) > 0))
                 {
                     ret = buf[0];
                 }
             }
         }
-#endif /* ! USE_WINCONSOLE */
         soft_ERR = (ret == ERR) ? 0 : 1;
         if (rawcurses_stdio && rawcurses_stdio_utf8 && (ret != ERR))
         {
