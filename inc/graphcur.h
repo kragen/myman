@@ -288,6 +288,11 @@ static int graphcurses_x = 0, graphcurses_y = 0;
 
 static int graphcurses_bitmap = 0;
 
+static int graphcurses_bitmap_count = 0;
+static int graphcurses_bitmap_x = 0;
+static int graphcurses_bitmap_y = 0;
+static int graphcurses_bitmap_fg = 0;
+
 static graphcurses_attr_t graphcurses_attr = 0;
 
 #define clear erase
@@ -538,6 +543,10 @@ static void initscrWithHints(int h, int w, const char *title, const char *shortn
     short rows;
     char *ignored;
 
+    graphcurses_bitmap_count = 0;
+    graphcurses_bitmap_x = 0;
+    graphcurses_bitmap_y = 0;
+    graphcurses_bitmap_fg = 0;
     graphcurses_mode = _DEFAULTMODE;
     rows = 0;
     _getvideoconfig(&vc);
@@ -829,6 +838,10 @@ static int erase(void)
     long fg, bk;
 
     if (! graphcurses_ready) return ERR;
+    graphcurses_bitmap_count = 0;
+    graphcurses_bitmap_x = 0;
+    graphcurses_bitmap_y = 0;
+    graphcurses_bitmap_fg = 0;
     text_fg = _gettextcolor();
     fg = _getcolor();
     bk = _getbkcolor();
@@ -901,7 +914,29 @@ static int graphcurses_getch(void) {
 static int refresh(void)
 {
     if (! graphcurses_ready) return OK;
-    _settextposition(graphcurses_y + 1, graphcurses_x + 1);
+    if (graphcurses_bitmap && graphcurses_bitmap_count)
+    {
+        if (graphcurses_fg != graphcurses_bitmap_fg)
+        {
+            _setcolor(graphcurses_bitmap_fg);
+            graphcurses_fg = graphcurses_bitmap_fg;
+        }
+        if (graphcurses_bitmap_count == 1)
+        {
+            _setpixel(graphcurses_bitmap_x, graphcurses_bitmap_y);
+        }
+        else
+        {
+            _rectangle(_GFILLINTERIOR,
+                       graphcurses_bitmap_x, graphcurses_bitmap_y,
+                       graphcurses_bitmap_x + graphcurses_bitmap_count - 1, graphcurses_bitmap_y);
+        }
+        graphcurses_bitmap_count = 0;
+    }
+    if (! graphcurses_bitmap)
+    {
+        _settextposition(graphcurses_y + 1, graphcurses_x + 1);
+    }
     return OK;
 }
 
@@ -1188,6 +1223,56 @@ static int graphcurses_addch(graphcurses_chtype ch)
             fg = bg ? COLOR_BLACK : (COLOR_WHITE | GRAPHCURSES_COLOR_BRIGHT);
         }
     }
+    if (graphcurses_bitmap)
+    {
+        if (graphcurses_bitmap_count
+            &&
+            (graphcurses_x == (graphcurses_bitmap_x + graphcurses_bitmap_count))
+            &&
+            (graphcurses_y == graphcurses_bitmap_y)
+            &&
+            (fg == graphcurses_bitmap_fg)
+            &&
+            ((graphcurses_y + 1) < graphcurses_h)
+            &&
+            ((graphcurses_x + 1) < graphcurses_w))
+        {
+            graphcurses_bitmap_count ++;
+        }
+        else
+        {
+            if (graphcurses_bitmap_count)
+            {
+                if (graphcurses_fg != graphcurses_bitmap_fg)
+                {
+                    _setcolor(graphcurses_bitmap_fg);
+                    graphcurses_fg = graphcurses_bitmap_fg;
+                }
+                if (graphcurses_bitmap_count == 1)
+                {
+                    _setpixel(graphcurses_bitmap_x, graphcurses_bitmap_y);
+                }
+                else
+                {
+                    _rectangle(_GFILLINTERIOR,
+                               graphcurses_bitmap_x, graphcurses_bitmap_y,
+                               graphcurses_bitmap_x + graphcurses_bitmap_count - 1, graphcurses_bitmap_y);
+                }
+                graphcurses_bitmap_count = 0;
+            }
+            if (((graphcurses_y + 1) < graphcurses_h)
+                &&
+                ((graphcurses_x + 1) < graphcurses_w))
+            {
+                graphcurses_bitmap_count = 1;
+                graphcurses_bitmap_x = graphcurses_x;
+                graphcurses_bitmap_y = graphcurses_y;
+                graphcurses_bitmap_fg = fg;
+            }
+        }
+        graphcurses_x ++;
+        return OK;
+    }
     if (! graphcurses_bitmap)
     {
         _settextposition(graphcurses_y + 1, graphcurses_x + 1);
@@ -1221,7 +1306,7 @@ static int graphcurses_addch(graphcurses_chtype ch)
         }
     }
     if (((graphcurses_y + 1) < graphcurses_h)
-        ||
+        &&
         ((graphcurses_x + 1) < graphcurses_w))
     {
         if (graphcurses_bitmap)
