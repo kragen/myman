@@ -68,14 +68,14 @@
 
 #if ! defined(WIN32)
 #ifndef WIN16
-#if defined(DOS) || defined(__TURBOC__)
+#if defined(DOS) || defined(__TURBOC__) || defined(_DOS) || defined(MSDOS) || defined(__DOS__)
 
 /* some DOS C compilers do not define __MSDOS__ */
 #ifndef __MSDOS__
 #define __MSDOS__ 1
 #endif
 
-#endif /* defined(DOS) || defined(__TURBOC__) */
+#endif /* defined(DOS) || defined(__TURBOC__) || defined(_DOS) || defined(MSDOS) || defined(__DOS__) */
 #endif /* ! defined(WIN16) */
 #endif /* ! defined(WIN32) */
 
