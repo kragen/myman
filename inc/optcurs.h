@@ -57,31 +57,128 @@ OPTCURSES_GLOBAL(const char *optcurses_bitmap_force, = NULL);
 OPTCURSES_GLOBAL(const char *optcurses_bitmap_braille, = NULL);
 
 /*
- * NOTE: this is actually an array of optcurses_cell_t of
- * dimensionality [2][optcurses_h][optcurses_w] followed by an array
- * of unsigned char char of dimensionality [optcurses_h]; the first
- * array is an application buffer at [0] followed by a screen buffer
- * at [1], and the second array is a clean-list for the application
- * buffer where a 0xFF entry indicates no change to the
+ * NOTE: this is actually an array of dimensionality optcurses_h where
+ * each element contains an array of optcurses_cell_t of
+ * dimensionality [2][optcurses_w] followed by an unsigned char; the
+ * first part is an application buffer at [0] followed by a screen
+ * buffer at [1], and the second part is a clean-flag for the
+ * application buffer where a 0xFF entry indicates no change to the
  * corresponding screen line since the last refresh.
  */
-OPTCURSES_GLOBAL(optcurses_cell_t *optcurses_backing, = NULL);
+typedef struct {
+    optcurses_cell_t *backing[2];
+    unsigned char clean;
+} optcurses_row_t;
+OPTCURSES_GLOBAL(optcurses_row_t *optcurses_backing, = NULL);
+
+static optcurses_row_t *optcurses_delete_backing(optcurses_row_t *old_backing, int old_w, int old_h)
+{
+    if (old_backing)
+    {
+        int i;
+
+        for (i = 0; i < old_h; i ++)
+        {
+            int j;
+
+            for (j = 0; j < 2; j ++)
+            {
+                if (old_backing[i].backing[j])
+                {
+                    free((void *) old_backing[i].backing[j]);
+                    old_backing[i].backing[j] = NULL;
+                }
+            }
+        }
+        old_backing = NULL;
+    }
+    return old_backing;
+}
+
+static optcurses_row_t *optcurses_create_backing(int new_w, int new_h)
+{
+    optcurses_row_t *new_backing;
+
+    new_backing = (optcurses_row_t *) malloc(new_h * sizeof(*new_backing));
+    if (new_backing)
+    {
+        int i;
+        int alloc_failed;
+
+        alloc_failed = 0;
+        memset((void *) new_backing, 0, new_h * sizeof(*new_backing));
+        for (i = 0; i < new_h; i ++)
+        {
+            int j;
+
+            for (j = 0; j < 2; j ++)
+            {
+                new_backing[i].backing[j] = (optcurses_cell_t *) malloc(new_w * sizeof(*(new_backing[i].backing[j])));
+                if (new_backing[i].backing[j])
+                {
+                    memset((void *) new_backing[i].backing[j], 0, new_w * sizeof(*(new_backing[i].backing[j])));
+                }
+                else
+                {
+                    alloc_failed = 1;
+                    break;
+                }
+            }
+            if (alloc_failed) break;
+        }
+        if (alloc_failed) new_backing = optcurses_delete_backing(new_backing, new_w, new_h);
+    }
+    return new_backing;
+}
+
+static optcurses_row_t *optcurses_resize_backing(optcurses_row_t *old_backing, int old_w, int old_h, int new_w, int new_h)
+{
+    optcurses_row_t *new_backing;
+
+    /* TODO: this should use realloc like the old bigmem code did, and
+     * possibly specially optimize the allocation to use a single
+     * chunk in the bigmem case */
+    if ((old_w == new_w) && (old_h == new_h) && old_backing) return old_backing;
+    new_backing = optcurses_create_backing(new_w, new_h);
+    if (new_backing && old_backing)
+    {
+        int i;
+
+        for (i = 0; (i < old_h) && (i < new_h); i ++)
+        {
+            int j;
+
+            for (j = 0; j < 2; j ++)
+            {
+                if (old_backing[i].backing[j] && new_backing[i].backing[j])
+                {
+                    memcpy((void *) new_backing[i].backing[j],
+                           (void *) old_backing[i].backing[j],
+                           ((new_w < old_w) ? new_w : old_w) * sizeof(*(new_backing[i].backing[j])));
+                }
+            }
+            new_backing[i].clean = old_backing[i].clean;
+        }
+    }
+    old_backing = optcurses_delete_backing(old_backing, old_w, old_h);
+    return new_backing;
+}
 
 static int OPTCURSES_IS_ROW_DIRTY(int y)
 {
     return (0xFFU
             !=
-            (unsigned) ((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))]);
+            optcurses_backing[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))].clean);
 }
 
-static int OPTCURSES_DIRTY_ROW(int y)
+static void OPTCURSES_DIRTY_ROW(int y)
 {
-    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0U);
+    optcurses_backing[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))].clean = 0U;
 }
 
-static int OPTCURSES_CLEAN_ROW(int y)
+static void OPTCURSES_CLEAN_ROW(int y)
 {
-    return (((unsigned char *)(optcurses_backing + 2 * optcurses_w * optcurses_h))[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))] = 0xFFU);
+    optcurses_backing[(y / ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))].clean = 0xFFU;
 }
 
 #define OPTCURSES__LINES (LINES * ((optcurses_bitmap && *optcurses_bitmap) ? 2 : 1))
@@ -135,101 +232,30 @@ static void optcurses_init(void) {
             ((COLS * OPTCURSES__LINES) <= 1))
         {
             /* no backing */
-            if (optcurses_backing)
-            {
-                free((void *) optcurses_backing);
-                optcurses_backing = NULL;
-            }
+            optcurses_backing = optcurses_delete_backing(optcurses_backing, optcurses_w, optcurses_h);
             optcurses_bitmap = 0;
         }
         else if (! optcurses_backing)
         {
-            optcurses_backing = (optcurses_cell_t *) malloc(2 * COLS * OPTCURSES__LINES * sizeof(optcurses_cell_t) + OPTCURSES__LINES);
-            if (optcurses_backing)
-            {
-                memset((void *) optcurses_backing, 0, 2 * COLS * OPTCURSES__LINES * sizeof(optcurses_cell_t) + OPTCURSES__LINES);
-            }
-            else
+            optcurses_backing = optcurses_create_backing(COLS, OPTCURSES__LINES);
+            if (! optcurses_backing)
             {
                 optcurses_bitmap = 0;
             }
         }
         else
         {
-            /* screen grew, enlarge backing buffer */
-            if ((COLS * OPTCURSES__LINES) > (optcurses_w * optcurses_h))
-            {
-                optcurses_cell_t *new_backing;
-
-                new_backing = (optcurses_cell_t *) realloc((void *) optcurses_backing, 2 * COLS * OPTCURSES__LINES * sizeof(optcurses_cell_t) + OPTCURSES__LINES);
-                if (! new_backing)
-                {
-                    free((void *) optcurses_backing);
-                }
-                optcurses_backing = new_backing;
-            }
+            optcurses_backing = optcurses_resize_backing(optcurses_backing, optcurses_w, optcurses_h, COLS, OPTCURSES__LINES);
             if (! optcurses_backing) optcurses_bitmap = 0;
             if (optcurses_backing)
             {
                 int y;
 
-                /* resize application backing buffer */
-                if (optcurses_w < COLS)
-                {
-                    /* scanlines got longer, so move starting at the end */
-                    for (y = OPTCURSES__LINES; y --; )
-                    {
-                        if (y < optcurses_h)
-                        {
-                            memmove((void *) (optcurses_backing + y * COLS),
-                                   (void *) (optcurses_backing + y * optcurses_w),
-                                   optcurses_w * sizeof(optcurses_cell_t));
-                            memset((void *) (optcurses_backing + y * COLS + optcurses_w),
-                                   0,
-                                   (COLS - optcurses_w) * sizeof(optcurses_cell_t));
-                        }
-                        else
-                        {
-                            memset((void *) (optcurses_backing + y * COLS),
-                                   0,
-                                   COLS * sizeof(optcurses_cell_t));
-                        }
-                    }
-                }
-                else
-                {
-                    /* scanlines got shorter or remained the same length, so move starting at the beginning */
-                    for (y = 0; y < OPTCURSES__LINES; y ++)
-                    {
-                        if (y < optcurses_h)
-                        {
-                            memmove((void *) (optcurses_backing + y * COLS),
-                                    (void *) (optcurses_backing + y * optcurses_w),
-                                    optcurses_w * sizeof(optcurses_cell_t));
-                        }
-                        else
-                        {
-                            memset((void *) (optcurses_backing + y * COLS),
-                                   0,
-                                   COLS * sizeof(optcurses_cell_t));
-                        }
-                    }
-                }
                 /* invalidate screen backing buffer */
-                memset((void *) (optcurses_backing + OPTCURSES__LINES * COLS),
-                       0,
-                       OPTCURSES__LINES * COLS * sizeof(optcurses_cell_t) + OPTCURSES__LINES);
-                /* screen shrunk, shrink backing buffer */
-                if ((COLS * OPTCURSES__LINES) < (optcurses_w * optcurses_h))
+                for (y = 0; y < OPTCURSES__LINES; y ++)
                 {
-                    optcurses_cell_t *new_backing;
-                    
-                    new_backing = (optcurses_cell_t *) realloc((void *) optcurses_backing, 2 * COLS * OPTCURSES__LINES * sizeof(optcurses_cell_t) + OPTCURSES__LINES);
-                    if (! new_backing)
-                    {
-                        free((void *) optcurses_backing);
-                    }
-                    optcurses_backing = new_backing;
+                    memset((void *) optcurses_backing[y].backing[1], 0, COLS * sizeof(*(optcurses_backing[y].backing[1])));
+                    OPTCURSES_DIRTY_ROW(y);
                 }
             }
         }
@@ -262,11 +288,7 @@ static void optcurses_endwin(void)
     optcurses_attr = 0;
     optcurses_clearok_flag = 0;
     optcurses_direct = NULL;
-    if (optcurses_backing)
-    {
-        free((void *) optcurses_backing);
-        optcurses_backing = NULL;
-    }
+    optcurses_backing = optcurses_delete_backing(optcurses_backing, optcurses_w, optcurses_h);
     endwin();
 }
 
@@ -338,8 +360,8 @@ static int optcurses_addch(chtype ch) {
             do
             {
                 OPTCURSES_DIRTY_ROW(optcurses_y);
-                optcurses_backing[optcurses_y * optcurses_w + optcurses_x - wcw].ch = ch;
-                optcurses_backing[optcurses_y * optcurses_w + optcurses_x - wcw].attr = optcurses_attr;
+                optcurses_backing[optcurses_y].backing[0][optcurses_x - wcw].ch = ch;
+                optcurses_backing[optcurses_y].backing[0][optcurses_x - wcw].attr = optcurses_attr;
                 ch = (chtype) ERR;
             }
             while (-- wcw);
@@ -494,11 +516,7 @@ static void optcurses_initscrWithHints(int h, int w, const char *title, const ch
     optcurses_attr = 0;
     optcurses_clearok_flag = 0;
     optcurses_direct = NULL;
-    if (optcurses_backing)
-    {
-        free((void *) optcurses_backing);
-        optcurses_backing = NULL;
-    }
+    optcurses_backing = optcurses_delete_backing(optcurses_backing, optcurses_w, optcurses_h);
     if (! optcurses_direct)
     {
         optcurses_direct = myman_getenv("OPTCURSES_DIRECT");
@@ -534,11 +552,7 @@ static WINDOW *optcurses_initscr(void)
     optcurses_attr = 0;
     optcurses_clearok_flag = 0;
     optcurses_direct = NULL;
-    if (optcurses_backing)
-    {
-        free((void *) optcurses_backing);
-        optcurses_backing = NULL;
-    }
+    optcurses_backing = optcurses_delete_backing(optcurses_backing, optcurses_w, optcurses_h);
     if (! optcurses_direct)
     {
         optcurses_direct = myman_getenv("OPTCURSES_DIRECT");
@@ -1335,9 +1349,17 @@ static int optcurses_refresh(void)
                 optcurses_clearok_flag = 0;
                 attrset(0);
                 clear();
-                memset((void *) (optcurses_backing + optcurses_h * optcurses_w),
-                       0,
-                       optcurses_h * optcurses_w * sizeof(optcurses_cell_t) + optcurses_h);
+                if (optcurses_backing)
+                {
+                    int y;
+
+                    /* invalidate screen backing buffer */
+                    for (y = 0; y < optcurses_h; y ++)
+                    {
+                        memset((void *) optcurses_backing[y].backing[1], 0, optcurses_w * sizeof(*(optcurses_backing[y].backing[1])));
+                        OPTCURSES_DIRTY_ROW(y);
+                    }
+                }
             }
             for (y_permute = 0; y_permute < optcurses_h; y_permute ++)
             {
@@ -1349,10 +1371,10 @@ static int optcurses_refresh(void)
                         attr_t attr, attr2;
                         chtype ch, ch2;
 
-                        attr = optcurses_backing[y * optcurses_w + x].attr;
-                        ch = optcurses_backing[y * optcurses_w + x].ch;
-                        attr2 = optcurses_backing[(optcurses_h + y) * optcurses_w + x].attr;
-                        ch2 = optcurses_backing[(optcurses_h + y) * optcurses_w + x].ch;
+                        attr = optcurses_backing[y].backing[0][x].attr;
+                        ch = optcurses_backing[y].backing[0][x].ch;
+                        attr2 = optcurses_backing[y].backing[1][x].attr;
+                        ch2 = optcurses_backing[y].backing[1][x].ch;
                         if (optcurses_bitmap && *optcurses_bitmap)
                         {
                             attr_t attr1, attr3;
@@ -1364,10 +1386,10 @@ static int optcurses_refresh(void)
                             ch3 = ERR;
                             if ((y + 1) < OPTCURSES__LINES)
                             {
-                                attr1 = optcurses_backing[(y + 1) * optcurses_w + x].attr;
-                                ch1 = optcurses_backing[(y + 1) * optcurses_w + x].ch;
-                                attr3 = optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x].attr;
-                                ch3 = optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x].ch;
+                                attr1 = optcurses_backing[y + 1].backing[0][x].attr;
+                                ch1 = optcurses_backing[y + 1].backing[0][x].ch;
+                                attr3 = optcurses_backing[y + 1].backing[1][x].attr;
+                                ch3 = optcurses_backing[y + 1].backing[1][x].ch;
                             }
                             optcurses__combine_bitmap(&ch, &attr, ch, attr, ch1, attr1);
                             optcurses__combine_bitmap(&ch2, &attr2, ch2, attr2, ch3, attr3);
@@ -1381,12 +1403,14 @@ static int optcurses_refresh(void)
                              !=
                              attr2))
                         {
-                            optcurses_backing[(optcurses_h + y) * optcurses_w + x] =
-                                optcurses_backing[y * optcurses_w + x];
+                            memcpy((void *) &(optcurses_backing[y].backing[1][x]),
+                                   (void *) &(optcurses_backing[y].backing[0][x]),
+                                   sizeof(optcurses_backing[y].backing[1][x]));
                             if (optcurses_bitmap && *optcurses_bitmap)
                             {
-                                optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x] =
-                                    optcurses_backing[(y + 1) * optcurses_w + x];
+                                memcpy((void *) &(optcurses_backing[y + 1].backing[1][x]),
+                                       (void *) &(optcurses_backing[y + 1].backing[0][x]),
+                                       sizeof(optcurses_backing[y + 1].backing[1][x]));
                             }
                             if (ch
                                 &&
@@ -1415,13 +1439,13 @@ static int optcurses_refresh(void)
 
                                     chprev = ERR;
                                     for (i = 1;
-                                         ((chprev = optcurses_backing[(optcurses_h + y) * optcurses_w + x - i].ch) == (chtype) ERR) && ((x - i) > 0);
+                                         ((chprev = optcurses_backing[y].backing[1][x - i].ch) == (chtype) ERR) && ((x - i) > 0);
                                          i ++)
                                     {
                                     }
                                     if (chprev != (chtype) ERR)
                                     {
-                                        attrprev = optcurses_backing[(optcurses_h + y) * optcurses_w + x - i].attr;
+                                        attrprev = optcurses_backing[y].backing[1][x - i].attr;
                                         if (optcurses_bitmap && *optcurses_bitmap)
                                         {
                                             attr_t attrprev1;
@@ -1431,8 +1455,8 @@ static int optcurses_refresh(void)
                                             chprev1 = ((chtype) ERR);
                                             if ((y + 1) < OPTCURSES__LINES)
                                             {
-                                                attrprev1 = optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x].attr;
-                                                chprev1 = optcurses_backing[(optcurses_h + y + 1) * optcurses_w + x].ch;
+                                                attrprev1 = optcurses_backing[y + 1].backing[1][x].attr;
+                                                chprev1 = optcurses_backing[y + 1].backing[1][x].ch;
                                             }
                                             optcurses__combine_bitmap(&chprev, &attrprev, chprev, attrprev, chprev1, attrprev1);
                                         }
@@ -1485,8 +1509,9 @@ static int optcurses_refresh(void)
                                 while (-- wcw)
                                 {
                                     x ++;
-                                    optcurses_backing[(optcurses_h + y) * optcurses_w + x] =
-                                        optcurses_backing[y * optcurses_w + x];
+                                    memcpy((void *) &(optcurses_backing[y].backing[1][x]),
+                                           (void *) &(optcurses_backing[y].backing[0][x]),
+                                           sizeof(optcurses_backing[y].backing[1][x]));
                                 }
                             }
                         }
