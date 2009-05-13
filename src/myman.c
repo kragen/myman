@@ -5150,24 +5150,30 @@ pager(void)
                         }
                     }
                     my_refresh();
-                    while ((k = my_getch()) == ERR)
+                    do
                     {
-                        my_refresh();
-                        if (got_sigwinch) break;
-                        my_usleep(100000UL);
-                    }
-                    if (IS_LEFT_ARROW(k) || (k == '<') || (k == ','))
-                    {
-                        pager_arrow_magic = 1;
-                    }
-                    else
-                    {
-                        if ((pager_arrow_magic == 1) && (IS_RIGHT_ARROW(k) || (k == '>') || (k == '.')))
+                        while ((k = my_getch()) == ERR)
                         {
-                            k = 27;
+                            my_refresh();
+                            if (got_sigwinch) break;
+                            my_usleep(100000UL);
                         }
-                        pager_arrow_magic = 0;
+                        if (IS_LEFT_ARROW(k) || (k == '<') || (k == ','))
+                        {
+                            pager_arrow_magic = 1;
+                            continue;
+                        }
+                        else
+                        {
+                            if ((pager_arrow_magic == 1) && (IS_RIGHT_ARROW(k) || (k == '>') || (k == '.')))
+                            {
+                                k = 27;
+                            }
+                            pager_arrow_magic = 0;
+                        }
+                        break;
                     }
+                    while (1);
                     my_attrset(0);
                     my_erase();
 #if USE_COLOR
