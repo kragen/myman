@@ -353,7 +353,7 @@ extern int sprite_color[256];
 
 #define XWRAP2(x) (XWRAP(x) % maze_w)
 
-#define CLEAN_ALL() do { memset((void *)dirty_cell, 0, sizeof(dirty_cell)); all_dirty = 0; } while (0)
+#define CLEAN_ALL() do { memset((void *)dirty_cell, 0, maze_h * ((maze_w + 1 + 7) >> 3) * sizeof(*dirty_cell)); all_dirty = 0; } while (0)
 #define DIRTY_ALL() do { all_dirty = 1; } while (0)
 #define IS_CELL_DIRTY(x,y) (all_dirty || ((((long) (x)) >= 0) && (((long) (y)) >= 0) && ((x) <= maze_w) && ((y) < maze_h) && ((unsigned) dirty_cell[((y)) * ((maze_w+1+7) >> 3) + ((x)>>3)]&(1<<((x)&7)))))
 
