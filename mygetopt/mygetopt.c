@@ -29,7 +29,9 @@
 #ifndef macintosh
 #ifndef __PACIFIC__
 #ifndef AZTEC
+#ifndef __EFI__
 #define HAVE_SYS_TYPES_H 1
+#endif
 #endif
 #endif
 #endif

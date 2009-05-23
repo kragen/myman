@@ -416,6 +416,7 @@ do
           echoline "--with-conio       "use Borland-style CONIO
           echoline "--with-graph       "use Open Watcom-style graph.h
           echoline "--with-disp        "use \<disp.h\> \(Digital Mars/Symantec/Zortech C/C\+\+\)
+          echoline "--with-efi         "use EFI \(the Extensible Firmware Interface\)
           echoline
           echoline Report bugs to \<bsittler@gmail.com\>.
           exit 0

@@ -1,6 +1,6 @@
 /*BINFMTC:-lcurses -I../inc utils.c
  * myman.c - game logic for the MyMan video game
- * Copyright 1997-2008, Benjamin C. Wiley Sittler <bsittler@gmail.com>
+ * Copyright 1997-2009, Benjamin C. Wiley Sittler <bsittler@gmail.com>
  *
  *  Permission is hereby granted, free of charge, to any person
  *  obtaining a copy of this software and associated documentation
@@ -226,6 +226,13 @@
 #ifndef MY_CURSES_H
 #ifdef DISPCURSES
 #include "dispcurs.h"
+#define MY_CURSES_H "optcurs.h"
+#endif
+#endif
+
+#ifndef MY_CURSES_H
+#ifdef EFICURSES
+#include "eficurs.h"
 #define MY_CURSES_H "optcurs.h"
 #endif
 #endif
@@ -464,7 +471,7 @@ vmscurses_getch(void)
 #endif
 
 #ifndef beep
-#define beep() do{putchar('\a');fflush(stdout);}while(0)
+#define beep() do{fputc('\a', stdout);fflush(stdout);}while(0)
 #endif
 
 #ifndef HAVE_CHTYPE

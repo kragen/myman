@@ -93,6 +93,12 @@
 
 /* HAVE_FCNTL_H: do we have <fcntl.h>? */
 
+#ifdef __EFI__
+#ifndef HAVE_FCNTL_H
+#define HAVE_FCNTL_H 0
+#endif
+#endif
+
 #ifndef HAVE_FCNTL_H
 #define HAVE_FCNTL_H 1
 #endif
@@ -130,7 +136,7 @@
 /* HAVE_LANGINFO_H: do we have <langinfo.h>? */
 
 #ifndef HAVE_LANGINFO_H
-#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__) || defined(__HAIKU__) || defined(__WATCOMC__))
+#if ! (defined(WIN32) || defined(CPM) || defined(macintosh) || defined(__MSDOS__) || defined(atarist) || defined(__atarist__) || defined(__DMC__) || defined(__HAIKU__) || defined(__WATCOMC__) || defined(__EFI__))
 #define HAVE_LANGINFO_H 1
 #endif
 #endif
@@ -142,7 +148,7 @@
 /* HAVE_LOCALE_H: do we have <locale.h>? */
 
 #ifndef HAVE_LOCALE_H
-#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#if ! (defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__EFI__))
 #define HAVE_LOCALE_H 1
 #endif
 #endif
@@ -182,7 +188,7 @@
 /* HAVE_STDINT_H: do we have <stdint.h>? */
 
 #ifndef HAVE_STDINT_H
-#if ! (defined(macintosh) || defined(AZTEC) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)))
+#if ! (defined(macintosh) || defined(AZTEC) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__EFI__))
 #ifdef __atarist__
 #if ((! defined(__GNUC__)) || (__GNUC__ > 2))
 #define HAVE_STDINT_H 1
@@ -192,7 +198,7 @@
 #else /* ! defined(__atarist__) */
 #define HAVE_STDINT_H 1
 #endif /* ! defined(__atarist__) */
-#endif /* ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__))) */
+#endif /* ! (defined(macintosh) || defined(LSI_C) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(__BCC__) && defined(__MSDOS__)) || defined(__EFI__)) */
 #endif
 
 #ifndef HAVE_STDINT_H
@@ -214,7 +220,7 @@
 /* HAVE_SYS_IOCTL_H: do we have <sys/ioctl.h>? */
 
 #ifndef HAVE_SYS_IOCTL_H
-#if ! (defined(AZTEC) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh) || defined(__TURBOC__) || defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__))
+#if ! (defined(AZTEC) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(macintosh) || defined(__TURBOC__) || defined(LSI_C) || defined(__BCC__) || defined(__DMC__) || defined(__WATCOMC__) || defined(__TINYC__) || defined(__EFI__))
 #define HAVE_SYS_IOCTL_H 1
 #endif
 #endif
@@ -226,11 +232,11 @@
 /* HAVE_SYS_SOCKET_H: do we have <sys/socket.h>? */
 
 #ifndef HAVE_SYS_SOCKET_H
-#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh) || defined(__DMC__) || defined(__WATCOMC__))
+#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh) || defined(__DMC__) || defined(__WATCOMC__) || defined(__EFI__))
 #if ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2))
 #define HAVE_SYS_SOCKET_H 1
 #endif /* ! (defined(__atarist__) && defined(__GNUC__) && (__GNUC__ == 2)) */
-#endif /* ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh) || defined(__DMC__) || defined(__WATCOMC__)) */
+#endif /* ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh) || defined(__DMC__) || defined(__WATCOMC__) || defined(__EFI__)) */
 #endif
 
 #ifndef HAVE_SYS_SOCKET_H
@@ -240,7 +246,7 @@
 /* HAVE_SYS_STAT_H: do we have <sys/stat.h>? */
 
 #ifndef HAVE_SYS_STAT_H
-#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh))
+#if ! (defined(__MSDOS__) || defined(CPM) || defined(macintosh) || defined(__EFI__))
 #define HAVE_SYS_STAT_H 1
 #endif
 #endif
@@ -252,7 +258,7 @@
 /* HAVE_SYS_TIME_H: do we have <sys/time.h>? */
 
 #ifndef HAVE_SYS_TIME_H
-#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__) || defined(__POCC__))
+#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || defined(__WATCOMC__) || defined(__POCC__) || defined(__EFI__))
 #define HAVE_SYS_TIME_H 1
 #endif
 #endif
@@ -294,7 +300,7 @@
 /* HAVE_UNISTD_H: do we have <unistd.h>? */
 
 #ifndef HAVE_UNISTD_H
-#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)))
+#if ! (defined(AZTEC) || defined(LSI_C) || defined(macintosh) || defined(__PACIFIC__) || defined(HI_TECH_C) || defined(SMALL_C) || defined(__TURBOC__) || (defined(WIN32) && defined(__DMC__)) || defined(__EFI__))
 #define HAVE_UNISTD_H 1
 #endif
 #endif
@@ -346,7 +352,7 @@
 #endif
 #endif
 
-#if defined(WIN32) || defined(macintosh)
+#if defined(WIN32) || defined(macintosh) || defined(__EFI__)
 #ifndef HAVE_PUTENV
 #define HAVE_PUTENV 0
 #endif
@@ -368,7 +374,7 @@
 #endif
 #endif /* defined(macintosh) */
 
-#if defined(WIN32) || defined(__MSDOS__) || defined(__DMC__) || defined(macintosh)
+#if defined(WIN32) || defined(__MSDOS__) || defined(__DMC__) || defined(macintosh) || defined(__EFI__)
 #ifndef HAVE_SETENV
 #define HAVE_SETENV 0
 #endif
@@ -395,7 +401,7 @@
 /* MAIN_NO_ENVP: define only if main() should not accept a third argument */
 
 #ifndef MAIN_NO_ENVP
-#ifdef __POCC__
+#if defined(__POCC__)
 #define MAIN_NO_ENVP 1
 #endif
 #endif

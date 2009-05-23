@@ -35,6 +35,9 @@
 #endif
 
 #include <ctype.h>
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif
 #include <errno.h>
 #include <limits.h>
 #include <math.h>

@@ -85,11 +85,14 @@ static optcurses_row_t *optcurses_delete_backing(optcurses_row_t *old_backing, i
             {
                 if (old_backing[i].backing[j])
                 {
+                    memset((void *) old_backing[i].backing[j], 0, old_w * sizeof(*(old_backing[i].backing[j])));
                     free((void *) old_backing[i].backing[j]);
                     old_backing[i].backing[j] = NULL;
                 }
             }
         }
+        memset((void *) old_backing, 0, old_h * sizeof(*old_backing));
+        free((void *) old_backing);
         old_backing = NULL;
     }
     return old_backing;

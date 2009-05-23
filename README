@@ -75,7 +75,8 @@ ncurses, slang, PDCurses, SysV curses, BSD curses, old VMS curses, or
 the raw stdio terminal driver), (B) on an X Window System display
 (using PDCurses for X, a.k.a. XCurses), (C) on any terminal or display
 supported by PDCurses for SDL, libcaca, LibGGI/LibGII, Allegro, TWin,
-aalib, Carbon/Toolbox, newt, GTK+, FLTK, <disp.h>, or (D) in a Win32
+aalib, Carbon/Toolbox, newt, GTK+, FLTK, <disp.h>, Borland-style
+CONIO, or the Extensible Firmware Interface (EFI) or (D) in a Win32
 command prompt window (using the raw Win32 terminal driver).  Since
 MyMan is fairly fast-moving, you'll need a reasonably fast computer
 and display.  It once ran acceptably fast on a 486-66 under Linux, and
@@ -469,38 +470,10 @@ the underlying display libraries:
                                             Nonzero value forces use of
                                             Braille pseudo-bitmap characters
                                             on a Unicode display
- newt                   OPTCURSES_DIRECT    Nonzero value disables redraw
-                                            optimization layer
-                        OPTCURSES_INTERLACE Nonzero value renders by
-                                            interleaving half-screens
-                        OPTCURSES_BITMAP    Nonzero value causes use of
-                                            pseudo-bitmap characters
-                        OPTCURSES_BITMAP_FORCE
-                                            Nonzero value allows use of
-                                            inverse video when using
-                                            ASCII pseudo-bitmap characters
-                        OPTCURSES_BITMAP_BRAILLE
-                                            Nonzero value forces use of
-                                            Braille pseudo-bitmap characters
-                                            on a Unicode display
  FLTK                   FLTKCURSES_FONT     Font face
                         FLTKCURSES_FONTSIZE
                                             Font size
                         OPTCURSES_DIRECT    Nonzero value disables redraw
-                                            optimization layer
-                        OPTCURSES_INTERLACE Nonzero value renders by
-                                            interleaving half-screens
-                        OPTCURSES_BITMAP    Nonzero value causes use of
-                                            pseudo-bitmap characters
-                        OPTCURSES_BITMAP_FORCE
-                                            Nonzero value allows use of
-                                            inverse video when using
-                                            ASCII pseudo-bitmap characters
-                        OPTCURSES_BITMAP_BRAILLE
-                                            Nonzero value forces use of
-                                            Braille pseudo-bitmap characters
-                                            on a Unicode display
- Borland-style CONIO    OPTCURSES_DIRECT    Nonzero value disables redraw
                                             optimization layer
                         OPTCURSES_INTERLACE Nonzero value renders by
                                             interleaving half-screens
@@ -555,6 +528,25 @@ the underlying display libraries:
  <disp.h>               DISPCURSES_USEBIOS  Nonzero value forces use of
                                             BIOS routines for display I/O
                                             (DOS)
+                        OPTCURSES_DIRECT    Nonzero value disables redraw
+                                            optimization layer
+                        OPTCURSES_INTERLACE Nonzero value renders by
+                                            interleaving half-screens
+                        OPTCURSES_BITMAP    Nonzero value causes use of
+                                            pseudo-bitmap characters
+                        OPTCURSES_BITMAP_FORCE
+                                            Nonzero value allows use of
+                                            inverse video when using
+                                            ASCII pseudo-bitmap characters
+                        OPTCURSES_BITMAP_BRAILLE
+                                            Nonzero value forces use of
+                                            Braille pseudo-bitmap characters
+                                            on a Unicode display
+ newt
+   or
+ Borland-style CONIO    
+   or
+ Extensible Firmware Interface (EFI)
                         OPTCURSES_DIRECT    Nonzero value disables redraw
                                             optimization layer
                         OPTCURSES_INTERLACE Nonzero value renders by

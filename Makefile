@@ -966,6 +966,14 @@ endif
 
 ## Conventional filename suffices (host)
 
+# Special case for EFI host
+
+ifeq (yes,${with_efi})
+ifeq ($(subst default,undefined,$(origin EXE_SUFFIX)),undefined)
+EXE_SUFFIX = .efi
+endif
+endif
+
 # Option 1: GNU, BSD, Unix, MiNT, etc.
 ifeq ($(subst -pe-,--,$(subst -msys-,--,$(subst -os2-,--,$(subst -cygwin32-,--,$(subst -mingw32msvc-,--,$(subst -mingw32-,--,$(subst -cygwin-,--,$(subst -mingw-,--,$(subst -msdosdjgpp-,--,$(subst -msdos-,--,-${host}-)))))))))),-${host}-)
 ifeq ($(subst default,undefined,$(origin OBJ_SUFFIX)),undefined)
@@ -1246,6 +1254,73 @@ hostbind_resource = ${ECHOLINEX} binding $(call q,$1) to $(call q,$@) && \
                  ${REMOVE} $(call q,$@))
 endif
 endif
+endif
+
+# Special cases for EFI host
+
+ifeq (yes,${with_efi})
+
+ifeq ($(subst default,undefined,$(origin ARCH)),undefined)
+ARCH = ia32
+endif
+
+ifeq ($(subst default,undefined,$(origin EFIROOT)),undefined)
+EFIROOT = /usr/local
+endif
+
+ifeq ($(subst default,undefined,$(origin HDRROOT)),undefined)
+HDRROOT = ${EFIROOT}/include/efi
+endif
+
+HOSTCINCLUDES += -I$(call q,${HDRROOT}) -I$(call q,${HDRROOT}/${ARCH}) -I$(call q,${HDRROOT}/protocol) -I$(call q,${src}efilibc) -I$(call q,$(call shell,${HOSTCC} -print-file-name="")include)
+
+ifeq ($(subst default,undefined,$(origin HOSTCRTOBJS)),undefined)
+HOSTCRTOBJS = $(call q,${EFIROOT}/lib/crt0-efi-${ARCH}.o) $(call q,${obj}efilibc$o)
+endif
+
+HOSTCPPFLAGS += -D$(call q,CONFIG_${ARCH}) -D__EFI__ -D_LIBC_LIMITS_H_
+
+ifeq ($(subst default,undefined,$(origin HOSTCFLAGS)),undefined)
+HOSTCFLAGS = -nostdinc -O2 -fpic -Wall -fshort-wchar -fno-strict-aliasing -fno-merge-constants
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTLD)),undefined)
+HOSTLD = ${hostprefix}ld
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTLDSCRIPT)),undefined)
+HOSTLDSCRIPT = $(call q,${EFIROOT}/lib/elf_${ARCH}_efi.lds)
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTLDFLAGS)),undefined)
+HOSTLDFLAGS = -nostdlib
+endif
+
+HOSTLDFLAGS += -T $(call q,${HOSTLDSCRIPT}) -shared -Bsymbolic -L$(call q,${EFIROOT}/lib) ${HOSTCRTOBJS} --no-undefined
+
+ifeq ($(subst default,undefined,$(origin HOSTLIBS)),undefined)
+HOSTLIBS = -lefi -lgnuefi $(call shell,${HOSTCC} -print-libgcc-file-name) ${EXTRAHOSTLIBS}
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTOBJCOPY)),undefined)
+HOSTOBJCOPY = ${hostprefix}objcopy
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTFORMAT)),undefined)
+HOSTFORMAT = efi-app-${ARCH}
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTOBJCOPYFLAGS)),undefined)
+HOSTOBJCOPYFLAGS = -j .text -j .sdata -j .data -j .dynamic -j .dynsym -j .rel -j .rela -j .reloc --target=$(call q,${HOSTFORMAT})
+endif
+
+ifeq ($(subst default,undefined,$(origin HOSTLINK)),undefined)
+HOSTLINK = hostlink() { \
+	${HOSTLD} ${HOSTLDFLAGS} ${EXTRAHOSTLDFLAGS} -o $(call q,${objdir}/$(call s,%$(call xq,$x),%,$@).so) $(call q,$<) "$$@" ${HOSTLIBS} ${EXTRAHOSTLIBS} && \
+	${HOSTOBJCOPY} ${HOSTOBJCOPYFLAGS} ${EXTRAHOSTOBJCOPYFLAGS} $(call q,${objdir}/$(call s,%$(call xq,$x),%,$@).so) $(call q,$@); \
+	}; hostlink
+endif
+
 endif
 
 # directory removal (empty directories only!)
@@ -2316,6 +2391,16 @@ endif
 CURSOPTS += -DAACURSES ${AALIBCFLAGS}
 
 else
+ifeq (yes,${with_efi})
+
+ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
+CURSES_FLAVOR = EFI console
+endif
+
+# EFI (Extensible Firmware Interface)
+CURSOPTS += -DEFICURSES ${EFICFLAGS}
+
+else
 ifeq (yes,${with_disp})
 
 ifeq ($(subst default,undefined,$(origin CURSES_FLAVOR)),undefined)
@@ -2640,6 +2725,7 @@ LIBTERMCAP =
 endif
 CURSESLIBS += $(LIBCURSES) $(LIBTERMCAP)
 
+endif
 endif
 endif
 endif
@@ -3336,6 +3422,7 @@ inc/cacacurs.h \
 inc/coniocur.h \
 inc/graphcur.h \
 inc/dispcurs.h \
+inc/eficurs.h \
 inc/fltkcurs.h \
 inc/ggicurs.h \
 inc/gtkcurs.h \
@@ -3836,6 +3923,17 @@ mygetopt/Makefile \
 mygetopt/mygetopt.c \
 mygetopt/mygetopt.h \
 mygetopt/README \
+efilibc/ctype.h \
+efilibc/efilibc.c \
+efilibc/errno.h \
+efilibc/math.h \
+efilibc/signal.h \
+efilibc/stdio.h \
+efilibc/stdlib.h \
+efilibc/string.h \
+efilibc/sys/types.h \
+efilibc/time.h \
+efilibc/wchar.h \
 pdcfont.bmp \
 pdcfont0.bmp \
 pdcfont1.bmp \
@@ -4011,6 +4109,7 @@ dist_dirs = \
 src \
 inc \
 mygetopt \
+efilibc \
 lvl \
 chr \
 spr \
@@ -4032,11 +4131,20 @@ ${dist_program_files} \
 ${dist_data_files}
 
 ifeq ($(subst default,undefined,$(origin DRIVERS)),undefined)
-DRIVERS = $(call mw,${src}inc/sdlcurs.h) $(call mw,${src}inc/ggicurs.h) $(call mw,${src}inc/twcurses.h) $(call mw,${src}inc/aacurses.h) $(call mw,${src}inc/allegcur.h) $(call mw,${src}inc/cacacurs.h) $(call mw,${src}inc/rawcurs.h) $(call mw,${src}inc/maccurs.h) $(call mw,${src}inc/newtcurs.h) $(call mw,${src}inc/dispcurs.h) $(call mw,${src}inc/coniocur.h) $(call mw,${src}inc/graphcur.h) $(call mw,${src}inc/fltkcurs.h) $(call mw,${src}inc/gtkcurs.h) $(call mw,${src}inc/optcurs.h)
+DRIVERS = $(call mw,${src}inc/sdlcurs.h) $(call mw,${src}inc/ggicurs.h) $(call mw,${src}inc/twcurses.h) $(call mw,${src}inc/aacurses.h) $(call mw,${src}inc/allegcur.h) $(call mw,${src}inc/cacacurs.h) $(call mw,${src}inc/rawcurs.h) $(call mw,${src}inc/maccurs.h) $(call mw,${src}inc/newtcurs.h) $(call mw,${src}inc/dispcurs.h) $(call mw,${src}inc/eficurs.h) $(call mw,${src}inc/coniocur.h) $(call mw,${src}inc/graphcur.h) $(call mw,${src}inc/fltkcurs.h) $(call mw,${src}inc/gtkcurs.h) $(call mw,${src}inc/optcurs.h)
 endif
 
 ifeq ($(subst default,undefined,$(origin UTILS)),undefined)
 UTILS = $(call mw,${src}inc/guess.h) $(call mw,${src}inc/utils.h) $(call mw,${src}src/utils.c)
+
+ifeq ($(subst default,undefined,$(origin EFILIBC)),undefined)
+EFILIBC = $(foreach header,ctype errno math signal stdio stdlib string time sys/types wchar,$(call mw,${src}efilibc/${header}.h))
+endif
+
+ifeq (yes,${with_efi})
+UTILS += ${EFILIBC}
+endif
+
 endif
 
 ifeq ($(subst default,undefined,$(origin LOGIC)),undefined)
@@ -4625,6 +4733,9 @@ endif
 ifeq (yes,${with_dmg})
 	-${REMOVE} ${BINDIST}.dmg
 endif
+ifeq (yes,${with_efi})
+	-${REMOVE} $(call q,${objdir})/${MYMAN}.so
+endif
 	-${REMOVE} ${MYMAN}${htm}${tmp} $(call q,${objdir})/*$o ${MYMAN}$x TAGS
 	-${REMOVE} $(call q,${objdir})/*$O
 	-${REMOVE} _sanity?$X $(call q,${obj}_sanity)?.c
@@ -5106,6 +5217,10 @@ ifeq (yes,${with_mac_icon})
 ${MYMAN}$x: $(call mw,${obj}${MYMAN}.icns)
 endif
 
+ifeq (yes,${with_efi})
+${MYMAN}$x: $(call mw,${obj}efilibc$o)
+endif
+
 ${MYMAN}$x: $(call mw,${obj}${MYMAN}$o) $(foreach object,${MYMAN_objs},$(call mw,${object}))
 	${HOSTLINK} $(foreach object,${MYMAN_objs},$(call q,${object})) ${CURSESLIBS} ${ICONVLIBS} ${HOSTLIBS}
 ifeq (yes,${with_win_icon})
@@ -5206,6 +5321,14 @@ ${obj}s2v%$o: $(call mw,${obj}s2v)%.c
 	@${MKPARENTDIR}
 	@${HOSTCOMPILE} ${DATADEFS} $(call datafiledefs,$(word $(call s,$(call xq,${obj}s2v)%$(call xq,$o),%,$@),${all_variants}),${MYMANSIZE})
 
+ifeq (yes,${with_efi})
+
+${obj}efilibc$o: $(call mw,${src}efilibc/efilibc.c) ${EFILIBC}
+	@${MKPARENTDIR}
+	@${HOSTCOMPILE}
+
+endif
+
 ${obj}s2s%$o: $(call mw,${obj}s2s)%.c
 	@${MKPARENTDIR}
 	@${HOSTCOMPILE} ${DATADEFS} $(call datafiledefs,${MYMANVARIANT},$(word $(call s,$(call xq,${obj}s2s)%$(call xq,$o),%,$@),${all_sizes}))
@@ -5214,7 +5337,7 @@ ${BOOTSTRAP}$X: $(call mw,${BOOTSTRAP}$O) $(call mw,${obj}mygetopt$O) $(call mw,
 	@${MKPARENTDIR}
 	${LINK} ${BUILDCURSESLIBS} ${BUILDICONVLIBS} $(call q,${obj}mygetopt$O) $(call mw,${obj}utils$O) $(call mw,${obj}logic$O) ${LIBS}
 
-${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h ${DRIVERS} $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} ${LOGIC} config.h
+${BOOTSTRAP}$O: $(call mw,${src})src/myman.c $(call mw,${src})${MYGETOPTDIR}/getopt.h $(call mw,${src})${MYGETOPTDIR}/mygetopt.h $(call mw,${src})VERSION $(call mw,${src})COPYRIGHT ${DRIVERS} ${UTILS} ${LOGIC} config.h
 	@${MKPARENTDIR}
 	@${COMPILE} ${BUILDCURSOPTS} ${EXTRABUILDCURSOPTS} ${BUILDICONVOPTS} ${BUILDCURSESINCLUDE} ${EXTRABUILDICONVOPTS} $(call gamedefs,${MYMANVARIANT},${MYMANSIZE}) ${WRAPPERDEFS}
 
