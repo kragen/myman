@@ -967,8 +967,6 @@ FILE *fopen(const char *path, const char *mode)
                 efi_device_path = FileDevicePath(efilibc_loaded_image ? efilibc_loaded_image->DeviceHandle : NULL, name16);
                 if (efi_device_path)
                 {
-                    CHAR16 *path_normalized;
-
                     if (! EFI_ERROR(OpenSimpleReadFile(FALSE,
                                                        NULL, 0,
                                                        &efi_device_path,
