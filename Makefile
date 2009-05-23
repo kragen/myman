@@ -4110,6 +4110,7 @@ src \
 inc \
 mygetopt \
 efilibc \
+efilibc/sys \
 lvl \
 chr \
 spr \
